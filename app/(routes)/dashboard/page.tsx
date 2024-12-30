@@ -1,8 +1,7 @@
 import { fetchFormStats } from '@/actions/form.action'
-import { Button } from '@/components/ui/button'
-import { PlusIcon } from 'lucide-react'
 import React from 'react'
 import StatsCards from './_components/StatsCards'
+import CreateForm from './_components/CreateForm'
 
 const DashboardPage = () => {
     return (
@@ -13,15 +12,12 @@ const DashboardPage = () => {
                         <h1 className='text-3xl font-semibold tracking-tight'>
                             Dashboard
                         </h1>
-                        <Button className='!bg-primary !font-medium gap-1'>
-                            <PlusIcon />
-                            Create a form
-                        </Button>
+                        <CreateForm />
                     </div>
                     <StatsListWrap />
                 </section>
-            </div>
-        </div>
+            </div >
+        </div >
     )
 }
 
