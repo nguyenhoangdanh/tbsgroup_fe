@@ -9,7 +9,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { createForm } from '@/actions/form.action';
+import { toast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
+
 const CreateForm = () => {
+    const router = useRouter();
     const [isOpen, setIsOpen] = React.useState<boolean>(false);
 
     const methods = useForm({
@@ -18,8 +23,30 @@ const CreateForm = () => {
     });
 
     const onSubmit: SubmitHandler<TForm> = async (data) => {
-        console.log(data, 'form data');
+        const response = await createForm({
+            name: data.name,
+            description: data.description,
+        });
+
+        console.log('response', response);
+
+        if (response.success) {
+            setIsOpen(false);
+            toast({
+                title: 'Success',
+                description: 'Form created successfully',
+            })
+            methods.reset();
+            router.push(`/dashboard/form/builder/${response?.form?.formId}`)
+        } else {
+            toast({
+                title: 'Error',
+                description: response?.message || 'An error occurred',
+                variant: "destructive"
+            })
+        }
     }
+
     return (
         <>
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
