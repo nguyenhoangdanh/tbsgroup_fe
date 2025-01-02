@@ -1,7 +1,10 @@
-import { fetchFormStats } from '@/actions/form.action'
-import React from 'react'
+import { fetchAllForms, fetchFormStats } from '@/actions/form.action'
+import React, { Suspense } from 'react'
 import StatsCards from './_components/StatsCards'
 import CreateForm from './_components/CreateForm'
+import { Separator } from '@/components/ui/separator'
+import { Loader } from 'lucide-react'
+import FormItem from './_components/_common/FormItem'
 
 const DashboardPage = () => {
     return (
@@ -16,6 +19,35 @@ const DashboardPage = () => {
                     </div>
                     <StatsListWrap />
                 </section>
+                <div className="mt-10">
+                    <Separator className="!border-[#eee] !bg-[#eee]" />
+                </div>
+
+                {/* ALL FORMS */}
+                <section className='w-full pt-7 pb-10'>
+                    <div className="w-full flex items-center md-4">
+                        <h5 className="text-xl font-semibold tracking-tight">
+                            All Forms
+                        </h5>
+                    </div>
+
+                    <div className="grid gap-4 grid-cols-2 
+                    md:grid-cols-5
+                    lg:grid-cols-3
+                    xl:grid-cols-5">
+                        <Suspense
+                            fallback={[1, 2, 3, 4].map((item) => (
+                                <Loader size="3rem" className="animate-spin" />
+                            ))}
+                        >
+                            <FormList />
+                        </Suspense>
+                    </div>
+
+                    {/* <div className="flex items-center justify-center">
+            No form created
+          </div> */}
+                </section>
             </div >
         </div >
     )
@@ -24,6 +56,27 @@ const DashboardPage = () => {
 async function StatsListWrap() {
     const stats = await fetchFormStats();
     return <StatsCards loading={false} data={stats} />
+}
+
+async function FormList() {
+    const { forms } = await fetchAllForms();
+    return (
+        <>
+            {forms?.map((form) => (
+                <FormItem
+                    key={form.id}
+                    id={form.id}
+                    formId={form.formId}
+                    name={form.name}
+                    published={form.published}
+                    createdAt={form.createdAt}
+                    responses={form.responses}
+                    views={form.views}
+                    backgroundColor={form.settings.backgroundColor}
+                />
+            ))}
+        </>
+    );
 }
 
 export default DashboardPage
