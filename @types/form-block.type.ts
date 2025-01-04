@@ -1,11 +1,10 @@
 import React from "react";
 
-
 export type FormCategoryType = "Layout" | "Field";
 
 export type FormBlockType =
   "RowLayout"
-//   | "RadioSelect"
+  | "RadioSelect"
 //   | "TextField"
 //   | "TextArea"
 //   | "StarRating"
@@ -23,7 +22,9 @@ export type ObjectBlockType = {
         label: string;
     }
 
-    canvasComponent: React.FC;
+    canvasComponent: React.FC<{
+        blockInstance: FormBlockInstance;
+    }>;
     formComponent: React.FC;
     propertiesComponent: React.FC;
 }
@@ -32,7 +33,7 @@ export type FormBlockInstance = {
     id: string;
     blockType: FormBlockType;
     attributes?: Record<string, any>;
-    childrenblocks?: FormBlockInstance[];
+    childblocks?: FormBlockInstance[];
     isLocked?: boolean;
 }
 export type FormBlocksType = {
