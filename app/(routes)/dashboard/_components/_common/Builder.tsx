@@ -1,7 +1,7 @@
 import React from 'react'
 import BuilderSidebar from './BuilderSidebar'
 import { SidebarInset, SidebarTrigger } from '@/components/ui/sidebar'
-import { defaultBackgroundColor } from '@/contants'
+import { defaultBackgroundColor } from '@/constants'
 import BuilderCanvas from '../BuilderCanvas'
 import BuilderBlockProperties from './BuilderBlockProperties'
 

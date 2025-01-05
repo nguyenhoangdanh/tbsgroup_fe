@@ -2,7 +2,7 @@
 
 import {getKindeServerSession} from '@kinde-oss/kinde-auth-nextjs/server';
 import {prisma} from '../lib/prismadb';
-import {defaultPrimaryColor, defaultBackgroundColor} from '../contants/index';
+import {defaultPrimaryColor, defaultBackgroundColor} from '../constants/index';
 
 export async function fetchFormStats() {
   try {
@@ -129,6 +129,90 @@ export async function fetchAllForms() {
     return {
       success: false,
       message: 'Something went wrong',
+    };
+  }
+}
+
+export async function saveForm(data: {
+  formId: string;
+  name?: string;
+  description?: string;
+  jsonBlocks: string;
+}) {
+  try {
+    const { formId, name, description, jsonBlocks } = data;
+    const session = getKindeServerSession();
+    const user = await session.getUser();
+
+    if (!user) {
+      return {
+        success: false,
+        message: "Unauthorized to use this resource",
+      };
+    }
+
+    if (!formId || !jsonBlocks) {
+      return {
+        success: false,
+        message: "Invalid input data",
+      };
+    }
+
+    const form = await prisma.form.update({
+      where: { formId: formId },
+      data: {
+        ...(name && { name }),
+        ...(description && { description }),
+        jsonBlocks,
+      },
+    });
+
+    return {
+      success: true,
+      message: "Form updated successfully",
+      form,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: "An error occurred while updating the form",
+    };
+  }
+}
+
+export async function updatePublish(formId: string, published: boolean) {
+  try {
+    const session = getKindeServerSession();
+    const user = await session.getUser();
+
+    if (!user) {
+      return {
+        success: false,
+        message: "Unauthorized to use this resource",
+      };
+    }
+
+    if (!formId) {
+      return {
+        success: false,
+        message: "FormId is required",
+      };
+    }
+
+    const form = await prisma.form.update({
+      where: { formId },
+      data: { published },
+    });
+
+    return {
+      success: true,
+      message: `Form successfully ${published ? "published" : "unpublished"}`,
+      published: form.published,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: "Failed to update publish status",
     };
   }
 }

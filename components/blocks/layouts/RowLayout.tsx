@@ -1,8 +1,10 @@
-import { FormBlockInstance, FormBlockType, FormCategoryType, ObjectBlockType } from "@/@types/form-block.type";
+import { FormBlockInstance, FormBlockType, FormCategoryType, FormErrorsType, HandleBlurFunc, ObjectBlockType } from "@/@types/form-block.type";
 import ChildCanvasComponentWrapper from "@/components/ChildCanvasComponentWrapper";
+import ChildFormComponentWrapper from "@/components/ChildFormComponentWrapper";
+import ChildPropertiesComponentWrapper from "@/components/ChildPropertiesComponentWrapper";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { allBlockLayouts } from "@/contants";
+import { allBlockLayouts } from "@/constants";
 import { useBuilder } from "@/context/builder-provider";
 import { FormBlocks } from "@/lib/form-blocks";
 import { generateUniqueId } from "@/lib/helper";
@@ -52,8 +54,6 @@ function RowLayoutCanvasComponent({
   const childBlocks = blockInstance.childblocks || [];
 
   const isSelected = selectedBlockLayout?.id === blockInstance.id;
-
-  console.log("RowLayoutCanvasComponent -> blockInstance", blockInstance)
 
   const draggable = useDraggable({
     id: blockInstance.id + "_drag-area",
@@ -223,18 +223,93 @@ function RowLayoutCanvasComponent({
   );
 }
 
-function RowLayoutFormComponent() {
+function RowLayoutFormComponent({
+  blockInstance,
+  handleBlur,
+  formErrors,
+}: {
+  blockInstance: FormBlockInstance;
+  handleBlur?: HandleBlurFunc;
+  formErrors?: FormErrorsType;
+}) {
+  const childblocks = blockInstance.childblocks || [];
+
   return (
-    <div>
-      Row Layout Form
+    <div className="max-w-full">
+      {blockInstance.isLocked && <Border />}
+
+      <Card
+        className={cn(
+          `!w-full bg-white relative border
+          shadow-sm
+            min-h-[120px]
+            max-w-[768px]
+                rounded-md !p-0
+                `,
+          blockInstance.isLocked && "!rounded-t-none"
+        )}
+      >
+        <CardContent className="px-2 pb-2">
+          <div className="flex flex-wrap gap-2">
+            <div
+              className="
+             flex w-full flex-col
+             items-center justify-center gap-4 py-4 px-3
+            "
+            >
+              {childblocks.map((childblock) => (
+                <div
+                  key={childblock.id}
+                  className="flex items-center
+                        justify-center 
+                        gap-1 h-auto w-full"
+                >
+                  <ChildFormComponentWrapper
+                    blockInstance={childblock}
+                    handleBlur={handleBlur}
+                    isError={!!formErrors?.[childblock.id]}
+                    errorMessage={formErrors?.[childblock.id]}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
 
-function RowLayoutPropertiesComponent() {
+function RowLayoutPropertiesComponent({
+  blockInstance
+}: {
+  blockInstance: FormBlockInstance
+}) {
+
+  const childblocks = blockInstance.childblocks || [];
   return (
-    <div>
-      Row Layout Properties
+    <div className="pt-3 w-full">
+      <div
+        className="flex w-full flex-col 
+    items-center
+     justify-start gap-0 py-0 px-0
+    "
+      >
+        {childblocks?.map((childblock, index) => (
+          <div
+            key={childblock.id}
+            className="w-full flex items-center
+          justify-center gap-1 h-auto
+          "
+          >
+            <ChildPropertiesComponentWrapper
+              index={index + 1}
+              parentId={blockInstance.id}
+              blockInstance={childblock}
+            />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
