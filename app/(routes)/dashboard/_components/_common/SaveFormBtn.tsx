@@ -20,20 +20,20 @@ const SaveFormBtn = () => {
 
             const lockedBlockLayout = blockLayouts.find((block) => block.isLocked);
 
-            // const name = lockedBlockLayout?.childblocks?.find(
-            //     (child) => child.blockType === "Heading"
-            // )?.attributes?.label as string;
+            const name = lockedBlockLayout?.childblocks?.find(
+                (child) => child.blockType === "Heading"
+            )?.attributes?.label as string;
 
-            // const description = lockedBlockLayout?.childblocks?.find(
-            //     (child) => child.blockType === "Paragraph"
-            // )?.attributes?.text as string;
+            const description = lockedBlockLayout?.childblocks?.find(
+                (child) => child.blockType === "Paragraph"
+            )?.attributes?.text as string;
 
             const jsonBlocks = JSON.stringify(blockLayouts);
 
             const response = await saveForm({
                 formId,
-                // name,
-                // description,
+                name,
+                description,
                 jsonBlocks,
             });
 

@@ -4,6 +4,8 @@ import { useBuilder } from "@/context/builder-provider";
 import { MousePointerClickIcon } from "lucide-react";
 import { FormBlocks } from "@/lib/form-blocks";
 import PreviewDialog from "./PreviewDialog";
+import SaveFormBtn from "./SaveFormBtn";
+import PublishFormBtn from "./PublishFormBtn";
 
 const BuilderBlockProperties = () => {
   const { selectedBlockLayout } = useBuilder();
@@ -32,8 +34,8 @@ const BuilderBlockProperties = () => {
             border-gray-200 top-0 gap-2 px-2"
           >
             <PreviewDialog />
-            {/* <SaveFormBtn /> */}
-            {/* <PublishFormBtn /> */}
+            <SaveFormBtn />
+            <PublishFormBtn />
           </div>
 
           {/* {Layout Property} */}

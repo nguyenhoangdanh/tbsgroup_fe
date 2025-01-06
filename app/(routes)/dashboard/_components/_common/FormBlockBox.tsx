@@ -5,6 +5,7 @@ import { Separator } from '@/components/ui/separator';
 import { useBuilder } from '@/context/builder-provider';
 import { FormBlocks } from '@/lib/form-blocks';
 import React from 'react'
+import AIAssistanceBtn from './AIAssistanceBtn';
 
 const FormBlockBox = () => {
     const { formData } = useBuilder();
@@ -25,6 +26,7 @@ const FormBlockBox = () => {
                     onChange={(e) => setSearch(e.target.value)}
                     className='placeholder:text-gray-400 shadow-sm'
                 />
+                <AIAssistanceBtn />
             </div>
             <div className="flex flex-col space-y-3 w-full">
                 {layoutBlocks?.length > 0 && (
