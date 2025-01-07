@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { useBuilder } from "@/context/builder-provider";
 import { FormBlocks } from "@/lib/form-blocks";
-import { defaultBackgroundColor } from "@/constants";
+import { defaultBackgroundColor } from "@/constant";
 
 const PreviewDialog = () => {
   const { blockLayouts } = useBuilder();

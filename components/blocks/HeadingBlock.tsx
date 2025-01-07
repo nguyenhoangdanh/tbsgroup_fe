@@ -25,7 +25,7 @@ import {
     FormCategoryType,
     ObjectBlockType,
 } from "@/@types/form-block.type";
-import { fontSizeClass, fontWeightClass } from "@/constants";
+import { fontSizeClass, fontWeightClass } from "@/constant";
 import { Input } from "../ui/input";
 import { useBuilder } from "@/context/builder-provider";
 

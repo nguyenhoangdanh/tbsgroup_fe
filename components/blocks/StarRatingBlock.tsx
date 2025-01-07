@@ -26,7 +26,7 @@ import { Label } from "../ui/label";
 
 import "@smastrom/react-rating/style.css";
 import { useEffect, useState } from "react";
-import { defaultPrimaryColor } from "@/constants";
+import { defaultPrimaryColor } from "@/constant";
 
 const blockCategory: FormCategoryType = "Field";
 const blockType: FormBlockType = "StarRating";

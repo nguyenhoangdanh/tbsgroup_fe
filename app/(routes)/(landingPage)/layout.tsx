@@ -6,17 +6,12 @@ export default async function LandingPageLayout({
 }: Readonly<{
     children: React.ReactNode;
 }>) {
-
     const { isAuthenticated } = getKindeServerSession();
     const isUserAuthenticated = await isAuthenticated();
 
     if (isUserAuthenticated) {
-        redirect('/dashboard');
+        redirect("/dashboard");
     }
 
-    return (
-        <div className="w-full h-auto">
-            {children}
-        </div>
-    );
+    return <div className="w-full h-auto">{children}</div>;
 }

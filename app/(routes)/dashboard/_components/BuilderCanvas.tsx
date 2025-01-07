@@ -1,5 +1,5 @@
 import { FormBlockInstance, FormBlockType } from '@/@types/form-block.type';
-import { allBlockLayouts } from '@/constants';
+import { allBlockLayouts } from '@/constant';
 import { useBuilder } from '@/context/builder-provider'
 import { FormBlocks } from '@/lib/form-blocks';
 import { generateUniqueId } from '@/lib/helper';
