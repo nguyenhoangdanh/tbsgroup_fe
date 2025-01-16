@@ -12,7 +12,7 @@ export default function Home() {
                         <div className="p-2 h-5 shrink-0 flex items-center text-xs justify-center text-white bg-primary rounded-full">
                             New
                         </div>
-                        Subscribe to Techwithemma
+                        Subscribe to Hoang Danh Nguyen
                         <ChevronRight className="w-4 h-4" />
                     </div>
 
@@ -56,7 +56,7 @@ export default function Home() {
                     <div className="w-full h-[400px] md:h-[500px] lg:h-[580px] rounded-xl shadow-lg bg-transparent">
                         <div className="relative w-full h-full rounded-md">
                             <Image
-                                src="/images/board-img.png"
+                                src="/images/form-bg.jpg"
                                 alt="Formy AI dashboard"
                                 fill
                                 className="object-contain w-full h-full rounded-md"
