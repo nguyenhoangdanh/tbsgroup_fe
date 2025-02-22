@@ -44,8 +44,6 @@ const BuilderCanvas = () => {
                 return;
             }
 
-            console.log('over', over)
-
             const isDroppingOverCanvasBlockLayoutAbove = over?.data?.current?.isAbove;
             const isDroppingOverCanvasBlockLayoutBelow = over?.data?.current?.isBelow;
 

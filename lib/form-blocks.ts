@@ -6,6 +6,7 @@ import { TextAreaBlock } from '@/components/blocks/TextAreaBlock';
 import { HeadingBlock } from '@/components/blocks/HeadingBlock';
 import { ParagraphBlock } from '@/components/blocks/ParagraphBlock';
 import { StarRatingBlock } from '@/components/blocks/StarRatingBlock';
+import { SingleSelectBlock } from '@/components/blocks/SingleSelectBlock';
 
 
 
@@ -17,4 +18,5 @@ export const FormBlocks: FormBlocksType = {
    Heading: HeadingBlock,
    Paragraph: ParagraphBlock,
    StarRating: StarRatingBlock,
+   SingleSelect: SingleSelectBlock,
 }

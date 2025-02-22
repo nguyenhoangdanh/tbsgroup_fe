@@ -9,7 +9,8 @@ export type FormBlockType =
   | "TextArea"
   | "StarRating"
   | "Heading"
-  | "Paragraph";
+  | "Paragraph"
+  | "SingleSelect";
 
 export type HandleBlurFunc = (key: string, value: string) => void;
 
