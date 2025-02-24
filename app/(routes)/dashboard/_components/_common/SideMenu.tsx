@@ -1,6 +1,6 @@
 "use client";
 import { cn } from "@/lib/utils";
-import { Blocks, LucideIcon, MessageSquare } from "lucide-react";
+import { Blocks, Briefcase, LucideIcon, MessageSquare } from "lucide-react";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import React from "react";
 
@@ -25,6 +25,11 @@ const SideMenu = () => {
             url: `/dashboard/form/responds/${formId}`,
             icon: MessageSquare,
         },
+        {
+            title: "Settings",
+            url: `/dashboard/form/settings/${formId}`,
+            icon: Briefcase
+        }
     ];
     return (
         <div

@@ -14,7 +14,7 @@ datasource db {
   directUrl = env("DIRECT_DATABASE_URL")
 }
 
-model Form {
+model form {
   id          Int      @id @default(autoincrement())
   formId      String   @unique @default(uuid())
   userId      String
@@ -29,26 +29,49 @@ model Form {
   creatorName String
 
   settingsId Int
-  settings   FormSettings @relation(fields: [settingsId], references: [id])
+  settings   formSettings @relation(fields: [settingsId], references: [id])
 
-  formResponses FormResponses[]
+  formResponses form_responses[]
 }
 
-model FormSettings {
+model formSettings {
   id              Int      @id @default(autoincrement())
   primaryColor    String
   backgroundColor String
   createdAt       DateTime @default(now())
   updatedAt       DateTime @default(now()) @updatedAt
 
-  forms Form[]
+  forms form[]
 }
 
-model FormResponses {
+model form_responses {
   id           Int    @id @default(autoincrement())
   jsonResponse String
 
   formId    Int
-  form      Form     @relation(fields: [formId], references: [id])
+  form      form     @relation(fields: [formId], references: [id])
   createdAt DateTime @default(now())
+}
+
+model handbag {
+  id          Int      @id @default(autoincrement())
+  code        String
+  name        String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+
+  handbag_production_process_id Int
+  handbag_production_process     handbag_production_process @relation(fields: [handbag_production_process_id], references: [id])
+}
+
+// handbag production process
+model handbag_production_process {
+  id          Int      @id @default(autoincrement())
+  code        String
+  name        String
+  target      Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+
+  handbags handbag[]
 }

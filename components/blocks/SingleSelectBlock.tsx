@@ -62,7 +62,7 @@ export const SingleSelectBlock: ObjectBlockType = {
       label: "Single Select",
       helperText: "",
       required: false,
-      placeHolder: "Chọn mã số nhân viên",
+      placeHolder: "Single select",
     },
   }),
   blockBtnElement: {
@@ -155,23 +155,33 @@ function TextFieldFormComponent({
         className={`h-10 ${isError || isSubmitError ? "!border-red-500" : ""}`}
         placeholder={placeHolder}
       /> */}
-     <Select>
+      <Select
+        onValueChange={(value) => {
+          setValue(value);
+          const isValid = validateField(value);
+          setIsError(!isValid); // Set error state based on validation.
+          if (handleBlur) {
+            handleBlur(block.id, value);
+          }
+        }}
+        value={value}
+      >
         <SelectTrigger>
-            <SelectValue placeholder={placeHolder} />
-            <SelectContent>
-                <SelectGroup>
-                    <SelectItem value="1">Option 1</SelectItem>
-                    <SelectItem value="2">Option 2</SelectItem>
-                    <SelectItem value="3">Option 3</SelectItem>
-                </SelectGroup>
-                <SelectGroup >
-                    <SelectItem value="4">Option 4</SelectItem>
-                    <SelectItem value="5">Option 5</SelectItem>
-                    <SelectItem value="6">Option 6</SelectItem>
-                </SelectGroup>
-            </SelectContent>
+          <SelectValue placeholder={placeHolder} />
+          <SelectContent>
+            <SelectGroup>
+              <SelectItem value="1">Option 1</SelectItem>
+              <SelectItem value="2">Option 2</SelectItem>
+              <SelectItem value="3">Option 3</SelectItem>
+            </SelectGroup>
+            <SelectGroup>
+              <SelectItem value="4">Option 4</SelectItem>
+              <SelectItem value="5">Option 5</SelectItem>
+              <SelectItem value="6">Option 6</SelectItem>
+            </SelectGroup>
+          </SelectContent>
         </SelectTrigger>
-     </Select>
+      </Select>
       {helperText && (
         <p className="text-muted-foreground text-[0.8rem]">{helperText}</p>
       )}
@@ -238,7 +248,7 @@ function TextFieldPropertiesComponent({
     <div className="w-full  pb-4">
       <div className="w-full flex flex-row items-center justify-between gap-1 bg-gray-100 h-auto p-1 px-2 mb-[10px]">
         <span className="text-sm font-medium text-gray-600 tracking-wider">
-          TextField {positionIndex}
+          Select {positionIndex}
         </span>
         <ChevronDown className="w-4 h-4" />
       </div>

@@ -28,8 +28,6 @@ const CreateForm = () => {
             description: data.description,
         });
 
-        console.log('response', response);
-
         if (response.success) {
             setIsOpen(false);
             toast({

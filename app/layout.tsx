@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { DM_Sans } from "next/font/google"
+import { DM_Sans } from "next/font/google";
 import { Toaster } from "@/components/ui/toaster";
-
+import { ThemeProvider } from "@/context/ThemeProvider";
+import SagaProviders from "@/context/SagaProvider";
+import QueryProvider from "@/context/QueryProvider";
 
 const dm_sans = DM_Sans({ subsets: ["latin"] });
 export const metadata: Metadata = {
@@ -16,12 +18,21 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`bg-white ${dm_sans.className} antialiased`}
-      >
-        {children}
-        <Toaster />
+    <html lang="en" suppressHydrationWarning>
+      <body className={`bg-white ${dm_sans.className} antialiased`}>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem={false}
+          disableTransitionOnChange
+        >
+          <SagaProviders>
+            <QueryProvider>
+              {children}
+              <Toaster />
+            </QueryProvider>
+          </SagaProviders>
+        </ThemeProvider>
       </body>
     </html>
   );
