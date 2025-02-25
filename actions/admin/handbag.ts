@@ -1,6 +1,5 @@
 "use server";
 import { prisma } from "@/lib/prismadb";
-import { appendToGoogleSheet } from "../googlesheet";
 type Handbag = {
   code: string;
   name: string;
@@ -23,18 +22,6 @@ export const createProductionProcess = async (productionProcess: any) => {
       }
     );
 
-    // Prepare the data to be inserted into Google Sheets
-    const values = [
-      [
-        newProductionProcess.code,
-        newProductionProcess.name,
-        newProductionProcess.target,
-      ],
-    ];
-
-    // Append data to Google Sheets
-    await appendToGoogleSheet(values);
-
     return {
       success: true,
       message: "Production process created successfully",
@@ -44,6 +31,31 @@ export const createProductionProcess = async (productionProcess: any) => {
     return {
       success: false,
       message: "Failed to create production process",
+    };
+  }
+};
+
+export const deleteProductionProcess = async (
+  id: number
+): Promise<{
+  success: boolean;
+  message: string;
+}> => {
+  try {
+    await prisma.handbag_production_process.delete({
+      where: {
+        id,
+      },
+    });
+
+    return {
+      success: true,
+      message: "Production process deleted successfully",
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: "Failed to delete production process",
     };
   }
 };

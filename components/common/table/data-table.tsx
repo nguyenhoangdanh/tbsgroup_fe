@@ -31,22 +31,35 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { CreateActionDialog } from "./actions/popup-create";
-
-interface DataTableProps<TData, TValue> {
+import ButtonGroupAction from "./actions/button-group-actions";
+interface BaseData {
+  id: string;
+  // other common properties...
+}
+interface DataTableProps<TData extends BaseData, TValue> {
   columns: ColumnDef<TData, TValue>[];
-  data: TData[];
+  data: TData[] & { id: string };
   title: string;
   description?: string;
   createFormComponent?: React.ReactNode;
+  refetchData?: () => void;
+  onDelete?: (id: string) => void;
+  onEdit?: (id: string) => void;
+  onSelected?: (ids: string[]) => void;
 }
 
-export function DataTable<TData, TValue>({
+export function DataTable<TData extends BaseData, TValue>({
   columns,
   data,
   title,
   description,
   createFormComponent,
+  refetchData,
+  onDelete,
+  onEdit,
+  onSelected,
 }: DataTableProps<TData, TValue>) {
+  const [openDialog, setOpenDialog] = React.useState(false);
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
@@ -83,6 +96,8 @@ export function DataTable<TData, TValue>({
             name={title}
             description={description}
             children={createFormComponent}
+            open={openDialog}
+            setIsOpen={setOpenDialog}
           />
         )}
       </div>
@@ -99,7 +114,7 @@ export function DataTable<TData, TValue>({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="ml-auto">
-                Show/Hide Columns <ChevronDown />
+                Ẩn/hiện cột <ChevronDown />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -158,6 +173,13 @@ export function DataTable<TData, TValue>({
                         )}
                       </TableCell>
                     ))}
+                    <TableCell>
+                      <ButtonGroupAction
+                        onEdit={() => onEdit && onEdit(row.original.id)}
+                        onDelete={() => onDelete && onDelete(row.original.id)}
+                        onRefetchData={refetchData}
+                      />
+                    </TableCell>
                   </TableRow>
                 ))
               ) : (
