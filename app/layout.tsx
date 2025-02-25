@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/context/ThemeProvider";
 import SagaProviders from "@/context/SagaProvider";
 import QueryProvider from "@/context/QueryProvider";
+import DialogProvider from "@/context/DialogProvider";
 
 const dm_sans = DM_Sans({ subsets: ["latin"] });
 export const metadata: Metadata = {
@@ -28,8 +29,10 @@ export default function RootLayout({
         >
           <SagaProviders>
             <QueryProvider>
-              {children}
-              <Toaster />
+              <DialogProvider>
+                <Toaster />
+                {children}
+              </DialogProvider>
             </QueryProvider>
           </SagaProviders>
         </ThemeProvider>

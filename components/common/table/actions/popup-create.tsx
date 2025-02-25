@@ -9,28 +9,28 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { useDialog } from "@/context/DialogProvider";
 import { on } from "events";
+import { set } from "lodash";
 import { Plus } from "lucide-react";
 
 interface IProps {
   name: string;
   description?: string;
   children: React.ReactNode;
-  open: boolean;
-  setIsOpen?: (open: boolean) => void;
   refetchData?: () => void;
 }
 
 export function CreateActionDialog({
   name,
   description,
-  open,
-  setIsOpen,
   refetchData,
   children,
 }: IProps) {
+  const { dialog, setDialog } = useDialog();
+  const { openCreate: open } = dialog;
   return (
-    <Dialog open={open} onOpenChange={setIsOpen}>
+    <Dialog open={open} onOpenChange={() => setDialog({ openCreate: !open })}>
       <DialogTrigger asChild>
         <Button
           className="ml-auto p-2 bg-green-700 text-white hover:bg-green-800 hover:text-white"

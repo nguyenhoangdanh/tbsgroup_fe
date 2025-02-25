@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import React from "react";
 import { toast } from "@/hooks/use-toast";
+import { useDialog } from "@/context/DialogProvider";
 
 interface ButtonGroupActionProps {
   onEdit?: () => void;
@@ -24,7 +25,7 @@ const ButtonGroupAction = ({
   onDelete,
   onRefetchData,
 }: ButtonGroupActionProps) => {
-  const [isOpenDeleteDialog, setIsOpenDeleteDialog] = React.useState(false);
+  const { dialog, setDialog } = useDialog();
   const handleDelete = () => {
     if (onDelete) {
       try {
@@ -37,10 +38,10 @@ const ButtonGroupAction = ({
           title: "Xoá dữ liệu thất bại",
         });
       } finally {
-        setIsOpenDeleteDialog(false);
         if (onRefetchData) {
           onRefetchData();
         }
+        setDialog({ openDelete: false });
       }
     }
   };
@@ -52,7 +53,7 @@ const ButtonGroupAction = ({
           <SquarePen />
         </Button>
       )}
-      <Dialog open={isOpenDeleteDialog} onOpenChange={setIsOpenDeleteDialog}>
+      <Dialog open={dialog.openDelete} onOpenChange={() => setDialog({ openDelete: !dialog.openDelete })}>
         <DialogTrigger asChild>
           <Button
             size="icon"
@@ -74,14 +75,13 @@ const ButtonGroupAction = ({
             >
               Xoá
             </Button>
-            <DialogClose>
-              <Button
-                size="sm"
-                className="bg-gray-500 hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-900"
-              >
-                Huỷ
-              </Button>
-            </DialogClose>
+            <Button
+              size="sm"
+              className="bg-gray-500 hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-900"
+              onClick={() => setDialog({ openDelete: false })}
+            >
+              Huỷ
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

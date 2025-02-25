@@ -9,6 +9,7 @@ import SubmitButton from "@/components/SubmitButton";
 import { FormField } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useDialog } from "@/context/DialogProvider";
 import { toast } from "@/hooks/use-toast";
 import { useDispatchType } from "@/lib/dispatch.utils";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,6 +18,7 @@ import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 
 const HandbagStageForm = () => {
   const dispatch = useDispatchType();
+  const { setDialog } = useDialog();
   const methods = useForm<THandbagStageForm>({
     defaultValues: defautHandbagStageFormValues,
     resolver: zodResolver(handbagStageFormSchema),
@@ -35,6 +37,7 @@ const HandbagStageForm = () => {
         description: `Đã tạo quy trình sản xuất ${rs?.productionProcess?.name}`,
       });
       methods.reset();
+      setDialog({ openCreate: false });
     } else {
       toast({
         title: "Lỗi",

@@ -59,7 +59,6 @@ export function DataTable<TData extends BaseData, TValue>({
   onEdit,
   onSelected,
 }: DataTableProps<TData, TValue>) {
-  const [openDialog, setOpenDialog] = React.useState(false);
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
@@ -96,8 +95,6 @@ export function DataTable<TData extends BaseData, TValue>({
             name={title}
             description={description}
             children={createFormComponent}
-            open={openDialog}
-            setIsOpen={setOpenDialog}
           />
         )}
       </div>
@@ -149,9 +146,9 @@ export function DataTable<TData extends BaseData, TValue>({
                         {header.isPlaceholder
                           ? null
                           : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                            )}
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
                       </TableHead>
                     );
                   })}
