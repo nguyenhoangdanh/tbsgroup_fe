@@ -30,22 +30,26 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { CreateActionDialog } from "./actions/popup-create";
 import ButtonGroupAction from "./actions/button-group-actions";
+import { CreateActionDialog } from "./actions/popup-create";
 interface BaseData {
   id: string;
   // other common properties...
 }
+
+type TActions = "create" | "edit" | "delete" | "read-only";
 interface DataTableProps<TData extends BaseData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[] & { id: string };
   title: string;
   description?: string;
   createFormComponent?: React.ReactNode;
+  editFormComponent?: React.ReactNode;
   refetchData?: () => void;
   onDelete?: (id: string) => void;
-  onEdit?: (id: string) => void;
+  onEdit?: (data: TData) => void;
   onSelected?: (ids: string[]) => void;
+  actions: TActions[];
 }
 
 export function DataTable<TData extends BaseData, TValue>({
@@ -54,6 +58,8 @@ export function DataTable<TData extends BaseData, TValue>({
   title,
   description,
   createFormComponent,
+  editFormComponent,
+  actions,
   refetchData,
   onDelete,
   onEdit,
@@ -67,6 +73,7 @@ export function DataTable<TData extends BaseData, TValue>({
     React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
 
+  const [action, setAction] = React.useState<string>("");
   const table = useReactTable({
     data,
     columns,
@@ -88,15 +95,13 @@ export function DataTable<TData extends BaseData, TValue>({
 
   return (
     <div className="min-h-[100vh] flex-1 rounded-xl bg-white dark:bg-gray-950 md:min-h-min border border-gray-200 shadow-sm p-4">
-      <div className="flex gap-2">
+      <div className="flex gap-2 justify-between items-center">
         <span className="text-lg font-semibold">{title}</span>
-        {createFormComponent && (
-          <CreateActionDialog
-            name={title}
-            description={description}
-            children={createFormComponent}
-          />
-        )}
+        <CreateActionDialog
+          name={title}
+          description={description}
+          children={createFormComponent}
+        />
       </div>
       <div className="w-full">
         <div className="flex items-center py-4">
@@ -146,9 +151,9 @@ export function DataTable<TData extends BaseData, TValue>({
                         {header.isPlaceholder
                           ? null
                           : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
                       </TableHead>
                     );
                   })}
@@ -170,11 +175,17 @@ export function DataTable<TData extends BaseData, TValue>({
                         )}
                       </TableCell>
                     ))}
-                    <TableCell>
+                    <TableCell key={row.id}>
                       <ButtonGroupAction
-                        onEdit={() => onEdit && onEdit(row.original.id)}
-                        onDelete={() => onDelete && onDelete(row.original.id)}
+                        action={action}
+                        setAction={setAction}
+                        onEdit={() => onEdit && onEdit(row.original)}
+                        onDelete={
+                          () => console.log("delete", row.original.id)
+                          // onDelete && onDelete(row.original.id)
+                        }
                         onRefetchData={refetchData}
+                        editComponent={editFormComponent}
                       />
                     </TableCell>
                   </TableRow>

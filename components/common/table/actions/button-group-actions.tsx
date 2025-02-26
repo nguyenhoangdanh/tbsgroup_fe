@@ -13,17 +13,24 @@ import {
 import React from "react";
 import { toast } from "@/hooks/use-toast";
 import { useDialog } from "@/context/DialogProvider";
+import { cn } from "@/lib/utils";
 
 interface ButtonGroupActionProps {
+  action: string;
+  setAction: (action: string) => void;
   onEdit?: () => void;
   onDelete?: () => void;
   onRefetchData?: () => void;
+  editComponent?: React.ReactNode;
 }
 
 const ButtonGroupAction = ({
+  action,
+  setAction,
   onEdit,
   onDelete,
   onRefetchData,
+  editComponent,
 }: ButtonGroupActionProps) => {
   const { dialog, setDialog } = useDialog();
   const handleDelete = () => {
@@ -41,29 +48,57 @@ const ButtonGroupAction = ({
         if (onRefetchData) {
           onRefetchData();
         }
-        setDialog({ openDelete: false });
+        setDialog({ open: false });
+      }
+    }
+  };
+
+  const handleUpdate = () => {
+    if (onEdit) {
+      try {
+        onEdit();
+        toast({
+          title: "Cập nhật dữ liệu thành công",
+        });
+      } catch (error) {
+        toast({
+          title: "Cập nhật dữ liệu thất bại",
+        });
+      } finally {
+        if (onRefetchData) {
+          onRefetchData();
+        }
+        setDialog({ open: false });
       }
     }
   };
 
   return (
     <div className="flex gap-1">
-      {onEdit && (
-        <Button size="icon" className="bg-green-800" onClick={onEdit}>
-          <SquarePen />
-        </Button>
-      )}
-      <Dialog open={dialog.openDelete} onOpenChange={() => setDialog({ openDelete: !dialog.openDelete })}>
+      <Dialog
+        open={dialog.open}
+        onOpenChange={() => setDialog({ open: !dialog.open })}
+      >
         <DialogTrigger asChild>
-          <Button
-            size="icon"
-            className="bg-red-500 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-900"
-          >
-            <Trash2 />
-          </Button>
+          <div className="flex gap-1">
+            <Button
+              size="icon"
+              className="bg-blue-800 hover:bg-blue-900 dark:bg-blue-900 dark:hover:bg-blue-700"
+              onClick={() => setAction("edit")}
+            >
+              <SquarePen />
+            </Button>
+            <Button
+              size="icon"
+              className="bg-red-500 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-900"
+              onClick={() => setAction("delete")}
+            >
+              <Trash2 />
+            </Button>
+          </div>
         </DialogTrigger>
         <DialogContent className="w-full">
-          <DialogTitle>Xoá dữ liệu</DialogTitle>
+          {/* <DialogTitle>Xoá dữ liệu</DialogTitle>
           <DialogDescription>
             Bạn có chắc chắn muốn xóa dữ liệu này không?
           </DialogDescription>
@@ -78,7 +113,36 @@ const ButtonGroupAction = ({
             <Button
               size="sm"
               className="bg-gray-500 hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-900"
-              onClick={() => setDialog({ openDelete: false })}
+              onClick={() => setDialog({ open: false })}
+            >
+              Huỷ
+            </Button>
+          </DialogFooter> */}
+          <DialogTitle>
+            {action === "edit" ? "Chỉnh sửa dữ liệu" : "Xoá dữ liệu"}
+          </DialogTitle>
+          <DialogDescription>
+            {action === "edit"
+              ? editComponent
+              : "Bạn có chắc chắn muốn xóa dữ liệu này không?"}
+          </DialogDescription>
+          <DialogFooter className="flex flex-row justify-end gap-1">
+            <Button
+              size="sm"
+              // className="bg-red-500 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-900"
+              className={cn(
+                action === "edit"
+                  ? "bg-green-800"
+                  : "bg-red-500 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-900"
+              )}
+              onClick={action === "edit" ? handleUpdate : handleDelete}
+            >
+              {action === "edit" ? "Cập nhật" : "Xoá"}
+            </Button>
+            <Button
+              size="sm"
+              className="bg-gray-500 hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-900"
+              onClick={() => setDialog({ open: false })}
             >
               Huỷ
             </Button>
