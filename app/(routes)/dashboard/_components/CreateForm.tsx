@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { PlusIcon } from 'lucide-react'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Form, FormProvider, SubmitHandler, useForm } from 'react-hook-form';
-import { defautFormValues, formSchema, TForm } from '@/app/schemas/form';
+import { defautFormValues, formSchema, TForm } from '@/schemas/form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';

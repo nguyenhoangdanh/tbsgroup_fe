@@ -1,5 +1,5 @@
+import RedirectButton from "@/components/RedirectButton";
 import { Button } from "@/components/ui/button";
-import { RegisterLink } from "@kinde-oss/kinde-auth-nextjs/components";
 import { ChevronRight, ExternalLink, Video } from "lucide-react";
 import Image from "next/image";
 
@@ -32,12 +32,13 @@ export default function Home() {
                         </p>
                         <br />
                         <div className="flex items-center gap-2">
-                            <Button className="h-12 text-base font-medium min-w-32" asChild>
-                                <RegisterLink>
-                                    Get Started
-                                    <ExternalLink />
-                                </RegisterLink>
-                            </Button>
+                            <RedirectButton
+                                name="Get Started"
+                                redirect="/login"
+                                icon={<ExternalLink className="w-4 h-4" />}
+                                positionIcon="right"
+                                className="h-12 text-base font-medium min-w-32"
+                            />
                             <Button
                                 variant="outline"
                                 className="h-12  border-primary text-primary text-base font-medium min-w-32"

@@ -4,7 +4,7 @@ import {
   defautHandbagStageFormValues,
   handbagStageFormSchema,
   THandbagStageForm,
-} from "@/app/schemas/handbag";
+} from "@/schemas/handbag";
 import SubmitButton from "@/components/SubmitButton";
 import { FormField } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
