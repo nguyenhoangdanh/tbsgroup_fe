@@ -24,11 +24,20 @@ const HandbagStageContainer = () => {
           title="Quy trình sản xuất túi xách"
           columns={columns}
           data={data}
-          createFormComponent={<HandbagStageForm />}
+          createFormComponent={<HandbagStageForm action="create" />}
+          editFormComponent={
+            <>
+              <div className="">Edit form</div>
+            </>
+          }
           onDelete={(id) => deleteProductionProcess(Number(id))}
+          onEdit={(data) => {
+            console.log("Edit", data);
+          }}
           refetchData={() => {
             dispatch("FETCH_PO_HANDBAG");
           }}
+          actions={["create", "edit", "delete"]}
         />
       )}
     </div>

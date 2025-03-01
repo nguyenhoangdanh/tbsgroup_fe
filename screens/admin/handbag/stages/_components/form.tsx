@@ -9,16 +9,19 @@ import SubmitButton from "@/components/SubmitButton";
 import { FormField } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useDialog } from "@/context/DialogProvider";
 import { toast } from "@/hooks/use-toast";
 import { useDispatchType } from "@/lib/dispatch.utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import React from "react";
-import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
+import { SubmitHandler, useForm } from "react-hook-form";
+import FormController from "@/components/common/form/FormController";
 
-const HandbagStageForm = () => {
+interface HandbagStageFormProps {
+  action: "create" | "update";
+}
+
+const HandbagStageForm: React.FC<HandbagStageFormProps> = ({ action }) => {
   const dispatch = useDispatchType();
-  const { setDialog } = useDialog();
   const methods = useForm<THandbagStageForm>({
     defaultValues: defautHandbagStageFormValues,
     resolver: zodResolver(handbagStageFormSchema),
@@ -36,8 +39,6 @@ const HandbagStageForm = () => {
         title: "Thành công",
         description: `Đã tạo quy trình sản xuất ${rs?.productionProcess?.name}`,
       });
-      methods.reset();
-      setDialog({ openCreate: false });
     } else {
       toast({
         title: "Lỗi",
@@ -47,37 +48,32 @@ const HandbagStageForm = () => {
     }
   };
   return (
-    <FormProvider {...methods}>
-      <form onSubmit={methods.handleSubmit(onSubmit)}>
-        <div className="flex flex-col gap-4">
-          <FormField
-            control={methods.control}
-            name="code"
-            render={({ field }) => (
-              <div className="col-span-4">
-                <Label htmlFor="code" className="text-right">
-                  Mã
-                </Label>
-                <Input id="code" {...field} />
-              </div>
-            )}
-          />
-          <FormField
-            control={methods.control}
-            name="name"
-            render={({ field }) => (
-              <div className="col-span-4">
-                <Label htmlFor="name" className="text-right">
-                  Tên
-                </Label>
-                <Input id="name" {...field} />
-              </div>
-            )}
-          />
-          <SubmitButton name="Lưu" />
-        </div>
-      </form>
-    </FormProvider>
+    <FormController methods={methods} onSubmit={onSubmit}>
+      <FormField
+        control={methods.control}
+        name="code"
+        render={({ field }) => (
+          <div className="col-span-4">
+            <Label htmlFor="code" className="text-right">
+              Mã
+            </Label>
+            <Input id="code" {...field} />
+          </div>
+        )}
+      />
+      <FormField
+        control={methods.control}
+        name="name"
+        render={({ field }) => (
+          <div className="col-span-4">
+            <Label htmlFor="name" className="text-right">
+              Tên
+            </Label>
+            <Input id="name" {...field} />
+          </div>
+        )}
+      />
+    </FormController>
   );
 };
 

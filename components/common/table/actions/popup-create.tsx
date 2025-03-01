@@ -10,47 +10,49 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useDialog } from "@/context/DialogProvider";
-import { on } from "events";
-import { set } from "lodash";
-import { Plus } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
+import { Plus, SquarePen, Trash2 } from "lucide-react";
+import React, { Dispatch, SetStateAction } from "react";
 
+type TAction = "create" | "edit" | "delete" | "read-only";
 interface IProps {
   name: string;
   description?: string;
-  children: React.ReactNode;
-  refetchData?: () => void;
+  children?: React.ReactNode;
 }
 
-export function CreateActionDialog({
-  name,
-  description,
-  refetchData,
-  children,
-}: IProps) {
-  const { dialog, setDialog } = useDialog();
-  const { openCreate: open } = dialog;
+export function CreateActionDialog({ name, description, children }: IProps) {
+  const actionTitle = (action: TAction) => {
+    switch (action) {
+      case "create":
+        return `Tạo mới ${name}`;
+      case "edit":
+        return `Chỉnh sửa ${name}`;
+      case "delete":
+        return `Xoá ${name}`;
+      case "read-only":
+        return `Xem chi tiết ${name}`;
+    }
+  };
+
   return (
-    <Dialog open={open} onOpenChange={() => setDialog({ openCreate: !open })}>
+    <Dialog>
       <DialogTrigger asChild>
         <Button
-          className="ml-auto p-2 bg-green-700 text-white hover:bg-green-800 hover:text-white"
           variant="outline"
+          className="flex items-center gap-1 bg-green-800 text-white"
         >
-          <Plus className="w-4 h-4" />
+          <Plus size={16} />
           Tạo mới
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Tạo {name}</DialogTitle>
+          <DialogTitle>{`Taọ mới ${name}`}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         {children}
-        {/* <DialogFooter>
-                    <Button type="submit">
-                        Lưu
-                    </Button>
-                </DialogFooter> */}
       </DialogContent>
     </Dialog>
   );

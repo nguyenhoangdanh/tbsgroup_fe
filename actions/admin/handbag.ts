@@ -35,6 +35,33 @@ export const createProductionProcess = async (productionProcess: any) => {
   }
 };
 
+export const updateProductionProcess = async (productionProcess: any) => {
+  try {
+    const updatedProductionProcess =
+      await prisma.handbag_production_process.update({
+        where: {
+          id: productionProcess.id,
+        },
+        data: {
+          code: productionProcess.code,
+          name: productionProcess.name,
+          target: productionProcess.target || 0,
+        },
+      });
+
+    return {
+      success: true,
+      message: "Production process updated successfully",
+      productionProcess: updatedProductionProcess,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: "Failed to update production process",
+    };
+  }
+};
+
 export const deleteProductionProcess = async (
   id: number
 ): Promise<{
