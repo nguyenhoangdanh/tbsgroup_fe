@@ -6,7 +6,7 @@ import LoginForm from './form'
 export const LoginContainer = () => {
   return (
     <AuthLayout
-      title="Login"
+      title="Đăng nhập"
       isLogin
       imageChildren={<AuthImage />}
     >
