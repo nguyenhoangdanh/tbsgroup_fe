@@ -1,5 +1,4 @@
 "use server";
-import { prisma } from "@/lib/prismadb";
 type Handbag = {
   code: string;
   name: string;
@@ -12,20 +11,20 @@ type Handbag = {
 
 export const createProductionProcess = async (productionProcess: any) => {
   try {
-    const newProductionProcess = await prisma.handbag_production_process.create(
-      {
-        data: {
-          code: productionProcess.code,
-          name: productionProcess.name,
-          target: productionProcess.target || 0,
-        },
-      }
-    );
+    // const newProductionProcess = await prisma.handbag_production_process.create(
+    //   {
+    //     data: {
+    //       code: productionProcess.code,
+    //       name: productionProcess.name,
+    //       target: productionProcess.target || 0,
+    //     },
+    //   }
+    // );
 
     return {
       success: true,
       message: "Production process created successfully",
-      productionProcess: newProductionProcess,
+      // productionProcess: newProductionProcess,
     };
   } catch (error) {
     return {
@@ -37,22 +36,22 @@ export const createProductionProcess = async (productionProcess: any) => {
 
 export const updateProductionProcess = async (productionProcess: any) => {
   try {
-    const updatedProductionProcess =
-      await prisma.handbag_production_process.update({
-        where: {
-          id: productionProcess.id,
-        },
-        data: {
-          code: productionProcess.code,
-          name: productionProcess.name,
-          target: productionProcess.target || 0,
-        },
-      });
+    // const updatedProductionProcess =
+      // await prisma.handbag_production_process.update({
+      //   where: {
+      //     id: productionProcess.id,
+      //   },
+      //   data: {
+      //     code: productionProcess.code,
+      //     name: productionProcess.name,
+      //     target: productionProcess.target || 0,
+      //   },
+      // });
 
     return {
       success: true,
       message: "Production process updated successfully",
-      productionProcess: updatedProductionProcess,
+      // productionProcess: updatedProductionProcess,
     };
   } catch (error) {
     return {
@@ -69,11 +68,11 @@ export const deleteProductionProcess = async (
   message: string;
 }> => {
   try {
-    await prisma.handbag_production_process.delete({
-      where: {
-        id,
-      },
-    });
+    // await prisma.handbag_production_process.delete({
+    //   where: {
+    //     id,
+    //   },
+    // });
 
     return {
       success: true,
@@ -89,10 +88,10 @@ export const deleteProductionProcess = async (
 
 export const fetchAllHandbagStages = async () => {
   try {
-    const handbagStages = await prisma.handbag_production_process.findMany();
+    // const handbagStages = await prisma.handbag_production_process.findMany();
     return {
       success: true,
-      handbagStages,
+      // handbagStages,
     };
   } catch (error) {
     return {
@@ -104,13 +103,13 @@ export const fetchAllHandbagStages = async () => {
 
 export const createHandbag = async (handbag: Handbag) => {
   try {
-    const newHandbag = await prisma.handbag.create({
-      data: handbag,
-    });
+    // const newHandbag = await prisma.handbag.create({
+    //   data: handbag,
+    // });
     return {
       success: true,
       message: "Handbag created successfully",
-      handbag: newHandbag,
+      // handbag: newHandbag,
     };
   } catch (error) {
     return {

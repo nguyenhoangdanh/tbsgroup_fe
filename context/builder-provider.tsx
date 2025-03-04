@@ -1,6 +1,5 @@
 "use client"
 import { FormBlockInstance } from "@/@types/form-block.type";
-import { FormWithSettings } from "@/@types/form.type";
 import { useParams } from "next/navigation";
 import React, { createContext, useEffect, useState } from "react";
 import { add } from 'date-fns';
@@ -8,8 +7,11 @@ import { generateUniqueId } from "@/lib/helper";
 
 type TBuilderContext = {
     loading: boolean;
-    formData: FormWithSettings | null;
-    setFormData: React.Dispatch<React.SetStateAction<FormWithSettings | null>>;
+    // formData: FormWithSettings | null;
+    // setFormData: React.Dispatch<React.SetStateAction<FormWithSettings | null>>;
+
+    formData: null;
+    setFormData: React.Dispatch<React.SetStateAction<null>>;
 
     blockLayouts: FormBlockInstance[];
     setBlockLayouts: React.Dispatch<React.SetStateAction<FormBlockInstance[]>>;
@@ -48,7 +50,7 @@ export default function BuilderContextProvider({ children }: { children: React.R
     const params = useParams();
     const formId = params.formId as string;
     const [loading, setLoading] = React.useState<boolean>(false);
-    const [formData, setFormData] = React.useState<FormWithSettings | null>(null);
+    const [formData, setFormData] = React.useState<null>(null);
     const [blockLayouts, setBlockLayouts] = React.useState<FormBlockInstance[]>([]);
     const [selectedBlockLayout, setSeletedBlockLayout] =
         useState<FormBlockInstance | null>(null);

@@ -33,7 +33,7 @@ const HandbagContainer = () => {
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 pt-0 bg-white dark:bg-gray-900">
       <div className="grid md:grid-cols-4 gap-2"></div>
-      <DataTable title="Túi xách" columns={columns} data={data} />
+      {/* <DataTable title="Túi xách" columns={columns} data={data} /> */}
     </div>
   );
 };

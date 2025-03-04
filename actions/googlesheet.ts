@@ -7,7 +7,7 @@ export const appendToGoogleSheet = async (values: any[][]) => {
     // Load the service account key JSON file
     const keyFilePath = path.join(
       process.cwd(),
-      process.env.SERVICE_ACCOUNT_KEY_PATH
+      process.env.SERVICE_ACCOUNT_KEY_PATH || ""
     );
     const auth = new google.auth.GoogleAuth({
       keyFile: keyFilePath,
@@ -37,7 +37,7 @@ export const updateGoogleSheetCell = async (range: string, value: string) => {
     // Load the service account key JSON file
     const keyFilePath = path.join(
       process.cwd(),
-      process.env.SERVICE_ACCOUNT_KEY_PATH
+      process.env.SERVICE_ACCOUNT_KEY_PATH || ""
     );
     const auth = new google.auth.GoogleAuth({
       keyFile: keyFilePath,
@@ -66,7 +66,7 @@ export const readFromGoogleSheet = async (range: string) => {
     // Load the service account key JSON file
     const keyFilePath = path.join(
       process.cwd(),
-      process.env.SERVICE_ACCOUNT_KEY_PATH
+      process.env.SERVICE_ACCOUNT_KEY_PATH || ""
     );
     const auth = new google.auth.GoogleAuth({
       keyFile: keyFilePath,

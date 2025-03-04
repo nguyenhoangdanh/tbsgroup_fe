@@ -80,11 +80,11 @@ const AdminDashboardContainer = () => {
           <DashboardCardComponent
             key={index}
             {...item}
-            // theme={theme}
+          // theme={theme}
           />
         ))}
       </div>
-      <DataTable title="Payments" columns={columns} data={data} />
+      {/* <DataTable title="Payments" columns={columns} data={data} /> */}
     </div>
   );
 };

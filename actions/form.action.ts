@@ -1,9 +1,7 @@
 'use server';
 
 import {getKindeServerSession} from '@kinde-oss/kinde-auth-nextjs/server';
-import {prisma} from '../lib/prismadb';
 import {defaultPrimaryColor, defaultBackgroundColor} from '../constant/index';
-import { FormWithSettings } from '@/@types/form.type';
 
 export async function fetchFormStats() {
   try {
@@ -17,31 +15,31 @@ export async function fetchFormStats() {
       };
     }
 
-    const {_sum, _count} = await prisma.form.aggregate({
-      where: {userId: user.id},
-      _sum: {
-        views: true,
-        responses: true,
-      },
-      _count: {
-        id: true,
-      },
-    });
+    // const {_sum, _count} = await prisma.form.aggregate({
+    //   where: {userId: user.id},
+    //   _sum: {
+    //     views: true,
+    //     responses: true,
+    //   },
+    //   _count: {
+    //     id: true,
+    //   },
+    // });
 
-    const views = _sum.views ?? 0;
-    const totalResponses = _sum.responses ?? 0;
-    const totalForms = _count.id ?? 0;
+    // const views = _sum.views ?? 0;
+    // const totalResponses = _sum.responses ?? 0;
+    // const totalForms = _count.id ?? 0;
 
-    const conversionRate = views > 0 ? (totalResponses / views) * 100 : 0;
-    const engagementRate = totalForms > 0 ? (views / totalForms) * 100 : 0;
+    // const conversionRate = views > 0 ? (totalResponses / views) * 100 : 0;
+    // const engagementRate = totalForms > 0 ? (views / totalForms) * 100 : 0;
 
     return {
       success: true,
-      views,
-      totalResponses,
-      totalForms,
-      conversionRate,
-      engagementRate,
+      views : 0,
+      totalResponses: 0,
+      totalForms: 0,
+      conversionRate: 0,
+      engagementRate: 0,
     };
   } catch (error) {
     return {
@@ -63,34 +61,34 @@ export async function createForm(data: {name: string; description: string}) {
       };
     }
 
-    const formSettings = await prisma.formSettings.create({
-      data: {
-        primaryColor: defaultPrimaryColor,
-        backgroundColor: defaultBackgroundColor,
-      },
-    });
+    // const formSettings = await prisma.formSettings.create({
+    //   data: {
+    //     primaryColor: defaultPrimaryColor,
+    //     backgroundColor: defaultBackgroundColor,
+    //   },
+    // });
 
-    const form = await prisma.form.create({
-      data: {
-        name: data.name,
-        description: data.description,
-        userId: user.id,
-        creatorName: user?.given_name || '',
-        settingsId: formSettings.id,
-      },
-    });
+    // const form = await prisma.form.create({
+    //   data: {
+    //     name: data.name,
+    //     description: data.description,
+    //     userId: user.id,
+    //     creatorName: user?.given_name || '',
+    //     settingsId: formSettings.id,
+    //   },
+    // });
 
-    if (!form) {
-      return {
-        success: false,
-        message: 'Failed to create form, please try again',
-      };
-    }
+    // if (!form) {
+    //   return {
+    //     success: false,
+    //     message: 'Failed to create form, please try again',
+    //   };
+    // }
 
     return {
       success: true,
       message: 'Form created successfully',
-      form,
+      // form,
     };
   } catch (error) {
     return {
@@ -112,19 +110,19 @@ export async function fetchAllForms() {
       };
     }
 
-    const forms = await prisma.form.findMany({
-      where: {userId: user.id},
-      include: {
-        settings: true,
-      },
-      orderBy:{
-        createdAt: 'desc'
-      }
-    });
+    // const forms = await prisma.form.findMany({
+    //   where: {userId: user.id},
+    //   include: {
+    //     settings: true,
+    //   },
+    //   orderBy:{
+    //     createdAt: 'desc'
+    //   }
+    // });
 
     return {
       success: true,
-      forms,
+      // forms,
     };
   } catch (error) {
     return {
@@ -159,19 +157,19 @@ export async function saveForm(data: {
       };
     }
 
-    const form = await prisma.form.update({
-      where: { formId: formId },
-      data: {
-        ...(name && { name }),
-        ...(description && { description }),
-        jsonBlocks,
-      },
-    });
+    // const form = await prisma.form.update({
+    //   where: { formId: formId },
+    //   data: {
+    //     ...(name && { name }),
+    //     ...(description && { description }),
+    //     jsonBlocks,
+    //   },
+    // });
 
     return {
       success: true,
       message: "Form updated successfully",
-      form,
+      // form,
     };
   } catch (error) {
     return {
@@ -200,15 +198,15 @@ export async function updatePublish(formId: string, published: boolean) {
       };
     }
 
-    const form = await prisma.form.update({
-      where: { formId },
-      data: { published },
-    });
+    // const form = await prisma.form.update({
+    //   where: { formId },
+    //   data: { published },
+    // });
 
     return {
       success: true,
       message: `Form successfully ${published ? "published" : "unpublished"}`,
-      published: form.published,
+      // published: form.published,
     };
   } catch (error) {
     return {
@@ -219,7 +217,7 @@ export async function updatePublish(formId: string, published: boolean) {
 }
 
 export async function fetchPublishFormById(formId: string): Promise<{
-  form?: FormWithSettings | null;
+  form?: null;
   success: boolean;
   message: string;
 }> {
@@ -230,27 +228,27 @@ export async function fetchPublishFormById(formId: string): Promise<{
         message: "FormId is required",
       };
     }
-    const form = await prisma.form.findFirst({
-      where: {
-        formId: formId,
-        published: true,
-      },
-      include: {
-        settings: true,
-      },
-    });
+    // const form = await prisma.form.findFirst({
+    //   where: {
+    //     formId: formId,
+    //     published: true,
+    //   },
+    //   include: {
+    //     settings: true,
+    //   },
+    // });
 
-    if (!form) {
-      return {
-        success: false,
-        message: "Form not found",
-      };
-    }
+    // if (!form) {
+    //   return {
+    //     success: false,
+    //     message: "Form not found",
+    //   };
+    // }
 
     return {
       success: true,
       message: "Form fetched successfully",
-      form,
+      // form,
     };
   } catch (error) {
     return {
@@ -268,22 +266,22 @@ export async function submitResponse(formId: string, response: string) {
         message: "FormId is required",
       };
     }
-    await prisma.form.update({
-      where: {
-        formId: formId,
-        published: true,
-      },
-      data: {
-        formResponses: {
-          create: {
-            jsonResponse: response,
-          },
-        },
-        responses: {
-          increment: 1,
-        },
-      },
-    });
+    // await prisma.form.update({
+    //   where: {
+    //     formId: formId,
+    //     published: true,
+    //   },
+    //   data: {
+    //     formResponses: {
+    //       create: {
+    //         jsonResponse: response,
+    //       },
+    //     },
+    //     responses: {
+    //       increment: 1,
+    //     },
+    //   },
+    // });
     return {
       success: true,
       message: "Response submitted",
@@ -308,23 +306,23 @@ export async function fetchAllResponseByFormId(formId: string) {
       };
     }
 
-    const form = await prisma.form.findUnique({
-      where: {
-        formId: formId,
-      },
-      include: {
-        formResponses: {
-          orderBy: {
-            createdAt: "desc",
-          },
-        },
-      },
-    });
+    // const form = await prisma.form.findUnique({
+    //   where: {
+    //     formId: formId,
+    //   },
+    //   include: {
+    //     formResponses: {
+    //       orderBy: {
+    //         createdAt: "desc",
+    //       },
+    //     },
+    //   },
+    // });
 
     return {
       success: true,
       message: "Form fetched successfully",
-      form,
+      // form,
     };
   } catch (error) {
     return {

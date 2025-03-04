@@ -1,4 +1,4 @@
-import { Form, FormSettings } from "@prisma/client";
+// import { form, formSettings } from "@prisma/client";
 
 
-export type FormWithSettings = Form & { settings: FormSettings };
+// export type FormWithSettings = form & { settings: formSettings };

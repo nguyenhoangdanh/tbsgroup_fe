@@ -13,8 +13,8 @@ const Page = async ({ params }: { params: { formId: string } }) => {
         return <NotAvaliable />;
     }
 
-    const blocks = JSON.parse(form.jsonBlocks) as FormBlockInstance[];
-    return <FormSubmitComponent formId={formId} blocks={blocks} />;
+    // const blocks = JSON.parse(form.jsonBlocks) as FormBlockInstance[];
+    // return <FormSubmitComponent formId={formId} blocks={blocks} />;
 };
 
 export default Page;
