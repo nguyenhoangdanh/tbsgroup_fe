@@ -28,7 +28,7 @@ const LoginForm = () => {
         setIsLoading(true);
         mutate(data, {
             onSuccess: (data) => {
-                Cookies.set('accessToken', data.data);
+                // Cookies.set('accessToken', data.data);
                 toast({
                     title: 'Thành công',
                     description: 'Đăng nhập thành công',
@@ -56,17 +56,25 @@ const LoginForm = () => {
                         control={methods.control}
                         name="username"
                         label="Tên đăng nhập"
+                        disabled={isLoading}
                     />
                     <FieldInput
                         control={methods.control}
                         name="password"
                         label="Mật khẩu"
                         type="password"
+                        disabled={isLoading}
                     />
                     <SubmitButton
                         isLoading={isLoading}
                         name="Đăng nhập"
                     />
+                </div>
+                <div className="flex justify-center mt-4">
+                    <a href="/password-reset" className="text-blue-500
+                    hover:underline">
+                        Quên mật khẩu?
+                    </a>
                 </div>
             </form>
         </FormProvider>

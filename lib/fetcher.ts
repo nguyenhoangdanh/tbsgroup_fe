@@ -14,8 +14,6 @@ export const fetcher = async (
       }
     );
   
-   console.log('response', response);
-  
     if (!response.ok) {
       const errorData = await response.json();
       throw { status: response.status, ...errorData };
@@ -26,7 +24,10 @@ export const fetcher = async (
   
 export const fetchWithAuth = async (url: string, options?: RequestInit) => {
     try {
-      return await fetcher(url, options);
+      return await fetcher(url, {
+        ...options,
+        credentials: 'include',
+      });
     } catch (error) {
       if (error instanceof Response) {
         // Parse JSON để lấy errorCode

@@ -2,7 +2,12 @@
 import Image from 'next/image';
 import React from 'react'
 
-export default function AuthImage() {
+interface IProps {
+    width?: number;
+    height?: number;
+}
+
+export default function AuthImage({ width, height }: IProps) {
     return (
         <Image
             src="/images/remove-bg-logo.png"
@@ -11,8 +16,8 @@ export default function AuthImage() {
             style={{
                 objectFit: 'contain',
             }}
-            width={150}
-            height={150}
+            width={width || 150}
+            height={height || 150}
         />
     )
 }

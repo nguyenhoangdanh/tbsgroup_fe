@@ -1,13 +1,14 @@
-import AuthLayout from '@/components/common/layouts/auth/AuthLayout'
-import ResetPasswordForm from './form'
-import AuthImage from '@/components/common/layouts/auth/AuthImage'
+import UserProfileForm from "./form"
 
 export const ProfileContainer = () => {
     return (
-        <div className="">
-            <h1>Profile</h1>
+        <div className="flex flex-col md:flex-row gap-6">
+            <h1 className="text-2xl font-bold text-center md:text-left md:w-1/2">
+                Thông tin cá nhân
+            </h1>
+            <div className="flex flex-col w-full max-w-lg mx-auto">
+                <UserProfileForm />
+            </div>
         </div>
     )
 }
-
-

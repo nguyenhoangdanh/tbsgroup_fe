@@ -2,6 +2,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { BadgeCheck, Bell, ChevronDown, ChevronsUpDown, CircleUserRound, LogOut, SettingsIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 interface IUserAvatarProps {
     name: string;
@@ -10,9 +11,9 @@ interface IUserAvatarProps {
 }
 
 const UserAvatar: React.FC<IUserAvatarProps> = ({ name, email, avatar }) => {
+    const router = useRouter();
     return (
         <div className="flex items-center gap-2" >
-
             <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-semibold">{name}</span>
                 <span className="truncate text-xs">{email}</span>
@@ -28,7 +29,9 @@ const UserAvatar: React.FC<IUserAvatarProps> = ({ name, email, avatar }) => {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
                     <DropdownMenuGroup>
-                        <DropdownMenuItem>
+                        <DropdownMenuItem
+                            onClick={() => router.push("/profile")}
+                        >
                             <CircleUserRound size="16px" />
                             Profile
                         </DropdownMenuItem>

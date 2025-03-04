@@ -1,5 +1,6 @@
+import LazyLoader from '@/components/common/LazyLoader'
 import { ResetPasswordContainer } from '@/screens/client/reset-password/Container'
-import React from 'react'
+import React, { Suspense } from 'react'
 
 export default function ResetPasswordPage() {
     return <ResetPasswordContainer />

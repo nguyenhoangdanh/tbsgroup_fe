@@ -1,12 +1,12 @@
-import AuthLayout from '@/components/layout/auth/AuthLayout'
 import React from 'react'
-import AuthImage from '@/components/layout/auth/AuthImage'
 import ForgotPassword from './ForgotPassword'
+import AuthLayout from '@/components/common/layouts/auth/AuthLayout'
+import AuthImage from '@/components/common/layouts/auth/AuthImage'
 
 export const ForgotPasswordContainer = () => {
     return (
         <AuthLayout
-            title="Forgot Password"
+            title="Quên mật khẩu"
             imageChildren={<AuthImage />}
         >
             <ForgotPassword />

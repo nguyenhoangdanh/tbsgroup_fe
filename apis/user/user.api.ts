@@ -13,11 +13,34 @@ export const loginMutationFn = async (data: LoginType) =>
 
 type ResetPasswordType = {
   password: string;
-  confirmPassword: string;
+  confirmPassword?: string;
+  employeeId?: string;
+  cardId?: string;
+  username?: string;
 };
 
-export const resetPasswordMutationFn = async (data: ResetPasswordType) =>
-  fetchWithAuth('/auth/reset-password', {
+export type VerifyDataType = {
+  employeeId: string;
+  cardId: string;
+};
+
+export const verifyMutationFn = async (data: VerifyDataType) =>
+  fetchWithAuth('/auth/verify', {
     method: 'POST',
     body: JSON.stringify(data),
   });
+
+export const resetPasswordMutationFn = async (data: ResetPasswordType) =>
+  fetchWithAuth('/auth/reset-password', {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+
+  export const  updateStatusMutationFn = async (data: {status: string}) =>
+  fetchWithAuth('/profile', {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+
+
+export const getUserProfileQueryFn = async () => fetchWithAuth('/profile');

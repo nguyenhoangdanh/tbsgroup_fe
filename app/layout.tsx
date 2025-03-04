@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/context/ThemeProvider";
 import SagaProviders from "@/context/SagaProvider";
 import QueryProvider from "@/context/QueryProvider";
 import DialogProvider from "@/context/DialogProvider";
+import { AuthProvider } from "@/context/AuthProvider";
 
 const dm_sans = DM_Sans({ subsets: ["latin"] });
 export const metadata: Metadata = {
@@ -29,14 +30,16 @@ export default function RootLayout({
         >
           <SagaProviders>
             <QueryProvider>
-              <DialogProvider>
-                <Toaster />
-                {children}
-              </DialogProvider>
+              <AuthProvider>
+                <DialogProvider>
+                  <Toaster />
+                  {children}
+                </DialogProvider>
+              </AuthProvider>
             </QueryProvider>
           </SagaProviders>
         </ThemeProvider>
       </body>
-    </html>
+    </html >
   );
 }

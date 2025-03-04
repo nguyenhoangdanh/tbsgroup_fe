@@ -1,7 +1,8 @@
-import React from 'react'
+import React, { Suspense } from 'react'
 import AuthLayout from '@/components/common/layouts/auth/AuthLayout'
 import AuthImage from '@/components/common/layouts/auth/AuthImage'
 import LoginForm from './form'
+import LazyLoader from '@/components/common/LazyLoader'
 
 export const LoginContainer = () => {
   return (
@@ -10,7 +11,9 @@ export const LoginContainer = () => {
       isLogin
       imageChildren={<AuthImage />}
     >
-      <LoginForm />
+      <Suspense fallback={<LazyLoader />}>
+        <LoginForm />
+      </Suspense>
     </AuthLayout>
   )
 }

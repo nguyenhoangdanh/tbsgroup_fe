@@ -14,7 +14,7 @@ const Header: React.FC<IHeaderProps> = ({ children }) => {
                     <img src="/images/remove-bg-logo.png" alt="logo" className="w-[100px] h-[30px]" />
                 </div>
                 <div className="flex items-center justify-between gap-10">
-                    <div className="flex items-center gap-5 text-gray-500 mx-auto sm:flex hidden">
+                    <div className="items-center gap-5 text-gray-500 mx-auto sm:flex hidden">
                         <a href="#" className="text-lg font-medium">Home</a>
                         <a href="#" className="text-lg font-medium">About</a>
                         <a href="#" className="text-lg font-medium">Contact</a>

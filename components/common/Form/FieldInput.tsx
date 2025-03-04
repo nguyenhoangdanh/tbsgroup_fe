@@ -11,6 +11,7 @@ interface FieldInputProps<T extends FieldValues> {
     placeholder?: string;
     className?: string;
     autoComplete?: string;
+    disabled?: boolean;
 }
 
 export const FieldInput = <T extends FieldValues>({
@@ -21,6 +22,7 @@ export const FieldInput = <T extends FieldValues>({
     placeholder = "",
     autoComplete,
     className,
+    disabled = false,
 }: FieldInputProps<T>) => {
     return (
         <Controller
@@ -37,6 +39,8 @@ export const FieldInput = <T extends FieldValues>({
                         type={type}
                         placeholder={placeholder}
                         autoComplete={autoComplete}
+                        disabled={disabled}
+                        value={field.value || ""}
                         className={clsx(
                             "border rounded-md px-3 py-2 transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none",
                             error ? "border-red-500" : "border-gray-300"
