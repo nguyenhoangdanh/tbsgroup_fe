@@ -2,6 +2,8 @@ import { Controller, FieldValues, Control, Path } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import clsx from "clsx";
+import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 
 interface FieldInputProps<T extends FieldValues> {
     name: Path<T>;
@@ -24,34 +26,50 @@ export const FieldInput = <T extends FieldValues>({
     className,
     disabled = false,
 }: FieldInputProps<T>) => {
+    const [showPassword, setShowPassword] = useState(false);
+    const isPassword = type === "password";
     return (
         <Controller
             control={control}
             name={name}
-            render={({ field, fieldState: { error } }) => (
-                <div className={clsx("flex flex-col gap-1", className)}>
-                    <Label htmlFor={name} className="text-left font-medium">
-                        {label}
-                    </Label>
-                    <Input
-                        {...field}
-                        id={name}
-                        type={type}
-                        placeholder={placeholder}
-                        autoComplete={autoComplete}
-                        disabled={disabled}
-                        value={field.value || ""}
-                        className={clsx(
-                            "border rounded-md px-3 py-2 transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none",
-                            error ? "border-red-500" : "border-gray-300"
+            render={({ field, fieldState: { error } }) => {
+                return (
+                    <div className={clsx("flex flex-col gap-1", className)}>
+                        <Label htmlFor={name} className="text-left font-medium">
+                            {label}
+                        </Label>
+                        <div className="relative">
+                            <Input
+                                {...field}
+                                id={name}
+                                type={isPassword && !showPassword ? "password" : "text"}
+                                placeholder={placeholder}
+                                autoComplete={autoComplete}
+                                disabled={disabled}
+                                value={field.value ?? ""}
+                                className={clsx(
+                                    "border rounded-md px-3 py-2 transition-all focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none",
+                                    disabled && "bg-gray-100 cursor-not-allowed",
+                                    error ? "border-red-500 focus:ring-red-500" : "border-gray-300"
+                                )}
+                                aria-invalid={!!error}
+                            />
+                            {isPassword && (
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute inset-y-0 right-3 flex items-center text-gray-500 hover:text-gray-700"
+                                >
+                                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                </button>
+                            )}
+                        </div>
+                        {error?.message && (
+                            <p className="h-5 text-red-500 text-sm">{error.message}</p>
                         )}
-                        aria-invalid={error ? "true" : "false"}
-                    />
-                    <p className="h-5 text-red-500 text-sm">
-                        {error?.message}
-                    </p>
-                </div>
-            )}
+                    </div>
+                )
+            }}
         />
     );
 };

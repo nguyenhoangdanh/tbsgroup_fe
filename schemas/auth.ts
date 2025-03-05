@@ -6,6 +6,8 @@ export const loginSchema = z.object({
   }),
   password: z.string().nonempty({
     message: 'Mật khẩu không được để trống',
+  }).min(6, {
+    message: 'Mật khẩu phải chứa ít nhất 6 ký tự',
   }),
 });
 
@@ -18,9 +20,11 @@ export type TLoginSchema = z.infer<typeof loginSchema>;
 
 
 export const resetPasswordSchema = z.object({
-  password: z.string().nonempty({
-    message: 'Mật khẩu không được để trống',
-  }),
+  password: z.string().min(6, {
+    message: 'Mật khẩu phải chứa ít nhất 6 ký tự',
+  })
+  .regex(/^\S*$/, { message: "Mật khẩu không được chứa khoảng trắng" }) // 🚀 Thêm điều kiện này
+  .optional(),
   confirmPassword: z.string({
     message: 'Xác nhận mật khẩu không được để trống',
   }).optional(),
@@ -34,14 +38,21 @@ export const resetPasswordSchema = z.object({
     message: 'Mã thẻ không được để trống',
   }).optional(),
 })
-  .refine(data => data.password === data.confirmPassword, {
-    message: 'Mật khẩu không khớp',
-    path: ['confirmPassword'],
+.refine(
+  (data) => {
+    if (data.password) {
+      return data.password === data.confirmPassword;
+    }
+    return true;
+  },
+  {
+    message: "Mật khẩu không khớp",
+    path: ["confirmPassword"],
   });
 
 export const defaultResetPasswordValues = {
-  password: '',
-  confirmPassword: '',
+  password: '111111',
+  confirmPassword: '111111',
   employeeId: '',
   cardId: '',
   username: '',

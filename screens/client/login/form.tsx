@@ -51,7 +51,7 @@ const LoginForm = () => {
     return (
         <FormProvider {...methods}>
             <form onSubmit={methods.handleSubmit(onSubmit)}>
-                <div className="flex flex-col gap-4 px-8">
+                <div className="flex flex-col gap-5 px-8">
                     <FieldInput
                         control={methods.control}
                         name="username"
@@ -66,12 +66,13 @@ const LoginForm = () => {
                         disabled={isLoading}
                     />
                     <SubmitButton
+                        disabled={isLoading || !methods.formState.isValid}
                         isLoading={isLoading}
                         name="Đăng nhập"
                     />
                 </div>
                 <div className="flex justify-center mt-4">
-                    <a href="/password-reset" className="text-blue-500
+                    <a href="/reset-password" className="text-blue-500
                     hover:underline">
                         Quên mật khẩu?
                     </a>

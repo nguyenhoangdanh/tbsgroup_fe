@@ -37,7 +37,8 @@ const HandbagStageForm: React.FC<HandbagStageFormProps> = ({ action }) => {
       dispatch("FETCH_PO_HANDBAG");
       toast({
         title: "Thành công",
-        description: `Đã tạo quy trình sản xuất ${rs?.productionProcess?.name}`,
+        description: "Đã tạo quy trình sản xuất",
+        // description: `Đã tạo quy trình sản xuất ${rs?.productionProcess?.name}`,
       });
     } else {
       toast({

@@ -1,7 +1,8 @@
 "use client";
 
 import useAuth from "@/hooks/useAuth";
-import React, { createContext, useContext } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import React, { createContext, useContext, useEffect, useMemo } from "react";
 
 type UserType = {
     username: string;
@@ -18,6 +19,8 @@ type UserType = {
         enable2FA: boolean;
     };
     employeeId?: string;
+    cardId?: string;
+    status: string;
 };
 
 type AuthContextType = {
@@ -34,12 +37,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     children,
 }) => {
     const { user, error, isLoading, isFetching, refetch } = useAuth();
+    const router = useRouter();
+    const pathname = usePathname();
 
-    React.useEffect(() => {
-        if (user && user.status === "first_login" && window.location.pathname !== "/reset-password") {
-            window.location.href = "/reset-password";
+    // 🔥 Dùng useMemo để tránh user thay đổi tham chiếu không cần thiết
+    const userStatus = useMemo(() => user?.status, [user?.status]);
+    const errorMessage = useMemo(() => error?.message, [error?.message]);
+
+    useEffect(() => {
+        if (userStatus === "first_login" && pathname !== "/reset-password") {
+            router.replace("/reset-password");
+        } else if (errorMessage && pathname !== "/login") {
+            router.replace("/login");
         }
-    }, [user]);
+    }, [userStatus, errorMessage, router]); // ✅ Giảm bớt dependency để tránh chạy liên tục
 
     return (
         <AuthContext.Provider
@@ -56,4 +67,4 @@ export const useAuthContext = () => {
         throw new Error("useAuthContext must be used within a AuthProvider");
     }
     return context;
-}; ``
+}; 
