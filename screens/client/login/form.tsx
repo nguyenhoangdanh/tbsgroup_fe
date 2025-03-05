@@ -9,7 +9,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import React from "react";
 import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
-import Cookies from 'js-cookie';
 import { useRouter } from "next/navigation";
 
 const LoginForm = () => {

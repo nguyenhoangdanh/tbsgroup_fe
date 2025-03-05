@@ -1,9 +1,19 @@
-import MainLayout from "@/components/common/layouts/client/MainLayout";
+"use client";
 import RedirectButton from "@/components/RedirectButton";
 import { Button } from "@/components/ui/button";
+import useAuth from "@/hooks/useAuth";
 import { ChevronRight, ExternalLink, Video } from "lucide-react";
+import { useRouter } from "next/navigation";
+import React from "react";
 
 export default function Home() {
+    const { user } = useAuth();
+    const router = useRouter();
+    React.useEffect(() => {
+        if (user && user?.status === "first_login") {
+            router.replace("/reset-password");
+        }
+    }, [user]);
     return (
         <div className="w-full">
             <div className="hero-section w-full h-full">
