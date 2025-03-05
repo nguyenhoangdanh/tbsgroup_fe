@@ -4,6 +4,7 @@ const protectedRoutes = ['/home', '/sessions'];
 const publicRoutes = [
   '/',
   '/login',
+  '/reset-password',
   '/register',
   '/confirm-account',
   'forgot-password',
