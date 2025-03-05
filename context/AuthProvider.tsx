@@ -47,7 +47,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     useEffect(() => {
         if (userStatus === "first_login" && pathname !== "/reset-password") {
             router.replace("/reset-password");
-        } else if (errorMessage && pathname !== "/login") {
+        } else if (errorMessage && pathname !== "/login" && pathname !== "/reset-password") {
             router.replace("/login");
         }
     }, [userStatus, errorMessage, router]);
