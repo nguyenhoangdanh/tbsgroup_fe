@@ -2,7 +2,6 @@ import MainLayout from "@/components/common/layouts/client/MainLayout";
 import RedirectButton from "@/components/RedirectButton";
 import { Button } from "@/components/ui/button";
 import { ChevronRight, ExternalLink, Video } from "lucide-react";
-import Image from "next/image";
 
 export default function Home() {
     return (
