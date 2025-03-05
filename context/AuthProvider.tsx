@@ -50,8 +50,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         } else if (errorMessage && pathname !== "/login") {
             router.replace("/login");
         }
-    }, [userStatus, errorMessage, router]); // ✅ Giảm bớt dependency để tránh chạy liên tục
-
+    }, [userStatus, errorMessage, router]);
     return (
         <AuthContext.Provider
             value={{ user, error, isLoading, isFetching, refetch }}

@@ -170,6 +170,7 @@ const ResetPasswordForm = () => {
         if (user?.status === 'first_login') {
             methods.setValue('password', '');
             methods.setValue('confirmPassword', '');
+            setVerified(true);
         }
     }, [user?.status]);
 
