@@ -6,6 +6,8 @@ export const userSchema = z.object({
   position: z.string(),
   department: z.string(),
   role: z.string(),
+  cardId: z.string(),
+  fullName: z.string(),
 });
 
 
@@ -15,6 +17,8 @@ export const defaultUserValues = {
   position: '',
   department: '',
   role: '',
+  cardId: '',
+  fullName: '',
 };
 
 export type TUserSchema = z.infer<typeof userSchema>;

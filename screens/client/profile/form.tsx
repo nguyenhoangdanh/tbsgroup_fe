@@ -55,6 +55,8 @@ const UserProfileForm = () => {
             methods.setValue('position', user.position);
             methods.setValue('department', user.department);
             methods.setValue('role', user.role);
+            methods.setValue('fullName', user.fullName);
+            methods.setValue('cardId', user.cardId);
         }
     }, [user, methods]);
 
@@ -75,6 +77,17 @@ const UserProfileForm = () => {
                         label="Mã nhân viên"
                         name="employeeId"
                         placeholder="Nhập mã nhân viên"
+                    />
+                    <FieldInput
+                        control={methods.control}
+                        label="Họ và tên"
+                        name="fullName"
+                        placeholder="Nhập họ và tên"
+                    />
+                    <FieldInput
+                        control={methods.control}
+                        label="CCCD/CMND"
+                        name="cardId"
                     />
                     <FieldInput
                         control={methods.control}
