@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
-import { BadgeCheck, Bell, ChevronDown, ChevronsUpDown, CircleUserRound, LogOut, SettingsIcon } from "lucide-react";
+import { BadgeCheck, Bell, ChevronDown, ChevronsUpDown, CircleUserRound, KeyRound, LogOut, SettingsIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 interface IUserAvatarProps {
@@ -50,24 +50,30 @@ const UserAvatar: React.FC<IUserAvatarProps> = ({ name, email, avatar }) => {
                             onClick={() => router.push("/profile")}
                         >
                             <CircleUserRound size="16px" />
-                            Profile
+                            Thông tin cá nhân
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                            onClick={() => router.push("/reset-password")}
+                        >
+                            <KeyRound size="16px" />
+                            Đổi mật khẩu
                         </DropdownMenuItem>
                         <DropdownMenuItem>
                             <Bell size="16px" />
-                            Notifications
+                            Thông báo
                         </DropdownMenuItem>
                     </DropdownMenuGroup>
                     <DropdownMenuSeparator />
                     <DropdownMenuGroup>
                         <DropdownMenuItem>
                             <SettingsIcon />
-                            Settings
+                            Cài đặt
                         </DropdownMenuItem>
                         <DropdownMenuItem
                             onClick={() => logoutMutation.mutate()}
                         >
                             <LogOut size="16px" />
-                            Logout
+                            Đăng xuất
                         </DropdownMenuItem>
                     </DropdownMenuGroup>
                 </DropdownMenuContent>
