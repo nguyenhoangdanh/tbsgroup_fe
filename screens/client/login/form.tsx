@@ -33,7 +33,7 @@ const LoginForm = () => {
                     title: 'Thành công',
                     description: 'Đăng nhập thành công',
                 });
-                router.push('/home');
+                router.push('/');
             },
             onError: (error) => {
                 console.log('error', error);
