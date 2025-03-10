@@ -11,7 +11,7 @@ import { AuthProvider } from "@/context/AuthProvider";
 const dm_sans = DM_Sans({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "NMTXTS",
-  description: "TBS Group - Thoại Sơn Handbag Factory"
+  description: "TBS Group - Thoai Son Handbag Factory"
 };
 
 export default function RootLayout({

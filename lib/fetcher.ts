@@ -32,7 +32,7 @@ export const fetchWithAuth = async (url: string, options?: RequestInit) => {
       if (error instanceof Response) {
         // Parse JSON để lấy errorCode
         const errorData = await error.json();
-        if (error.status === 401 && errorData.errorCode === 'AUTH_TOKEN_NOT_FOUND') {
+        if (error instanceof Error && 'status' in error && error.status === 401) {
           try {
             await fetcher('/auth/refresh', { method: 'GET' }); // Gọi refresh token
             return await fetcher(url, options); // Gọi lại request gốc

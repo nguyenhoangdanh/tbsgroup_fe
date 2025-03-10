@@ -1,4 +1,4 @@
-// Form.tsx
+
 'use client';
 import React from "react";
 import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
@@ -7,255 +7,134 @@ import { defaultResetPasswordValues, resetPasswordSchema, ResetPasswordType } fr
 import { FieldInput } from "@/components/common/Form/FieldInput";
 import { useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
-import { logoutMutationFn, resetPasswordMutationFn, updateStatusMutationFn, VerifyDataType, verifyMutationFn } from "@/apis/user/user.api";
+import { loginMutationFn, LoginType, logoutMutationFn, requestResetPasswordMutationFn, resetPasswordMutationFn, updateStatusMutationFn, VerifyDataType, verifyMutationFn } from "@/apis/user/user.api";
 import { toast } from "@/hooks/use-toast";
 import SubmitButton from "@/components/SubmitButton";
 import useAuth from "@/hooks/useAuth";
 import LazyLoader from "@/components/common/LazyLoader";
 import { CircleCheckBig } from "lucide-react";
-import { set } from "date-fns";
+import { UserStatusEnum } from "@/common/enum";
+import useAuthManager from "@/hooks/useAuthManager";
+
 const ResetPasswordForm = () => {
     const router = useRouter();
-    const { user, isLoading: loading } = useAuth();
-    const [isLoading, setIsLoading] = React.useState<boolean>(false);
+    const {
+        user,
+        isLoading,
+        login,
+        requestPasswordReset,
+        resetPassword,
+        needsPasswordReset,
+        isAuthenticated,
+    } = useAuthManager();
+    // const [isLoading, setIsLoading] = React.useState<boolean>(false);
     const [verified, setVerified] = React.useState<boolean>(false);
+    const [resetToken, setResetToken] = React.useState<string | null>(null);
+    const [userName, setUserName] = React.useState<string>("");
+
     const methods = useForm<ResetPasswordType>({
         defaultValues: defaultResetPasswordValues,
         resolver: zodResolver(resetPasswordSchema),
         mode: "onChange",
     });
-    // const { mutate } = useMutation({
-    //     mutationFn: resetPasswordMutationFn,
-    // });
-
-    // const { mutate: mutateVerify } = useMutation({
-    //     mutationFn: verifyMutationFn,
-    // })
-
-    // const { mutate: mutateUpdateStatus } = useMutation({
-    //     mutationFn: updateStatusMutationFn,
-    // })
-
-    // const { mutate: mutateLogout } = useMutation({
-    //     mutationFn: logoutMutationFn,
-    // });
-
-    // const checkVerified = async (data: VerifyDataType) => {
-    //     setIsLoading(true);
-    //     mutateVerify(data, {
-    //         onSuccess: (data) => {
-    //             toast({
-    //                 title: 'Thành công',
-    //                 description: 'Xác thực thành công',
-    //             });
-    //             setVerified(true);
-    //             methods.reset();
-    //             methods.setValue('password', '');
-    //             methods.setValue('confirmPassword', '');
-    //         },
-    //         onError: (error) => {
-    //             toast({
-    //                 title: 'Lỗi',
-    //                 description: error.message || 'Có lỗi xảy ra',
-    //                 variant: 'destructive',
-    //             });
-    //         },
-    //         onSettled: () => {
-    //             setIsLoading(false);
-    //         },
-    //     });
-
-    // };
-
-    // Xác thực thông tin
-    const verifyMutation = useMutation({
-        mutationFn: verifyMutationFn,
-        onSuccess: () => {
-            toast({
-                title: 'Thành công',
-                description: 'Xác thực thành công',
-            });
-            setVerified(true);
-            methods.reset();
-        },
-        onError: (error) => {
-            toast({
-                title: 'Lỗi',
-                description: error.message || 'Có lỗi xảy ra',
-                variant: 'destructive',
-            });
-        },
-        onSettled: () => {
-            setIsLoading(false);
-        }
-    })
-
-    // Đổi mật khẩu
-    const resetPasswordMutation = useMutation({
-        mutationFn: resetPasswordMutationFn,
-        onSuccess: () => {
-            toast({
-                title: 'Thành công',
-                description: 'Đổi mật khẩu thành công',
-            });
-
-            if (user?.status === 'first_login') {
-                updateStatusMutation.mutate({ status: 'active' });
-            } else {
-                logoutMutation.mutate();
-            }
-        },
-        onError: (error) => {
-            toast({
-                title: 'Lỗi',
-                description: error.message || 'Có lỗi xảy ra',
-                variant: 'destructive',
-            });
-        },
-        onSettled: () => {
-            setIsLoading(false);
-        }
-    });
-
-    // Cập nhật trạng thái người dùng sau khi đổi mật khẩu
-    const updateStatusMutation = useMutation({
-        mutationFn: updateStatusMutationFn,
-        onSuccess: () => {
-            logoutMutation.mutate();
-        },
-        onError: (error) => {
-            toast({
-                title: 'Lỗi',
-                description: error.message || 'Có lỗi xảy ra',
-                variant: 'destructive',
-            });
-        },
-    });
-
-    // Đăng xuất sau khi đổi mật khẩu
-    const logoutMutation = useMutation({
-        mutationFn: logoutMutationFn,
-        onSuccess: () => {
-            router.push('/login');
-        },
-        onError: (error) => {
-            toast({
-                title: 'Lỗi',
-                description: error.message || 'Có lỗi xảy ra',
-                variant: 'destructive',
-            });
-        },
-    });;
-
-    const checkVerified = (data: VerifyDataType) => {
-        verifyMutation.mutate(data);
-    };
 
     const onSubmit: SubmitHandler<ResetPasswordType> = async (data) => {
-        if (data.employeeId && data.cardId && user?.status !== 'first_login' && !verified) {
-            setIsLoading(true);
-            checkVerified({ employeeId: data.employeeId, cardId: data.cardId });
-            return;
+
+        if (data.employeeId && data.cardId && !verified) {
+            try {
+                const result = await requestPasswordReset({
+                    employeeId: data.employeeId,
+                    cardId: data.cardId,
+                });
+
+                // Xử lý kết quả từ API theo cấu trúc đã cung cấp
+                if (result && result.success) {
+                    setResetToken(result.data.resetToken);
+                    setVerified(true);
+                    setUserName(result.data.username);
+
+                    // Clear the form fields for password entry
+                    methods.setValue('employeeId', '');
+                    methods.setValue('cardId', '');
+
+                    toast({
+                        title: 'Thành công',
+                        description: result.data.message || 'Vui lòng nhập mật khẩu mới',
+                    });
+                }
+            } catch (error: any) {
+                toast({
+                    title: 'Lỗi',
+                    description: error.message || 'Không thể yêu cầu đặt lại mật khẩu',
+                    variant: 'destructive',
+                });
+                console.error('Lỗi yêu cầu đặt lại mật khẩu:', error);
+            }
         }
+        else if (verified && data.password && data.confirmPassword) {
+            try {
+                const resetParams = resetToken
+                    ? {
+                        resetToken,
+                        password: data.password,
+                        confirmPassword: data.confirmPassword,
+                    }
+                    : {
+                        username: userName,
+                        password: data.password,
+                        confirmPassword: data.confirmPassword,
+                    };
 
-        setIsLoading(true);
+                await resetPassword(resetParams);
 
-        resetPasswordMutation.mutate({
-            password: data.password,
-            username: user?.username,
-        });
+                toast({
+                    title: 'Thành công',
+                    description: 'Đổi mật khẩu thành công',
+                });
+
+                setTimeout(async () => {
+                    if (!isAuthenticated) {
+                        await login({
+                            username: userName,
+                            password: data.password || '',
+                        }, {
+                            message: 'Đổi mật khẩu thành công',
+                        });
+                    } else {
+                        window.location.href = '/home';
+                    }
+                }, 500);
+
+
+            } catch (resetError: any) {
+                toast({
+                    title: 'Lỗi',
+                    description: resetError.message || 'Không thể đổi mật khẩu',
+                    variant: 'destructive',
+                });
+                console.error('Lỗi đổi mật khẩu:', resetError);
+            }
+        }
     };
 
+
     React.useEffect(() => {
-        if (user?.status === 'first_login') {
+        if (user?.status === UserStatusEnum.PENDING_ACTIVATION || (
+            isAuthenticated && user
+        )) {
             methods.setValue('password', '');
             methods.setValue('confirmPassword', '');
             setVerified(true);
+            setUserName(user.username);
         }
-    }, [user?.status]);
+    }, [user]);
 
-
-    // const onSubmit: SubmitHandler<ResetPasswordType> = async (data) => {
-    //     setIsLoading(true);
-    //     console.log('data', data);
-    //     if (data.employeeId && data.cardId && user?.status !== 'first_login' && !verified) {
-    //         checkVerified({
-    //             employeeId: data.employeeId,
-    //             cardId: data.cardId,
-    //         });
-    //         return; // Dừng lại cho đến khi xác thực xong
-    //     }
-    //     data = {
-    //         password: data.password,
-    //         username: user?.username,
-    //     }
-
-    //     mutate(data, {
-    //         onSuccess: (data) => {
-    //             toast({
-    //                 title: 'Thành công',
-    //                 description: 'Đổi mật khẩu thành công',
-    //             });
-    //             if (user?.status === 'first_login') {
-    //                 mutateUpdateStatus({
-    //                     status: 'active',
-    //                 },
-    //                     {
-    //                         onSuccess: (data) => {
-    //                             // toast({
-    //                             //     title: 'Thành công',
-    //                             //     description: 'Cập nhật trạng thái thành công',
-    //                             // });
-    //                         },
-    //                         onError: (error) => {
-    //                             toast({
-    //                                 title: 'Lỗi',
-    //                                 description: error.message || 'Có lỗi xảy ra',
-    //                                 variant: 'destructive',
-    //                             });
-    //                         },
-    //                         onSettled: () => {
-    //                             setIsLoading(false);
-    //                         },
-    //                     });
-    //             }
-    //             mutateLogout(undefined, {
-    //                 onSuccess: (data) => {
-    //                     // toast({
-    //                     //     title: 'Thành công',
-    //                     //     description: 'Đăng xuất thành công',
-    //                     // });
-    //                     router.push('/login');
-    //                 },
-    //                 onError: (error) => {
-    //                     toast({
-    //                         title: 'Lỗi',
-    //                         description: error.message || 'Có lỗi xảy ra',
-    //                         variant: 'destructive',
-    //                     });
-    //                 },
-    //                 onSettled: () => {
-    //                     setIsLoading(false);
-    //                 },
-    //             });
-    //         },
-    //         onError: (error) => {
-    //             toast({
-    //                 title: 'Lỗi',
-    //                 description: error.message || 'Có lỗi xảy ra',
-    //                 variant: 'destructive',
-    //             });
-    //         },
-    //         onSettled: () => {
-    //             setIsLoading(false);
-    //         },
-    //     });
-    // };
+    console.log('user', user);
 
     return (
         <FormProvider {...methods}>
             <form onSubmit={methods.handleSubmit(onSubmit)}>
-                {loading ? (
+                {isLoading ? (
                     <LazyLoader />
                 ) : (
                     <div className="flex flex-col gap-10 px-8">
@@ -267,11 +146,11 @@ const ResetPasswordForm = () => {
                             <p className="text-md text-center flex items-center justify-center gap-1">
                                 <CircleCheckBig size={20} color="green" />
                                 <span className="ml-2">
-                                    Đã xác thực
+                                    Đã xác thực {userName && `(${userName})`}
                                 </span>
                             </p>
                         )}
-                        {user?.status === 'first_login' || verified ? (
+                        {user?.status === UserStatusEnum.PENDING_ACTIVATION || verified ? (
                             <div className="flex flex-col gap-5">
                                 <FieldInput
                                     control={methods.control}
@@ -302,7 +181,7 @@ const ResetPasswordForm = () => {
                         )}
                         <SubmitButton
                             isLoading={isLoading}
-                            disabled={isLoading || !methods.formState.isValid}
+                            // disabled={isLoading || !methods.formState.isValid}
                             name="Xác nhận"
                         />
                     </div>

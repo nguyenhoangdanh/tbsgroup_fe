@@ -1,6 +1,7 @@
 import {fetchWithAuth} from '@/lib/fetcher';
+import { string } from 'zod';
 
-type LoginType = {
+export type LoginType = {
   username: string;
   password: string;
 };
@@ -30,9 +31,23 @@ export const verifyMutationFn = async (data: VerifyDataType) =>
     body: JSON.stringify(data),
   });
 
-export const resetPasswordMutationFn = async (data: ResetPasswordType) =>
+export const resetPasswordMutationFn = async (data: {
+  resetToken?: string;
+  username?: string;
+  password: string;
+  confirmPassword: string;
+}) =>
   fetchWithAuth('/auth/reset-password', {
-    method: 'PATCH',
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
+export const requestResetPasswordMutationFn = async (data: {
+  employeeId: string;
+  cardId: string;
+}) =>
+  fetchWithAuth('/auth/request-password-reset', {
+    method: 'POST',
     body: JSON.stringify(data),
   });
 
@@ -42,8 +57,9 @@ export const updateStatusMutationFn = async (data: {status: string}) =>
     body: JSON.stringify(data),
   });
 
-export const logoutMutationFn = async () => fetchWithAuth('/auth/logout', {
-  method: 'POST',
-});
+export const logoutMutationFn = async () =>
+  fetchWithAuth('/auth/logout', {
+    method: 'POST',
+  });
 
 export const getUserProfileQueryFn = async () => fetchWithAuth('/profile');

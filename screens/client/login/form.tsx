@@ -10,10 +10,15 @@ import { useMutation } from "@tanstack/react-query";
 import React from "react";
 import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
+import { UserStatusEnum } from "@/common/enum"
+import Cookies from 'js-cookie';
+import useAuthManager from "@/hooks/useAuthManager";
+import { logoutMutationFn } from '../../../apis/user/user.api';
 
 const LoginForm = () => {
     const router = useRouter();
-    const [isLoading, setIsLoading] = React.useState<boolean>(false);
+    const { login, isLoading } = useAuthManager();
+    // const [isLoading, setIsLoading] = React.useState<boolean>(false);
     const methods = useForm<TLoginSchema>({
         defaultValues: defaultLoginValues,
         resolver: zodResolver(loginSchema),
@@ -24,28 +29,37 @@ const LoginForm = () => {
     });
 
     const onSubmit: SubmitHandler<TLoginSchema> = async (data) => {
-        setIsLoading(true);
-        mutate(data, {
-            onSuccess: (data) => {
-                // Cookies.set('accessToken', data.data);
-                toast({
-                    title: 'Thành công',
-                    description: 'Đăng nhập thành công',
-                });
-                router.push('/');
-            },
-            onError: (error) => {
-                console.log('error', error);
-                toast({
-                    title: 'Lỗi',
-                    description: error.message || 'Có lỗi xảy ra',
-                    variant: 'destructive',
-                });
-            },
-            onSettled: () => {
-                setIsLoading(false);
-            },
-        });
+        // setIsLoading(true);
+        await login(data);
+        // mutate(data, {
+        //     onSuccess: (data) => {
+        //         // Kiểm tra trạng thái người dùng
+        //         if (data.data.requiredResetPassword) {
+        //             toast({
+        //                 title: 'Cần đổi mật khẩu',
+        //                 description: 'Bạn cần đổi mật khẩu trước khi tiếp tục',
+        //             });
+        //             router.push('/reset-password');
+        //         } else {
+        //             toast({
+        //                 title: 'Thành công',
+        //                 description: 'Đăng nhập thành công',
+        //             });
+        //             router.push('/home');
+        //         }
+        //     },
+        //     onError: (error) => {
+        //         console.log('error', error);
+        //         toast({
+        //             title: 'Lỗi',
+        //             description: error.message || 'Có lỗi xảy ra',
+        //             variant: 'destructive',
+        //         });
+        //     },
+        //     onSettled: () => {
+        //         setIsLoading(false);
+        //     },
+        // });
     };
     return (
         <FormProvider {...methods}>
@@ -65,7 +79,7 @@ const LoginForm = () => {
                         disabled={isLoading}
                     />
                     <SubmitButton
-                        disabled={isLoading || !methods.formState.isValid}
+                        disabled={isLoading}
                         isLoading={isLoading}
                         name="Đăng nhập"
                     />

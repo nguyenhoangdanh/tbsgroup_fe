@@ -1,19 +1,20 @@
 "use client";
+import { UserStatusEnum } from "@/common/enum";
 import RedirectButton from "@/components/RedirectButton";
 import { Button } from "@/components/ui/button";
-import useAuth from "@/hooks/useAuth";
+import useAuthManager from "@/hooks/useAuthManager";
 import { ChevronRight, ExternalLink, Video } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React from "react";
 
 export default function Home() {
-    const { user } = useAuth();
+    const { user } = useAuthManager();
     const router = useRouter();
-    React.useEffect(() => {
-        if (user && user?.status === "first_login") {
-            router.replace("/reset-password");
-        }
-    }, [user]);
+    // React.useEffect(() => {
+    //     if (user && user?.status === UserStatusEnum.PENDING_ACTIVATION) {
+    //         router.replace("/reset-password");
+    //     }
+    // }, [user]);
     return (
         <div className="w-full">
             <div className="hero-section w-full h-full">
