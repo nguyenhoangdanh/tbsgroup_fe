@@ -29,7 +29,8 @@
     ".next/types/app/(auth)/layout.tsx",
     ".next/types/app/(auth)/reset-password/page.tsx",
     ".next/types/app/(auth)/layout.tsx",
-    ".next/types/app/(auth)/reset-password/page.tsx"
+    ".next/types/app/(auth)/reset-password/page.tsx",
+    "utils"
   ],
   "exclude": ["node_modules"]
 }

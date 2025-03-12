@@ -1,73 +1,146 @@
 "use client"
-import { logoutMutationFn } from "@/apis/user/user.api";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "@/hooks/use-toast";
-import useAuth from "@/hooks/useAuth";
 import useAuthManager from "@/hooks/useAuthManager";
-import { useMutation } from "@tanstack/react-query";
-import { BadgeCheck, Bell, ChevronDown, ChevronsUpDown, CircleUserRound, KeyRound, LogOut, SettingsIcon } from "lucide-react";
+import { Bell, CircleUserRound, KeyRound, LogOut, SettingsIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useCallback, useState } from "react";
 
-interface IUserAvatarProps {
-    name: string;
-    email: string;
-    avatar?: string;
-}
-
-const UserAvatar: React.FC<IUserAvatarProps> = ({ name, email, avatar }) => {
+const UserAvatar = () => {
     const router = useRouter();
-    const { logout } = useAuthManager();
+    const { logout, user, isAuthenticated } = useAuthManager();
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+    // Use fullName or username, with fallback for display
+    const displayName = user?.fullName || user?.username || "User";
+
+    // Get the initials for the avatar fallback
+    const getInitials = (name: string) => {
+        return name
+            .split(" ")
+            .map((n) => n[0])
+            .join("")
+            .toLocaleUpperCase();
+    };
+
+    const handleNavigation = useCallback((path: string) => {
+        router.push(path);
+    }, [router]);
+
+    const handleLogout = useCallback(async () => {
+        setIsLoggingOut(true);
+        try {
+            await logout();
+            toast({
+                title: "Đăng xuất thành công",
+                variant: "default",
+            });
+        } catch (error) {
+            toast({
+                title: "Đăng xuất thất bại",
+                description: "Vui lòng thử lại sau",
+                variant: "destructive",
+            });
+        } finally {
+            setIsLoggingOut(false);
+        }
+    }, [logout]);
+
+    if (!isAuthenticated) return (
+        <div className="flex items-center">
+            <button
+                onClick={() => handleNavigation("/login")}
+                className="px-2 py-1 text-sm font-semibold text-blue-500 hover:text-blue-700 transition-colors"
+                aria-label="Đăng nhập"
+            >
+                Đăng nhập
+            </button>
+        </div>
+    );
 
     return (
-        <div className="flex items-center gap-2" >
-            <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">{name}</span>
-                <span className="truncate text-xs">{email}</span>
+        <div className="flex items-center gap-2">
+            {/* Chỉ hiển thị thông tin người dùng trên màn hình lớn hơn */}
+            <div className="hidden sm:grid flex-1 text-left text-sm leading-tight">
+                <span className="truncate font-semibold">{displayName}</span>
+                {user?.email && (
+                    <span className="truncate text-xs text-gray-500">{user.email}</span>
+                )}
             </div>
+
             <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    <Avatar className="h-8 w-8 rounded-lg">
-                        {avatar ? <AvatarImage src={avatar} alt={name} /> : null}
-                        <AvatarFallback className="rounded-lg">
-                            {name?.split(" ").map((n) => n[0]).join("").toLocaleUpperCase()}
+                <DropdownMenuTrigger asChild aria-label="User menu">
+                    <Avatar className="h-8 w-8 rounded-lg cursor-pointer">
+                        {user?.avatar ? (
+                            <AvatarImage
+                                src={user.avatar}
+                                alt={displayName}
+                                onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.onerror = null;
+                                    target.style.display = 'none';
+                                }}
+                            />
+                        ) : null}
+                        <AvatarFallback className="rounded-lg text-sm">
+                            {getInitials(displayName)}
                         </AvatarFallback>
                     </Avatar>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent>
+
+                <DropdownMenuContent align="end" className="w-56">
+                    <div className="px-3 py-2 text-sm">
+                        <p className="font-medium">{displayName}</p>
+                        {user?.email && <p className="text-xs text-gray-500 truncate">{user.email}</p>}
+                    </div>
+
+                    <DropdownMenuSeparator />
+
                     <DropdownMenuGroup>
                         <DropdownMenuItem
-                            onClick={() => router.push("/profile")}
+                            onClick={() => handleNavigation("/profile")}
+                            className="cursor-pointer"
                         >
-                            <CircleUserRound size="16px" />
+                            <CircleUserRound size="16px" className="mr-2" />
                             Thông tin cá nhân
                         </DropdownMenuItem>
+
                         <DropdownMenuItem
-                            onClick={() => router.push("/reset-password")}
+                            onClick={() => handleNavigation("/reset-password")}
+                            className="cursor-pointer"
                         >
-                            <KeyRound size="16px" />
+                            <KeyRound size="16px" className="mr-2" />
                             Đổi mật khẩu
                         </DropdownMenuItem>
-                        <DropdownMenuItem>
-                            <Bell size="16px" />
+
+                        <DropdownMenuItem className="cursor-pointer">
+                            <Bell size="16px" className="mr-2" />
                             Thông báo
                         </DropdownMenuItem>
                     </DropdownMenuGroup>
+
                     <DropdownMenuSeparator />
+
                     <DropdownMenuGroup>
-                        <DropdownMenuItem>
-                            <SettingsIcon />
+                        <DropdownMenuItem className="cursor-pointer">
+                            <SettingsIcon size="16px" className="mr-2" />
                             Cài đặt
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={logout}>
-                            <LogOut size="16px" />
-                            Đăng xuất
+
+                        <DropdownMenuItem
+                            onClick={handleLogout}
+                            className="cursor-pointer"
+                            disabled={isLoggingOut}
+                        >
+                            <LogOut size="16px" className="mr-2" />
+                            {isLoggingOut ? "Đang đăng xuất..." : "Đăng xuất"}
                         </DropdownMenuItem>
                     </DropdownMenuGroup>
                 </DropdownMenuContent>
             </DropdownMenu>
         </div>
-    )
-}
+    );
+};
 
 export default UserAvatar;

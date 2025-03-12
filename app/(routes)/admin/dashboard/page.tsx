@@ -1,6 +1,6 @@
 import AdminDashboardContainer from '@/screens/admin/dashboard/Container'
-import React from 'react'
 
 export default function AdminDashboardPage() {
-  return <AdminDashboardContainer />
+  // Không cần bọc AdminLayout vì đã có trong layout.tsx
+  return <AdminDashboardContainer />;
 }

@@ -14,6 +14,7 @@ interface FieldInputProps<T extends FieldValues> {
     className?: string;
     autoComplete?: string;
     disabled?: boolean;
+    required?: boolean;
 }
 
 export const FieldInput = <T extends FieldValues>({
@@ -25,6 +26,7 @@ export const FieldInput = <T extends FieldValues>({
     autoComplete,
     className,
     disabled = false,
+    required = false,
 }: FieldInputProps<T>) => {
     const [showPassword, setShowPassword] = useState(false);
     const isPassword = type === "password";
@@ -37,6 +39,7 @@ export const FieldInput = <T extends FieldValues>({
                     <div className={clsx("flex flex-col gap-1", className)}>
                         <Label htmlFor={name} className="text-left font-medium">
                             {label}
+                            {required && <span className="text-red-500">*</span>}
                         </Label>
                         <div className="relative">
                             <Input

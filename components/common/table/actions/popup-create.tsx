@@ -1,59 +1,102 @@
-"use client";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { useDialog } from "@/context/DialogProvider";
+import { Plus } from "lucide-react";
+import React from "react";
 import { toast } from "@/hooks/use-toast";
-import { cn } from "@/lib/utils";
-import { Plus, SquarePen, Trash2 } from "lucide-react";
-import React, { Dispatch, SetStateAction } from "react";
+import { DialogType, useDialog, DialogChildrenProps } from "@/context/DialogProvider";
 
-type TAction = "create" | "edit" | "delete" | "read-only";
-interface IProps {
+interface CreateActionDialogProps<T = any> {
   name: string;
   description?: string;
-  children?: React.ReactNode;
+  children?: React.ReactNode | ((props: DialogChildrenProps<T>) => React.ReactNode);
+  onSubmit?: (data?: T) => Promise<void | boolean>;
+  buttonText?: string;
+  buttonIcon?: React.ReactNode;
+  buttonVariant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
+  buttonSize?: "default" | "sm" | "lg" | "icon";
+  fullWidth?: boolean;
+  disableButton?: boolean;
+  onClose?: () => void;
 }
 
-export function CreateActionDialog({ name, description, children }: IProps) {
-  const actionTitle = (action: TAction) => {
-    switch (action) {
-      case "create":
-        return `Tạo mới ${name}`;
-      case "edit":
-        return `Chỉnh sửa ${name}`;
-      case "delete":
-        return `Xoá ${name}`;
-      case "read-only":
-        return `Xem chi tiết ${name}`;
-    }
+export function CreateActionDialog<T = any>({
+  name,
+  description,
+  children,
+  onSubmit,
+  buttonText = "Tạo mới",
+  buttonIcon = <Plus size={16} />,
+  buttonVariant = "default",
+  buttonSize = "default",
+  fullWidth = false,
+  disableButton = false,
+  onClose,
+}: CreateActionDialogProps<T>) {
+  const { showDialog, hideDialog } = useDialog<T>();
+
+  const handleOpenDialog = () => {
+    showDialog({
+      type: DialogType.CREATE,
+      title: `Tạo mới ${name}`,
+      description: description,
+      fullWidth: fullWidth,
+      children: typeof children === 'function'
+        ? (props) => {
+          // Truyền các props cần thiết cho children function
+          return children({
+            ...props,
+            onClose: () => {
+              props.onClose();
+              onClose && onClose();
+            }
+          });
+        }
+        : children,
+      onSubmit: async (formData) => {
+        if (onSubmit) {
+          try {
+            const result = await onSubmit(formData);
+            toast({
+              title: `Tạo mới ${name.toLowerCase()} thành công`,
+              variant: "default",
+            });
+
+            // Quan trọng: Không cần gọi hideDialog() ở đây
+            // DialogProvider sẽ tự động gọi hideDialog sau khi onSubmit thành công
+
+            if (result === true) {
+              // Phải đảm bảo onClose được gọi trước khi hideDialog
+              // để component cha có thể biết và refetch
+              onClose && onClose();
+            }
+
+            return result;
+          } catch (error) {
+            console.error("[CreateActionDialog] onSubmit error:", error);
+            toast({
+              title: `Lỗi khi tạo mới ${name.toLowerCase()}`,
+              description: error instanceof Error ? error.message : "Có lỗi xảy ra",
+              variant: "destructive",
+            });
+            throw error; // Ném lại lỗi để DialogProvider không đóng dialog
+          }
+        }
+      },
+      onClose: () => {
+        onClose && onClose();
+      }
+    });
   };
 
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button
-          variant="outline"
-          className="flex items-center gap-1 bg-green-800 text-white"
-        >
-          <Plus size={16} />
-          Tạo mới
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>{`Taọ mới ${name}`}</DialogTitle>
-          <DialogDescription>{description}</DialogDescription>
-        </DialogHeader>
-        {children}
-      </DialogContent>
-    </Dialog>
+    <Button
+      variant={buttonVariant}
+      size={buttonSize}
+      className={`flex items-center gap-1 bg-green-800 text-white hover:bg-green-700 ${fullWidth ? 'w-full' : 'sm:w-auto'}`}
+      disabled={disableButton}
+      onClick={handleOpenDialog}
+    >
+      {buttonIcon}
+      {buttonText}
+    </Button>
   );
 }

@@ -1,89 +1,166 @@
 "use client"
 
 import * as React from "react"
-import { ChevronsUpDown, Plus } from "lucide-react"
-
+import { cn } from "@/lib/utils"
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuShortcut,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+    Avatar,
+    AvatarFallback,
+    AvatarImage,
+} from "@/components/ui/avatar"
+import { Button } from "@/components/ui/button"
 import {
-    SidebarMenu,
-    SidebarMenuButton,
-    SidebarMenuItem,
-    useSidebar,
-} from "@/components/ui/sidebar"
+    Command,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+    CommandList,
+    CommandSeparator,
+} from "@/components/ui/command"
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover"
+import { useSidebarState } from "@/components/common/layouts/admin/AdminLayout"
+import { useMediaQuery } from "@/hooks/useMediaQuery"
+import { CheckIcon, PlusCircleIcon, SortDesc } from "lucide-react"
+import { Team } from "./sidebar-data"
 
-export function TeamSwitcher({
-    teams,
-}: {
-    teams: {
-        name: string
-        logo: React.ElementType
-        plan: string
-    }[]
-}) {
-    const { isMobile } = useSidebar()
-    const [activeTeam, setActiveTeam] = React.useState(teams[0])
+// Định nghĩa props cho TeamSwitcher component
+interface TeamSwitcherProps {
+    teams: Team[]
+}
+
+export function TeamSwitcher({ teams }: TeamSwitcherProps) {
+    const [open, setOpen] = React.useState(false)
+    const [showNewTeamDialog, setShowNewTeamDialog] = React.useState(false)
+    const [selectedTeam, setSelectedTeam] = React.useState(teams[0])
+
+    const { collapsed } = useSidebarState()
+    const isMobileScreen = useMediaQuery("(max-width: 768px)")
+
+    // Không áp dụng chế độ icon trên mobile
+    const isIconMode = !isMobileScreen && collapsed
 
     return (
-        <SidebarMenu>
-            <SidebarMenuItem>
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <SidebarMenuButton
-                            size="lg"
-                            className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-                        >
-                            <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                                <activeTeam.logo className="size-4" />
-                            </div>
-                            <div className="grid flex-1 text-left text-sm leading-tight">
-                                <span className="truncate font-semibold">
-                                    {activeTeam.name}
-                                </span>
-                                <span className="truncate text-xs">{activeTeam.plan}</span>
-                            </div>
-                            <ChevronsUpDown className="ml-auto" />
-                        </SidebarMenuButton>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                        className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
-                        align="start"
-                        side={isMobile ? "bottom" : "right"}
-                        sideOffset={4}
+        <>
+            <Popover open={open} onOpenChange={setOpen}>
+                <PopoverTrigger asChild>
+                    <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={open}
+                        aria-label="Select a team"
+                        className={`justify-between ${isIconMode ? "w-12 px-0" : "w-[200px]"}`}
                     >
-                        <DropdownMenuLabel className="text-xs text-muted-foreground">
-                            Teams
-                        </DropdownMenuLabel>
-                        {teams.map((team, index) => (
-                            <DropdownMenuItem
-                                key={team.name}
-                                onClick={() => setActiveTeam(team)}
-                                className="gap-2 p-2"
-                            >
-                                <div className="flex size-6 items-center justify-center rounded-sm border">
-                                    <team.logo className="size-4 shrink-0" />
-                                </div>
-                                {team.name}
-                                <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut>
-                            </DropdownMenuItem>
-                        ))}
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem className="gap-2 p-2">
-                            <div className="flex size-6 items-center justify-center rounded-md border bg-background">
-                                <Plus className="size-4" />
-                            </div>
-                            <div className="font-medium text-muted-foreground">Add team</div>
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            </SidebarMenuItem>
-        </SidebarMenu>
+                        <Avatar className={cn("mr-2 h-5 w-5", isIconMode && "mr-0")}>
+                            <AvatarImage
+                                src={`https://avatar.vercel.sh/${selectedTeam.label}.png`}
+                                alt={selectedTeam.label}
+                            />
+                            <AvatarFallback>SC</AvatarFallback>
+                        </Avatar>
+                        {!isIconMode && (
+                            <>
+                                <span className="team.label">{selectedTeam.label}</span>
+                                <SortDesc className="ml-auto h-4 w-4 shrink-0 opacity-50" />
+                            </>
+                        )}
+                    </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[200px] p-0">
+                    <Command>
+                        <CommandList>
+                            <CommandInput placeholder="Search team..." />
+                            <CommandEmpty>No team found.</CommandEmpty>
+                            <CommandGroup heading="Teams">
+                                {teams.map((team) => (
+                                    <CommandItem
+                                        key={team.label}
+                                        onSelect={() => {
+                                            setSelectedTeam(team)
+                                            setOpen(false)
+                                        }}
+                                        className="text-sm"
+                                    >
+                                        <Avatar className="mr-2 h-5 w-5">
+                                            <AvatarImage
+                                                src={`https://avatar.vercel.sh/${team.label}.png`}
+                                                alt={team.label}
+                                            />
+                                            <AvatarFallback>
+                                                {team.label[0].toUpperCase()}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                        {team.label}
+                                        <CheckIcon
+                                            className={cn(
+                                                "ml-auto h-4 w-4",
+                                                selectedTeam.label === team.label
+                                                    ? "opacity-100"
+                                                    : "opacity-0"
+                                            )}
+                                        />
+                                    </CommandItem>
+                                ))}
+                            </CommandGroup>
+                        </CommandList>
+                        <CommandSeparator />
+                        <CommandList>
+                            <CommandGroup>
+                                {/* Wrap the DialogTrigger with Dialog */}
+                                <Dialog open={showNewTeamDialog} onOpenChange={setShowNewTeamDialog}>
+                                    <DialogTrigger asChild>
+                                        <CommandItem
+                                            onSelect={() => {
+                                                setOpen(false)
+                                                setShowNewTeamDialog(true)
+                                            }}
+                                        >
+                                            <PlusCircleIcon className="mr-2 h-5 w-5" />
+                                            Create Team
+                                        </CommandItem>
+                                    </DialogTrigger>
+                                    <DialogContent>
+                                        <DialogHeader>
+                                            <DialogTitle>Create team</DialogTitle>
+                                            <DialogDescription>
+                                                Add a new team to manage products and customers.
+                                            </DialogDescription>
+                                        </DialogHeader>
+                                        <div>
+                                            <div className="space-y-4 py-2 pb-4">
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="name">Team name</Label>
+                                                    <Input id="name" placeholder="Acme Inc." />
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <DialogFooter>
+                                            <Button variant="outline" onClick={() => setShowNewTeamDialog(false)}>
+                                                Cancel
+                                            </Button>
+                                            <Button type="submit">Continue</Button>
+                                        </DialogFooter>
+                                    </DialogContent>
+                                </Dialog>
+                            </CommandGroup>
+                        </CommandList>
+                    </Command>
+                </PopoverContent>
+            </Popover>
+        </>
     )
 }

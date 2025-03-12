@@ -1,154 +1,118 @@
-"use client";
 import { Button } from "@/components/ui/button";
-import { SquarePen, Trash2 } from "lucide-react";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Eye, SquarePen, Trash2 } from "lucide-react";
 import React from "react";
 import { toast } from "@/hooks/use-toast";
-import { useDialog } from "@/context/DialogProvider";
-import { cn } from "@/lib/utils";
+import { DialogType, useDialog, DialogChildrenProps } from "@/context/DialogProvider";
+import { BaseData, TActions } from "../data-table";
+import { ViewActionDialog } from "./popup-view";
+import { EditActionDialog } from "./popup-edit";
 
-interface ButtonGroupActionProps {
-  action: string;
-  setAction: (action: string) => void;
-  onEdit?: () => void;
-  onDelete?: () => void;
+interface ButtonGroupActionProps<T extends BaseData = BaseData> {
+  actions: TActions[];
+  onEdit?: (data: T) => void;
+  onDelete?: (id: string) => Promise<void>;
+  onView?: (data: T) => void;
   onRefetchData?: () => void;
-  editComponent?: React.ReactNode;
+  editComponent?: React.ReactNode | ((props: DialogChildrenProps<T>) => React.ReactNode);
+  viewComponent?: React.ReactNode | ((props: DialogChildrenProps<T>) => React.ReactNode);
+  rowData: T;
 }
 
-const ButtonGroupAction = ({
-  action,
-  setAction,
+const ButtonGroupAction = <T extends BaseData>({
+  actions,
   onEdit,
   onDelete,
+  onView,
   onRefetchData,
   editComponent,
-}: ButtonGroupActionProps) => {
-  const { dialog, setDialog } = useDialog();
-  const handleDelete = () => {
-    if (onDelete) {
-      try {
-        onDelete();
-        toast({
-          title: "Xoá dữ liệu thành công",
-        });
-      } catch (error) {
-        toast({
-          title: "Xoá dữ liệu thất bại",
-        });
-      } finally {
-        if (onRefetchData) {
-          onRefetchData();
-        }
-        setDialog({ open: false });
-      }
-    }
-  };
+  viewComponent,
+  rowData,
+}: ButtonGroupActionProps<T>) => {
+  const { showDialog } = useDialog<T>();
 
-  const handleUpdate = () => {
-    if (onEdit) {
-      try {
-        onEdit();
-        toast({
-          title: "Cập nhật dữ liệu thành công",
-        });
-      } catch (error) {
-        toast({
-          title: "Cập nhật dữ liệu thất bại",
-        });
-      } finally {
-        if (onRefetchData) {
-          onRefetchData();
+  const handleDelete = () => {
+    showDialog({
+      type: DialogType.DELETE,
+      title: `Xóa dữ liệu ${rowData.id ? `#${rowData.id}` : ''}`,
+      data: rowData,
+      onSubmit: async () => {
+        if (onDelete) {
+          try {
+            await onDelete(rowData.id);
+            toast({
+              title: "Đã xóa dữ liệu",
+              variant: "default"
+            });
+
+            onRefetchData && onRefetchData();
+            return true;
+          } catch (error) {
+            console.error("Error executing delete action:", error);
+            toast({
+              title: "Lỗi khi thực hiện thao tác xóa",
+              description: error instanceof Error ? error.message : "Lỗi không xác định",
+              variant: "destructive"
+            });
+            throw error;
+          }
         }
-        setDialog({ open: false });
+        return false;
       }
-    }
+    });
   };
 
   return (
-    <div className="flex gap-1">
-      <Dialog
-        open={dialog.open}
-        onOpenChange={() => setDialog({ open: !dialog.open })}
-      >
-        <DialogTrigger asChild>
-          <div className="flex gap-1">
-            <Button
-              size="icon"
-              className="bg-blue-800 hover:bg-blue-900 dark:bg-blue-900 dark:hover:bg-blue-700"
-              onClick={() => setAction("edit")}
-            >
-              <SquarePen />
-            </Button>
-            <Button
-              size="icon"
-              className="bg-red-500 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-900"
-              onClick={() => setAction("delete")}
-            >
-              <Trash2 />
-            </Button>
-          </div>
-        </DialogTrigger>
-        <DialogContent className="w-full">
-          {/* <DialogTitle>Xoá dữ liệu</DialogTitle>
-          <DialogDescription>
-            Bạn có chắc chắn muốn xóa dữ liệu này không?
-          </DialogDescription>
-          <DialogFooter className="flex flex-row justify-end gap-1">
-            <Button
-              size="sm"
-              className="bg-red-500 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-900"
-              onClick={handleDelete}
-            >
-              Xoá
-            </Button>
-            <Button
-              size="sm"
-              className="bg-gray-500 hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-900"
-              onClick={() => setDialog({ open: false })}
-            >
-              Huỷ
-            </Button>
-          </DialogFooter> */}
-          <DialogTitle>
-            {action === "edit" ? "Chỉnh sửa dữ liệu" : "Xoá dữ liệu"}
-          </DialogTitle>
-          <DialogDescription>
-            {action === "edit"
-              ? editComponent
-              : "Bạn có chắc chắn muốn xóa dữ liệu này không?"}
-          </DialogDescription>
-          <DialogFooter className="flex flex-row justify-end gap-1">
-            <Button
-              size="sm"
-              // className="bg-red-500 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-900"
-              className={cn(
-                action === "edit"
-                  ? "bg-green-800"
-                  : "bg-red-500 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-900"
-              )}
-              onClick={action === "edit" ? handleUpdate : handleDelete}
-            >
-              {action === "edit" ? "Cập nhật" : "Xoá"}
-            </Button>
-            <Button
-              size="sm"
-              className="bg-gray-500 hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-900"
-              onClick={() => setDialog({ open: false })}
-            >
-              Huỷ
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+    <div className="flex flex-wrap gap-1 justify-end md:justify-start">
+      {actions.includes("read-only") && (
+        <ViewActionDialog
+          name=""
+          buttonText=""
+          buttonSize="icon"
+          buttonIcon={<Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
+          data={rowData}
+          children={
+            typeof viewComponent === 'function'
+              ? (props) => viewComponent({ ...props, data: rowData })
+              : viewComponent
+          }
+          onClose={onRefetchData}
+        />
+      )}
+
+      {actions.includes("edit") && (
+        <EditActionDialog
+          name=""
+          buttonText=""
+          buttonSize="icon"
+          buttonIcon={<SquarePen className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
+          data={rowData}
+          onSubmit={async (data) => {
+            if (onEdit && data) {
+              onEdit(data as T);
+              if (onRefetchData) onRefetchData();
+              return true;
+            }
+            return false;
+          }}
+          children={
+            typeof editComponent === 'function'
+              ? (props) => editComponent({ ...props, data: rowData })
+              : editComponent
+          }
+        />
+      )}
+
+      {actions.includes("delete") && (
+        <Button
+          size="icon"
+          className="bg-red-500 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-900 h-7 w-7 md:w-8 md:h-8 p-0"
+          onClick={handleDelete}
+          title="Xóa"
+          aria-label="Xóa"
+        >
+          <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+        </Button>
+      )}
     </div>
   );
 };

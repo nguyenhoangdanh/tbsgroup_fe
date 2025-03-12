@@ -5,8 +5,10 @@ import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/context/ThemeProvider";
 import SagaProviders from "@/context/SagaProvider";
 import QueryProvider from "@/context/QueryProvider";
-import DialogProvider from "@/context/DialogProvider";
 import { AuthProvider } from "@/context/AuthProvider";
+import { beVietnamPro } from "@/lib/fonts";
+import { DialogProvider } from "@/context/DialogProvider";
+import RootLayoutWrapper from "@/components/common/layouts/admin/RootLayoutWrapper";
 
 const dm_sans = DM_Sans({ subsets: ["latin"] });
 export const metadata: Metadata = {
@@ -21,7 +23,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`bg-white ${dm_sans.className} antialiased`}>
+      <body className={`bg-white ${beVietnamPro.variable} antialiased`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
@@ -31,10 +33,10 @@ export default function RootLayout({
           <SagaProviders>
             <QueryProvider>
               <AuthProvider>
-                <DialogProvider>
+                <RootLayoutWrapper>
                   <Toaster />
                   {children}
-                </DialogProvider>
+                </RootLayoutWrapper>
               </AuthProvider>
             </QueryProvider>
           </SagaProviders>

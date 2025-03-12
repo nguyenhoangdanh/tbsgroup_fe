@@ -3,17 +3,12 @@ import { loginMutationFn } from "@/apis/user/user.api";
 import { defaultLoginValues, loginSchema, TLoginSchema } from "@/schemas/auth";
 import { FieldInput } from "@/components/common/Form/FieldInput";
 import SubmitButton from "@/components/SubmitButton";
-import { toast } from "@/hooks/use-toast";
 import { useDispatchType } from "@/lib/dispatch.utils";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
 import React from "react";
 import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
-import { UserStatusEnum } from "@/common/enum"
-import Cookies from 'js-cookie';
 import useAuthManager from "@/hooks/useAuthManager";
-import { logoutMutationFn } from '../../../apis/user/user.api';
 
 const LoginForm = () => {
     const router = useRouter();
@@ -22,10 +17,6 @@ const LoginForm = () => {
     const methods = useForm<TLoginSchema>({
         defaultValues: defaultLoginValues,
         resolver: zodResolver(loginSchema),
-    });
-
-    const { mutate } = useMutation({
-        mutationFn: loginMutationFn,
     });
 
     const onSubmit: SubmitHandler<TLoginSchema> = async (data) => {

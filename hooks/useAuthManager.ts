@@ -1,4 +1,6 @@
 // hooks/useAuthManager.ts
+
+"use client";
 import {useState, useCallback, useEffect} from 'react';
 import {useRouter, usePathname} from 'next/navigation';
 import {useMutation, useQueryClient, useQuery} from '@tanstack/react-query';
@@ -166,7 +168,7 @@ export const useAuthManager = () => {
             title: 'Thành công',
             description: message || 'Đăng nhập thành công',
           });
-          router.push('/home');
+          window.location.href = '/home';
         }
 
         return response;

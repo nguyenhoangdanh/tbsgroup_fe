@@ -63,3 +63,13 @@ export const logoutMutationFn = async () =>
   });
 
 export const getUserProfileQueryFn = async () => fetchWithAuth('/profile');
+
+// Function lấy tất cả users
+export const getAllUsersQueryFn = async () => {
+  const response = await fetchWithAuth('/users');
+  return response.data; // Giả sử response là { success: true, data: [...] }
+}
+
+// Export type để sử dụng ở các components
+export type User = Awaited<ReturnType<typeof getAllUsersQueryFn>>[number];
+

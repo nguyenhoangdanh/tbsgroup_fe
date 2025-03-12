@@ -1,26 +1,22 @@
 import React from 'react'
 import Header from './Header';
-import UserAvatar from './UserAvatar';
 import Footer from './Footer';
 
-interface IAuthLayoutProps {
+interface IMainLayoutProps {
     title?: string;
     children: React.ReactNode;
 }
 
-const _MainLayout: React.FC<IAuthLayoutProps> = ({ title, children }) => {
+const _MainLayout: React.FC<IMainLayoutProps> = ({ title, children }) => {
     return (
-        <div className="w-full h-full flex flex-col pt-2 min-h-screen gap-4 ">
-            <Header>
-                <UserAvatar
-                    name="Hoang Danh Nguyen"
-                    email="hoangdanh54317@gmail.com"
-                />
-            </Header>
-            <div className="w-[60%] h-full flex-grow items-center justify-between mx-auto border border-gray-200
-            shadow-sm p-4 rounded-xl">
-                {children}
-            </div>
+        <div className="w-full h-full flex flex-col min-h-screen">
+            <Header />
+            <main className="flex-grow px-4 py-6">
+                <div className="w-full md:w-[85%] lg:w-[80%] xl:w-[70%] 2xl:w-[60%] h-full mx-auto border border-gray-200
+                shadow-sm p-3 sm:p-4 md:p-6 rounded-lg sm:rounded-xl">
+                    {children}
+                </div>
+            </main>
             <Footer />
         </div>
     )

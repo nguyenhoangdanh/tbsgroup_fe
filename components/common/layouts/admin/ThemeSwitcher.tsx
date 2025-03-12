@@ -1,25 +1,42 @@
 "use client";
-import React from "react";
+import React, { useCallback } from "react";
 import { useTheme } from "next-themes";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Moon, Sun } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const ThemeSwitcher = () => {
   const { theme, setTheme } = useTheme();
+
+  const toggleTheme = useCallback(() => {
+    setTheme(theme === "light" ? "dark" : "light");
+  }, [theme, setTheme]);
+
   return (
-    <div className="flex pr-4">
-      <Avatar
-        className={`cursor-pointer ${
-          theme === "dark"
-            ? "bg-gray-800 hover:text-yellow-400"
-            : "bg-gray-200 hover:text-violet-600"
-        }`}
-        onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-      >
-        <AvatarFallback>{theme === "dark" ? <Sun /> : <Moon />}</AvatarFallback>
-      </Avatar>
-    </div>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            className="w-8 h-8 flex items-center justify-center rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            onClick={toggleTheme}
+            aria-label={theme === "dark" ? "Chuyển sang chế độ sáng" : "Chuyển sang chế độ tối"}
+          >
+            <Avatar
+              className={`cursor-pointer transition-colors ${theme === "dark"
+                ? "bg-gray-800 text-gray-200 hover:text-yellow-400 hover:bg-gray-700"
+                : "bg-gray-200 text-gray-800 hover:text-violet-600 hover:bg-gray-300"
+                }`}
+            >
+              <AvatarFallback>{theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}</AvatarFallback>
+            </Avatar>
+          </button>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>{theme === "dark" ? "Chuyển sang chế độ sáng" : "Chuyển sang chế độ tối"}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 };
 
-export default ThemeSwitcher;
+export default React.memo(ThemeSwitcher);

@@ -1,11 +1,15 @@
-import AdminLayout from "@/components/common/layouts/admin/AdminLayout";
+import React from "react";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import AdminLayoutContent from "@/components/common/layouts/admin/AdminLayout";
 
-const RootLayout: React.FC<{ children: React.ReactNode }> = async ({ children }) => {
+const AdminRootLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     return (
-        <AdminLayout>
-            {children}
-        </AdminLayout>
+        <SidebarProvider>
+            <AdminLayoutContent>
+                {children}
+            </AdminLayoutContent>
+        </SidebarProvider>
     );
 };
 
-export default RootLayout;
+export default AdminRootLayout;
