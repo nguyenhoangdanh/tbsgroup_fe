@@ -16,8 +16,8 @@ interface ButtonGroupActionProps<T extends BaseData = BaseData> {
   editComponent?: React.ReactNode | ((props: DialogChildrenProps<T>) => React.ReactNode);
   viewComponent?: React.ReactNode | ((props: DialogChildrenProps<T>) => React.ReactNode);
   rowData: T;
+  children?: React.ReactNode | ((props: DialogChildrenProps<T>) => React.ReactNode);
 }
-
 const ButtonGroupAction = <T extends BaseData>({
   actions,
   onEdit,
@@ -27,6 +27,7 @@ const ButtonGroupAction = <T extends BaseData>({
   editComponent,
   viewComponent,
   rowData,
+  children,
 }: ButtonGroupActionProps<T>) => {
   const { showDialog } = useDialog<T>();
 

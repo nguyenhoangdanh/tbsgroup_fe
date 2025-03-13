@@ -33,10 +33,10 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover"
-import { useSidebarState } from "@/components/common/layouts/admin/AdminLayout"
 import { useMediaQuery } from "@/hooks/useMediaQuery"
 import { CheckIcon, PlusCircleIcon, SortDesc } from "lucide-react"
 import { Team } from "./sidebar-data"
+import { useSidebarState } from "../../SidebarStateProvider"
 
 // Định nghĩa props cho TeamSwitcher component
 interface TeamSwitcherProps {

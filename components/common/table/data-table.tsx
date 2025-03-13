@@ -36,7 +36,9 @@ import * as XLSX from 'xlsx';
 import { jsPDF } from "jspdf"
 import autoTable from 'jspdf-autotable'
 import ButtonGroupAction from "./actions/button-group-actions";
-import { TableSkeleton } from "./TableSkeleton";
+import PageLoader from '../PageLoader';
+import { useTheme } from "next-themes";
+import { DialogChildrenProps } from "@/context/DialogProvider";
 
 
 // Explicitly define types and actions
@@ -65,6 +67,7 @@ interface DataTableProps<TData extends BaseData, TValue> {
   exportFormats?: Array<"csv" | "excel" | "pdf">;
   initialPageSize?: number;
   isLoading?: boolean;
+  children?: React.ReactNode;
 }
 
 // Hàm chuyển đổi tiếng Việt không dấu
@@ -94,7 +97,10 @@ export function DataTable<TData extends BaseData, TValue>({
   exportFormats = ["csv", "excel", "pdf"],
   initialPageSize = 10,
   isLoading = false,
+  children,
 }: DataTableProps<TData, TValue>) {
+
+  const { theme } = useTheme();
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
@@ -464,12 +470,15 @@ export function DataTable<TData extends BaseData, TValue>({
           <div className="h-10 w-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
         )}
       </div>
-      {isLoading ? (
-        <TableSkeleton
-          columns={columns.length + (actions.includes("edit") || actions.includes("delete") || actions.includes("read-only") ? 1 : 0)}
-          rows={initialPageSize}
-        />
-      ) : (
+      <PageLoader
+        skeletonColumns={columns.length + (actions.includes("edit") || actions.includes("delete") || actions.includes("read-only") ? 1 : 0)}
+        skeletonRows={initialPageSize}
+        showTableSkeleton={true}
+        isLoading={isLoading}
+        darkMode={theme === "dark"}
+        loadingTime={3000}
+        skeletonLoadingTime={3500}
+      >
         <div className="w-full">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between py-2 sm:py-4 gap-2">
             <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center w-full sm:w-auto">
@@ -599,11 +608,12 @@ export function DataTable<TData extends BaseData, TValue>({
                         <TableCell key={`${row.id}-actions`} className="py-2">
                           <ButtonGroupAction
                             actions={actions}
-                            onEdit={() => onEdit && onEdit(row.original)}
+                            onEdit={(data) => onEdit && onEdit(data)}
+                            // onEdit={(data) => console.log('Edit', data)}
                             onDelete={async (id) => onDelete && await onDelete(id)}
                             onRefetchData={refetchData}
-                            editComponent={editFormComponent}
                             rowData={row.original}
+                            editComponent={editFormComponent}
                           />
                         </TableCell>
                       )}
@@ -668,7 +678,7 @@ export function DataTable<TData extends BaseData, TValue>({
             </div>
           </div>
         </div>
-      )}
+      </PageLoader>
     </div>
   );
 }

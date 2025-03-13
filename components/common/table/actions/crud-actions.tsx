@@ -1,3 +1,6 @@
+// Đây là phần cần sửa trong file crud-actions.tsx
+
+// Sửa lại hàm này để đảm bảo nó không bị mất dữ liệu khi đóng dialog
 import React from "react";
 import { BaseData, TActions } from "../data-table";
 import { CreateActionDialog } from "./popup-create";
@@ -71,12 +74,17 @@ export function CrudActions<T extends BaseData = BaseData>({
                     description={description}
                     data={rowData}
                     onSubmit={async (data) => {
-                        if (onEdit) {
-                            await onEdit(data as T);
-                            if (onRefetch) onRefetch();
-                            return true;
+                        try {
+                            if (onEdit) {
+                                await onEdit(data as T);
+                                if (onRefetch) onRefetch();
+                                return true;
+                            }
+                            return false;
+                        } catch (error) {
+                            console.error("Error in onEdit:", error);
+                            return false;
                         }
-                        return false;
                     }}
                     onClose={onRefetch}
                     children={editComponent}

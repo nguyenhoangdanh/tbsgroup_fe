@@ -1,15 +1,19 @@
+// layout.tsx - Nên tách thành file riêng để Next.js có thể tối ưu
+
 import React from "react";
-import { SidebarProvider } from "@/components/ui/sidebar";
-import AdminLayoutContent from "@/components/common/layouts/admin/AdminLayout";
+import { SidebarStateProvider } from "@/components/common/layouts/admin/SidebarStateProvider";
+import RootLayoutWrapper from "@/components/common/layouts/admin/RootLayoutWrapper";
+import AdminLayoutWrapper from "@/components/common/layouts/admin/AdminLayoutWrapper";
 
-const AdminRootLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+// Gói gọn layout trong các Providers
+export default function AdminRootLayout({ children }: { children: React.ReactNode }) {
     return (
-        <SidebarProvider>
-            <AdminLayoutContent>
-                {children}
-            </AdminLayoutContent>
-        </SidebarProvider>
+        <RootLayoutWrapper>
+            <SidebarStateProvider>
+                <AdminLayoutWrapper>
+                    {children}
+                </AdminLayoutWrapper>
+            </SidebarStateProvider>
+        </RootLayoutWrapper>
     );
-};
-
-export default AdminRootLayout;
+}

@@ -1,6 +1,7 @@
+
 "use client";
 
-import React, { useCallback, useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -10,11 +11,11 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Separator } from "@/components/ui/separator";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import ThemeSwitcher from "./ThemeSwitcher";
 import dynamic from "next/dynamic";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { AlignJustify } from "lucide-react";
-import { useSidebarCollapsed, useSidebarSetCollapsed, useSidebarIsMobileView } from "./SidebarStateProvider";
-import { useRouteChangeHandler } from "@/hooks/useRouteChangeHandler";
 
 // Sử dụng dynamic import để tránh lỗi hydration
 const DynamicAppSidebar = dynamic(
@@ -33,7 +34,13 @@ interface AdminLayoutProps {
   variant?: "default" | "dashboard";
 }
 
-// Tách BreadcrumbNavigation thành component riêng với memo
+// Tạo một custom context provider để quản lý trạng thái sidebar
+const SidebarStateContext = React.createContext<{
+  collapsed: boolean;
+  setCollapsed: (value: boolean) => void;
+  isMobileView: boolean;
+} | null>(null);
+
 const BreadcrumbNavigation = React.memo(({ items }: {
   items: Array<{
     title: string;
@@ -65,7 +72,7 @@ const BreadcrumbNavigation = React.memo(({ items }: {
 
 BreadcrumbNavigation.displayName = "BreadcrumbNavigation";
 
-// Tách HeaderSection thành component riêng với memo và các props cần thiết
+
 const HeaderSection = React.memo(({
   breadcrumbItems,
   showThemeSwitcher,
@@ -109,11 +116,11 @@ const HeaderSection = React.memo(({
       </div>
     </header>
   );
-});
+})
 
 HeaderSection.displayName = "HeaderSection";
 
-// Main content wrapper tối ưu hóa để tránh re-renders
+// Main content wrapper component to prevent re-renders of main content
 const MainContent = React.memo(({ children, variant }: { children: React.ReactNode, variant?: "default" | "dashboard" }) => {
   const mainClasses = variant === "dashboard"
     ? "flex-1 overflow-y-auto bg-slate-50 dark:bg-slate-950 w-full"
@@ -124,7 +131,7 @@ const MainContent = React.memo(({ children, variant }: { children: React.ReactNo
 
 MainContent.displayName = "MainContent";
 
-// Tách SidebarComponent thành component riêng và tối ưu hóa 
+// Separated Sidebar component to prevent re-renders
 const SidebarComponent = React.memo(({ collapsed, isClient, isSmallScreen }: {
   collapsed: boolean,
   isClient: boolean,
@@ -166,8 +173,8 @@ const SidebarOverlay = React.memo(({ isSmallScreen, collapsed, onCollapse }: {
 
 SidebarOverlay.displayName = "SidebarOverlay";
 
-// AdminLayout component
-const AdminLayout = ({
+
+const _AdminLayout = ({
   children,
   showThemeSwitcher = true,
   breadcrumbItems = [
@@ -176,72 +183,117 @@ const AdminLayout = ({
   ],
   variant = "default",
 }: AdminLayoutProps) => {
+  // Xác định thiết bị
+  const isMobileScreen = useMediaQuery("(max-width: 768px)");
+  const isTabletScreen = useMediaQuery("(min-width: 769px) and (max-width: 1023px)");
+  const isSmallScreen = isMobileScreen || isTabletScreen;
+  const [isClient, setIsClient] = useState(false);
 
-  useRouteChangeHandler(); // Sử dụng hook để xử lý route change
+  // Trạng thái sidebar - Mặc định đóng trên tất cả thiết bị
+  const [collapsed, setCollapsed] = useState(true);
 
-  // Sử dụng các context riêng biệt để giảm thiểu re-renders
-  const collapsed = useSidebarCollapsed();
-  const setCollapsed = useSidebarSetCollapsed();
-  const isMobileView = useSidebarIsMobileView();
-
-  const [isClient, setIsClient] = React.useState(false);
-
-  // Set isClient once component is mounted
-  React.useEffect(() => {
+  useEffect(() => {
     setIsClient(true);
+
+    // Khôi phục trạng thái sidebar từ localStorage cho desktop
+    if (!isSmallScreen) {
+      const savedState = localStorage.getItem('sidebarCollapsed');
+      if (savedState !== null) {
+        setCollapsed(savedState === 'true');
+      } else {
+        // Mặc định mở trên desktop
+        setCollapsed(false);
+      }
+    }
   }, []);
 
-  // Tối ưu callbacks để tránh re-render
-  const handleToggleSidebar = useCallback(() => {
-    setCollapsed(!collapsed);
-  }, [collapsed, setCollapsed]);
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsClient(true);
 
-  const handleCollapse = useCallback(() => {
-    setCollapsed(true);
-  }, [setCollapsed]);
+      // For desktop views
+      if (!isSmallScreen) {
+        const savedState = localStorage.getItem('sidebarCollapsed');
+        if (savedState !== null) {
+          setCollapsed(savedState === 'true');
+        } else {
+          // Default open on desktop
+          setCollapsed(false);
+        }
+      }
+    }
+  }, [isSmallScreen]);
 
-  // Memoize contentStyle để tránh tính toán lại
-  const contentStyle = useMemo(() => ({
-    width: isMobileView
-      ? '100%'
-      : (collapsed ? 'calc(100% - 4rem)' : 'calc(100% - 14rem)')
-  }), [isMobileView, collapsed]);
+  const sidebarContextValue = React.useMemo(() => ({
+    collapsed,
+    setCollapsed,
+    isMobileView: isSmallScreen
+  }), [collapsed, isSmallScreen]);
+
+  // Overlay khi sidebar mở trên thiết bị nhỏ
+  const overlayElement = (isSmallScreen && !collapsed) ? (
+    <div
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-10"
+      onClick={() => setCollapsed(true)}
+    />
+  ) : null;
 
   return (
-    <div className="flex min-h-screen h-full w-full overflow-hidden">
-      {/* Overlay for mobile/tablet view */}
-      <SidebarOverlay
-        isSmallScreen={isMobileView}
-        collapsed={collapsed}
-        onCollapse={handleCollapse}
-      />
+    <SidebarProvider>
+      <SidebarStateContext.Provider value={sidebarContextValue}>
+        <div className="flex min-h-screen h-full w-full overflow-hidden">
+          {/* Overlay cho thiết bị nhỏ */}
+          {overlayElement}
 
-      {/* Sidebar */}
-      <SidebarComponent
-        collapsed={collapsed}
-        isClient={isClient}
-        isSmallScreen={isMobileView}
-      />
+          <div
+            className={`
+    ${isSmallScreen ? 'fixed z-20' : 'relative'} 
+    transition-all duration-300 ease-in-out h-screen
+    ${collapsed ? 'w-16' : 'w-56'}
+    ${(isSmallScreen && collapsed) || !isClient ? 'hidden' : ''}
+  `}
+          >
+            {isClient && <DynamicAppSidebar />}
+          </div>
 
-      {/* Main Content */}
-      <div
-        className="flex flex-col flex-grow transition-all duration-300 ease-in-out"
-        style={contentStyle}
-      >
-        <HeaderSection
-          breadcrumbItems={breadcrumbItems}
-          showThemeSwitcher={showThemeSwitcher}
-          variant={variant}
-          onToggleSidebar={handleToggleSidebar}
-          isCollapsed={collapsed}
-          isMobileView={isMobileView}
-        />
-        <MainContent variant={variant}>
-          {children}
-        </MainContent>
-      </div>
-    </div>
+          {/* Main Content */}
+          <div
+            className={`
+              flex flex-col flex-grow 
+              transition-all duration-300 ease-in-out
+            `}
+            style={{
+              width: isSmallScreen
+                ? '100%'
+                : (collapsed ? 'calc(100% - 4rem)' : 'calc(100% - 14rem)')
+            }}
+          >
+            <HeaderSection
+              breadcrumbItems={breadcrumbItems}
+              showThemeSwitcher={showThemeSwitcher}
+              variant={variant}
+              onToggleSidebar={() => setCollapsed(!collapsed)}
+              isCollapsed={collapsed}
+              isMobileView={isSmallScreen}
+            />
+            <MainContent variant={variant}>
+              {children}
+            </MainContent>
+          </div>
+        </div>
+      </SidebarStateContext.Provider>
+    </SidebarProvider>
   );
 };
 
-export default React.memo(AdminLayout);
+export const useSidebarState = () => {
+  const context = React.useContext(SidebarStateContext);
+  if (!context) {
+    throw new Error("useSidebarState must be used within SidebarStateContext.Provider");
+  }
+  return context;
+};
+
+const AdminLayout = React.memo(_AdminLayout);
+
+export default AdminLayout;

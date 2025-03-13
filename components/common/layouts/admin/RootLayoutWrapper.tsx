@@ -13,7 +13,6 @@ const RootLayoutWrapper: React.FC<RootLayoutWrapperProps> = ({ children }) => {
         <DialogProvider>
             {children}
             <GlobalDialog />
-
         </DialogProvider>
     );
 };

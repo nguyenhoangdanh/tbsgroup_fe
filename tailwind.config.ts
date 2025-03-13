@@ -75,10 +75,20 @@ const config: Config = {
       },
       keyframes: {
         'spin-reverse': {
-          '0%': { transform: 'rotate(0deg)' },
-          '100%': { transform: 'rotate(-360deg)' },
+          from: {transform: 'rotate(0deg)'},
+          to: {transform: 'rotate(-360deg)'},
+        },
+        'pulse-slow': {
+          '0%, 100%': {opacity: '1'},
+          '50%': {opacity: '0.7'},
         },
       },
+      // keyframes: {
+      //   'spin-reverse': {
+      //     '0%': { transform: 'rotate(0deg)' },
+      //     '100%': { transform: 'rotate(-360deg)' },
+      //   },
+      // },
     },
   },
   plugins: [require('tailwindcss-animate')],

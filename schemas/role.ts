@@ -7,8 +7,8 @@ export const roleSchema = z.object({
     description: z.string().nullable().optional(),
     level: z.number().int().optional().default(0),
     isSystem: z.boolean().optional().default(false),
-    createdAt: z.date(),
-    updatedAt: z.date(),
+    createdAt: z.date().optional(),
+    updatedAt: z.date().optional(),
   });
   
 export type TRoleSchema = z.infer<typeof roleSchema>;

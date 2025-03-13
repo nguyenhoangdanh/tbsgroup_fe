@@ -21,16 +21,21 @@ import {
 } from '@/apis/roles/role.api';
 import {useCallback, useMemo} from 'react';
 
-// Cache configurations
-const GC_TIME = 30 * 60 * 1000; // 30 minutes
-const STALE_TIME = 5 * 60 * 1000; // 5 minutes
-const LIST_STALE_TIME = 30 * 1000; // 30 seconds - balancing between fresh data and performance
+// // Cache configurations
+// const GC_TIME = 30 * 60 * 1000; // 30 minutes
+// const STALE_TIME = 5 * 60 * 1000; // 5 minutes
+// const LIST_STALE_TIME = 30 * 1000; // 30 seconds - balancing between fresh data and performance
 
-// Error retry configuration
+// Cải thiện cache configurations cho ứng dụng quy mô lớn
+const GC_TIME = 60 * 60 * 1000; // 60 minutes (tăng lên để giảm fetching)
+const STALE_TIME = 10 * 60 * 1000; // 10 minutes (tăng lên để giảm số lần refetch)
+const LIST_STALE_TIME = 60 * 1000; // 1 minute (tăng từ 30s lên 60s)
+
+// Cải thiện retry configuration
 const DEFAULT_RETRY_OPTIONS = {
-  retry: 1, // Giảm xuống 1 lần retry để tránh quá nhiều request
+  retry: 2, // Tăng lên 2 lần
   retryDelay: (attemptIndex: number) =>
-    Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
+    Math.min(1000 * Math.pow(1.5, attemptIndex), 30000), // Giảm hệ số từ 2 xuống 1.5
 };
 
 /**

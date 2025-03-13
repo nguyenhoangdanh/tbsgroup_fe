@@ -173,9 +173,9 @@ export const useRoleHelpers = () => {
   /**
    * Select a role for editing or viewing
    */
-  const selectRole = useCallback((role: RoleType | null) => {
-    setSelectedRole(role);
-  }, []);
+  // const selectRole = useCallback((role: RoleType | null) => {
+  //   setSelectedRole(role);
+  // }, []);
 
   return {
     // State
@@ -187,7 +187,7 @@ export const useRoleHelpers = () => {
 
     // Actions
     setSelectedRole,
-    selectRole,
+    // selectRole,
     resetError,
     updateFilter,
     resetFilters,

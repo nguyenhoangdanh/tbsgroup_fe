@@ -2,6 +2,7 @@ import {NextRequest, NextResponse} from 'next/server';
 import { UserStatusEnum } from './common/enum';
 
 const protectedRoutes = ['/home', '/sessions'];
+const adminProtectedRoutes = ['/admin'];
 const publicRoutes = [
   '/',
   '/login',
@@ -24,7 +25,7 @@ export default async function middleware(req: NextRequest) {
 
   const accessToken = req.cookies.get('accessToken')?.value;
   
-  if (isProtectedRoute && !accessToken) {
+  if (isProtectedRoute && !accessToken && adminProtectedRoutes.includes(path)) {
     return NextResponse.redirect(new URL('/login', req.nextUrl));
   }
 
