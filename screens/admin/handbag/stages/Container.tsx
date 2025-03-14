@@ -30,7 +30,7 @@ const HandbagStageContainer = () => {
               <div className="">Edit form</div>
             </>
           }
-          onDelete={(id) => deleteProductionProcess(Number(id))}
+          // onDelete={(id) => deleteProductionProcess(Number(id))}
           onEdit={(data) => {
             console.log("Edit", data);
           }}
