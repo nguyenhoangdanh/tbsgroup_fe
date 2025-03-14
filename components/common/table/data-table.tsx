@@ -56,6 +56,7 @@ interface DataTableProps<TData extends BaseData, TValue> {
   description?: string;
   createFormComponent?: React.ReactNode;
   editFormComponent?: React.ReactNode;
+  viewFormComponent?: React.ReactNode;
   refetchData?: () => void;
   onDelete?: (id: string) => Promise<void>;
   onEdit?: (data: TData) => void;
@@ -86,6 +87,7 @@ export function DataTable<TData extends BaseData, TValue>({
   description,
   createFormComponent,
   editFormComponent,
+  viewFormComponent,
   actions,
   refetchData,
   onDelete,
@@ -614,6 +616,7 @@ export function DataTable<TData extends BaseData, TValue>({
                             onRefetchData={refetchData}
                             rowData={row.original}
                             editComponent={editFormComponent}
+                            viewComponent={viewFormComponent}
                           />
                         </TableCell>
                       )}

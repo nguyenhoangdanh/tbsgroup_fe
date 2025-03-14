@@ -34,22 +34,19 @@ export function ViewActionDialog<T extends BaseData = BaseData>({
     const { showDialog } = useDialog<T>();
 
     const handleOpenDialog = () => {
-        console.log("[ViewActionDialog] Opening dialog with data:", data);
         showDialog({
             type: DialogType.VIEW,
-            title: `Chi tiết ${name} ${data.id ? `#${data.id}` : ''}`,
+            title: `Chi tiết ${name}`,
             description: description,
             fullWidth: fullWidth,
+            isReadOnly: true,
             data: data, // Truyền dữ liệu hiện tại vào dialog
             children: typeof children === 'function'
                 ? (props) => {
-                    console.log("[ViewActionDialog] Rendering children function");
                     return children({
                         ...props,
                         data: props.data || data, // Đảm bảo luôn có data
-                        // isReadOnly: true, // Thêm flag để các form biết đây là chế độ xem
                         onClose: () => {
-                            console.log("[ViewActionDialog] children onClose called");
                             props.onClose();
                             onClose && onClose();
                         }
@@ -57,15 +54,14 @@ export function ViewActionDialog<T extends BaseData = BaseData>({
                 }
                 : children,
             onClose: () => {
-                console.log("[ViewActionDialog] Dialog onClose called");
                 onClose && onClose();
             }
         });
     };
 
     const buttonClasses = buttonSize === "icon"
-        ? "bg-blue-500 hover:bg-blue-600 text-white h-7 w-7 md:w-8 md:h-8 p-0"
-        : `flex items-center gap-1 bg-blue-500 hover:bg-blue-600 text-white ${fullWidth ? 'w-full' : 'sm:w-auto'}`;
+        ? "bg-gray-400 hover:bg-gray-500 text-white h-7 w-7 md:w-8 md:h-8 p-0"
+        : `flex items-center gap-1 bg-gray-400 hover:bg-gray-500 text-white ${fullWidth ? 'w-full' : 'sm:w-auto'}`;
 
     return (
         <Button

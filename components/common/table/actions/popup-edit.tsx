@@ -34,24 +34,21 @@ export function EditActionDialog<T extends BaseData = BaseData>({
     onClose,
     data,
 }: EditActionDialogProps<T>) {
-    const { showDialog, hideDialog } = useDialog<T>();
+    const { showDialog } = useDialog<T>();
 
     const handleOpenDialog = () => {
-        console.log("[EditActionDialog] Opening dialog with data:", data);
         showDialog({
             type: DialogType.EDIT,
-            title: `Chỉnh sửa ${name} ${data.id ? `#${data.id}` : ''}`,
+            title: `Chỉnh sửa ${name}`,
             description: description,
             fullWidth: fullWidth,
-            data: data, // Truyền dữ liệu hiện tại vào dialog
+            data: data,
             children: typeof children === 'function'
                 ? (props) => {
-                    console.log("[EditActionDialog] Rendering children function");
                     return children({
                         ...props,
-                        data: props.data || data, // Đảm bảo luôn có data
+                        data: props.data || data,
                         onClose: () => {
-                            console.log("[EditActionDialog] children onClose called");
                             props.onClose();
                             onClose && onClose();
                         }
@@ -59,11 +56,9 @@ export function EditActionDialog<T extends BaseData = BaseData>({
                 }
                 : children,
             onSubmit: async (formData) => {
-                console.log("[EditActionDialog] onSubmit called with data:", formData);
                 if (onSubmit) {
                     try {
                         await onSubmit(formData as T);
-                        console.log("[EditActionDialog] onSubmit success");
                         toast({
                             title: `Cập nhật ${name.toLowerCase()} thành công`,
                             variant: "default",
@@ -71,7 +66,6 @@ export function EditActionDialog<T extends BaseData = BaseData>({
 
                         return true;
                     } catch (error) {
-                        console.error("[EditActionDialog] onSubmit error:", error);
                         toast({
                             title: `Lỗi khi cập nhật ${name.toLowerCase()}`,
                             description: error instanceof Error ? error.message : "Có lỗi xảy ra",
@@ -82,7 +76,6 @@ export function EditActionDialog<T extends BaseData = BaseData>({
                 }
             },
             onClose: () => {
-                console.log("[EditActionDialog] Dialog onClose called");
                 onClose && onClose();
             }
         });

@@ -177,7 +177,7 @@ const Header: React.FC<IHeaderProps> = ({ children }) => {
                                     )}
                                 </div>
                             ))}
-                            {user?.role === 'SUPER_ADMIN' && (
+                            {(user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN') && (
                                 <Link
                                     href="/admin/dashboard"
                                     className={`text-sm lg:text-base font-medium hover:text-gray-900 transition-colors ${pathname?.startsWith('/admin')
@@ -258,7 +258,7 @@ const Header: React.FC<IHeaderProps> = ({ children }) => {
                                 )}
                             </div>
                         ))}
-                        {user?.role === 'SUPER_ADMIN' && (
+                        {(user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN') && (
                             <Link
                                 href="/admin/dashboard"
                                 className={`py-3 text-base font-medium border-b border-gray-100 block ${pathname?.startsWith('/admin') ? 'text-gray-900 font-semibold' : 'text-gray-600'

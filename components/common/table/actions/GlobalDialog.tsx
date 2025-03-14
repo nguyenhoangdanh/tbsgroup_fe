@@ -10,15 +10,6 @@ import { Loader2 } from "lucide-react";
 const GlobalDialog = memo(() => {
     const { dialog, hideDialog, submit, isSubmitting } = useDialog();
 
-    // Debug log mỗi khi component render
-    console.log("GlobalDialog rendering with dialog state:", {
-        open: dialog.open,
-        title: dialog.title,
-        type: dialog.type,
-        hasChildren: !!dialog.children,
-        dataExists: !!dialog.data
-    });
-
     // Dialog title component
     const dialogTitle = useMemo(() => {
         if (!dialog.title) {
@@ -37,11 +28,8 @@ const GlobalDialog = memo(() => {
 
     // Dialog content component
     const dialogContent = useMemo(() => {
-        console.log("Rendering dialog content, children type:", typeof dialog.children);
-
         // Render function children if provided
         if (typeof dialog.children === 'function') {
-            console.log("Rendering function children with data:", dialog.data);
             try {
                 return dialog.children({
                     data: dialog.data,
@@ -57,13 +45,11 @@ const GlobalDialog = memo(() => {
 
         // Render direct children if provided
         if (dialog.children) {
-            console.log("Rendering direct children");
             return dialog.children;
         }
 
         // Default delete dialog
         if (dialog.type === DialogType.DELETE) {
-            console.log("Rendering DELETE dialog");
             return (
                 <div className="p-4 text-center">
                     <p className="mb-4">Bạn có chắc chắn muốn xóa?</p>
@@ -108,7 +94,6 @@ const GlobalDialog = memo(() => {
             );
         }
 
-        console.log("No matching dialog content");
         return null;
     }, [dialog.children, dialog.data, dialog.type, isSubmitting, submit, hideDialog]);
 
@@ -141,7 +126,6 @@ const GlobalDialog = memo(() => {
         return null;
     }
 
-    console.log("Rendering final Dialog component with open state:", dialog.open);
 
     return (
         <Dialog

@@ -29,7 +29,7 @@ const ButtonGroupAction = <T extends BaseData>({
   rowData,
   children,
 }: ButtonGroupActionProps<T>) => {
-  const { showDialog } = useDialog<T>();
+  const { showDialog, dialog } = useDialog<T>();
 
   const handleDelete = () => {
     showDialog({
@@ -66,7 +66,7 @@ const ButtonGroupAction = <T extends BaseData>({
     <div className="flex flex-wrap gap-1 justify-end md:justify-start">
       {actions.includes("read-only") && (
         <ViewActionDialog
-          name=""
+          name={rowData.name ? rowData.name : ""}
           buttonText=""
           buttonSize="icon"
           buttonIcon={<Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
@@ -76,13 +76,12 @@ const ButtonGroupAction = <T extends BaseData>({
               ? (props) => viewComponent({ ...props, data: rowData })
               : viewComponent
           }
-          onClose={onRefetchData}
         />
       )}
 
       {actions.includes("edit") && (
         <EditActionDialog
-          name=""
+          name={rowData.name ? rowData.name : ""}
           buttonText=""
           buttonSize="icon"
           buttonIcon={<SquarePen className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}

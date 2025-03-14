@@ -31,6 +31,7 @@ export interface DialogConfig<T = any> {
   onClose?: () => void;
   fullWidth?: boolean;
   id?: string; // Thêm ID để phân biệt giữa các dialog
+  isReadOnly?: boolean;
 }
 
 // Interface for dialog children props
@@ -50,6 +51,7 @@ interface DialogContextType<T = any> {
   hideDialog: () => void;
   submit: (data?: T) => Promise<void | boolean>;
   updateDialogData: (newData: T) => void;
+  isReadOnly: boolean;
 }
 
 // Create dialog context
@@ -60,12 +62,12 @@ const DialogContext = createContext<DialogContextType>({
   showDialog: () => { },
   hideDialog: () => { },
   submit: async () => { },
-  updateDialogData: () => { }
+  updateDialogData: () => { },
+  isReadOnly: false
 });
 
 // Provider for managing dialog state
 export const DialogProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  // Sử dụng useRef để tránh re-renders không cần thiết
   const [dialog, setDialog] = useState<DialogConfig>({
     open: false
   });
@@ -110,10 +112,6 @@ export const DialogProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       open: true
     }));
 
-    // Log cho debugging trong môi trường dev
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`[DialogProvider] Showing dialog ${dialogId} with data:`, config.data);
-    }
   }, []);
 
   const hideDialog = useCallback(() => {
@@ -123,11 +121,6 @@ export const DialogProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }
 
     isClosingRef.current = true;
-
-    // Log cho debugging
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`[DialogProvider] Closing dialog ${dialogIdRef.current}`);
-    }
 
     // Gọi onClose callback nếu có
     if (dialog.onClose) {
@@ -175,11 +168,6 @@ export const DialogProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       // Sử dụng dữ liệu từ tham số hoặc từ ref nếu không có
       const dataToSubmit = data || currentDataRef.current;
 
-      // Log cho debugging
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`[DialogProvider] Submitting dialog ${dialogIdRef.current} with data:`, dataToSubmit);
-      }
-
       // Gọi onSubmit và đợi kết quả
       const result = await dialog.onSubmit(dataToSubmit);
 
@@ -213,7 +201,8 @@ export const DialogProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     showDialog,
     hideDialog,
     submit,
-    updateDialogData
+    updateDialogData,
+    isReadOnly: dialog.isReadOnly || false
   }), [dialog, isSubmitting, showDialog, hideDialog, submit, updateDialogData]);
 
   return (

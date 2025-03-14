@@ -21,11 +21,9 @@ const RoleManagementScreen = () => {
         activeFilters,
         handleCreateRole,
         handleUpdateRole,
+        resetError,
     } = useRoleContext();
 
-    // State for pagination
-    const [page, setPage] = useState(1);
-    const [limit, setLimit] = useState(10);
 
     // Sử dụng useRef để tránh re-render không cần thiết
     const refetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -35,7 +33,7 @@ const RoleManagementScreen = () => {
     const pendingRequestsRef = useRef(new Set<string>());
 
     // Dialog context
-    const { hideDialog, updateDialogData, showDialog } = useDialog();
+    const { updateDialogData, showDialog } = useDialog();
 
     // Thêm effect để cập nhật dialog khi selectedRole thay đổi
     // Đảm bảo dependencies array chính xác để tránh re-render không cần thiết
@@ -52,8 +50,6 @@ const RoleManagementScreen = () => {
         refetch: refetchRoles,
         isRefetching
     } = listRoles({
-        page,
-        limit,
         ...activeFilters
     }, {
         refetchOnWindowFocus: false,
@@ -143,18 +139,12 @@ const RoleManagementScreen = () => {
         }
     }, [deleteRoleMutation, safeRefetch, selectedRole, setSelectedRole]);
 
-    // Sử dụng useCallback để tránh re-render không cần thiết
-    // const handleEditRole = useCallback(async (role: RoleType): Promise<boolean> => {
-    //     setSelectedRole(role);
-    //     return true;
-    // }, [setSelectedRole]);
     const handleEditRole = useCallback(async (role: RoleType): Promise<boolean> => {
         setSelectedRole(role);
         showDialog({
             type: DialogType.EDIT,
-            title: `Chỉnh sửa vai trò`,
+            // title: `Chỉnh sửa quyền: ${role.name}`,
             data: role,
-            children: <RoleForm onSubmit={handleRoleFormSubmit} setRoleData={resetRoleData} />
         });
         return true;
     }, [setSelectedRole, showDialog, handleRoleFormSubmit, resetRoleData]);
@@ -172,8 +162,9 @@ const RoleManagementScreen = () => {
 
             // Reset selected role khi unmount để tránh memory leaks
             setSelectedRole(null);
+            resetError();
         };
-    }, [setSelectedRole]);
+    }, [setSelectedRole, resetError]);
 
     // Define table columns
     const columns: ColumnDef<RoleType>[] = [
@@ -189,17 +180,19 @@ const RoleManagementScreen = () => {
             cell: ({ row }) => row.original.name,
             accessorKey: "name",
         },
-        {
-            id: "level",
-            header: "Cấp độ",
-            cell: ({ row }) => row.original.level,
-            accessorKey: "level",
-        },
+        // {
+        //     id: "level",
+        //     header: "Cấp độ",
+        //     cell: ({ row }) => row.original.level,
+        //     accessorKey: "level",
+        // },
         {
             id: "isSystem",
             header: "Loại vai trò",
             cell: ({ row }) => (
-                <Badge variant={row.original.isSystem ? "secondary" : "default"}>
+                <Badge
+                    className="text-xs text-center"
+                    variant={row.original.isSystem ? "secondary" : "default"}>
                     {row.original.isSystem ? "Hệ thống" : "Người dùng"}
                 </Badge>
             ),
@@ -223,8 +216,6 @@ const RoleManagementScreen = () => {
         }
     }, [selectedRole, updateDialogData]);
 
-    console.log("Rendering RoleManagementScreen with roles:", selectedRole);
-
     return (
         <div className="container mx-auto py-6">
             <DataTable
@@ -236,11 +227,7 @@ const RoleManagementScreen = () => {
                 searchColumn="name"
                 searchPlaceholder="Tìm theo tên quyền..."
                 exportData={true}
-                initialPageSize={limit}
                 onDelete={handleDeleteRole}
-                onEdit={async (rowData) => {
-                    return await handleEditRole(rowData);
-                }}
                 refetchData={safeRefetch}
                 isLoading={isLoading}
                 createFormComponent={
@@ -251,8 +238,10 @@ const RoleManagementScreen = () => {
                 editFormComponent={
                     <RoleForm
                         onSubmit={handleRoleFormSubmit}
-                        setRoleData={resetRoleData}
                     />
+                }
+                viewFormComponent={
+                    <RoleForm />
                 }
             />
         </div>

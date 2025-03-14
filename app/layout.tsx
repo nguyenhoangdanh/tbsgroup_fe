@@ -7,7 +7,6 @@ import SagaProviders from "@/context/SagaProvider";
 import QueryProvider from "@/context/QueryProvider";
 import { AuthProvider } from "@/context/AuthProvider";
 import { beVietnamPro } from "@/lib/fonts";
-import { DialogProvider } from "@/context/DialogProvider";
 import RootLayoutWrapper from "@/components/common/layouts/admin/RootLayoutWrapper";
 
 const dm_sans = DM_Sans({ subsets: ["latin"] });

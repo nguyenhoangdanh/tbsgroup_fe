@@ -41,6 +41,7 @@ const SidebarToggle = React.memo(({
             >
                 <path d="m15 18-6-6 6-6"></path>
             </svg>
+
         </button>
     );
 });
@@ -54,8 +55,8 @@ const MemoNavProjects = React.memo(NavProjects);
 const MemoNavUser = React.memo(NavUser);
 
 // UserData wrapper để tránh re-renders của NavUser
-const UserDataProvider = React.memo(({ children }: { children: React.ReactElement<{ userData: { name: string, avatar?: string } }> }) => {
-    const { user, isLoading } = useAuthManager();
+const NavUserWithProvider = React.memo(() => {
+    const { user, isLoading, logout } = useAuthManager();
 
     const userData = React.useMemo(() => {
         if (isLoading || !user) return null;
@@ -67,14 +68,14 @@ const UserDataProvider = React.memo(({ children }: { children: React.ReactElemen
 
     if (!userData) return null;
 
-    return React.cloneElement(children, { userData });
+    return <MemoNavUser user={userData} onLogout={logout} />;
 });
 
-UserDataProvider.displayName = "UserDataProvider";
+NavUserWithProvider.displayName = "NavUserWithProvider";
 
 // Export AppSidebar với React.memo
 export const AppSidebar = React.memo(function AppSidebar() {
-    // Sử dụng context đã tách để giảm re-renders
+    // Sử dụng context đã tách để giảm re-render
     const collapsed = useSidebarCollapsed();
     const setCollapsed = useSidebarSetCollapsed();
     const isMobileView = useSidebarIsMobileView();
@@ -110,9 +111,7 @@ export const AppSidebar = React.memo(function AppSidebar() {
                 </div>
             </div>
             <div className="border-t p-2.5">
-                <UserDataProvider>
-                    <MemoNavUser user={{ name: '', avatar: '' }} />
-                </UserDataProvider>
+                <NavUserWithProvider />
             </div>
         </div>
     );

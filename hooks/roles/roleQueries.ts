@@ -19,33 +19,27 @@ import {
   RoleWithRelationsType,
   RoleListResponse,
 } from '@/apis/roles/role.api';
-import {useCallback, useMemo} from 'react';
+import {useCallback, useMemo, useState} from 'react';
+import {toast} from '../use-toast';
 
-// // Cache configurations
-// const GC_TIME = 30 * 60 * 1000; // 30 minutes
-// const STALE_TIME = 5 * 60 * 1000; // 5 minutes
-// const LIST_STALE_TIME = 30 * 1000; // 30 seconds - balancing between fresh data and performance
+// Cache configurations
+const GC_TIME = 60 * 60 * 1000; // 60 minutes
+const STALE_TIME = 10 * 60 * 1000; // 10 minutes
+const LIST_STALE_TIME = 60 * 1000; // 1 minute
 
-// Cải thiện cache configurations cho ứng dụng quy mô lớn
-const GC_TIME = 60 * 60 * 1000; // 60 minutes (tăng lên để giảm fetching)
-const STALE_TIME = 10 * 60 * 1000; // 10 minutes (tăng lên để giảm số lần refetch)
-const LIST_STALE_TIME = 60 * 1000; // 1 minute (tăng từ 30s lên 60s)
-
-// Cải thiện retry configuration
+// Retry configuration
 const DEFAULT_RETRY_OPTIONS = {
-  retry: 2, // Tăng lên 2 lần
+  retry: 2,
   retryDelay: (attemptIndex: number) =>
-    Math.min(1000 * Math.pow(1.5, attemptIndex), 30000), // Giảm hệ số từ 2 xuống 1.5
+    Math.min(1000 * Math.pow(1.5, attemptIndex), 30000),
 };
 
 /**
- * Tạo stable query key để tránh re-render và refetch không cần thiết
+ * Create stable query key to avoid unnecessary re-renders and refetches
  */
 const createStableQueryKey = (params: any) => {
-  // Tạo một object mới với các property được sắp xếp
-const sortedParams: Record<string, any> = {};
+  const sortedParams: Record<string, any> = {};
 
-  // Sắp xếp các key theo thứ tự alphabet
   Object.keys(params)
     .sort()
     .forEach(key => {
@@ -62,6 +56,40 @@ const sortedParams: Record<string, any> = {};
  */
 export const useRoleQueries = () => {
   const queryClient = useQueryClient();
+  const [queryError, setQueryError] = useState<Error | null>(null);
+
+  /**
+   * Handle query errors with toast notifications
+   */
+  const handleQueryError = useCallback((error: any, queryName: string) => {
+    // Ensure we have a proper Error object
+  // Extract message safely
+  let errorMessage = 'Lỗi không xác định';
+  try {
+     if (typeof error === 'object' && error.message) {
+      errorMessage = error.message;
+    } else if (typeof error === 'object') {
+      errorMessage = JSON.stringify(error);
+    }
+  } catch (e) {
+    errorMessage = 'Không thể hiển thị chi tiết lỗi';
+  }
+  
+    // Show toast with safe message
+    toast({
+      title: `Không thể tải dữ liệu ${queryName}`,
+      description: errorMessage || 'Vui lòng thử lại sau',
+      variant: 'destructive',
+      duration: 3000,
+    });
+  }, []);
+
+  /**
+   * Reset error state
+   */
+  const resetQueryError = useCallback(() => {
+    setQueryError(null);
+  }, []);
 
   /**
    * Prefetch roles data
@@ -107,7 +135,13 @@ export const useRoleQueries = () => {
    */
   const getAllRoles = useQuery<RoleType[], Error>({
     queryKey: ['roles'],
-    queryFn: fetchRoles,
+    queryFn: async () => {
+      try {
+        return await fetchRoles();
+      } catch (error) {
+        handleQueryError(error, 'danh sách vai trò');
+      }
+    },
     staleTime: STALE_TIME,
     gcTime: GC_TIME,
     refetchOnWindowFocus: false,
@@ -123,9 +157,15 @@ export const useRoleQueries = () => {
   ): UseQueryResult<RoleItemType, Error> =>
     useQuery<RoleItemType, Error>({
       queryKey: ['role', id],
-      queryFn: () => {
+      queryFn: async () => {
         if (!id) throw new Error('Role ID is required');
-        return fetchRoleById(id);
+        try {
+          return await fetchRoleById(id);
+        } catch (error) {
+          const err = error instanceof Error ? error : new Error(String(error));
+          handleQueryError(err, 'vai trò');
+          throw err;
+        }
       },
       staleTime: STALE_TIME,
       gcTime: GC_TIME,
@@ -143,9 +183,15 @@ export const useRoleQueries = () => {
   ): UseQueryResult<RoleItemType, Error> =>
     useQuery<RoleItemType, Error>({
       queryKey: ['role-by-code', code],
-      queryFn: () => {
+      queryFn: async () => {
         if (!code) throw new Error('Role code is required');
-        return fetchRoleByCode(code);
+        try {
+          return await fetchRoleByCode(code);
+        } catch (error) {
+          const err = error instanceof Error ? error : new Error(String(error));
+          handleQueryError(err, 'vai trò theo mã');
+          throw err;
+        }
       },
       staleTime: STALE_TIME,
       gcTime: GC_TIME,
@@ -163,9 +209,15 @@ export const useRoleQueries = () => {
   ): UseQueryResult<RoleWithRelationsType, Error> =>
     useQuery<RoleWithRelationsType, Error>({
       queryKey: ['role-with-relations', id],
-      queryFn: () => {
+      queryFn: async () => {
         if (!id) throw new Error('Role ID is required');
-        return fetchRoleWithRelations(id);
+        try {
+          return await fetchRoleWithRelations(id);
+        } catch (error) {
+          const err = error instanceof Error ? error : new Error(String(error));
+          handleQueryError(err, 'vai trò và các mối quan hệ');
+          throw err;
+        }
       },
       staleTime: STALE_TIME,
       gcTime: GC_TIME,
@@ -181,12 +233,18 @@ export const useRoleQueries = () => {
     params: RoleListParams = {},
     options?: any,
   ): UseQueryResult<RoleListResponse, Error> => {
-    // Tạo stable query key để tránh refetch không cần thiết
+    // Create stable query key to avoid unnecessary refetches
     const stableParams = useMemo(() => createStableQueryKey(params), [params]);
 
     return useQuery<RoleListResponse, Error>({
       queryKey: ['roles-list', stableParams],
-      queryFn: () => fetchRolesList(params),
+      queryFn: async () => {
+        try {
+          return await fetchRolesList(params);
+        } catch (error) {
+          handleQueryError(error, 'danh sách vai trò');
+        }
+      },
       staleTime: LIST_STALE_TIME,
       gcTime: GC_TIME,
       refetchOnWindowFocus: false,
@@ -203,7 +261,7 @@ export const useRoleQueries = () => {
     limit = 20,
     filters: Omit<RoleListParams, 'page' | 'limit'> = {},
   ): UseInfiniteQueryResult<RoleListResponse, Error> => {
-    // Tạo stable query key
+    // Create stable query key
     const stableFilters = useMemo(
       () => createStableQueryKey(filters),
       [filters],
@@ -220,8 +278,9 @@ export const useRoleQueries = () => {
             limit,
           });
         } catch (error) {
-          console.error('Failed to fetch infinite roles:', error);
-          throw error;
+          const err = error instanceof Error ? error : new Error(String(error));
+          handleQueryError(err, 'vai trò (infinite scroll)');
+          throw err;
         }
       },
       getNextPageParam: lastPage => {
@@ -294,5 +353,9 @@ export const useRoleQueries = () => {
     // Cache invalidation methods
     invalidateRolesCache,
     invalidateRoleCache,
+    
+    // Error handling
+    queryError,
+    resetQueryError,
   };
 };
