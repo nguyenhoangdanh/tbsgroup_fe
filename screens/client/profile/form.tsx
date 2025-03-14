@@ -52,15 +52,11 @@ const UserProfileForm = () => {
         if (user) {
             methods.setValue('username', user.username);
             methods.setValue('employeeId', user.employeeId);
-            methods.setValue('position', user.position);
-            methods.setValue('department', user.department);
             methods.setValue('role', user.role);
             methods.setValue('fullName', user.fullName);
             methods.setValue('cardId', user.cardId);
         }
     }, [user, methods]);
-
-    console.log('user', user);
 
     return (
         <FormProvider {...methods}>
@@ -88,18 +84,6 @@ const UserProfileForm = () => {
                         control={methods.control}
                         label="CCCD/CMND"
                         name="cardId"
-                    />
-                    <FieldInput
-                        control={methods.control}
-                        label="Chức vụ"
-                        name="position"
-                        placeholder="Nhập chức vụ"
-                    />
-                    <FieldInput
-                        control={methods.control}
-                        label="Phòng ban"
-                        name="department"
-                        placeholder="Nhập phòng ban"
                     />
                     <FieldInput
                         control={methods.control}

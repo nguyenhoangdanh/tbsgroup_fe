@@ -223,21 +223,21 @@ const UserContainer = () => {
                 initialPageSize={10}
                 onEdit={handleEditUser}
                 onDelete={(id) => handleDeleteUser(id)}
-                createFormComponent={<UserForm
-                    roles={roles}
-                    onSubmit={handleUserFormSubmit}
-                    refetchData={fetchUsers}
-                />
-                }
-                editFormComponent={selectedUser ?
-                    <UserForm
-                        roles={roles}
-                        userData={selectedUser}
-                        onSubmit={handleUserFormSubmit}
-                        refetchData={fetchUsers}
-                    />
-                    : undefined
-                }
+                // createFormComponent={<UserForm
+                //     roles={roles}
+                //     onSubmit={handleUserFormSubmit}
+                //     refetchData={fetchUsers}
+                // />
+                // }
+                // editFormComponent={selectedUser ?
+                //     <UserForm
+                //         roles={roles}
+                //         userData={selectedUser}
+                //         onSubmit={handleUserFormSubmit}
+                //         refetchData={fetchUsers}
+                //     />
+                //     : undefined
+                // }
                 refetchData={fetchUsers}
             />
         </div>
