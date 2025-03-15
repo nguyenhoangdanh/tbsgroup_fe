@@ -1,8 +1,5 @@
 "use client";
-import RedirectButton from "@/components/RedirectButton";
-import { Button } from "@/components/ui/button";
-import { ExternalLink, Video } from "lucide-react";
-import Image from "next/image";
+import CompanyImageSlider from "@/components/common/layouts/client/CompanyImageSlider";
 import React from "react";
 
 export default function Home() {

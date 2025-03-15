@@ -23,6 +23,13 @@ export default async function middleware(req: NextRequest) {
   const isProtectedRoute = protectedRoutes.includes(path);
   const isPublicRoute = publicRoutes.includes(path);
 
+   // Tạo một NextResponse mới để gửi đến destination của bạn
+   const response = NextResponse.next();
+  
+   // Thêm đường dẫn hiện tại vào headers, để các server component có thể truy cập
+   response.headers.set('x-pathname', req.nextUrl.pathname);
+   response.headers.set('x-url', req.url);
+
   const accessToken = req.cookies.get('accessToken')?.value;
   
   if (isProtectedRoute && !accessToken && adminProtectedRoutes.includes(path)) {
@@ -40,3 +47,8 @@ export default async function middleware(req: NextRequest) {
 
   return NextResponse.next();
 }
+
+// Middleware sẽ chạy cho tất cả các routes
+export const config = {
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+};

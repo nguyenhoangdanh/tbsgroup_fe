@@ -326,7 +326,7 @@ const CompanyImageSlider = () => {
                                     onError={() => handleImageError(index)}
                                     style={{ opacity: isLoading[index] ? 0 : 1 }}
                                     width={1600}
-                                    height={900}
+                                    height={1000}
                                     priority={index === 0} // Ưu tiên tải ảnh đầu tiên
                                 />
                             )}
