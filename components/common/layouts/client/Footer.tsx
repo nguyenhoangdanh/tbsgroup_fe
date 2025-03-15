@@ -3,7 +3,7 @@ import dayjs from 'dayjs'
 
 const Footer = () => {
     return (
-        <footer className="w-full py-4 sm:py-6 border-t-2 bg-white">
+        <footer className="w-full py-4 sm:py-6 border-t-2">
             <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                     {/* Logo */}
@@ -17,7 +17,7 @@ const Footer = () => {
 
                     {/* Footer text - always visible */}
                     <div className="text-center mb-3 sm:mb-0 sm:text-left">
-                        <p className="text-gray-500 text-xs sm:text-sm">
+                        <p className="text-gray-500 dark:text-gray-300 text-xs sm:text-sm">
                             © {dayjs().format('YYYY')} TBS Group. Thoai Son Handbag Factory
                         </p>
                     </div>

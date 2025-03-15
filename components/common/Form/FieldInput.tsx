@@ -36,7 +36,7 @@ export const FieldInput = <T extends FieldValues>({
             name={name}
             render={({ field, fieldState: { error } }) => {
                 return (
-                    <div className={clsx("flex flex-col gap-1", className)}>
+                    <div className={clsx("flex flex-col gap-1 default-theme", className)}>
                         <Label htmlFor={name} className="text-left font-medium">
                             {label}
                             {required && <span className="text-red-500">*</span>}
@@ -52,7 +52,7 @@ export const FieldInput = <T extends FieldValues>({
                                 value={field.value ?? ""}
                                 className={clsx(
                                     "border rounded-md px-3 py-2 transition-all focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none",
-                                    disabled && "bg-gray-100 cursor-not-allowed",
+                                    disabled && "bg-gray-100 cursor-not-allowed dark:bg-gray-800",
                                     error ? "border-red-500 focus:ring-red-500" : "border-gray-300"
                                 )}
                                 aria-invalid={!!error}

@@ -63,7 +63,7 @@ const ButtonGroupAction = <T extends BaseData>({
   };
 
   return (
-    <div className="flex flex-wrap gap-1 justify-end md:justify-start">
+    <div className="flex gap-1 justify-end md:justify-start md:flex-row flex-col">
       {actions.includes("read-only") && (
         <ViewActionDialog
           name={rowData.name ? rowData.name : ""}

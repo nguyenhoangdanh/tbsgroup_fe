@@ -9,7 +9,7 @@ interface IMainLayoutProps {
 
 const _MainLayout: React.FC<IMainLayoutProps> = ({ title, children }) => {
     return (
-        <div className="w-full h-full flex flex-col min-h-screen">
+        <div className="default-theme w-full h-full flex flex-col min-h-screen">
             <Header />
             <main className="flex-grow px-4 py-6">
                 <div className="w-full md:w-[85%] lg:w-[80%] xl:w-[70%] 2xl:w-[60%] h-full mx-auto border border-gray-200

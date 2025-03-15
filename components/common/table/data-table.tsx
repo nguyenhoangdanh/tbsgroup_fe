@@ -13,7 +13,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { ChevronDown, Download, FileSpreadsheet, Search } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Download, FileSpreadsheet, FileText, FileType, Search } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -38,7 +38,8 @@ import autoTable from 'jspdf-autotable'
 import ButtonGroupAction from "./actions/button-group-actions";
 import PageLoader from '../PageLoader';
 import { useTheme } from "next-themes";
-import { DialogChildrenProps } from "@/context/DialogProvider";
+import { useDialog } from "@/context/DialogProvider";
+import { extractPlainValue, removeVietnameseAccents } from "@/utils";
 
 
 // Explicitly define types and actions
@@ -66,11 +67,17 @@ interface DataTableProps<TData extends BaseData, TValue> {
   searchPlaceholder?: string;
   exportData?: boolean;
   exportFormats?: Array<"csv" | "excel" | "pdf">;
-  initialPageSize?: number;
   isLoading?: boolean;
   children?: React.ReactNode;
-}
 
+  // Thêm hai props mới cho phân trang server-side
+  initialPageIndex?: number;  // Thêm prop cho trang ban đầu (zero-based)
+  initialPageSize?: number;   // Giữ nguyên
+  totalItems?: number;        // Giữ nguyên
+  serverSidePagination?: boolean; // Giữ nguyên
+  onPageChange?: (pageIndex: number, pageSize: number) => void; // Cập nhật tham số để rõ ràng hơn
+  disablePagination?: boolean; // Thêm tuỳ chọn tắt phân trang
+}
 // Hàm chuyển đổi tiếng Việt không dấu
 function removeAccents(str: string) {
   return str
@@ -97,12 +104,18 @@ export function DataTable<TData extends BaseData, TValue>({
   searchPlaceholder = "Tìm kiếm...",
   exportData = false,
   exportFormats = ["csv", "excel", "pdf"],
-  initialPageSize = 10,
   isLoading = false,
   children,
+  initialPageIndex = 0, // Thêm giá trị mặc định cho initialPageIndex
+  initialPageSize = 10,
+  totalItems,
+  serverSidePagination = false,
+  onPageChange,
+  disablePagination = false,
 }: DataTableProps<TData, TValue>) {
 
   const { theme } = useTheme();
+  const { dialog } = useDialog();
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
@@ -110,6 +123,14 @@ export function DataTable<TData extends BaseData, TValue>({
 
   // Tạo biến state riêng cho giá trị tìm kiếm
   const [searchValue, setSearchValue] = React.useState("");
+
+
+  // Thêm state cho input chuyển trang
+  const [gotoPage, setGotoPage] = React.useState("");
+  // Thêm ref để tránh gọi onPageChange khi component mount
+  const isInitialRender = React.useRef(true);
+  // 3. Khởi tạo tableRef để tránh lỗi circular dependency
+  const tableRef = React.useRef<any>(null);
 
   // Tạo state riêng cho kết quả lọc
   const [filteredData, setFilteredData] = React.useState<TData[]>(data);
@@ -140,14 +161,14 @@ export function DataTable<TData extends BaseData, TValue>({
     setFilteredData(filtered);
   }, [data, searchValue, searchColumn]);
 
-  // Tạo table với dữ liệu đã lọc
+  // 5. Cải tiến logic khởi tạo table với xử lý phân trang tốt hơn
   const table = useReactTable({
     data: filteredData,
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
+    getPaginationRowModel: disablePagination ? undefined : getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
@@ -158,12 +179,406 @@ export function DataTable<TData extends BaseData, TValue>({
       columnVisibility,
       rowSelection,
     },
+
+    // Cải tiến cấu hình phân trang
     initialState: {
       pagination: {
+        pageIndex: initialPageIndex,
         pageSize: initialPageSize,
       },
     },
+
+    // Xử lý phân trang server-side
+    manualPagination: serverSidePagination,
+
+    // Cải tiến cách tính pageCount để tránh bị lỗi khi không có dữ liệu
+    pageCount: serverSidePagination
+      ? totalItems != null
+        ? Math.max(1, Math.ceil(totalItems / initialPageSize))
+        : undefined
+      : undefined, // Để undefined để tự động tính từ filteredData.length với client-side pagination
   });
+
+  // Gán table cho tableRef để có thể sử dụng trong các effect
+  tableRef.current = table;
+
+  // 6. Cải tiến callback xử lý thay đổi trang và pageSize
+  React.useEffect(() => {
+    if (!serverSidePagination || !onPageChange) {
+      return;
+    }
+
+    // Lấy state pagination hiện tại
+    const { pageIndex, pageSize } = table.getState().pagination;
+
+    // Trong lần render đầu tiên, kiểm tra xem có cần cập nhật không
+    if (isInitialRender.current) {
+      console.log("Initial render, checking if we need to sync page size");
+
+      // Nếu pageSize từ prop khác với pageSize trong state, cập nhật
+      if (initialPageSize !== pageSize) {
+        console.log(`Initial pageSize mismatch: state=${pageSize}, prop=${initialPageSize}`);
+        // Không gọi onPageChange ở đây để tránh API call không cần thiết
+      }
+
+      isInitialRender.current = false;
+      return;
+    }
+
+    console.log(`Pagination state changed: pageIndex=${pageIndex}, pageSize=${pageSize}`);
+
+    // Gọi callback với pageIndex và pageSize mới
+    onPageChange(pageIndex, pageSize);
+
+  }, [
+    serverSidePagination,
+    onPageChange,
+    initialPageSize,
+    // Sử dụng các giá trị cụ thể từ state pagination thay vì toàn bộ đối tượng table
+    // Điều này đảm bảo effect chỉ chạy khi giá trị pagination thực sự thay đổi
+    table.getState().pagination.pageIndex,
+    table.getState().pagination.pageSize
+  ]);
+
+  // Các tùy chọn cho số mục trên mỗi trang
+  const pageSizeOptions = [5, 10, 20, 50, 100];
+
+  // Hàm xử lý khi thay đổi số mục trên mỗi trang
+  const handlePageSizeChange = React.useCallback(
+    (newPageSize: number) => {
+      table.setPageSize(newPageSize);
+      // table.setPageIndex(0); // Có thể thêm để reset về trang đầu khi thay đổi pageSize
+    },
+    [table]
+  );
+
+  // 6. Cải tiến hàm render nút phân trang - thêm xử lý cho nhiều trang
+  const renderPaginationButtons = () => {
+    if (disablePagination) return null;
+
+    const currentPage = table.getState().pagination.pageIndex;
+    const pageCount = table.getPageCount();
+
+    // Nếu không có trang, hiển thị nút mặc định không có chức năng
+    if (pageCount <= 0) {
+      return (
+        <Button
+          key={0}
+          variant="default"
+          size="sm"
+          disabled
+          className="w-8 h-8 p-0"
+        >
+          1
+        </Button>
+      );
+    }
+
+    // Nếu có ít hơn hoặc bằng 7 trang, hiển thị tất cả
+    if (pageCount <= 7) {
+      return Array.from({ length: pageCount }, (_, i) => (
+        <Button
+          key={i}
+          variant={currentPage === i ? "default" : "outline"}
+          size="sm"
+          onClick={() => table.setPageIndex(i)}
+          className="w-8 h-8 p-0"
+        >
+          {i + 1}
+        </Button>
+      ));
+    }
+
+    // Mẫu hiển thị: First ... [Current-1] Current [Current+1] ... Last
+    const pages = [];
+
+    // Luôn hiển thị trang đầu
+    pages.push(
+      <Button
+        key={0}
+        variant={currentPage === 0 ? "default" : "outline"}
+        size="sm"
+        onClick={() => table.setPageIndex(0)}
+        className="w-8 h-8 p-0"
+      >
+        1
+      </Button>
+    );
+
+    // Logic hiển thị trang với các trường hợp đầu, giữa, cuối
+    if (currentPage <= 3) {
+      // Gần đầu: hiển thị các trang 2, 3, 4
+      for (let i = 1; i <= 3; i++) {
+        if (i < pageCount - 1) {
+          pages.push(
+            <Button
+              key={i}
+              variant={currentPage === i ? "default" : "outline"}
+              size="sm"
+              onClick={() => table.setPageIndex(i)}
+              className="w-8 h-8 p-0"
+            >
+              {i + 1}
+            </Button>
+          );
+        }
+      }
+      // Thêm dấu chấm lửng nếu cần
+      if (pageCount > 5) {
+        pages.push(
+          <span
+            key="ellipsis1"
+            className="px-2 flex items-center"
+            aria-hidden
+          >
+            ...
+          </span>
+        );
+      }
+    } else if (currentPage >= pageCount - 4) {
+      // Gần cuối: hiển thị dấu chấm lửng và 3 trang cuối
+      if (pageCount > 5) {
+        pages.push(
+          <span
+            key="ellipsis1"
+            className="px-2 flex items-center"
+            aria-hidden
+          >
+            ...
+          </span>
+        );
+      }
+
+      for (let i = pageCount - 4; i < pageCount - 1; i++) {
+        pages.push(
+          <Button
+            key={i}
+            variant={currentPage === i ? "default" : "outline"}
+            size="sm"
+            onClick={() => table.setPageIndex(i)}
+            className="w-8 h-8 p-0"
+          >
+            {i + 1}
+          </Button>
+        );
+      }
+    } else {
+      // Ở giữa: hiển thị dấu chấm lửng, trang hiện tại và các trang lân cận
+      pages.push(
+        <span
+          key="ellipsis1"
+          className="px-2 flex items-center"
+          aria-hidden
+        >
+          ...
+        </span>
+      );
+
+      // Hiển thị trang trước, hiện tại và sau
+      for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+        pages.push(
+          <Button
+            key={i}
+            variant={currentPage === i ? "default" : "outline"}
+            size="sm"
+            onClick={() => table.setPageIndex(i)}
+            className="w-8 h-8 p-0"
+          >
+            {i + 1}
+          </Button>
+        );
+      }
+
+      pages.push(
+        <span
+          key="ellipsis2"
+          className="px-2 flex items-center"
+          aria-hidden
+        >
+          ...
+        </span>
+      );
+    }
+
+    // Luôn hiển thị trang cuối
+    if (pageCount > 1) {
+      pages.push(
+        <Button
+          key={pageCount - 1}
+          variant={currentPage === pageCount - 1 ? "default" : "outline"}
+          size="sm"
+          onClick={() => table.setPageIndex(pageCount - 1)}
+          className="w-8 h-8 p-0"
+        >
+          {pageCount}
+        </Button>
+      );
+    }
+
+    return pages;
+  };
+
+  // 7. Cải tiến hàm xử lý chuyển trang thủ công
+  const handleGotoPage = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      const pageNumber = parseInt(gotoPage, 10);
+      if (!isNaN(pageNumber) && pageNumber >= 1 && pageNumber <= table.getPageCount()) {
+        table.setPageIndex(pageNumber - 1);
+
+        // Nếu là server-side pagination, không cần trigger effect riêng
+        // vì table.setPageIndex sẽ thay đổi pageIndex, kích hoạt effect trên
+      }
+
+      // Reset input sau khi xử lý
+      setGotoPage("");
+    }
+  };
+
+  // 8. Phần render phân trang cải tiến
+  const renderPagination = () => {
+    if (disablePagination) return null;
+
+    const pageCount = table.getPageCount();
+    const { pageIndex, pageSize } = table.getState().pagination;
+
+    // Tính toán số dòng hiển thị
+    const startRow = pageIndex * pageSize + 1;
+    const endRow = Math.min(
+      (pageIndex + 1) * pageSize,
+      serverSidePagination && totalItems ? totalItems : filteredData.length
+    );
+
+    const totalRows = serverSidePagination && totalItems ? totalItems : filteredData.length;
+
+    return (
+      <div className="flex flex-col lg:flex-row items-center justify-between gap-4 py-4">
+        {/* Thông tin hiển thị và dropdown pageSize */}
+        <div className="flex flex-col sm:flex-row items-center gap-4 text-sm text-muted-foreground">
+          <div className="flex items-center gap-2">
+            <span>
+              Hiển thị {totalRows > 0 ? startRow : 0}-
+              {totalRows > 0 ? endRow : 0} trên {totalRows} dòng
+            </span>
+          </div>
+
+          {/* Dropdown chọn số mục trên mỗi trang */}
+          <div className="flex items-center whitespace-nowrap">
+            <span className="text-sm mr-2">Hiển thị</span>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 px-2 flex items-center gap-1 min-w-[65px]"
+                >
+                  {pageSize}
+                  <ChevronDown className="h-4 w-4 ml-1" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="center">
+                {pageSizeOptions.map((size) => (
+                  <DropdownMenuCheckboxItem
+                    key={size}
+                    className="cursor-pointer"
+                    checked={pageSize === size}
+                    onCheckedChange={() => handlePageSizeChange(size)}
+                  >
+                    {size} dòng
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <span className="text-sm ml-2">mỗi trang</span>
+          </div>
+        </div>
+
+        {/* Thông tin về số dòng đã chọn */}
+        <div className="text-sm text-muted-foreground text-center">
+          Đã chọn {table.getFilteredSelectedRowModel().rows.length} / {" "}
+          {table.getFilteredRowModel().rows.length} dòng
+        </div>
+
+        {/* Các phần còn lại của phân trang giữ nguyên */}
+        <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto justify-center lg:justify-end">
+          {/* Đi đến trang cụ thể */}
+          <div className="flex items-center gap-1 mr-2">
+            <span className="text-sm whitespace-nowrap">Đến trang</span>
+            <Input
+              type="number"
+              min={1}
+              max={Math.max(1, pageCount)}
+              value={gotoPage}
+              onChange={(e) => setGotoPage(e.target.value)}
+              onKeyDown={handleGotoPage}
+              className="w-14 h-8 text-center"
+            />
+          </div>
+
+          {/* Các nút phân trang - phần này giữ nguyên */}
+          <div className="flex items-center gap-1">
+            {/* Nút đến trang đầu */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => table.setPageIndex(0)}
+              disabled={!table.getCanPreviousPage()}
+              className="w-8 h-8 p-0"
+              title="Trang đầu tiên"
+            >
+              <ChevronsLeft className="h-4 w-4" />
+            </Button>
+
+            {/* Nút trang trước */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+              className="w-8 h-8 p-0"
+              title="Trang trước"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+
+            {/* Các nút số trang */}
+            <div className="flex items-center">
+              {renderPaginationButtons()}
+            </div>
+
+            {/* Nút trang sau */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+              className="w-8 h-8 p-0"
+              title="Trang sau"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+
+            {/* Nút đến trang cuối */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => table.setPageIndex(Math.max(0, pageCount - 1))}
+              disabled={!table.getCanNextPage()}
+              className="w-8 h-8 p-0"
+              title="Trang cuối cùng"
+            >
+              <ChevronsRight className="h-4 w-4" />
+            </Button>
+
+            {/* Hiển thị thông tin trang */}
+            <span className="text-sm whitespace-nowrap ml-2">
+              Trang {pageIndex + 1} / {Math.max(1, pageCount)}
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
 
   // Callback to handle row selection changes
   React.useEffect(() => {
@@ -268,77 +683,6 @@ export function DataTable<TData extends BaseData, TValue>({
     exportDataToFormat(format, data, columns, title);
   };
 
-  // Hàm trích xuất giá trị thuần túy từ các cell (bao gồm cả React components)
-  function extractPlainValue(value: any): string {
-    if (value === null || value === undefined) {
-      return '';
-    }
-
-    // Nếu là function (thường là cell render function)
-    if (typeof value === 'function') {
-      return '';
-    }
-
-    // Xử lý giá trị ngày tháng
-    if (value instanceof Date) {
-      return formatDate(value);
-    }
-
-    // Kiểm tra xem chuỗi có phải là ngày tháng không
-    if (typeof value === 'string') {
-      // Kiểm tra các mẫu ngày tháng phổ biến (ISO, US, etc.)
-      const dateRegex = /^\d{4}-\d{2}-\d{2}|^\d{2}\/\d{2}\/\d{4}/;
-      if (dateRegex.test(value)) {
-        return formatDate(value);
-      }
-    }
-
-    // Nếu là React element
-    if (value && typeof value === 'object' &&
-      (value.type !== undefined || value.props !== undefined ||
-        value.$$typeof !== undefined)) {
-      // Nếu có props.children là string, trả về
-      if (value.props && typeof value.props.children === 'string') {
-        return value.props.children;
-      }
-      // Trường hợp phức tạp khác
-      return '';
-    }
-
-    // Các kiểu dữ liệu thông thường
-    if (typeof value === 'object') {
-      try {
-        return JSON.stringify(value);
-      } catch (e) {
-        return Object.prototype.toString.call(value);
-      }
-    }
-
-    // String, number, boolean
-    return String(value);
-  }
-
-
-  // Hàm định dạng ngày tháng khi xuất dữ liệu
-  function formatDate(value: unknown): string {
-
-    // Kiểm tra nếu là đối tượng Date
-    if (value instanceof Date) {
-      return `${value.getDate().toString().padStart(2, '0')}/${(value.getMonth() + 1).toString().padStart(2, '0')}/${value.getFullYear()} - ${`${value.getHours().toString().padStart(2, '0')}:${value.getMinutes().toString().padStart(2, '0')}:${value.getSeconds().toString().padStart(2, '0')}`}`;
-    }
-
-    // Kiểm tra nếu là chuỗi ngày tháng ISO hoặc chuỗi ngày hợp lệ
-    if (typeof value === 'string') {
-      // Thử chuyển đổi thành Date object
-      const date = new Date(value);
-      if (!isNaN(date.getTime())) {
-        return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()} - ${`${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}:${date.getSeconds().toString().padStart(2, '0')}`}`;
-      }
-    }
-
-    // Trả về giá trị ban đầu nếu không phải ngày
-    return String(value);
-  }
 
   // Hàm chuẩn bị dữ liệu cho việc xuất - phiên bản có xử lý tiếng Việt
   function prepareExportData<TData>(
@@ -401,15 +745,7 @@ export function DataTable<TData extends BaseData, TValue>({
 
     return { headers, rows };
   }
-  // Hàm chuyển đổi ký tự tiếng Việt sang không dấu
-  function removeVietnameseAccents(str: string): string {
-    if (!str) return '';
 
-    return str.normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/đ/g, 'd')
-      .replace(/Đ/g, 'D');
-  }
 
   const exportPDF = <TData extends Record<string, any>>(
     data: TData[],
@@ -476,7 +812,7 @@ export function DataTable<TData extends BaseData, TValue>({
         skeletonColumns={columns.length + (actions.includes("edit") || actions.includes("delete") || actions.includes("read-only") ? 1 : 0)}
         skeletonRows={initialPageSize}
         showTableSkeleton={true}
-        isLoading={isLoading}
+        isLoading={isLoading && !dialog.open}
         darkMode={theme === "dark"}
         loadingTime={3000}
         skeletonLoadingTime={3500}
@@ -514,6 +850,7 @@ export function DataTable<TData extends BaseData, TValue>({
                         className="cursor-pointer"
                         onClick={() => handleExportData("csv")}
                       >
+                        <FileText className="h-4 w-4 mr-2 text-blue-500" />
                         CSV (.csv)
                       </DropdownMenuCheckboxItem>
                     )}
@@ -522,7 +859,7 @@ export function DataTable<TData extends BaseData, TValue>({
                         className="cursor-pointer"
                         onClick={() => handleExportData("excel")}
                       >
-                        <FileSpreadsheet className="h-4 w-4 mr-2" />
+                        <FileSpreadsheet className="h-4 w-4 mr-2 text-green-500" />
                         Excel (.xlsx)
                       </DropdownMenuCheckboxItem>
                     )}
@@ -531,7 +868,7 @@ export function DataTable<TData extends BaseData, TValue>({
                         className="cursor-pointer"
                         onClick={() => handleExportData("pdf")}
                       >
-
+                        <FileType className="h-4 w-4 mr-2 text-red-500" />
                         PDF (.pdf)
                       </DropdownMenuCheckboxItem>
                     )}
@@ -575,6 +912,9 @@ export function DataTable<TData extends BaseData, TValue>({
               <TableHeader>
                 {table.getHeaderGroups().map((headerGroup) => (
                   <TableRow key={headerGroup.id}>
+                    <TableHead key="select" className="whitespace-nowrap">
+                      STT
+                    </TableHead>
                     {headerGroup.headers.map((header) => (
                       <TableHead key={header.id} className="whitespace-nowrap">
                         {header.isPlaceholder
@@ -598,6 +938,9 @@ export function DataTable<TData extends BaseData, TValue>({
                       key={row.id}
                       data-state={row.getIsSelected() && "selected"}
                     >
+                      <TableCell key="select" className="py-2">
+                        {row.index + 1}
+                      </TableCell>
                       {row.getVisibleCells().map((cell) => (
                         <TableCell key={cell.id} className="py-2">
                           {flexRender(
@@ -636,50 +979,8 @@ export function DataTable<TData extends BaseData, TValue>({
             </Table>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-2 py-4">
-            <div className="flex items-center gap-2 w-full sm:w-auto justify-start">
-              <span className="text-sm text-muted-foreground">Hiển thị</span>
-              <select
-                value={table.getState().pagination.pageSize}
-                onChange={e => {
-                  table.setPageSize(Number(e.target.value))
-                }}
-                className="border rounded p-1 text-sm"
-              >
-                {[10, 20, 30, 40, 50].map(pageSize => (
-                  <option key={pageSize} value={pageSize}>
-                    {pageSize}
-                  </option>
-                ))}
-              </select>
-              <span className="text-sm text-muted-foreground">dòng mỗi trang</span>
-            </div>
-            <div className="flex-1 text-sm text-muted-foreground text-center my-2 sm:my-0">
-              Đã chọn {table.getFilteredSelectedRowModel().rows.length} / {" "}
-              {table.getFilteredRowModel().rows.length} dòng
-            </div>
-            <div className="flex items-center gap-2 w-full sm:w-auto justify-center sm:justify-end">
-              <span className="text-sm">
-                Trang {table.getState().pagination.pageIndex + 1} / {table.getPageCount()}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => table.previousPage()}
-                disabled={!table.getCanPreviousPage()}
-              >
-                Trước
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => table.nextPage()}
-                disabled={!table.getCanNextPage()}
-              >
-                Sau
-              </Button>
-            </div>
-          </div>
+          {/* Cải tiến phần phân trang */}
+          {!disablePagination && renderPagination()}
         </div>
       </PageLoader>
     </div>

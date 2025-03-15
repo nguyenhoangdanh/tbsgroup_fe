@@ -8,7 +8,7 @@ export const ResetPasswordContainer = () => {
     return (
         <AuthLayout
             title="Thay đổi mật khẩu"
-            imageChildren={<AuthImage />}
+            imageChildren={<AuthImage isGoBack={true} />}
         >
             <Suspense fallback={<LazyLoader />}>
                 <ResetPasswordForm />

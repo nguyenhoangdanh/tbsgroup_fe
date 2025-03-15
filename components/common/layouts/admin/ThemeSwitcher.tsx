@@ -7,10 +7,21 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 
 const ThemeSwitcher = () => {
   const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = React.useState(false);
+
+  // Only show the UI after component has mounted to avoid hydration errors
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const toggleTheme = useCallback(() => {
     setTheme(theme === "light" ? "dark" : "light");
   }, [theme, setTheme]);
+
+  // Render nothing until mounted to prevent hydration mismatch
+  if (!mounted) {
+    return null;
+  }
 
   return (
     <TooltipProvider>
@@ -22,9 +33,9 @@ const ThemeSwitcher = () => {
             aria-label={theme === "dark" ? "Chuyển sang chế độ sáng" : "Chuyển sang chế độ tối"}
           >
             <Avatar
-              className={`cursor-pointer transition-colors ${theme === "dark"
+              className={`cursor-pointer w-full h-full transition-colors ${theme === "dark"
                 ? "bg-gray-800 text-gray-200 hover:text-yellow-400 hover:bg-gray-700"
-                : "bg-gray-200 text-gray-800 hover:text-violet-600 hover:bg-gray-300"
+                : "bg-gray-200 text-gray-800 hover:text-violet-700 hover:bg-gray-300"
                 }`}
             >
               <AvatarFallback>{theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}</AvatarFallback>

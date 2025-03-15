@@ -1,56 +1,21 @@
 "use client";
-import { loginMutationFn } from "@/apis/user/user.api";
 import { defaultLoginValues, loginSchema, TLoginSchema } from "@/schemas/auth";
 import { FieldInput } from "@/components/common/Form/FieldInput";
 import SubmitButton from "@/components/SubmitButton";
-import { useDispatchType } from "@/lib/dispatch.utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import React from "react";
 import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
-import { useRouter } from "next/navigation";
 import useAuthManager from "@/hooks/useAuthManager";
 
 const LoginForm = () => {
-    const router = useRouter();
     const { login, isLoading } = useAuthManager();
-    // const [isLoading, setIsLoading] = React.useState<boolean>(false);
     const methods = useForm<TLoginSchema>({
         defaultValues: defaultLoginValues,
         resolver: zodResolver(loginSchema),
     });
 
     const onSubmit: SubmitHandler<TLoginSchema> = async (data) => {
-        // setIsLoading(true);
         await login(data);
-        // mutate(data, {
-        //     onSuccess: (data) => {
-        //         // Kiểm tra trạng thái người dùng
-        //         if (data.data.requiredResetPassword) {
-        //             toast({
-        //                 title: 'Cần đổi mật khẩu',
-        //                 description: 'Bạn cần đổi mật khẩu trước khi tiếp tục',
-        //             });
-        //             router.push('/reset-password');
-        //         } else {
-        //             toast({
-        //                 title: 'Thành công',
-        //                 description: 'Đăng nhập thành công',
-        //             });
-        //             router.push('/home');
-        //         }
-        //     },
-        //     onError: (error) => {
-        //         console.log('error', error);
-        //         toast({
-        //             title: 'Lỗi',
-        //             description: error.message || 'Có lỗi xảy ra',
-        //             variant: 'destructive',
-        //         });
-        //     },
-        //     onSettled: () => {
-        //         setIsLoading(false);
-        //     },
-        // });
     };
     return (
         <FormProvider {...methods}>
@@ -59,8 +24,9 @@ const LoginForm = () => {
                     <FieldInput
                         control={methods.control}
                         name="username"
-                        label="Tên đăng nhập"
+                        label="MSNV"
                         disabled={isLoading}
+                        placeholder="Vui lòng nhập mã số nhân viên của bạn..."
                     />
                     <FieldInput
                         control={methods.control}
@@ -68,6 +34,7 @@ const LoginForm = () => {
                         label="Mật khẩu"
                         type="password"
                         disabled={isLoading}
+                        placeholder="Vui lòng nhập mật khẩu..."
                     />
                     <SubmitButton
                         disabled={isLoading}
@@ -75,12 +42,14 @@ const LoginForm = () => {
                         name="Đăng nhập"
                     />
                 </div>
-                <div className="flex justify-center mt-4">
-                    <a href="/reset-password" className="text-blue-500
+                {!isLoading && (
+                    <div className="flex justify-center mt-4">
+                        <a href="/reset-password" className="text-blue-500
                     hover:underline">
-                        Quên mật khẩu?
-                    </a>
-                </div>
+                            Quên mật khẩu?
+                        </a>
+                    </div>
+                )}
             </form>
         </FormProvider>
     );

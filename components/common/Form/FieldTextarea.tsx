@@ -44,7 +44,7 @@ export const FieldTextarea = <T extends FieldValues>({
                             rows={rows}
                             className={clsx(
                                 "resize-none border rounded-md px-3 py-2 transition-all focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none",
-                                disabled && "bg-gray-100 cursor-not-allowed",
+                                disabled && "bg-gray-100 cursor-not-allowed dark:bg-gray-800",
                                 error ? "border-red-500 focus:ring-red-500" : "border-gray-300"
                             )}
                             aria-invalid={!!error}

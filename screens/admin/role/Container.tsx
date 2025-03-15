@@ -22,18 +22,31 @@ const RoleManagementScreen = () => {
         handleCreateRole,
         handleUpdateRole,
         resetError,
+        updatePagination,
     } = useRoleContext();
 
 
     // Sử dụng useRef để tránh re-render không cần thiết
     const refetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const isSubmittingRef = useRef(false);
+    const isInitialFetchRef = useRef(true);
+
 
     // Theo dõi các request đang thực hiện
     const pendingRequestsRef = useRef(new Set<string>());
 
     // Dialog context
     const { updateDialogData, showDialog } = useDialog();
+
+    // State lưu trữ metadata cho phân trang
+    const [paginationMeta, setPaginationMeta] = useState({
+        totalItems: 0,
+        totalPages: 0,
+        currentPage: 1,
+        pageSize: activeFilters.limit || 10
+    });
+
+
 
     // Thêm effect để cập nhật dialog khi selectedRole thay đổi
     // Đảm bảo dependencies array chính xác để tránh re-render không cần thiết
@@ -77,6 +90,27 @@ const RoleManagementScreen = () => {
             });
         }, 300);
     }, [refetchRoles]);
+
+
+    // Thêm hàm xử lý thay đổi trang/limit được tối ưu
+    const handlePageChange = useCallback((pageIndex: number, pageSize: number) => {
+        // pageIndex từ TanStack Table bắt đầu từ 0, API bắt đầu từ 1
+        const apiPage = pageIndex + 1;
+
+        // Nếu không thay đổi, không cần trigger API call
+        if (paginationMeta.currentPage === apiPage && paginationMeta.pageSize === pageSize) {
+            return;
+        }
+
+        // Cập nhật trong context
+        updatePagination(apiPage, pageSize);
+
+        // Kích hoạt refetch sau khi cập nhật state
+        // Sử dụng setTimeout để đảm bảo state đã được cập nhật
+        setTimeout(() => {
+            safeRefetch();
+        }, 0);
+    }, [updatePagination, safeRefetch, paginationMeta.currentPage, paginationMeta.pageSize]);
 
     // Reset role data với useCallback để tránh re-render không cần thiết
     const resetRoleData = useCallback(() => {
@@ -211,10 +245,12 @@ const RoleManagementScreen = () => {
 
     useEffect(() => {
         if (selectedRole) {
-            console.log("Updating dialog with selectedRole:", selectedRole.id);
             updateDialogData(selectedRole);
         }
     }, [selectedRole, updateDialogData]);
+
+
+    const initialPageIndex = Math.max(0, (paginationMeta.currentPage || 1) - 1);
 
     return (
         <div className="container mx-auto py-6">
@@ -242,7 +278,13 @@ const RoleManagementScreen = () => {
                 }
                 viewFormComponent={
                     <RoleForm />
+
                 }
+                serverSidePagination={true}
+                totalItems={paginationMeta.totalItems}
+                initialPageIndex={initialPageIndex}
+                initialPageSize={paginationMeta.pageSize}
+                onPageChange={handlePageChange}
             />
         </div>
     );

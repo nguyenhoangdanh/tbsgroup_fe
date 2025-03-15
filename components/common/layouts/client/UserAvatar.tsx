@@ -63,7 +63,7 @@ const UserAvatar = () => {
         <div className="flex items-center gap-2">
             {/* Chỉ hiển thị thông tin người dùng trên màn hình lớn hơn */}
             <div className="hidden sm:grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">{displayName}</span>
+                <span className="truncate font-semibold ">{displayName}</span>
                 {user?.email && (
                     <span className="truncate text-xs text-gray-500">{user.email}</span>
                 )}

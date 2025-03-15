@@ -12,7 +12,7 @@ import { toast } from "@/hooks/use-toast";
 import SubmitButton from "@/components/SubmitButton";
 import useAuth from "@/hooks/useAuth";
 import LazyLoader from "@/components/common/LazyLoader";
-import { CircleCheckBig } from "lucide-react";
+import { ArrowLeft, ChevronLeft, CircleCheckBig } from "lucide-react";
 import { UserStatusEnum } from "@/common/enum";
 import useAuthManager from "@/hooks/useAuthManager";
 
@@ -129,63 +129,62 @@ const ResetPasswordForm = () => {
         }
     }, [user]);
 
-    console.log('user', user);
-
     return (
         <FormProvider {...methods}>
             <form onSubmit={methods.handleSubmit(onSubmit)}>
-                {isLoading ? (
-                    <LazyLoader />
-                ) : (
-                    <div className="flex flex-col gap-10 px-8">
-                        {!verified ? (
-                            <p className="text-md text-center">
-                                Vui lòng xác thực thông tin của bạn để đổi mật khẩu
-                            </p>
-                        ) : (
-                            <p className="text-md text-center flex items-center justify-center gap-1">
-                                <CircleCheckBig size={20} color="green" />
-                                <span className="ml-2">
-                                    Đã xác thực {userName && `(${userName})`}
-                                </span>
-                            </p>
+                <div className="flex flex-col gap-10 px-8">
+                    {!verified ? (
+                        <p className="text-md text-center">
+                            Vui lòng xác thực thông tin của bạn để đổi mật khẩu
+                        </p>
+                    ) : (
+                        <p className="text-md text-center flex items-center justify-center gap-1">
+                            <CircleCheckBig size={20} color="green" />
+                            <span className="ml-2">
+                                Đã xác thực tài khoản {userName && `(${userName})`}
+                            </span>
+                        </p>
+                    )}
+                    {user?.status === UserStatusEnum.PENDING_ACTIVATION || verified ? (
+                        <div className="flex flex-col gap-5">
+                            <FieldInput
+                                control={methods.control}
+                                name="password"
+                                label="Mật khẩu"
+                                type="password"
+                            />
+                            <FieldInput
+                                control={methods.control}
+                                name="confirmPassword"
+                                label="Xác nhận mật khẩu"
+                                type="password"
+                            />
+                        </div>
+                    ) : (
+                        <div className="flex flex-col gap-5">
+                            <FieldInput
+                                control={methods.control}
+                                name="employeeId"
+                                label="Mã nhân viên"
+                                placeholder="Vui lòng nhập mã số nhân viên của bạn..."
+                            />
+                            <FieldInput
+                                control={methods.control}
+                                name="cardId"
+                                label="CCCD"
+                                placeholder="Vui lòng nhập số CCCD của bạn..."
+                            />
+                        </div>
+                    )}
+                    <SubmitButton
+                        name="Xác nhận"
+                        isLoading={isLoading}
+                        disabled={isLoading || (!verified
+                            ? !methods.watch('employeeId') || !methods.watch('cardId')
+                            : !methods.watch('password') || !methods.watch('confirmPassword')
                         )}
-                        {user?.status === UserStatusEnum.PENDING_ACTIVATION || verified ? (
-                            <div className="flex flex-col gap-5">
-                                <FieldInput
-                                    control={methods.control}
-                                    name="password"
-                                    label="Mật khẩu"
-                                    type="password"
-                                />
-                                <FieldInput
-                                    control={methods.control}
-                                    name="confirmPassword"
-                                    label="Xác nhận mật khẩu"
-                                    type="password"
-                                />
-                            </div>
-                        ) : (
-                            <div className="flex flex-col gap-5">
-                                <FieldInput
-                                    control={methods.control}
-                                    name="employeeId"
-                                    label="Mã nhân viên"
-                                />
-                                <FieldInput
-                                    control={methods.control}
-                                    name="cardId"
-                                    label="CCCD"
-                                />
-                            </div>
-                        )}
-                        <SubmitButton
-                            isLoading={isLoading}
-                            // disabled={isLoading || !methods.formState.isValid}
-                            name="Xác nhận"
-                        />
-                    </div>
-                )}
+                    />
+                </div>
             </form>
         </FormProvider >
     );

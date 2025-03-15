@@ -208,7 +208,7 @@ const AdminLayout = ({
   }), [isMobileView, collapsed]);
 
   return (
-    <div className="flex min-h-screen h-full w-full overflow-hidden">
+    <div className="flex min-h-screen h-full w-full overflow-hidden bg-white dark:bg-gray-950 text-slate-900 dark:text-slate-50">
       {/* Overlay for mobile/tablet view */}
       <SidebarOverlay
         isSmallScreen={isMobileView}

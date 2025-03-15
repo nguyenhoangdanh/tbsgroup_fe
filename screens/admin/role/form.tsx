@@ -74,7 +74,7 @@ const RoleForm: React.FC<RoleFormProps> = memo(({
                         name="code"
                         label="Mã vai trò"
                         placeholder="Nhập mã vai trò"
-                        disabled={isSubmitting || isReadOnly || dialog.data.code === "SUPER_ADMIN" || (user?.role === "ADMIN" && dialog.data.code === "ADMIN")}
+                        disabled={isSubmitting || isReadOnly || dialog.data?.code === "SUPER_ADMIN" || (user?.role === "ADMIN" && dialog.data?.code === "ADMIN")}
                         required
                     />
 
