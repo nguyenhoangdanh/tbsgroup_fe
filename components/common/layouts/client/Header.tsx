@@ -3,8 +3,7 @@ import useAuthManager from '@/hooks/useAuthManager';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import React, { useState, useEffect, useRef } from 'react';
-import { Menu, X, ChevronDown, User, Settings, LogOut, ChevronRight } from 'lucide-react';
-import { getDisplayInitials } from '@/utils';
+import { Menu, X, ChevronDown, ChevronRight } from 'lucide-react';
 import UserAvatar from './UserAvatar';
 import ThemeSwitcher from '../admin/ThemeSwitcher';
 
@@ -27,12 +26,13 @@ interface DropdownItem {
 }
 
 const Header: React.FC<IHeaderProps> = ({ children }) => {
-    const { user, logout } = useAuthManager();
+    const { user } = useAuthManager();
     const pathname = usePathname();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
     const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
     const dropdownRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+    const headerRef = useRef<HTMLElement>(null);
 
     // Handle scroll effect
     useEffect(() => {
@@ -69,29 +69,48 @@ const Header: React.FC<IHeaderProps> = ({ children }) => {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, [activeDropdown]);
 
+    // Handle clicks outside of mobile menu
+    useEffect(() => {
+        const handleClickOutsideMenu = (event: MouseEvent) => {
+            if (isMenuOpen &&
+                headerRef.current &&
+                !headerRef.current.contains(event.target as Node)) {
+                setIsMenuOpen(false);
+            }
+        };
+
+        if (isMenuOpen) {
+            document.addEventListener('mousedown', handleClickOutsideMenu);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutsideMenu);
+        };
+    }, [isMenuOpen]);
+
     // Navigation links with dropdowns
     const navLinks: NavLink[] = [
-        { title: 'Home', path: '/' },
+        { title: 'Trang chủ', path: '/' },
         {
-            title: 'Services',
+            title: 'Dịch vụ',
             path: '/services',
             dropdown: [
-                { title: 'Consulting', path: '/services/consulting' },
-                { title: 'Development', path: '/services/development' },
-                { title: 'UI/UX Design', path: '/services/design' },
+                { title: 'Tư vấn', path: '/services/consulting' },
+                { title: 'Phát triển', path: '/services/development' },
+                { title: 'Thiết kế UI/UX', path: '/services/design' },
             ]
         },
         {
-            title: 'Resources',
+            title: 'Tài nguyên',
             path: '/resources',
             dropdown: [
-                { title: 'Documentation', path: '/resources/docs' },
-                { title: 'Tutorials', path: '/resources/tutorials' },
+                { title: 'Tài liệu', path: '/resources/docs' },
+                { title: 'Hướng dẫn', path: '/resources/tutorials' },
                 { title: 'Blog', path: '/resources/blog' },
             ]
         },
-        { title: 'About', path: '/about' },
-        { title: 'Contact', path: '/contact' },
+        { title: 'Giới thiệu', path: '/about' },
+        { title: 'Liên hệ', path: '/contact' },
     ];
 
     // Check if a link is active
@@ -104,16 +123,17 @@ const Header: React.FC<IHeaderProps> = ({ children }) => {
 
     return (
         <header
-            className={`sticky top-0 w-full z-50 transition-all default-hover
-                duration-300 ${scrolled ? ' shadow-md' : ''}
+            ref={headerRef}
+            className={`sticky top-0 w-full z-50 transition-all bg-white dark:bg-gray-800
+                duration-300 ${scrolled ? 'shadow-md' : ''}
                 }`}
         >
             <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="h-16 md:h-[60px] flex items-center justify-between">
-                    {/* Logo */}
-                    <div className="flex items-center justify-center gap-1">
+                    {/* Logo và Mobile Menu Toggle */}
+                    <div className="flex items-center gap-2">
                         <button
-                            className="focus:outline-none pt-2 md:hidden"
+                            className="focus:outline-none md:hidden"
                             onClick={() => setIsMenuOpen(!isMenuOpen)}
                             aria-label="Toggle menu"
                         >
@@ -123,7 +143,7 @@ const Header: React.FC<IHeaderProps> = ({ children }) => {
                             <img
                                 src="/images/remove-bg-logo.png"
                                 alt="logo"
-                                className="h-[25px] sm:h-[30px] object-contain"
+                                className="h-8 sm:h-9 object-contain"
                             />
                         </Link>
                     </div>
@@ -143,9 +163,9 @@ const Header: React.FC<IHeaderProps> = ({ children }) => {
                                     {link.dropdown ? (
                                         <>
                                             <button
-                                                className={`flex items-center hover:font-bold gap-1 text-sm lg:text-base font-medium  transition-colors ${isActive(link.path)
-                                                    ? ' font-semibold'
-                                                    : ' '
+                                                className={`flex items-center hover:text-primary gap-1 text-sm lg:text-base font-medium transition-colors ${isActive(link.path)
+                                                    ? 'text-primary font-semibold'
+                                                    : ''
                                                     }`}
                                                 onClick={() => toggleDropdown(link.title)}
                                                 aria-expanded={activeDropdown === link.title}
@@ -157,13 +177,15 @@ const Header: React.FC<IHeaderProps> = ({ children }) => {
                                                 />
                                             </button>
                                             {activeDropdown === link.title && (
-                                                <div className="absolute top-full  dark:bg-gray-600 bg-white left-0 mt-2 w-56 rounded-md shadow-lg ring-1 ring-black dark:ring-white ring-opacity-5 z-10">
+                                                <div className="absolute top-full bg-white dark:bg-gray-700 left-0 mt-2 w-56 rounded-md shadow-lg ring-1 ring-black dark:ring-gray-500 ring-opacity-5 z-10">
                                                     <div className="py-1" role="menu" aria-orientation="vertical">
                                                         {link.dropdown.map((item) => (
                                                             <Link
                                                                 key={item.path}
                                                                 href={item.path || '#'}
-                                                                className={`block px-4 py-2 text-sm hover:font-bold dark:hover:font-bold  ${isActive(item.path || '') ? 'font-medium' : ''
+                                                                className={`block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-600 hover:text-primary ${isActive(item.path || '')
+                                                                    ? 'text-primary font-medium bg-gray-50 dark:bg-gray-600'
+                                                                    : ''
                                                                     }`}
                                                                 onClick={() => setActiveDropdown(null)}
                                                                 role="menuitem"
@@ -178,8 +200,8 @@ const Header: React.FC<IHeaderProps> = ({ children }) => {
                                     ) : (
                                         <Link
                                             href={link.path}
-                                            className={`text-sm hover:font-bold lg:text-base font-medium transition-colors ${isActive(link.path)
-                                                ? ' font-semibold border-b-2 border-gray-900'
+                                            className={`text-sm hover:text-primary lg:text-base font-medium transition-colors ${isActive(link.path)
+                                                ? 'text-primary font-semibold border-b-2 border-primary'
                                                 : ''
                                                 }`}
                                         >
@@ -191,99 +213,106 @@ const Header: React.FC<IHeaderProps> = ({ children }) => {
                             {(user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN') && (
                                 <Link
                                     href="/admin/dashboard"
-                                    className={`text-sm lg:text-base font-medium hover:font-bold transition-colors ${pathname?.startsWith('/admin')
-                                        ? ' font-semibold border-b-2 border-gray-900'
+                                    className={`text-sm lg:text-base font-medium hover:text-primary transition-colors ${pathname?.startsWith('/admin')
+                                        ? 'text-primary font-semibold border-b-2 border-primary'
                                         : ''
                                         }`}
                                 >
-                                    Admin Dashboard
+                                    Quản trị
                                 </Link>
                             )}
                         </nav>
 
-                        <div className="flex flex-row gap-3 items-center">
+                        <div className="flex items-center gap-3">
                             <ThemeSwitcher />
                             <UserAvatar />
                             {children}
                         </div>
                     </div>
 
-                    {/* Mobile Navigation Button and Avatar */}
-                    <div className="flex gap-2 items-center md:hidden">
+                    {/* Mobile: Theme và Avatar */}
+                    <div className="flex items-center gap-2 md:hidden">
                         <ThemeSwitcher />
                         <UserAvatar />
-                        {/* <button
-                            className="p-2 ml-2focus:outline-none"
-                            onClick={() => setIsMenuOpen(!isMenuOpen)}
-                            aria-label="Toggle menu"
-                        >
-                            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-                        </button> */}
                     </div>
                 </div>
             </div>
 
-            {/* Mobile Menu */}
-            {isMenuOpen && (
-                <div className="md:hidden  shadow-lg">
-                    <nav className="max-h-[80vh] overflow-y-auto px-4 pt-2 pb-4">
-                        {navLinks.map((link) => (
-                            <div key={link.path}>
-                                {link.dropdown ? (
-                                    <>
-                                        <button
-                                            className={`flex items-center justify-between w-full py-3 text-base font-medium border-b border-gray-100 ${activeDropdown === link.title ? 'font-semibold' : ''
-                                                }`}
-                                            onClick={() => toggleDropdown(link.title)}
-                                        >
-                                            {link.title}
-                                            <ChevronDown
-                                                size={16}
-                                                className={`transition-transform ${activeDropdown === link.title ? 'rotate-180' : ''}`}
-                                            />
-                                        </button>
-                                        {activeDropdown === link.title && (
-                                            <div className="ml-4 py-1">
-                                                {link.dropdown.map((item) => (
-                                                    <Link
-                                                        key={item.path || item.title}
-                                                        href={item.path || '#'}
-                                                        className={`flex items-center gap-2 py-2 pl-2 text-sm border-b border-gray-50 ${isActive(item.path || '') ? 'font-medium' : ''
-                                                            }`}
-                                                        onClick={() => setIsMenuOpen(false)}
-                                                    >
-                                                        <ChevronRight size={12} />
-                                                        {item.title}
-                                                    </Link>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </>
-                                ) : (
-                                    <Link
-                                        href={link.path}
-                                        className={`py-3 text-base font-medium border-b border-gray-100 block ${isActive(link.path) ? ' font-semibold' : ''
+            {/* Mobile Menu - slide down animation */}
+            <div
+                className={`md:hidden overflow-hidden transition-all duration-300 ${isMenuOpen
+                    ? 'max-h-[80vh] shadow-lg'
+                    : 'max-h-0'
+                    }`}
+            >
+                <nav className="px-4 pt-2 pb-4 bg-white dark:bg-gray-800">
+                    {navLinks.map((link) => (
+                        <div key={link.path}>
+                            {link.dropdown ? (
+                                <>
+                                    <button
+                                        className={`flex items-center justify-between w-full py-3 text-base font-medium border-b border-gray-100 dark:border-gray-700 ${activeDropdown === link.title
+                                            ? 'text-primary font-semibold'
+                                            : ''
                                             }`}
-                                        onClick={() => setIsMenuOpen(false)}
+                                        onClick={() => toggleDropdown(link.title)}
                                     >
                                         {link.title}
-                                    </Link>
-                                )}
-                            </div>
-                        ))}
-                        {(user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN') && (
-                            <Link
-                                href="/admin/dashboard"
-                                className={`py-3 text-base font-medium border-b border-gray-100 block ${pathname?.startsWith('/admin') ? ' font-semibold' : ''
-                                    }`}
-                                onClick={() => setIsMenuOpen(false)}
-                            >
-                                Admin Dashboard
-                            </Link>
-                        )}
-                    </nav>
-                </div>
-            )}
+                                        <ChevronDown
+                                            size={16}
+                                            className={`transition-transform ${activeDropdown === link.title ? 'rotate-180' : ''}`}
+                                        />
+                                    </button>
+                                    <div
+                                        className={`ml-4 overflow-hidden transition-all duration-300 ${activeDropdown === link.title
+                                            ? 'max-h-64'
+                                            : 'max-h-0'
+                                            }`}
+                                    >
+                                        {link.dropdown.map((item) => (
+                                            <Link
+                                                key={item.path || item.title}
+                                                href={item.path || '#'}
+                                                className={`flex items-center gap-2 py-2 pl-2 text-sm border-b border-gray-50 dark:border-gray-700 ${isActive(item.path || '')
+                                                    ? 'text-primary font-medium'
+                                                    : ''
+                                                    }`}
+                                                onClick={() => setIsMenuOpen(false)}
+                                            >
+                                                <ChevronRight size={12} />
+                                                {item.title}
+                                            </Link>
+                                        ))}
+                                    </div>
+                                </>
+                            ) : (
+                                <Link
+                                    href={link.path}
+                                    className={`py-3 text-base font-medium border-b border-gray-100 dark:border-gray-700 block ${isActive(link.path)
+                                        ? 'text-primary font-semibold'
+                                        : ''
+                                        }`}
+                                    onClick={() => setIsMenuOpen(false)}
+                                >
+                                    {link.title}
+                                </Link>
+                            )}
+                        </div>
+                    ))}
+                    {(user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN') && (
+                        <Link
+                            href="/admin/dashboard"
+                            className={`py-3 text-base font-medium border-b border-gray-100 dark:border-gray-700 block ${pathname?.startsWith('/admin')
+                                ? 'text-primary font-semibold'
+                                : ''
+                                }`}
+                            onClick={() => setIsMenuOpen(false)}
+                        >
+                            Quản trị
+                        </Link>
+                    )}
+                </nav>
+            </div>
         </header>
     );
 }
