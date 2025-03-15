@@ -20,11 +20,11 @@ export default function AuthImage({ width, height, className, isGoBack = false }
                 <button
                     type="button"
                     title="Quay lại"
-                    className="flex items-center absolute top-2 left-4 z-10 transition-colors
+                    className="flex items-center absolute top-2 left-4 z-10 transition-colors dark:hover:bg-gray-800 dark:bg-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full p-1
                            sm:left-4 md:top-4 md:left-4"
                     onClick={() => router.back()}
                 >
-                    <ArrowLeft className='rounded-full bg-gray-200 md:size-6 sm:size-5' />
+                    <ArrowLeft className='rounded-full bg-gray-200 dark:bg-gray-600 md:size-6 sm:size-5' />
                     <span className="ml-2 text-sm md:text-base font-medium hover:font-bold">Quay lại</span>
                 </button>
             )}

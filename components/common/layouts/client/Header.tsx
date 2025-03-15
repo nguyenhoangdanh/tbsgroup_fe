@@ -113,7 +113,7 @@ const Header: React.FC<IHeaderProps> = ({ children }) => {
                     {/* Logo */}
                     <div className="flex items-center justify-center gap-1">
                         <button
-                            className="focus:outline-none pt-2"
+                            className="focus:outline-none pt-2 md:hidden"
                             onClick={() => setIsMenuOpen(!isMenuOpen)}
                             aria-label="Toggle menu"
                         >
