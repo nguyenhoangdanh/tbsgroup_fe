@@ -2,6 +2,7 @@
 import React, { useEffect, useRef } from 'react';
 import dayjs from 'dayjs';
 import { Facebook, Mail, PhoneCall } from 'lucide-react';
+import { ImageLogo } from '../ImageLogo';
 
 const Footer = () => {
     const footerRef = useRef<HTMLElement>(null);
@@ -40,10 +41,13 @@ const Footer = () => {
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                     {/* Logo */}
                     <div className="mb-3 sm:mb-0">
-                        <img
+                        {/* <img
                             src="/images/remove-bg-logo.png"
                             alt="logo"
                             className="h-[40px] sm:h-[50px] object-contain"
+                        /> */}
+                        <ImageLogo
+                            className="h-[100px] sm:h-[120px] md:h-[140px] object-contain"
                         />
                     </div>
 

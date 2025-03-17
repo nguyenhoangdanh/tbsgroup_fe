@@ -119,7 +119,7 @@ export const NavProjects = React.memo(({
             <SidebarGroupLabel>Projects</SidebarGroupLabel>
             <SidebarMenu>
                 {projectItems}
-                <MoreProjectsButton />
+                {/* <MoreProjectsButton /> */}
             </SidebarMenu>
         </SidebarGroup>
     );

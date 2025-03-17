@@ -91,7 +91,7 @@ export const NavUser = React.memo(({ user, onLogout }: NavUserProps) => {
                             </div>
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        <DropdownMenuGroup>
+                        {/* <DropdownMenuGroup>
                             <DropdownMenuItem>
                                 <Sparkles />
                                 Upgrade to Pro
@@ -111,7 +111,7 @@ export const NavUser = React.memo(({ user, onLogout }: NavUserProps) => {
                                 <Bell />
                                 Notifications
                             </DropdownMenuItem>
-                        </DropdownMenuGroup>
+                        </DropdownMenuGroup> */}
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={handleLogout}>
                             <LogOut />

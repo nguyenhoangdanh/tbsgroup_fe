@@ -15,6 +15,7 @@ import dynamic from "next/dynamic";
 import { AlignJustify } from "lucide-react";
 import { useSidebarCollapsed, useSidebarSetCollapsed, useSidebarIsMobileView } from "./SidebarStateProvider";
 import { useRouteChangeHandler } from "@/hooks/useRouteChangeHandler";
+import Link from "next/link";
 
 // Sử dụng dynamic import để tránh lỗi hydration
 const DynamicAppSidebar = dynamic(
@@ -228,6 +229,7 @@ const AdminLayout = ({
         className="flex flex-col flex-grow transition-all duration-300 ease-in-out"
         style={contentStyle}
       >
+
         <HeaderSection
           breadcrumbItems={breadcrumbItems}
           showThemeSwitcher={showThemeSwitcher}
@@ -237,6 +239,10 @@ const AdminLayout = ({
           isMobileView={isMobileView}
         />
         <MainContent variant={variant}>
+          <Link href="/" className="text-blue-500 hover:underline">
+            {/* <ChevronRight size={18} /> */}
+            Quay lại trang chủ
+          </Link>
           {children}
         </MainContent>
       </div>

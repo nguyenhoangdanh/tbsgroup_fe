@@ -156,15 +156,15 @@ export const sidebarData = {
             url: "permissions",
             icon: LockKeyhole,
         },
-        {
-            name: "Sales & Marketing",
-            url: "#",
-            icon: PieChart,
-        },
-        {
-            name: "Travel",
-            url: "#",
-            icon: Map,
-        },
+        // {
+        //     name: "Sales & Marketing",
+        //     url: "#",
+        //     icon: PieChart,
+        // },
+        // {
+        //     name: "Travel",
+        //     url: "#",
+        //     icon: Map,
+        // },
     ] as Project[],
 }

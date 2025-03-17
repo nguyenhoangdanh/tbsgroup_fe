@@ -10,6 +10,7 @@ import { sidebarData } from "./sidebar-data"
 import { useSidebarCollapsed, useSidebarSetCollapsed, useSidebarIsMobileView } from "../../SidebarStateProvider"
 import { useRenderTracker } from "@/hooks/useRenderTracker"
 import { ChevronRight } from "lucide-react"
+import Link from "next/link"
 
 // Định nghĩa component SidebarToggle và memo nó
 const SidebarToggle = React.memo(({
@@ -93,9 +94,10 @@ export const AppSidebar = React.memo(function AppSidebar() {
                         isCollapsed={collapsed}
                     />
                 )}
+
             </div>
             <div className="flex-1 overflow-y-auto p-2.5">
-                <MemoNavMain items={navMainItems} />
+                {/* <MemoNavMain items={navMainItems} /> */}
                 <div className="mt-4">
                     <MemoNavProjects projects={projectItems} />
                 </div>

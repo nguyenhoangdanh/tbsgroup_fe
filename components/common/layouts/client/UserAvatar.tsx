@@ -114,19 +114,19 @@ const UserAvatar = () => {
                             Đổi mật khẩu
                         </DropdownMenuItem>
 
-                        <DropdownMenuItem className="cursor-pointer">
+                        {/* <DropdownMenuItem className="cursor-pointer">
                             <Bell size="16px" className="mr-2" />
                             Thông báo
-                        </DropdownMenuItem>
+                        </DropdownMenuItem> */}
                     </DropdownMenuGroup>
 
                     <DropdownMenuSeparator />
 
                     <DropdownMenuGroup>
-                        <DropdownMenuItem className="cursor-pointer">
+                        {/* <DropdownMenuItem className="cursor-pointer">
                             <SettingsIcon size="16px" className="mr-2" />
                             Cài đặt
-                        </DropdownMenuItem>
+                        </DropdownMenuItem> */}
 
                         <DropdownMenuItem
                             onClick={handleLogout}

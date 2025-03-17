@@ -28,7 +28,7 @@ export default function Home() {
                             Các giá trị cốt lõi, cấu trúc doanh nghiệp, cột mốc, thành tựu và đóng góp to lớn của nhà điều hành là tiền đề, động lực cho sự phát triển chung cho một tương lai vững mạnh của TBS.
                         </p>
                         <br />
-                        <div className="w-full flex flex-row gap-4 items-center justify-between">
+                        <div className="w-full flex flex-col md:flex-row gap-4 items-center justify-between">
                             <img src="https://www.tbsgroup.vn/wp-content/uploads/2014/12/about-landing-image-1.png" alt="about-landing-image-1"></img>
                             <div className="w-full flex flex-col gap-2 items-start">
                                 <h2 className="text-2xl font-black">

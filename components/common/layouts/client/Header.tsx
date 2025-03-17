@@ -6,6 +6,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Menu, X, ChevronDown, ChevronRight } from 'lucide-react';
 import UserAvatar from './UserAvatar';
 import ThemeSwitcher from '../admin/ThemeSwitcher';
+import { ImageLogo } from '../ImageLogo';
 
 interface IHeaderProps {
     children?: React.ReactNode;
@@ -140,10 +141,13 @@ const Header: React.FC<IHeaderProps> = ({ children }) => {
                             {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
                         </button>
                         <Link href="/" className="flex-shrink-0">
-                            <img
+                            {/* <img
                                 src="/images/remove-bg-logo.png"
                                 alt="logo"
                                 className="h-8 sm:h-9 object-contain"
+                            /> */}
+                            <ImageLogo
+                                className="h-[60px] sm:h-[80px] md:h-[100px] object-contain"
                             />
                         </Link>
                     </div>
@@ -151,7 +155,7 @@ const Header: React.FC<IHeaderProps> = ({ children }) => {
                     {/* Desktop Navigation */}
                     <div className="hidden md:flex items-center justify-between flex-1 ml-10">
                         <nav className="flex items-center space-x-4 lg:space-x-6">
-                            {navLinks.map((link) => (
+                            {/* {navLinks.map((link) => (
                                 <div
                                     key={link.path}
                                     className="relative"
@@ -209,10 +213,10 @@ const Header: React.FC<IHeaderProps> = ({ children }) => {
                                         </Link>
                                     )}
                                 </div>
-                            ))}
+                            ))} */}
                             {(user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN') && (
                                 <Link
-                                    href="/admin/dashboard"
+                                    href="/admin/users"
                                     className={`text-sm lg:text-base font-medium hover:text-primary transition-colors ${pathname?.startsWith('/admin')
                                         ? 'text-primary font-semibold border-b-2 border-primary'
                                         : ''
@@ -246,7 +250,7 @@ const Header: React.FC<IHeaderProps> = ({ children }) => {
                     }`}
             >
                 <nav className="px-4 pt-2 pb-4 bg-white dark:bg-gray-800">
-                    {navLinks.map((link) => (
+                    {/* {navLinks.map((link) => (
                         <div key={link.path}>
                             {link.dropdown ? (
                                 <>
@@ -298,10 +302,10 @@ const Header: React.FC<IHeaderProps> = ({ children }) => {
                                 </Link>
                             )}
                         </div>
-                    ))}
+                    ))} */}
                     {(user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN') && (
                         <Link
-                            href="/admin/dashboard"
+                            href="/admin/users"
                             className={`py-3 text-base font-medium border-b border-gray-100 dark:border-gray-700 block ${pathname?.startsWith('/admin')
                                 ? 'text-primary font-semibold'
                                 : ''

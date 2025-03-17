@@ -1,5 +1,8 @@
 'use client';
+import { UserStatusEnum } from '@/common/enum';
+import useAuthManager from '@/hooks/useAuthManager';
 import { ArrowLeft } from 'lucide-react';
+import { useTheme } from 'next-themes';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import React from 'react';
@@ -12,11 +15,20 @@ interface IProps {
 
 export default function AuthImage({ width, height, className, isGoBack = false }: IProps) {
     const router = useRouter();
-
+    const { user } = useAuthManager();
+    const [logoUrl, setLogoUrl] = React.useState<string>("");
+    const theme = useTheme()
+    React.useEffect(() => {
+        if (theme.theme === 'dark') {
+            setLogoUrl('/images/logo-dark.png');
+        } else {
+            setLogoUrl('/images/logo-light.png');
+        }
+    }, [theme.theme]);;
     return (
 
         <div className={`relative flex flex-col items-center justify-center w-full ${className || ''}`}>
-            {isGoBack && (
+            {(isGoBack && user?.status !== UserStatusEnum.PENDING_ACTIVATION) && (
                 <button
                     type="button"
                     title="Quay lại"
@@ -29,9 +41,9 @@ export default function AuthImage({ width, height, className, isGoBack = false }
                 </button>
             )}
 
-            <div className={isGoBack ? `relative mt-12 md:mt-16 flex justify-center w-full` : ""}>
+            <div className={isGoBack ? `relative mt-0 flex justify-center w-full` : ""}>
                 <Image
-                    src="/images/remove-bg-logo.png"
+                    src={logoUrl}
                     alt="Auth Image"
                     loading="lazy"
                     className="max-w-full h-auto"
