@@ -2,10 +2,12 @@
 import React, { useEffect, useRef } from 'react';
 import dayjs from 'dayjs';
 import { Facebook, Mail, PhoneCall } from 'lucide-react';
-import { ImageLogo } from '../ImageLogo';
+import { useTheme } from 'next-themes';
+import ImageLogo from '../ImageLogo';
 
 const Footer = () => {
     const footerRef = useRef<HTMLElement>(null);
+    const { theme } = useTheme();
 
     // Thêm hiệu ứng fade-in khi footer hiển thị
     useEffect(() => {
@@ -47,6 +49,7 @@ const Footer = () => {
                             className="h-[40px] sm:h-[50px] object-contain"
                         /> */}
                         <ImageLogo
+                            variant={theme === 'dark' ? 'dark' : 'light'}
                             className="h-[100px] sm:h-[120px] md:h-[140px] object-contain"
                         />
                     </div>

@@ -40,6 +40,8 @@ export const SelectField = <T extends FieldValues>({
             control={control}
             name={name}
             render={({ field, fieldState: { error } }) => {
+                console.log('error', error);
+                console.log('field', field.value);
                 return (
                     <div className={clsx("flex flex-col gap-1", className)}>
                         <Label htmlFor={name} className="text-left font-medium">

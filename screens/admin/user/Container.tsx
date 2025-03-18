@@ -1,157 +1,217 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import { ColumnDef } from "@tanstack/react-table";
-import { Loader2 } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
-import UserForm from "./form";
 import { DataTable } from "@/components/common/table/data-table";
-import { getAllUsersQueryFn, User } from "@/apis/user/user.api";
-import { useMutation } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { TUserSchema } from "@/schemas/user";
-import { fetchRoles, RoleType } from "@/apis/roles/role.api";
+import { useUserContext } from "@/hooks/users/userContext";
+import { DialogType, useDialog } from "@/context/DialogProvider";
 import { useRoleContext } from "@/hooks/roles/roleContext";
+import { UserType } from "@/hooks/users/useUserQueries";
+import UserForm from "./form";
+import { UserStatusEnum } from "@/common/enum";
 
 const UserContainer = () => {
-    const [users, setUsers] = useState<User[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [selectedUser, setSelectedUser] = useState<User | null>(null);
-    const [roles, setRoles] = useState<RoleType[]>([]);
-
-
-
-    const { mutate: fetchUsers } = useMutation({
-        mutationFn: getAllUsersQueryFn,
-        onSuccess: (data) => {
-            setUsers(data);
-            setLoading(false);
-            toast({
-                title: "Đã tải dữ liệu người dùng thành công",
-                variant: "default",
-            });
-        },
-        onError: (error) => {
-            console.error("Lỗi khi tải dữ liệu người dùng:", error);
-            toast({
-                title: "Lỗi khi tải dữ liệu người dùng",
-                description: "Vui lòng thử lại sau",
-                variant: "destructive",
-            });
-            setLoading(false);
-        }
-    })
-
+    // Sử dụng context
     const {
-        mutate: allRoles,
-    } = useMutation({
-        mutationFn: fetchRoles,
-        onSuccess: (data) => {
-            if (roles.length === 0 && data) {
-                const formattedRoles = data.map(role => ({
-                    value: role.id,
-                    label: role.name
-                }));
-                setRoles(formattedRoles);
-            }
-        },
-        onError: (error) => {
-            console.error("Lỗi khi lấy dữ liệu vai trò:", error);
-            toast({
-                title: "Lỗi khi lấy dữ liệu vai trò",
-                description: "Vui lòng thử lại sau",
-                variant: "destructive",
-            });
-        }
+        listUsers,
+        selectedUser,
+        loading,
+        activeFilters,
+        handleCreateUser,
+        handleUpdateUser,
+        handleDeleteUser,
+        setSelectedUser,
+        resetError,
+        updatePagination,
+    } = useUserContext();
+
+    // Lấy context của role để có thể hiển thị danh sách role trong form
+    const { getAllRoles } = useRoleContext();
+    const roleQuery = getAllRoles;
+
+    // Sử dụng useRef để tránh re-render không cần thiết
+    const refetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const isSubmittingRef = useRef(false);
+
+    // Theo dõi các request đang thực hiện
+    const pendingRequestsRef = useRef(new Set<string>());
+
+    // Dialog context
+    const { updateDialogData, showDialog } = useDialog();
+
+    // State lưu trữ metadata cho phân trang
+    const [paginationMeta, setPaginationMeta] = useState({
+        totalItems: 0,
+        totalPages: 0,
+        currentPage: 1,
+        pageSize: activeFilters.limit || 10
     });
 
+    // Thêm effect để cập nhật dialog khi selectedUser thay đổi
     useEffect(() => {
-        fetchUsers();
-        allRoles();
-    }, []);
-
-
-    // Xử lý xóa người dùng
-    const handleDeleteUser = async (id: string) => {
-        try {
-            // Trong thực tế, bạn sẽ gọi API xóa ở đây
-            // await fetch(`/api/users/${id}`, { method: 'DELETE' });
-
-            // Cập nhật state
-            setUsers((prevUsers) => prevUsers.filter((user) => user.id !== id));
-            toast({
-                title: "Đã xóa người dùng thành công",
-                variant: "default",
-            });
-        } catch (error) {
-            console.error("Lỗi khi xóa người dùng:", error);
-            toast({
-                title: "Lỗi khi xóa người dùng",
-                description: "Vui lòng thử lại sau",
-                variant: "destructive",
-            });
+        if (selectedUser) {
+            updateDialogData(selectedUser);
         }
-    };
+    }, [selectedUser, updateDialogData]);
 
-    // Xử lý chỉnh sửa người dùng
-    const handleEditUser = (userData: User) => {
-        setSelectedUser(userData);
-    };
+    // Get users data with filters and pagination
+    const {
+        data: usersData,
+        isLoading: isLoadingUsers,
+        refetch: refetchUsers,
+        isRefetching
+    } = listUsers({
+        ...activeFilters,
+        // Convert string status to UserStatusEnum if it exists
+        status: activeFilters.status ? (activeFilters.status as UserStatusEnum) : undefined
+    }, {
+        refetchOnWindowFocus: false,
+        refetchOnMount: true,
+        refetchOnReconnect: false,
+        // Thêm caching và stale time để tối ưu hiệu suất
+        staleTime: 30000, // 30 seconds
+        cacheTime: 300000, // 5 minutes
+    });
 
-    // Xử lý submission từ form
-    const handleUserFormSubmit = async (formData: TUserSchema): Promise<void | boolean> => {
+    // Safe wrapper for refetch that prevents excessive calls
+    const safeRefetch = useCallback(() => {
+        if (refetchTimeoutRef.current) {
+            clearTimeout(refetchTimeoutRef.current);
+        }
+
+        // Tạo request ID để theo dõi
+        const requestId = `refetch-${Date.now()}`;
+        pendingRequestsRef.current.add(requestId);
+
+        refetchTimeoutRef.current = setTimeout(() => {
+            refetchUsers().finally(() => {
+                pendingRequestsRef.current.delete(requestId);
+                refetchTimeoutRef.current = null;
+            });
+        }, 300);
+    }, [refetchUsers]);
+
+    // Thêm hàm xử lý thay đổi trang/limit được tối ưu
+    const handlePageChange = useCallback((pageIndex: number, pageSize: number) => {
+        // pageIndex từ TanStack Table bắt đầu từ 0, API bắt đầu từ 1
+        const apiPage = pageIndex + 1;
+
+        // Nếu không thay đổi, không cần trigger API call
+        if (paginationMeta.currentPage === apiPage && paginationMeta.pageSize === pageSize) {
+            return;
+        }
+
+        // Cập nhật trong context
+        updatePagination(apiPage, pageSize);
+
+        // Kích hoạt refetch sau khi cập nhật state
+        setTimeout(() => {
+            safeRefetch();
+        }, 0);
+    }, [updatePagination, safeRefetch, paginationMeta.currentPage, paginationMeta.pageSize]);
+
+    // Reset user data với useCallback để tránh re-render không cần thiết
+    const resetUserData = useCallback(() => {
+        setSelectedUser(null);
+    }, [setSelectedUser]);
+
+    // Chuẩn bị danh sách roles để truyền vào form
+    const roleOptions = React.useMemo(() => {
+        if (!roleQuery.data) return [];
+
+        return roleQuery.data.map(role => ({
+            value: role.id,
+            label: role.name
+        }));
+    }, [roleQuery.data]);
+
+    // Handle form submission for create/edit with controlled refetch
+    const handleUserFormSubmit = useCallback(async (data: TUserSchema): Promise<boolean> => {
+        // Ngăn chặn submit trùng lặp
+        if (isSubmittingRef.current) return false;
+
+        const requestId = `submit-${Date.now()}`;
         try {
-            console.log("Form data submitted:", formData);
+            isSubmittingRef.current = true;
+            pendingRequestsRef.current.add(requestId);
 
-            // Nếu có ID thì đang edit, ngược lại là create
-            if (formData.id) {
-                // Cập nhật user trong state
-                setUsers(prevUsers =>
-                    prevUsers.map(user =>
-                        user.id === formData.id
-                            ? { ...user, ...formData as any }
-                            : user
-                    )
-                );
-
-                setSelectedUser(null); // Reset selected user
-
-                toast({
-                    title: "Đã cập nhật người dùng thành công",
-                    variant: "default",
-                });
+            if (data.id) {
+                const { id, ...updateData } = data;
+                await handleUpdateUser(id, updateData);
             } else {
-                // Thêm user mới vào state (giả định ID được tạo từ API)
-                const newUser: User = {
-                    id: `temp-${Date.now()}`,
-                    ...formData as any,
-                    createdAt: new Date().toISOString(),
-                };
-
-                console.log("New user data:", newUser);
-
-                setUsers(prevUsers => [...prevUsers, newUser]);
-
-                toast({
-                    title: "Đã tạo người dùng thành công",
-                    variant: "default",
-                });
+                const { id, ...createData } = data;
+                await handleCreateUser(createData);
             }
 
+            safeRefetch();
+            setSelectedUser(null);
             return true;
         } catch (error) {
-            console.error("Lỗi khi lưu dữ liệu người dùng:", error);
-            toast({
-                title: "Lỗi khi lưu dữ liệu người dùng",
-                description: "Vui lòng thử lại sau",
-                variant: "destructive",
-            });
-            throw error; // Ném lỗi để DialogProvider không đóng dialog
+            console.error("Error submitting user form:", error);
+            return false;
+        } finally {
+            isSubmittingRef.current = false;
+            pendingRequestsRef.current.delete(requestId);
         }
-    };
+    }, [handleCreateUser, handleUpdateUser, safeRefetch, setSelectedUser]);
 
-    // Định nghĩa các cột cho bảng
-    const columns: ColumnDef<User>[] = [
+    // Handle user deletion
+    const handleUserDelete = useCallback(async (id: string): Promise<void> => {
+        // Ngăn chặn delete trùng lặp
+        if (isSubmittingRef.current) return;
+
+        const requestId = `delete-${Date.now()}`;
+        try {
+            isSubmittingRef.current = true;
+            pendingRequestsRef.current.add(requestId);
+
+            await handleDeleteUser(id);
+
+            // Nếu user đang được chọn bị xóa, reset selection
+            if (selectedUser?.id === id) {
+                setSelectedUser(null);
+            }
+
+            safeRefetch();
+        } catch (error) {
+            console.error("Error deleting user:", error);
+        } finally {
+            isSubmittingRef.current = false;
+            pendingRequestsRef.current.delete(requestId);
+        }
+    }, [handleDeleteUser, safeRefetch, selectedUser, setSelectedUser]);
+
+    // Xử lý khi chọn edit user
+    const handleEditUser = useCallback(async (user: UserType): Promise<boolean> => {
+        setSelectedUser(user);
+        showDialog({
+            type: DialogType.EDIT,
+            data: user,
+        });
+        return true;
+    }, [setSelectedUser, showDialog]);
+
+    // Đảm bảo cleanup khi unmount
+    useEffect(() => {
+        return () => {
+            // Clear tất cả timers và refs
+            if (refetchTimeoutRef.current) {
+                clearTimeout(refetchTimeoutRef.current);
+            }
+
+            pendingRequestsRef.current.clear();
+            isSubmittingRef.current = false;
+
+            // Reset selected user khi unmount để tránh memory leaks
+            setSelectedUser(null);
+            resetError();
+        };
+    }, [setSelectedUser, resetError]);
+
+    // Define table columns
+    const columns: ColumnDef<UserType>[] = [
         {
             id: "fullName",
             header: "Tên người dùng",
@@ -163,11 +223,19 @@ const UserContainer = () => {
                     </div>
                 );
             },
+            accessorKey: "fullName",
+        },
+        {
+            id: "username",
+            header: "Tên đăng nhập",
+            cell: ({ row }) => row.original.username,
+            accessorKey: "username",
         },
         {
             id: "role",
             header: "Vai trò",
             cell: ({ row }) => row.original.role,
+            accessorKey: "role",
         },
         {
             id: "status",
@@ -180,8 +248,8 @@ const UserContainer = () => {
                             status === "ACTIVE"
                                 ? "bg-green-100 text-green-800 border-green-200"
                                 : status === "INACTIVE"
-                                    ? "bg-gray-100 text-gray-800 border-gray-200"
-                                    : "bg-yellow-100 text-yellow-800 border-yellow-200"
+                                    ? "bg-red-500 text-white dark:text-gray-900 border-red-200"
+                                    : "bg-gray-100  border-yellow-200 text-gray-900 dark:text-gray-800"
                         }
                     >
                         {status === "ACTIVE"
@@ -190,8 +258,9 @@ const UserContainer = () => {
                                 ? "Không hoạt động"
                                 : "Chờ duyệt"}
                     </Badge>
-                )
+                );
             },
+            accessorKey: "status",
         },
         {
             id: "lastLogin",
@@ -208,42 +277,65 @@ const UserContainer = () => {
             cell: ({ row }) => {
                 return new Date(row.original.createdAt).toLocaleString("vi-VN");
             },
+            accessorKey: "createdAt",
         },
     ];
 
+    const users = usersData || [];
+    const isLoading = loading || isLoadingUsers || isRefetching;
+
+    // Cập nhật metadata phân trang khi dữ liệu thay đổi
+    useEffect(() => {
+        if (usersData?.meta) {
+            setPaginationMeta({
+                totalItems: usersData.meta.totalItems,
+                totalPages: usersData.meta.totalPages,
+                currentPage: usersData.meta.currentPage,
+                pageSize: usersData.meta.itemsPerPage
+            });
+        }
+    }, [usersData]);
+
+    const initialPageIndex = Math.max(0, (paginationMeta.currentPage || 1) - 1);
+
     return (
         <div className="container mx-auto py-6">
-            {/* DataTable với các action đã được định nghĩa */}
             <DataTable
                 columns={columns}
                 data={users}
-                title="Danh sách người dùng"
-                description="Quản lý thông tin tất cả người dùng trong hệ thống"
+                title="Quản lý người dùng"
+                description="Quản lý thông tin người dùng trong hệ thống"
                 actions={["create", "edit", "delete", "read-only"]}
                 searchColumn="fullName"
                 searchPlaceholder="Tìm theo tên người dùng..."
                 exportData={true}
-                initialPageSize={10}
+                onDelete={handleUserDelete}
                 onEdit={handleEditUser}
-                isLoading={loading}
-                onDelete={(id) => handleDeleteUser(id)}
-                createFormComponent={<UserForm
-                    userData={null}
-                    onSubmit={handleUserFormSubmit}
-                    refetchData={fetchUsers}
-                    roles={roles}
-                />
+                refetchData={safeRefetch}
+                isLoading={isLoading}
+                createFormComponent={
+                    <UserForm
+                        onSubmit={handleUserFormSubmit}
+                        roles={roleOptions}
+                    />
                 }
-                // editFormComponent={selectedUser ?
-                //     <UserForm
-                //         roles={roles}
-                //         userData={selectedUser}
-                //         onSubmit={handleUserFormSubmit}
-                //         refetchData={fetchUsers}
-                //     />
-                //     : undefined
-                // }
-                refetchData={fetchUsers}
+                editFormComponent={
+                    <UserForm
+                        onSubmit={handleUserFormSubmit}
+                        roles={roleOptions}
+                    />
+                }
+                viewFormComponent={
+                    <UserForm
+                        roles={roleOptions}
+                        isReadOnly={true}
+                    />
+                }
+                serverSidePagination={true}
+                totalItems={paginationMeta.totalItems}
+                initialPageIndex={initialPageIndex}
+                initialPageSize={paginationMeta.pageSize}
+                onPageChange={handlePageChange}
             />
         </div>
     );

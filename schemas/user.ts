@@ -8,10 +8,10 @@ export const userSchema = z.object({
     message: 'Tên đăng nhập phải có ít nhất 9 ký tự',
   }),
   employeeId: z.string(),
-  role: z.string().uuid(),
-  password: z.string().min(6, {
-    message: 'Mật khẩu phải có ít  nhất 6 ký tự',
-  }),
+  roleId: z.string(),
+  // password: z.string().min(6, {
+  //   message: 'Mật khẩu phải có ít  nhất 6 ký tự',
+  // }),
   status: z.enum([
     UserStatusEnum.PENDING_ACTIVATION,
     UserStatusEnum.ACTIVE,
@@ -31,8 +31,8 @@ export const defaultUserValues: TUserSchema = {
   id: '',
   username: '',
   employeeId: '',
-  role: '',
-  password: 'Abc@123',
+  roleId: '',
+  // password: 'Abc@123',
   status: UserStatusEnum.PENDING_ACTIVATION,
   fullName: '',
   cardId: '',

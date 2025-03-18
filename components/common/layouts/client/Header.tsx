@@ -6,7 +6,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Menu, X, ChevronDown, ChevronRight } from 'lucide-react';
 import UserAvatar from './UserAvatar';
 import ThemeSwitcher from '../admin/ThemeSwitcher';
-import { ImageLogo } from '../ImageLogo';
+import { useTheme } from 'next-themes';
+import ImageLogo from '../ImageLogo';
 
 interface IHeaderProps {
     children?: React.ReactNode;
@@ -28,6 +29,7 @@ interface DropdownItem {
 
 const Header: React.FC<IHeaderProps> = ({ children }) => {
     const { user } = useAuthManager();
+    const { theme } = useTheme();
     const pathname = usePathname();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
@@ -147,6 +149,7 @@ const Header: React.FC<IHeaderProps> = ({ children }) => {
                                 className="h-8 sm:h-9 object-contain"
                             /> */}
                             <ImageLogo
+                                variant={theme === 'dark' ? 'dark' : 'light'}
                                 className="h-[60px] sm:h-[80px] md:h-[100px] object-contain"
                             />
                         </Link>

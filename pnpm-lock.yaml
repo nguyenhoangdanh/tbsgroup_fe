@@ -68,12 +68,18 @@ importers:
       '@smastrom/react-rating':
         specifier: 1.5.0
         version: 1.5.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@tanstack/query-sync-storage-persister':
+        specifier: ^5.68.0
+        version: 5.68.0
       '@tanstack/react-query':
         specifier: ^5.66.9
         version: 5.66.9(react@18.3.1)
       '@tanstack/react-query-devtools':
         specifier: ^5.66.9
         version: 5.66.9(@tanstack/react-query@5.66.9(react@18.3.1))(react@18.3.1)
+      '@tanstack/react-query-persist-client':
+        specifier: ^5.68.0
+        version: 5.68.0(@tanstack/react-query@5.66.9(react@18.3.1))(react@18.3.1)
       '@tanstack/react-table':
         specifier: ^8.21.2
         version: 8.21.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -89,6 +95,9 @@ importers:
       cmdk:
         specifier: 1.0.0
         version: 1.0.0(@types/react-dom@18.3.5(@types/react@18.3.18))(@types/react@18.3.18)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      crypto-js:
+        specifier: ^4.2.0
+        version: 4.2.0
       date-fns:
         specifier: 4.1.0
         version: 4.1.0
@@ -159,6 +168,9 @@ importers:
         specifier: ^3.24.2
         version: 3.24.2
     devDependencies:
+      '@types/crypto-js':
+        specifier: ^4.2.2
+        version: 4.2.2
       '@types/js-cookie':
         specifier: ^3.0.6
         version: 3.0.6
@@ -1496,13 +1508,28 @@ packages:
   '@tanstack/query-core@5.66.4':
     resolution: {integrity: sha512-skM/gzNX4shPkqmdTCSoHtJAPMTtmIJNS0hE+xwTTUVYwezArCT34NMermABmBVUg5Ls5aiUXEDXfqwR1oVkcA==}
 
+  '@tanstack/query-core@5.68.0':
+    resolution: {integrity: sha512-r8rFYYo8/sY/LNaOqX84h12w7EQev4abFXDWy4UoDVUJzJ5d9Fbmb8ayTi7ScG+V0ap44SF3vNs/45mkzDGyGw==}
+
   '@tanstack/query-devtools@5.65.0':
     resolution: {integrity: sha512-g5y7zc07U9D3esMdqUfTEVu9kMHoIaVBsD0+M3LPdAdD710RpTcLiNvJY1JkYXqkq9+NV+CQoemVNpQPBXVsJg==}
+
+  '@tanstack/query-persist-client-core@5.68.0':
+    resolution: {integrity: sha512-SP5E9lyC1/yHqfIrfIoGD5By0hh3zv0kMMWWtWjznHPb6Ghb0INCoNJr0oD5f+DQZAen+mJmwQ0x9LlAZdle6Q==}
+
+  '@tanstack/query-sync-storage-persister@5.68.0':
+    resolution: {integrity: sha512-Zd0ukP58F4uLDol5QoP6NCgRdMl9+3InW4ojg7VITpP6QLcjbJqQ4DG5miOhSElM/xASbW2wS/AoSSguboA5Lw==}
 
   '@tanstack/react-query-devtools@5.66.9':
     resolution: {integrity: sha512-70G6AR35he53SYUcUK6EdqNR18zejCv1rM6900gjZP408EAex56YLwVSeijzk9lWeU2J42G9Fjh0i1WngUTsgw==}
     peerDependencies:
       '@tanstack/react-query': ^5.66.9
+      react: ^18 || ^19
+
+  '@tanstack/react-query-persist-client@5.68.0':
+    resolution: {integrity: sha512-USJZICO6iRhH3oM40NFJhQH1kXMhGNS/RmFaXIfdgF4rtjfbmAdejaGEhq7DPuTgzd+mhcgGC3wdl/A8YFMp8g==}
+    peerDependencies:
+      '@tanstack/react-query': ^5.68.0
       react: ^18 || ^19
 
   '@tanstack/react-query@5.66.9':
@@ -1520,6 +1547,9 @@ packages:
   '@tanstack/table-core@8.21.2':
     resolution: {integrity: sha512-uvXk/U4cBiFMxt+p9/G7yUWI/UbHYbyghLCjlpWZ3mLeIZiUBSKcUnw9UnKkdRz7Z/N4UBuFLWQdJCjUe7HjvA==}
     engines: {node: '>=12'}
+
+  '@types/crypto-js@4.2.2':
+    resolution: {integrity: sha512-sDOLlVbHhXpAUAL0YHDUUwDZf3iN4Bwi4W6a0W0b+QcAezUbRtH4FVb+9J4h+XFPW7l/gQ9F8qC7P+Ec4k8QVQ==}
 
   '@types/js-cookie@3.0.6':
     resolution: {integrity: sha512-wkw9yd1kEXOPnvEeEV1Go1MmxtBJL0RR79aOTAApecWFVu7w0NNXNqhcWgvw2YgZDYadliXkl14pa3WXw5jlCQ==}
@@ -4107,11 +4137,28 @@ snapshots:
 
   '@tanstack/query-core@5.66.4': {}
 
+  '@tanstack/query-core@5.68.0': {}
+
   '@tanstack/query-devtools@5.65.0': {}
+
+  '@tanstack/query-persist-client-core@5.68.0':
+    dependencies:
+      '@tanstack/query-core': 5.68.0
+
+  '@tanstack/query-sync-storage-persister@5.68.0':
+    dependencies:
+      '@tanstack/query-core': 5.68.0
+      '@tanstack/query-persist-client-core': 5.68.0
 
   '@tanstack/react-query-devtools@5.66.9(@tanstack/react-query@5.66.9(react@18.3.1))(react@18.3.1)':
     dependencies:
       '@tanstack/query-devtools': 5.65.0
+      '@tanstack/react-query': 5.66.9(react@18.3.1)
+      react: 18.3.1
+
+  '@tanstack/react-query-persist-client@5.68.0(@tanstack/react-query@5.66.9(react@18.3.1))(react@18.3.1)':
+    dependencies:
+      '@tanstack/query-persist-client-core': 5.68.0
       '@tanstack/react-query': 5.66.9(react@18.3.1)
       react: 18.3.1
 
@@ -4127,6 +4174,8 @@ snapshots:
       react-dom: 18.3.1(react@18.3.1)
 
   '@tanstack/table-core@8.21.2': {}
+
+  '@types/crypto-js@4.2.2': {}
 
   '@types/js-cookie@3.0.6': {}
 

@@ -10,10 +10,10 @@ import { resetPasswordMutationFn } from "@/apis/user/user.api";
 import { toast } from "@/hooks/use-toast";
 import SubmitButton from "@/components/SubmitButton";
 import { defaultUserValues, TUserSchema, userSchema } from "@/schemas/user";
-import useAuth from "@/hooks/useAuth";
+import useAuthManager from "@/hooks/useAuthManager";
 
 const UserProfileForm = () => {
-    const { user } = useAuth();
+    const { user } = useAuthManager();
     const router = useRouter();
     const [isLoading, setIsLoading] = React.useState<boolean>(false);
     const methods = useForm<TUserSchema>({

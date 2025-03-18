@@ -1,58 +1,76 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState, useCallback, memo, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form } from "@/components/ui/form";
+import { TUserSchema, userSchema, defaultUserValues } from "@/schemas/user";
 import { useDialog } from "@/context/DialogProvider";
 import { FieldInput } from "@/components/common/Form/FieldInput";
-import FormActions from "@/components/common/Form/FormAction";
-import { defaultUserValues, TUserSchema, userSchema } from "@/schemas/user";
 import { SelectField } from "@/components/common/Form/SelectField";
-import { Checkbox } from "@/components/ui/checkbox";
 import { FieldCheckbox } from "@/components/common/Form/FieldCheckbox";
+import FormActions from "@/components/common/Form/FormAction";
+import useAuthManager from "@/hooks/useAuthManager";
 
 interface UserFormProps {
-    userData?: TUserSchema | null;
     onSubmit?: (data: TUserSchema) => Promise<void | boolean>;
     refetchData?: () => void;
     isReadOnly?: boolean;
     roles: { value: string; label: string }[];
 }
 
-const UserForm: React.FC<UserFormProps> = ({
-    userData,
+const UserForm: React.FC<UserFormProps> = memo(({
     onSubmit,
     refetchData,
     isReadOnly = false,
     roles,
 }) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const { hideDialog } = useDialog();
+    const { hideDialog, dialog } = useDialog();
+    const { user: currentUser } = useAuthManager();
 
-    // Initialize form with zod validation
+    // Determine if the form is in edit mode (dialog.data exists)
+    const isEditMode = !!dialog.data?.id;
+
+    // Check if readonly is set by dialog or props
+    const effectiveReadOnly = isReadOnly || dialog.type === 'view';
+
+    // Initialize form with values from dialog if available, otherwise defaults
     const form = useForm<TUserSchema>({
         resolver: zodResolver(userSchema),
-        defaultValues: userData ? {
-            id: userData.id,
-            username: userData.username,
-            employeeId: userData.employeeId,
-            role: userData.role,
-            password: userData.password,
-            status: userData.status,
-            fullName: userData.fullName,
-            cardId: userData.cardId,
+        defaultValues: dialog.data ? {
+            id: dialog.data.id,
+            username: dialog.data.username,
+            fullName: dialog.data.fullName || "",
+            employeeId: dialog.data.employeeId || "",
+            cardId: dialog.data.cardId || "",
+            roleId: dialog.data.roleId || "",
+            status: dialog.data.status || "PENDING_ACTIVATION",
         } : defaultUserValues,
     });
 
+    // Update form when dialog data changes
+    useEffect(() => {
+        if (dialog.data) {
+            form.reset({
+                id: dialog.data.id,
+                username: dialog.data.username,
+                fullName: dialog.data.fullName || "",
+                employeeId: dialog.data.employeeId || "",
+                cardId: dialog.data.cardId || "",
+                roleId: dialog.data.roleId || "",
+                status: dialog.data.status || "PENDING_ACTIVATION",
+            });
+        }
+    }, [dialog.data, form]);
 
-
-    // Form submission handler
-    const handleSubmit = async (values: TUserSchema) => {
-        if (isReadOnly) return;
+    // Form submission handler with useCallback
+    const handleSubmit = useCallback(async (values: TUserSchema) => {
+        if (effectiveReadOnly || isSubmitting) return;
 
         try {
             setIsSubmitting(true);
+            console.log("Submitting user data:", values);
 
             if (onSubmit) {
                 const result = await onSubmit(values);
@@ -68,27 +86,20 @@ const UserForm: React.FC<UserFormProps> = ({
                 refetchData();
             }
         } catch (error) {
-            console.error("Lỗi khi lưu dữ liệu vai trò:", error);
+            console.error("Lỗi khi lưu dữ liệu người dùng:", error);
         } finally {
             setIsSubmitting(false);
         }
-    };
+    }, [effectiveReadOnly, isSubmitting, onSubmit, hideDialog, refetchData]);
 
-    // // Gọi API lấy danh sách roles với TanStack Query
-    // const rolesQuery = listRoles({
-    //     page: 1,
-    //     limit: 100,
-    // });
+    // Status options for user
+    const statusOptions = [
+        { value: "ACTIVE", label: "Hoạt động" },
+        { value: "INACTIVE", label: "Không hoạt động" },
+        { value: "PENDING_ACTIVATION", label: "Chờ duyệt" }
+    ];
 
-    // // Chuyển đổi dữ liệu roles thành options cho SelectField
-    // const roleOptions = React.useMemo(() => {
-    //     if (!rolesQuery.data?.data) return [];
-
-    //     return rolesQuery.data.data.map(role => ({
-    //         value: role.id,
-    //         label: role.name
-    //     }));
-    // }, [rolesQuery.data]);
+    console.log('error', form.formState.errors);
 
     return (
         <Form {...form}>
@@ -99,7 +110,7 @@ const UserForm: React.FC<UserFormProps> = ({
                         name="username"
                         label="Tên đăng nhập"
                         placeholder="Nhập tên đăng nhập"
-                        disabled={isSubmitting || isReadOnly}
+                        disabled={isSubmitting || effectiveReadOnly || isEditMode}
                         required
                     />
 
@@ -108,47 +119,72 @@ const UserForm: React.FC<UserFormProps> = ({
                         name="fullName"
                         label="Họ và tên"
                         placeholder="Nhập họ và tên"
-                        disabled={isSubmitting || isReadOnly}
+                        disabled={isSubmitting || effectiveReadOnly}
                         required
                     />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FieldInput
+                        control={form.control}
+                        name="employeeId"
+                        label="Mã nhân viên"
+                        placeholder="Nhập mã nhân viên"
+                        disabled={isSubmitting || effectiveReadOnly}
+                    />
 
                     <FieldInput
                         control={form.control}
                         name="cardId"
                         label="Số CCCD"
                         placeholder="Nhập số CCCD"
-                        disabled={isSubmitting || isReadOnly}
+                        disabled={isSubmitting || effectiveReadOnly}
                     />
+                </div>
 
-                    <FieldInput
-                        control={form.control}
-                        name="employeeId"
-                        label="Mã nhân viên"
-                        placeholder="Nhập mã nhân viên"
-                        disabled={isSubmitting || isReadOnly}
-                    />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <SelectField
                         control={form.control}
-                        name="role"
+                        name="roleId"
                         label="Vai trò"
                         options={roles}
-                        disabled={isSubmitting || isReadOnly}
+                        disabled={isSubmitting || effectiveReadOnly}
+                        required
+                    />
+
+                    <SelectField
+                        control={form.control}
+                        name="status"
+                        label="Trạng thái"
+                        options={statusOptions}
+                        disabled={isSubmitting || effectiveReadOnly}
                         required
                     />
                 </div>
 
+                {/* {!isEditMode && (
+                    <FieldInput
+                        control={form.control}
+                        name="password"
+                        label="Mật khẩu"
+                        type="password"
+                        placeholder="Nhập mật khẩu"
+                        disabled={isSubmitting || effectiveReadOnly}
+                        required
+                    />
+                )} */}
+
                 <FormActions
                     isSubmitting={isSubmitting}
-                    isReadOnly={isReadOnly}
-                    isEdit={!!userData}
+                    isReadOnly={effectiveReadOnly}
+                    isEdit={isEditMode}
                 />
             </form>
         </Form>
     );
-};
+});
+
+// Add displayName for debugging
+UserForm.displayName = "UserForm";
 
 export default UserForm;
-

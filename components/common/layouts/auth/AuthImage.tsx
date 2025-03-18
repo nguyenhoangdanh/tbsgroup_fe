@@ -6,6 +6,7 @@ import { useTheme } from 'next-themes';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import React from 'react';
+
 interface IProps {
     width?: number;
     height?: number;
@@ -16,17 +17,15 @@ interface IProps {
 export default function AuthImage({ width, height, className, isGoBack = false }: IProps) {
     const router = useRouter();
     const { user } = useAuthManager();
-    const [logoUrl, setLogoUrl] = React.useState<string>("");
-    const theme = useTheme()
-    React.useEffect(() => {
-        if (theme.theme === 'dark') {
-            setLogoUrl('/images/logo-dark.png');
-        } else {
-            setLogoUrl('/images/logo-light.png');
-        }
-    }, [theme.theme]);;
-    return (
+    const { theme } = useTheme();
+    const [logoUrl, setLogoUrl] = React.useState<string>("/images/logo-light.png");
 
+    React.useEffect(() => {
+        // Set a default logo immediately to avoid the missing src error
+        setLogoUrl(theme === 'dark' ? '/images/logo-dark.png' : '/images/logo-light.png');
+    }, [theme]);
+
+    return (
         <div className={`relative flex flex-col items-center justify-center w-full ${className || ''}`}>
             {(isGoBack && user?.status !== UserStatusEnum.PENDING_ACTIVATION) && (
                 <button
@@ -42,18 +41,20 @@ export default function AuthImage({ width, height, className, isGoBack = false }
             )}
 
             <div className={isGoBack ? `relative mt-0 flex justify-center w-full` : ""}>
-                <Image
-                    src={logoUrl}
-                    alt="Auth Image"
-                    loading="lazy"
-                    className="max-w-full h-auto"
-                    style={{
-                        objectFit: 'contain',
-                    }}
-                    width={width || 150}
-                    height={height || 150}
-                    priority={false}
-                />
+                {logoUrl && (
+                    <Image
+                        src={logoUrl}
+                        alt="Auth Image"
+                        loading="lazy"
+                        className="max-w-full h-auto"
+                        style={{
+                            objectFit: 'contain',
+                        }}
+                        width={width || 150}
+                        height={height || 150}
+                        priority={false}
+                    />
+                )}
             </div>
         </div>
     );

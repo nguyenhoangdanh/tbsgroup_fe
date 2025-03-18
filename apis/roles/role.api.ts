@@ -8,7 +8,6 @@ import { TRoleSchema } from "@/schemas/role";
 export const fetchRoles = async () => {
   const response = await fetchWithAuth("/roles");
 
-  console.log(response.data, 'response.data');
   return response.data;
 };
 
