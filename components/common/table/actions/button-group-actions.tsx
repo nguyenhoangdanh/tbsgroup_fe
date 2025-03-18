@@ -34,7 +34,7 @@ const ButtonGroupAction = <T extends BaseData>({
   const handleDelete = () => {
     showDialog({
       type: DialogType.DELETE,
-      title: `Xóa dữ liệu ${rowData.id ? `#${rowData.id}` : ''}`,
+      title: `Ban có chắc chắn muốn xóa ${rowData.name ? rowData.name : ""} không?`,
       data: rowData,
       onSubmit: async () => {
         if (onDelete) {

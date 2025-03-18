@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { DialogType, useDialog } from "@/context/DialogProvider";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { Loader, Loader2, LoaderIcon, LoaderPinwheel } from "lucide-react";
 
 const GlobalDialog = memo(() => {
     const { dialog, hideDialog, submit, isSubmitting } = useDialog();
@@ -75,7 +75,7 @@ const GlobalDialog = memo(() => {
                         >
                             {isSubmitting ? (
                                 <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    <Loader className="mr-2 h-4 w-4 animate-spin" />
                                     Đang xóa...
                                 </>
                             ) : (

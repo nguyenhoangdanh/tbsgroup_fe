@@ -4,65 +4,51 @@ import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form } from "@/components/ui/form";
-import { TRoleSchema, roleSchema, defaultRoleValues } from "@/schemas/role";
 import { useDialog } from "@/context/DialogProvider";
 import { FieldInput } from "@/components/common/Form/FieldInput";
-import { FieldTextarea } from "@/components/common/Form/FieldTextarea";
-import { FieldCheckbox } from "@/components/common/Form/FieldCheckbox";
 import FormActions from "@/components/common/Form/FormAction";
-import { RoleType } from "@/apis/roles/role.api";
+import { defaultUserValues, TUserSchema, userSchema } from "@/schemas/user";
+import { SelectField } from "@/components/common/Form/SelectField";
+import { Checkbox } from "@/components/ui/checkbox";
+import { FieldCheckbox } from "@/components/common/Form/FieldCheckbox";
 
-interface RoleFormProps {
-    roleData?: RoleType | null;
-    onSubmit?: (data: TRoleSchema) => Promise<void | boolean>;
+interface UserFormProps {
+    userData?: TUserSchema | null;
+    onSubmit?: (data: TUserSchema) => Promise<void | boolean>;
     refetchData?: () => void;
     isReadOnly?: boolean;
+    roles: { value: string; label: string }[];
 }
 
-const RoleForm: React.FC<RoleFormProps> = ({
-    roleData,
+const UserForm: React.FC<UserFormProps> = ({
+    userData,
     onSubmit,
     refetchData,
     isReadOnly = false,
+    roles,
 }) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { hideDialog } = useDialog();
 
     // Initialize form with zod validation
-    const form = useForm<TRoleSchema>({
-        resolver: zodResolver(roleSchema),
-        defaultValues: roleData ? {
-            id: roleData.id,
-            code: roleData.code,
-            name: roleData.name,
-            description: roleData.description || "",
-            level: roleData.level || 0,
-            isSystem: roleData.isSystem || false,
-            createdAt: roleData.createdAt,
-            updatedAt: roleData.updatedAt,
-        } : defaultRoleValues,
+    const form = useForm<TUserSchema>({
+        resolver: zodResolver(userSchema),
+        defaultValues: userData ? {
+            id: userData.id,
+            username: userData.username,
+            employeeId: userData.employeeId,
+            role: userData.role,
+            password: userData.password,
+            status: userData.status,
+            fullName: userData.fullName,
+            cardId: userData.cardId,
+        } : defaultUserValues,
     });
 
-    // Update form when roleData changes
-    useEffect(() => {
-        if (roleData) {
-            form.reset({
-                id: roleData.id,
-                code: roleData.code,
-                name: roleData.name,
-                description: roleData.description || "",
-                level: roleData.level || 0,
-                isSystem: roleData.isSystem || false,
-                createdAt: roleData.createdAt,
-                updatedAt: roleData.updatedAt,
-            });
-        } else {
-            form.reset(defaultRoleValues);
-        }
-    }, [roleData, form]);
+
 
     // Form submission handler
-    const handleSubmit = async (values: TRoleSchema) => {
+    const handleSubmit = async (values: TUserSchema) => {
         if (isReadOnly) return;
 
         try {
@@ -88,66 +74,81 @@ const RoleForm: React.FC<RoleFormProps> = ({
         }
     };
 
+    // // Gọi API lấy danh sách roles với TanStack Query
+    // const rolesQuery = listRoles({
+    //     page: 1,
+    //     limit: 100,
+    // });
+
+    // // Chuyển đổi dữ liệu roles thành options cho SelectField
+    // const roleOptions = React.useMemo(() => {
+    //     if (!rolesQuery.data?.data) return [];
+
+    //     return rolesQuery.data.data.map(role => ({
+    //         value: role.id,
+    //         label: role.name
+    //     }));
+    // }, [rolesQuery.data]);
+
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FieldInput
                         control={form.control}
-                        name="code"
-                        label="Mã vai trò"
-                        placeholder="Nhập mã vai trò"
+                        name="username"
+                        label="Tên đăng nhập"
+                        placeholder="Nhập tên đăng nhập"
                         disabled={isSubmitting || isReadOnly}
                         required
                     />
 
                     <FieldInput
                         control={form.control}
-                        name="name"
-                        label="Tên vai trò"
-                        placeholder="Nhập tên vai trò"
+                        name="fullName"
+                        label="Họ và tên"
+                        placeholder="Nhập họ và tên"
                         disabled={isSubmitting || isReadOnly}
                         required
                     />
                 </div>
 
-
-                <FieldTextarea
-                    control={form.control}
-                    name="description"
-                    label="Mô tả"
-                    placeholder="Nhập mô tả vai trò"
-                    disabled={isSubmitting || isReadOnly}
-                    rows={4}
-                />
-
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
                     <FieldInput
                         control={form.control}
-                        name="level"
-                        label="Cấp độ"
-                        placeholder="Nhập cấp độ"
+                        name="cardId"
+                        label="Số CCCD"
+                        placeholder="Nhập số CCCD"
                         disabled={isSubmitting || isReadOnly}
                     />
 
-                    <FieldCheckbox
+                    <FieldInput
                         control={form.control}
-                        name="isSystem"
-                        label="Vai trò hệ thống"
-                        description="Các vai trò hệ thống chỉ có thể được quản lý bởi quản trị viên"
+                        name="employeeId"
+                        label="Mã nhân viên"
+                        placeholder="Nhập mã nhân viên"
                         disabled={isSubmitting || isReadOnly}
+                    />
+                    <SelectField
+                        control={form.control}
+                        name="role"
+                        label="Vai trò"
+                        options={roles}
+                        disabled={isSubmitting || isReadOnly}
+                        required
                     />
                 </div>
 
                 <FormActions
                     isSubmitting={isSubmitting}
                     isReadOnly={isReadOnly}
-                    isEdit={!!roleData}
+                    isEdit={!!userData}
                 />
             </form>
         </Form>
     );
 };
 
-export default RoleForm;
+export default UserForm;
+

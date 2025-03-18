@@ -20,14 +20,14 @@ export enum DialogType {
 }
 
 // Generic interface for dialog configuration
-export interface DialogConfig<T = any> {
+export interface DialogConfig<TData> {
   type?: DialogType;
   open: boolean;
   title?: string;
   description?: string;
-  data?: T;
-  children?: React.ReactNode | ((props: DialogChildrenProps<T>) => React.ReactNode);
-  onSubmit?: (data?: T) => Promise<void | boolean>;
+  data?: TData;
+  children?: React.ReactNode | ((props: DialogChildrenProps<TData>) => React.ReactNode);
+  onSubmit?: (data?: TData) => Promise<void | boolean>;
   onClose?: () => void;
   fullWidth?: boolean;
   id?: string; // Thêm ID để phân biệt giữa các dialog
@@ -35,27 +35,30 @@ export interface DialogConfig<T = any> {
 }
 
 // Interface for dialog children props
-export interface DialogChildrenProps<T = any> {
-  data?: T;
+export interface DialogChildrenProps<TData> {
+  data?: TData;
   isSubmitting: boolean;
-  onSubmit: (data?: T) => Promise<void | boolean>;
+  onSubmit: (data?: TData) => Promise<void | boolean>;
   onClose: () => void;
 }
 
 // Interface for dialog context
-interface DialogContextType<T = any> {
-  dialog: DialogConfig<T>;
+interface DialogContextType<TData> {
+  dialog: DialogConfig<TData>;
   isOpen: boolean;
   isSubmitting: boolean;
-  showDialog: (config: Partial<Omit<DialogConfig<T>, 'open'>>) => void;
+  showDialog: (config: Partial<Omit<DialogConfig<TData>, 'open'>>) => void;
   hideDialog: () => void;
-  submit: (data?: T) => Promise<void | boolean>;
-  updateDialogData: (newData: T) => void;
+  submit: (data?: TData) => Promise<void | boolean>;
+  updateDialogData: (newData: TData) => void;
   isReadOnly: boolean;
 }
 
+// Define a type for the default data structure
+export type DefaultDialogData = Record<string, unknown>;
+
 // Create dialog context
-const DialogContext = createContext<DialogContextType>({
+const DialogContext = createContext<DialogContextType<DefaultDialogData>>({
   dialog: { open: false },
   isOpen: false,
   isSubmitting: false,
@@ -68,7 +71,7 @@ const DialogContext = createContext<DialogContextType>({
 
 // Provider for managing dialog state
 export const DialogProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [dialog, setDialog] = useState<DialogConfig>({
+  const [dialog, setDialog] = useState<DialogConfig<DefaultDialogData>>({
     open: false
   });
 
@@ -84,7 +87,7 @@ export const DialogProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   // Thêm một ID ref để theo dõi các dialog khác nhau
   const dialogIdRef = useRef<string>("");
 
-  const showDialog = useCallback((config: Partial<Omit<DialogConfig, 'open'>>) => {
+  const showDialog = useCallback((config: Partial<Omit<DialogConfig<DefaultDialogData>, 'open'>>) => {
     // Dừng timer đóng dialog nếu có
     if (dialogTimerRef.current) {
       clearTimeout(dialogTimerRef.current);

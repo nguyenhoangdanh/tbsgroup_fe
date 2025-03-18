@@ -12,6 +12,8 @@ export const loginSchema = z.object({
     .min(6, {
       message: 'Mật khẩu phải chứa ít nhất 6 ký tự',
     }),
+
+  rememberMe: z.boolean().optional().default(false),
 });
 
 export const defaultLoginValues = {

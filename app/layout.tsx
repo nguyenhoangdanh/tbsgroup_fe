@@ -11,7 +11,7 @@ import RootLayoutWrapper from "@/components/common/layouts/admin/RootLayoutWrapp
 
 const dm_sans = DM_Sans({ subsets: ["latin"] });
 export const metadata: Metadata = {
-  title: "NMTXTS",
+  title: "Thoai Son Handbag Factory",
   description: "TBS Group - Thoai Son Handbag Factory"
 };
 

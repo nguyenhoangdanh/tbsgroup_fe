@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import React from "react";
 import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 import useAuthManager from "@/hooks/useAuthManager";
+import { FieldCheckbox } from "@/components/common/Form/FieldCheckbox";
 
 const LoginForm = () => {
     const { login, isLoading } = useAuthManager();
@@ -36,10 +37,16 @@ const LoginForm = () => {
                         disabled={isLoading}
                         placeholder="Vui lòng nhập mật khẩu..."
                     />
+                    <FieldCheckbox
+                        control={methods.control}
+                        name="rememberMe"
+                        label="Ghi nho"
+                    />
                     <SubmitButton
                         disabled={isLoading}
                         isLoading={isLoading}
                         name="Đăng nhập"
+                        className="border-none"
                     />
                 </div>
                 {!isLoading && (

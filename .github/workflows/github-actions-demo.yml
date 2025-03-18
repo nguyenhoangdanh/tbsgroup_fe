@@ -1,6 +1,11 @@
-name: GitHub Actions Demo
-run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
-on: [push]
+name: GitHub Actions Demo with Code Review
+run-name: ${{ github.actor }} is testing out GitHub Actions with Code Review 🚀
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master, develop]
+
 jobs:
   Explore-GitHub-Actions:
     runs-on: ubuntu-latest
@@ -16,3 +21,198 @@ jobs:
         run: |
           ls ${{ github.workspace }}
       - run: echo "🍏 This job's status is ${{ job.status }}."
+
+  Code-Review:
+    runs-on: ubuntu-latest
+    needs: Explore-GitHub-Actions
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      # Cài đặt ESLint cho JavaScript/TypeScript
+      - name: Install ESLint
+        run: |
+          npm install eslint eslint-config-airbnb-base eslint-plugin-import --save-dev
+          echo '{"extends": "airbnb-base"}' > .eslintrc.json
+
+      # Thực hiện kiểm tra cú pháp và quy tắc code với ESLint
+      - name: Run ESLint
+        id: eslint
+        continue-on-error: true
+        run: |
+          mkdir -p reports
+          CHANGED_FILES=$(git diff --name-only HEAD^ HEAD | grep -E '\.js$|\.jsx$|\.ts$|\.tsx$' || echo "")
+          if [ ! -z "$CHANGED_FILES" ]; then
+            npx eslint $CHANGED_FILES --format json > reports/eslint-report.json || true
+            echo "::set-output name=has_js_files::true"
+          else
+            echo "No JavaScript/TypeScript files changed."
+            echo "::set-output name=has_js_files::false"
+          fi
+
+      # Tạo pull request comment từ kết quả ESLint
+      - name: Comment on PR with ESLint Results
+        if: github.event_name == 'pull_request' && steps.eslint.outputs.has_js_files == 'true'
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            try {
+              const eslintReport = JSON.parse(fs.readFileSync('reports/eslint-report.json', 'utf8'));
+              
+              let commentBody = '## Code Review Results 🔍\n\n';
+              let issueCount = 0;
+              
+              eslintReport.forEach(file => {
+                if (file.messages.length > 0) {
+                  commentBody += `### ${file.filePath}\n\n`;
+                  file.messages.forEach(message => {
+                    issueCount++;
+                    const severity = message.severity === 2 ? '🔴 Error' : '🟠 Warning';
+                    commentBody += `- **${severity}** at line ${message.line}, column ${message.column}: ${message.message} (${message.ruleId})\n`;
+                  });
+                  commentBody += '\n';
+                }
+              });
+              
+              if (issueCount > 0) {
+                commentBody += `\n**Total issues found: ${issueCount}**\n`;
+                commentBody += '\nThese issues were automatically detected using ESLint. Please fix them before merging.';
+              } else {
+                commentBody += '✅ No issues found with ESLint! Code looks good.';
+              }
+              
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: commentBody
+              });
+            } catch (error) {
+              console.error('Error processing ESLint report:', error);
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: '❌ Error occurred while generating code review report. Please check the action logs.'
+              });
+            }
+
+      # Kiểm tra cú pháp Python (nếu có file Python)
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install Pylint
+        run: |
+          python -m pip install --upgrade pip
+          pip install pylint
+
+      - name: Run Pylint
+        id: pylint
+        continue-on-error: true
+        run: |
+          PYTHON_FILES=$(git diff --name-only HEAD^ HEAD | grep -E '\.py$' || echo "")
+          if [ ! -z "$PYTHON_FILES" ]; then
+            mkdir -p reports
+            pylint $PYTHON_FILES --output-format=json > reports/pylint-report.json || true
+            echo "::set-output name=has_py_files::true"
+          else
+            echo "No Python files changed."
+            echo "::set-output name=has_py_files::false"
+          fi
+
+      # Tạo pull request comment từ kết quả Pylint
+      - name: Comment on PR with Pylint Results
+        if: github.event_name == 'pull_request' && steps.pylint.outputs.has_py_files == 'true'
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            try {
+              const pylintReport = JSON.parse(fs.readFileSync('reports/pylint-report.json', 'utf8'));
+              
+              let commentBody = '## Python Code Review Results 🐍\n\n';
+              let issueCount = 0;
+              
+              pylintReport.forEach(issue => {
+                issueCount++;
+                const severity = issue.type === 'error' ? '🔴 Error' : 
+                                (issue.type === 'warning' ? '🟠 Warning' : '🔵 Info');
+                commentBody += `- **${severity}** in ${issue.path}:${issue.line}: ${issue.message} (${issue.symbol})\n`;
+              });
+              
+              if (issueCount > 0) {
+                commentBody += `\n**Total Python issues found: ${issueCount}**\n`;
+                commentBody += '\nThese issues were automatically detected using Pylint.';
+              } else {
+                commentBody += '✅ No issues found with Pylint! Python code looks good.';
+              }
+              
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: commentBody
+              });
+            } catch (error) {
+              console.error('Error processing Pylint report:', error);
+            }
+
+      # Phân tích độ phức tạp của mã nguồn
+      - name: Analyze Code Complexity
+        if: github.event_name == 'pull_request'
+        run: |
+          # Phân tích các file JavaScript
+          JS_FILES=$(git diff --name-only HEAD^ HEAD | grep -E '\.js$|\.jsx$|\.ts$|\.tsx$' || echo "")
+
+          if [ ! -z "$JS_FILES" ]; then
+            npm install complexity-report --save-dev
+            mkdir -p reports/complexity
+            
+            for file in $JS_FILES; do
+              if [ -f "$file" ]; then
+                echo "Analyzing complexity of $file"
+                npx cr $file -o reports/complexity/$(basename $file).json || true
+              fi
+            done
+          fi
+
+      # Tạo tổng kết review
+      - name: Summarize Review
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `# 🤖 Automated Code Review Summary
+              
+              Thanks for your contribution! Our automated tools have analyzed your code changes.
+              
+              Please check the comments above for specific issues that were found.
+              
+              ## Review Tips:
+              - Fix any highlighted errors or warnings
+              - Consider improving code complexity if reported
+              - Make sure your code follows project coding standards
+              - For more detailed analysis, consider running these tools locally
+              
+              *This is an automated message. If you have questions, please ask in a comment.*`
+            });

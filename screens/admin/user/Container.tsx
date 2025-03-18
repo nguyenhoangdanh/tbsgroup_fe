@@ -10,13 +10,17 @@ import { getAllUsersQueryFn, User } from "@/apis/user/user.api";
 import { useMutation } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { TUserSchema } from "@/schemas/user";
-import { RoleType } from "@/apis/roles/role.api";
+import { fetchRoles, RoleType } from "@/apis/roles/role.api";
+import { useRoleContext } from "@/hooks/roles/roleContext";
 
 const UserContainer = () => {
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
     const [roles, setRoles] = useState<RoleType[]>([]);
+
+
+
     const { mutate: fetchUsers } = useMutation({
         mutationFn: getAllUsersQueryFn,
         onSuccess: (data) => {
@@ -38,26 +42,32 @@ const UserContainer = () => {
         }
     })
 
-    // const {
-    //     mutate: fetchRoles,
-    // } = useMutation({
-    //     mutationFn: getAllRolesQueryFn,
-    //     onSuccess: (data) => {
-    //         setRoles(data);
-    //     },
-    //     onError: (error) => {
-    //         console.error("Lỗi khi lấy dữ liệu vai trò:", error);
-    //         toast({
-    //             title: "Lỗi khi lấy dữ liệu vai trò",
-    //             description: "Vui lòng thử lại sau",
-    //             variant: "destructive",
-    //         });
-    //     }
-    // });
+    const {
+        mutate: allRoles,
+    } = useMutation({
+        mutationFn: fetchRoles,
+        onSuccess: (data) => {
+            if (roles.length === 0 && data) {
+                const formattedRoles = data.map(role => ({
+                    value: role.id,
+                    label: role.name
+                }));
+                setRoles(formattedRoles);
+            }
+        },
+        onError: (error) => {
+            console.error("Lỗi khi lấy dữ liệu vai trò:", error);
+            toast({
+                title: "Lỗi khi lấy dữ liệu vai trò",
+                description: "Vui lòng thử lại sau",
+                variant: "destructive",
+            });
+        }
+    });
 
     useEffect(() => {
         fetchUsers();
-        // fetchRoles();
+        allRoles();
     }, []);
 
 
@@ -117,6 +127,8 @@ const UserContainer = () => {
                     ...formData as any,
                     createdAt: new Date().toISOString(),
                 };
+
+                console.log("New user data:", newUser);
 
                 setUsers(prevUsers => [...prevUsers, newUser]);
 
@@ -199,15 +211,6 @@ const UserContainer = () => {
         },
     ];
 
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center min-h-[60vh]">
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                <span className="ml-2">Đang tải dữ liệu người dùng...</span>
-            </div>
-        );
-    }
-
     return (
         <div className="container mx-auto py-6">
             {/* DataTable với các action đã được định nghĩa */}
@@ -222,13 +225,15 @@ const UserContainer = () => {
                 exportData={true}
                 initialPageSize={10}
                 onEdit={handleEditUser}
+                isLoading={loading}
                 onDelete={(id) => handleDeleteUser(id)}
-                // createFormComponent={<UserForm
-                //     roles={roles}
-                //     onSubmit={handleUserFormSubmit}
-                //     refetchData={fetchUsers}
-                // />
-                // }
+                createFormComponent={<UserForm
+                    userData={null}
+                    onSubmit={handleUserFormSubmit}
+                    refetchData={fetchUsers}
+                    roles={roles}
+                />
+                }
                 // editFormComponent={selectedUser ?
                 //     <UserForm
                 //         roles={roles}

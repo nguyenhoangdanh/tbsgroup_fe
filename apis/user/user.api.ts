@@ -1,5 +1,5 @@
 import {fetchWithAuth} from '@/lib/fetcher';
-import { string } from 'zod';
+import { TUserSchema } from '@/schemas/user';
 
 export type LoginType = {
   username: string;
@@ -8,6 +8,12 @@ export type LoginType = {
 
 export const loginMutationFn = async (data: LoginType) =>
   fetchWithAuth('/auth/login', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
+export const registerMutationFn = async (data: Omit<TUserSchema, 'id'>) =>
+  fetchWithAuth('/auth/register', {
     method: 'POST',
     body: JSON.stringify(data),
   });

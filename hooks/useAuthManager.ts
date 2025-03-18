@@ -14,6 +14,7 @@ import {
   updateStatusMutationFn,
 } from '@/apis/user/user.api';
 import {UserStatusEnum} from '@/common/enum';
+import { fetchRoles } from '@/apis/roles/role.api';
 
 export type AuthUser = {
   username: string;
@@ -119,6 +120,16 @@ export const useAuthManager = () => {
       setIsLoggedOut(false);
       queryClient.invalidateQueries({queryKey: ['authUser']});
     },
+  });
+
+  const fetchAllRoles = useMutation({
+    mutationFn: fetchRoles,
+    onSuccess: (data) => {
+      console.log("Danh sách roles:", data);
+    },
+    onError: (error) => {
+      console.error("Lỗi khi lấy dữ liệu vai trò:", error);
+    }
   });
 
   // Logout mutation
@@ -337,6 +348,7 @@ export const useAuthManager = () => {
     requestPasswordReset: handleRequestPasswordReset,
     updateStatus: handleUpdateStatus,
     refetchUser,
+    allRoles: fetchAllRoles,
   };
 };
 
