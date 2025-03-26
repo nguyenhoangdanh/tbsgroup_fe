@@ -156,6 +156,11 @@ export const sidebarData = {
             url: "permissions",
             icon: LockKeyhole,
         },
+        {
+            name: "Túi xách",
+            url: "handbags",
+            icon: BookOpen,
+        }
         // {
         //     name: "Sales & Marketing",
         //     url: "#",

@@ -149,46 +149,46 @@ export const useAuthManager = () => {
   }, []);
 
   // Thiết lập theo dõi hoạt động người dùng để quản lý thời gian phiên
-  useEffect(() => {
-    const updateLastActivity = () => {
-      setLastActivity(Date.now());
-    };
+  // useEffect(() => {
+  //   const updateLastActivity = () => {
+  //     setLastActivity(Date.now());
+  //   };
 
-    // Theo dõi các sự kiện người dùng để cập nhật lastActivity
-    window.addEventListener('mousemove', updateLastActivity);
-    window.addEventListener('keydown', updateLastActivity);
-    window.addEventListener('click', updateLastActivity);
-    window.addEventListener('scroll', updateLastActivity);
+  //   // Theo dõi các sự kiện người dùng để cập nhật lastActivity
+  //   window.addEventListener('mousemove', updateLastActivity);
+  //   window.addEventListener('keydown', updateLastActivity);
+  //   window.addEventListener('click', updateLastActivity);
+  //   window.addEventListener('scroll', updateLastActivity);
 
-    // Kiểm tra phiên hoạt động đã hết hạn hay chưa
-    const checkSessionTimeout = setInterval(() => {
-      const now = Date.now();
-      // Only logout if authenticated and not on public pages
-      if (
-        now - lastActivity > SESSION_TIMEOUT &&
-        authToken &&
-        !location.pathname.includes('/login')
-      ) {
-        // Phiên đã hết hạn, đăng xuất tự động
-        if (!isLoggedOut) {
-          handleLogout(true);
-        }
-        toast({
-          title: 'Phiên đã hết hạn',
-          description:
-            'Bạn đã tự động đăng xuất do không hoạt động trong thời gian dài',
-        });
-      }
-    }, 60000); // Kiểm tra mỗi phút
+  //   // Kiểm tra phiên hoạt động đã hết hạn hay chưa
+  //   const checkSessionTimeout = setInterval(() => {
+  //     const now = Date.now();
+  //     // Only logout if authenticated and not on public pages
+  //     if (
+  //       now - lastActivity > SESSION_TIMEOUT &&
+  //       authToken &&
+  //       !location.pathname.includes('/login')
+  //     ) {
+  //       // Phiên đã hết hạn, đăng xuất tự động
+  //       if (!isLoggedOut) {
+  //         handleLogout(true);
+  //       }
+  //       toast({
+  //         title: 'Phiên đã hết hạn',
+  //         description:
+  //           'Bạn đã tự động đăng xuất do không hoạt động trong thời gian dài',
+  //       });
+  //     }
+  //   }, 60000); // Kiểm tra mỗi phút
 
-    return () => {
-      window.removeEventListener('mousemove', updateLastActivity);
-      window.removeEventListener('keydown', updateLastActivity);
-      window.removeEventListener('click', updateLastActivity);
-      window.removeEventListener('scroll', updateLastActivity);
-      clearInterval(checkSessionTimeout);
-    };
-  }, [lastActivity, authToken]);
+  //   return () => {
+  //     window.removeEventListener('mousemove', updateLastActivity);
+  //     window.removeEventListener('keydown', updateLastActivity);
+  //     window.removeEventListener('click', updateLastActivity);
+  //     window.removeEventListener('scroll', updateLastActivity);
+  //     clearInterval(checkSessionTimeout);
+  //   };
+  // }, [lastActivity, authToken]);
 
   // Type for the useQuery result
   type UserQueryResult = {

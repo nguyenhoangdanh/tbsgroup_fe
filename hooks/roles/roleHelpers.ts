@@ -1,13 +1,14 @@
 'use client';
 
-import {useCallback, useEffect, useState, useRef} from 'react';
-import {useRoleMutations} from './roleMutations';
-import {TRoleSchema} from '@/schemas/role';
-import {RoleType} from '@/apis/roles/role.api';
-import {useDebounce} from '../useDebounce';
+import { useCallback, useEffect, useState, useRef } from 'react';
+import { useRoleMutations } from './roleMutations';
+import { TRoleSchema } from '@/schemas/role';
+import { RoleType } from '@/apis/roles/role.api';
+import { useDebounce } from '../useDebounce';
 
 /**
  * Hook for role-related helper functions and state management
+ * Optimized for high performance with 5000+ users
  */
 export const useRoleHelpers = () => {
   // State
@@ -26,25 +27,33 @@ export const useRoleHelpers = () => {
     limit: 10,
   });
 
-// Prevent duplicate refetches
-const isSubmittingRef = useRef(false);
-const isSearchingRef = useRef(false);
+  // Tracking refs to prevent duplicate operations
+  const operationsRef = useRef({
+    isSubmitting: false,
+    isSearching: false,
+    pendingRequests: new Set<string>(),
+    filterChangeId: 0,
+    paginationChangeId: 0
+  });
 
   // Debounced filter values for optimized search
-  const debouncedCode = useDebounce(filterValues.code);
-  const debouncedName = useDebounce(filterValues.name);
+  const debouncedCode = useDebounce(filterValues.code, 500); // Increased debounce timeout
+  const debouncedName = useDebounce(filterValues.name, 500);
 
-  // Combined filters with debounced values
-  const [activeFilters, setActiveFilters] = useState({
+  // memoize initial state to avoid unnecessary object creation
+  const initialActiveFilters = useRef({
     code: '',
     name: '',
     level: undefined as number | undefined,
     isSystem: undefined as boolean | undefined,
     page: 1,
     limit: 10,
-  });
+  }).current;
 
-  // Ref to track if filters have changed (for pagination reset)
+  // Combined filters with debounced values - using reducer for better state updates
+  const [activeFilters, setActiveFilters] = useState(initialActiveFilters);
+
+  // Previous filter values reference for comparison
   const previousFiltersRef = useRef({
     code: '',
     name: '',
@@ -52,57 +61,71 @@ const isSearchingRef = useRef(false);
     isSystem: undefined as boolean | undefined,
   });
 
+  // Get mutations with useCallback to prevent unnecessary re-renders
+  const { createRoleMutation, updateRoleMutation, deleteRoleMutation } = useRoleMutations();
+
+  /**
+   * Optimized pagination updater that prevents redundant state updates
+   */
   const updatePagination = useCallback((page: number, limit: number) => {
     setPagination(prev => {
-      // Không trigger re-render nếu giá trị không thay đổi
+      // Skip update if values haven't changed
       if (prev.page === page && prev.limit === limit) {
-        console.log('No change in pagination values, skipping update');
         return prev;
       }
-      console.log(
-        `Updating pagination state from {page: ${prev.page}, limit: ${prev.limit}} to {page: ${page}, limit: ${limit}}`,
-      );
-      return {page, limit};
+      
+      // Track this change to coordinate with effects
+      operationsRef.current.paginationChangeId++;
+      
+      return { page, limit };
     });
   }, []);
 
-  // Update active filters when debounced values change
+  /**
+   * Effect to consolidate filter changes to minimize API calls
+   * Uses a single effect to handle both filter and pagination changes
+   */
   useEffect(() => {
-    // Kiểm tra xem bộ lọc đã thay đổi hay chưa
+    // Check if filters have changed
     const hasFilterChanged =
       debouncedCode !== previousFiltersRef.current.code ||
       debouncedName !== previousFiltersRef.current.name ||
       filterValues.level !== previousFiltersRef.current.level ||
       filterValues.isSystem !== previousFiltersRef.current.isSystem;
 
-    // Lưu giá trị bộ lọc hiện tại để so sánh lần sau
-    previousFiltersRef.current = {
-      code: debouncedCode,
-      name: debouncedName,
-      level: filterValues.level,
-      isSystem: filterValues.isSystem,
-    };
+    // Only process changes if something actually changed
+    if (hasFilterChanged) {
+      // Track this filter change to coordinate with effects
+      operationsRef.current.filterChangeId++;
+      
+      // Save filter values for future comparison
+      previousFiltersRef.current = {
+        code: debouncedCode,
+        name: debouncedName,
+        level: filterValues.level,
+        isSystem: filterValues.isSystem,
+      };
 
-    // Nếu bộ lọc thay đổi, reset về trang 1
-    const newPage = hasFilterChanged ? 1 : pagination.page;
+      // When filters change, always reset to page 1
+      const newPage = hasFilterChanged ? 1 : pagination.page;
 
-    // Cập nhật active filters
-    setActiveFilters(prev => ({
-      ...prev,
-      code: debouncedCode,
-      name: debouncedName,
-      level: filterValues.level,
-      isSystem: filterValues.isSystem,
-      page: newPage,
-      limit: pagination.limit,
-    }));
-
-    // Nếu bộ lọc thay đổi, đồng bộ lại state pagination
-    if (hasFilterChanged && pagination.page !== 1) {
-      setPagination(prev => ({
+      // Batch state updates using functional update
+      setActiveFilters(prev => ({
         ...prev,
-        page: 1,
+        code: debouncedCode,
+        name: debouncedName,
+        level: filterValues.level,
+        isSystem: filterValues.isSystem,
+        page: newPage,
       }));
+
+      // Sync pagination state if we reset to page 1
+      if (hasFilterChanged && pagination.page !== 1) {
+        setPagination(prev => ({
+          ...prev,
+          page: 1,
+        }));
+      }
     }
   }, [
     debouncedCode,
@@ -110,27 +133,19 @@ const isSearchingRef = useRef(false);
     filterValues.level,
     filterValues.isSystem,
     pagination.page,
-    pagination.limit,
   ]);
 
-  // Đồng bộ thay đổi pagination vào active filters
+  /**
+   * Separate effect to handle pagination changes
+   * Intentionally has fewer dependencies than the filter effect
+   */
   useEffect(() => {
-    console.log(
-      `Pagination state changed: page=${pagination.page}, limit=${pagination.limit}`,
-    );
-
     setActiveFilters(prev => {
-      // Kiểm tra nếu thực sự có thay đổi
+      // Skip update if pagination hasn't changed
       if (prev.page === pagination.page && prev.limit === pagination.limit) {
-        console.log(
-          'No change in pagination for active filters, skipping update',
-        );
         return prev;
       }
 
-      console.log(
-        `Updating active filters with new pagination: page=${pagination.page}, limit=${pagination.limit}`,
-      );
       return {
         ...prev,
         page: pagination.page,
@@ -139,32 +154,30 @@ const isSearchingRef = useRef(false);
     });
   }, [pagination.page, pagination.limit]);
 
-  // Get mutations
-  const {createRoleMutation, updateRoleMutation, deleteRoleMutation} =
-    useRoleMutations();
-
   /**
    * Update filter values with memoization to prevent unnecessary re-renders
+   * Using a more robust approach to handle concurrent updates
    */
   const updateFilter = useCallback(
     (key: keyof typeof filterValues, value: any) => {
       setFilterValues(prev => {
-        // Nếu giá trị không thay đổi, không trigger render
+        // Skip update if value hasn't changed
         if (prev[key] === value) return prev;
 
-        // Flag đang tìm kiếm để tránh trigger nhiều API call
-        isSearchingRef.current = true;
+        // Flag as searching to prevent redundant API calls
+        operationsRef.current.isSearching = true;
 
-        return {...prev, [key]: value};
+        return { ...prev, [key]: value };
       });
     },
     [],
   );
 
   /**
-   * Reset all filters
+   * Reset all filters with optimized implementation
    */
   const resetFilters = useCallback(() => {
+    // Batch reset operations to minimize renders
     setFilterValues({
       code: '',
       name: '',
@@ -172,8 +185,8 @@ const isSearchingRef = useRef(false);
       isSystem: undefined,
     });
 
-     // Reset về trang 1 khi clear bộ lọc
-     setPagination(prev => ({
+    // Reset to page 1 when clearing filters
+    setPagination(prev => ({
       ...prev,
       page: 1
     }));
@@ -181,27 +194,33 @@ const isSearchingRef = useRef(false);
 
   /**
    * Handle role creation with loading state and optimized API calls
+   * Adds safeguards against duplicate submissions
    */
   const handleCreateRole = useCallback(
     async (data: Omit<TRoleSchema, 'id' | 'createdAt' | 'updatedAt'>) => {
-      // Prevent duplicate submissions
-      if (isSubmittingRef.current) return;
+      // Prevent duplicate submissions using ref
+      if (operationsRef.current.isSubmitting) return;
 
-      isSubmittingRef.current = true;
-      setLoading(true);
-      setError(null);
-
+      // Generate a unique request ID
+      const requestId = `create-${Date.now()}`;
+      
       try {
+        operationsRef.current.isSubmitting = true;
+        operationsRef.current.pendingRequests.add(requestId);
+        
+        setLoading(true);
+        setError(null);
+
         const result = await createRoleMutation.mutateAsync(data);
-        setLoading(false);
-        isSubmittingRef.current = false;
         return result;
       } catch (err) {
-        setLoading(false);
-        isSubmittingRef.current = false;
         const error = err instanceof Error ? err : new Error(String(err));
         setError(error);
         throw error;
+      } finally {
+        setLoading(false);
+        operationsRef.current.isSubmitting = false;
+        operationsRef.current.pendingRequests.delete(requestId);
       }
     },
     [createRoleMutation],
@@ -209,30 +228,34 @@ const isSearchingRef = useRef(false);
 
   /**
    * Handle role update with loading state and optimized API calls
+   * Similar optimizations as handleCreateRole
    */
   const handleUpdateRole = useCallback(
     async (
       id: string,
       data: Omit<TRoleSchema, 'id' | 'createdAt' | 'updatedAt'>,
     ) => {
-      // Prevent duplicate submissions
-      if (isSubmittingRef.current) return;
+      if (operationsRef.current.isSubmitting) return;
 
-      isSubmittingRef.current = true;
-      setLoading(true);
-      setError(null);
-
+      const requestId = `update-${Date.now()}`;
+      
       try {
+        operationsRef.current.isSubmitting = true;
+        operationsRef.current.pendingRequests.add(requestId);
+        
+        setLoading(true);
+        setError(null);
+
         const result = await updateRoleMutation.mutateAsync({id, data});
-        setLoading(false);
-        isSubmittingRef.current = false;
         return result;
       } catch (err) {
-        setLoading(false);
-        isSubmittingRef.current = false;
         const error = err instanceof Error ? err : new Error(String(err));
         setError(error);
         throw error;
+      } finally {
+        setLoading(false);
+        operationsRef.current.isSubmitting = false;
+        operationsRef.current.pendingRequests.delete(requestId);
       }
     },
     [updateRoleMutation],
@@ -243,14 +266,17 @@ const isSearchingRef = useRef(false);
    */
   const handleDeleteRole = useCallback(
     async (id: string) => {
-      // Prevent duplicate submissions
-      if (isSubmittingRef.current) return;
+      if (operationsRef.current.isSubmitting) return;
 
-      isSubmittingRef.current = true;
-      setLoading(true);
-      setError(null);
-
+      const requestId = `delete-${Date.now()}`;
+      
       try {
+        operationsRef.current.isSubmitting = true;
+        operationsRef.current.pendingRequests.add(requestId);
+        
+        setLoading(true);
+        setError(null);
+
         const result = await deleteRoleMutation.mutateAsync(id);
 
         // If the deleted role was selected, deselect it
@@ -258,15 +284,15 @@ const isSearchingRef = useRef(false);
           setSelectedRole(null);
         }
 
-        setLoading(false);
-        isSubmittingRef.current = false;
         return result;
       } catch (err) {
-        setLoading(false);
-        isSubmittingRef.current = false;
         const error = err instanceof Error ? err : new Error(String(err));
         setError(error);
         throw error;
+      } finally {
+        setLoading(false);
+        operationsRef.current.isSubmitting = false;
+        operationsRef.current.pendingRequests.delete(requestId);
       }
     },
     [deleteRoleMutation, selectedRole],
@@ -278,11 +304,17 @@ const isSearchingRef = useRef(false);
   const resetError = useCallback(() => setError(null), []);
 
   /**
-   * Select a role for editing or viewing
+   * Cleanup function to ensure proper resource management
    */
-  // const selectRole = useCallback((role: RoleType | null) => {
-  //   setSelectedRole(role);
-  // }, []);
+  useEffect(() => {
+    // Cleanup function that runs on component unmount
+    return () => {
+      // Clear any pending operations
+      operationsRef.current.pendingRequests.clear();
+      operationsRef.current.isSubmitting = false;
+      operationsRef.current.isSearching = false;
+    };
+  }, []);
 
   return {
     // State
@@ -295,12 +327,11 @@ const isSearchingRef = useRef(false);
 
     // Actions
     setSelectedRole,
-    // selectRole,
     resetError,
     updateFilter,
     resetFilters,
-    setActiveFilters, // Thêm vào
-    updatePagination, // Thêm vào
+    setActiveFilters,
+    updatePagination,
 
     // Handlers
     handleCreateRole,

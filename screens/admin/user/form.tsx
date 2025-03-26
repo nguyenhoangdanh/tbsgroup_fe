@@ -64,13 +64,21 @@ const UserForm: React.FC<UserFormProps> = memo(({
         }
     }, [dialog.data, form]);
 
+    const employeeId = form.watch("employeeId");
+
+    useEffect(() => {
+        // Chỉ cập nhật username nếu không trong chế độ chỉnh sửa và employeeId không rỗng
+        if ((!isEditMode || !isReadOnly) && employeeId) {
+            form.setValue("username", employeeId);
+        }
+    }, [employeeId, form, isEditMode, isReadOnly]);
+
     // Form submission handler with useCallback
     const handleSubmit = useCallback(async (values: TUserSchema) => {
         if (effectiveReadOnly || isSubmitting) return;
 
         try {
             setIsSubmitting(true);
-            console.log("Submitting user data:", values);
 
             if (onSubmit) {
                 const result = await onSubmit(values);
@@ -99,20 +107,20 @@ const UserForm: React.FC<UserFormProps> = memo(({
         { value: "PENDING_ACTIVATION", label: "Chờ duyệt" }
     ];
 
-    console.log('error', form.formState.errors);
-
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <FieldInput
-                        control={form.control}
-                        name="username"
-                        label="Tên đăng nhập"
-                        placeholder="Nhập tên đăng nhập"
-                        disabled={isSubmitting || effectiveReadOnly || isEditMode}
-                        required
-                    />
+                    <div className="hidden">
+                        <FieldInput
+                            control={form.control}
+                            name="username"
+                            label="Tên đăng nhập"
+                            placeholder="Nhập tên đăng nhập"
+                            disabled={isSubmitting || effectiveReadOnly || isEditMode}
+                            required
+                        />
+                    </div>
 
                     <FieldInput
                         control={form.control}

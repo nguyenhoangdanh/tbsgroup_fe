@@ -9,64 +9,131 @@ import {
 } from '@/apis/roles/role.api';
 import {TRoleSchema} from '@/schemas/role';
 import {toast} from '../use-toast';
+import { useRef, useEffect } from 'react';
 
 /**
  * Hook for role-related mutations with optimistic updates
+ * Optimized for high performance and reliability in multi-user environments
  */
 export const useRoleMutations = () => {
   const queryClient = useQueryClient();
+  
+  // Track pending mutations to prevent concurrent operations on the same entity
+  const pendingMutationsRef = useRef(new Map<string, number>());
+  
+  // Cleanup pending mutations on unmount
+  useEffect(() => {
+    return () => {
+      pendingMutationsRef.current.clear();
+    };
+  }, []);
 
   /**
    * Create a new role with optimistic update
+   * Enhanced with better error handling and performance optimizations
    */
   const createRoleMutation = useMutation({
-    mutationFn: (data: Omit<TRoleSchema, 'id' | 'createdAt' | 'updatedAt'>) =>
-      createRole(data),
+    mutationFn: async (data: Omit<TRoleSchema, 'id' | 'createdAt' | 'updatedAt'>) => {
+      // Generate a unique operation ID
+      const operationId = `create-${Date.now()}`;
+      pendingMutationsRef.current.set(operationId, Date.now());
+      
+      try {
+        // Add validation or preprocessing here if needed
+        const normalizedData = {
+          ...data,
+          code: data.code?.trim(),
+          name: data.name?.trim(),
+          description: data.description?.trim() || null
+        };
+        
+        return await createRole(normalizedData);
+      } finally {
+        pendingMutationsRef.current.delete(operationId);
+      }
+    },
     onMutate: async newRoleData => {
+      // Generate a unique temporary ID
+      const tempId = `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      
       // Cancel any outgoing refetches to avoid overwriting optimistic update
-      await queryClient.cancelQueries({queryKey: ['roles-list']});
+      await queryClient.cancelQueries({ queryKey: ['roles-list'] });
 
-      // Find and store the current query data for roles-list
-      const queries = queryClient.getQueriesData({queryKey: ['roles-list']});
-      const previousRolesListData = [];
+      // Store the current query data for potential rollback
+      // Fix: Use array instead of Map to avoid iterator issues
+      const previousRolesListData: Array<{queryKey: any, queryData: any}> = [];
+      
+      // Find all roles-list queries to update optimistically
+      const queriesData = queryClient.getQueriesData({ queryKey: ['roles-list'] });
+      
+      // Fix: Convert to array to avoid iterator issues
+      const queries = Array.from(queriesData);
       
       for (const [queryKey, queryData] of queries) {
-        previousRolesListData.push({queryKey, queryData});
-      }
+        // Store original data for potential rollback
+        previousRolesListData.push({ queryKey, queryData });
+        
+        // Create optimistic role entry with temporary ID
+        const optimisticRole = {
+          ...newRoleData,
+          id: tempId,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
 
-      // Tạo role mới với ID tạm thời
-      const tempId = `temp-${Date.now()}`;
-      const optimisticRole = {
-        ...newRoleData,
-        id: tempId,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-
-      // Update each roles-list query with optimistic data
-      for (const {queryKey} of previousRolesListData) {
+        // Update cache with optimistic data
         queryClient.setQueryData(queryKey, (oldData: any) => {
           if (!oldData || !oldData.data) return oldData;
           
           return {
             ...oldData,
             data: [optimisticRole, ...oldData.data],
-            total: oldData.total + 1,
+            meta: oldData.meta ? {
+              ...oldData.meta,
+              total: (oldData.meta.total || 0) + 1,
+            } : undefined
           };
         });
       }
 
-      return {previousRolesListData, tempId};
+      return {
+        previousRolesListData,
+        tempId,
+        optimisticRole: {
+          ...newRoleData,
+          id: tempId,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }
+      };
     },
     onSuccess: async (result, variables, context) => {
-      // Hiển thị thông báo thành công
+      // Show success notification
       toast({
         title: 'Vai trò đã được tạo thành công',
         duration: 2000,
       });
 
-      // Chỉ đánh dấu queries là stale mà không tự động refetch
-      // Component sẽ quyết định khi nào refetch
+      // Update cache with actual server data
+      // Check if both context and result exist with expected structure before updating cache
+  if (context?.tempId && result && result.id) {
+    queryClient.setQueriesData({ queryKey: ['roles-list'] }, (oldData: any) => {
+      if (!oldData || !oldData.data) return oldData;
+      
+      return {
+        ...oldData,
+        data: oldData.data.map((role: RoleType) =>
+          role.id === context.tempId ? { ...role, id: result.id } : role
+        ),
+      };
+    });
+  } else {
+    // Handle case where we don't have a valid result.id by still invalidating queries
+    console.log('Role created but missing expected result structure, refreshing queries.');
+  }
+
+
+      // Mark queries as stale without triggering immediate refetch
       queryClient.invalidateQueries({
         queryKey: ['roles-list'],
         refetchType: 'none',
@@ -83,79 +150,133 @@ export const useRoleMutations = () => {
       });
     },
     onError: (error, variables, context) => {
+      // Show error notification
       toast({
         title: 'Không thể tạo vai trò',
         description: (error as Error).message,
         variant: 'destructive',
-        duration: 2000,
+        duration: 3000,
       });
 
-      // Rollback to the previous state for all roles-list queries
+      // Rollback optimistic updates
       if (context?.previousRolesListData) {
-        for (const {queryKey, queryData} of context.previousRolesListData) {
-          queryClient.setQueryData(queryKey, queryData);
+        // Fix: Use for...of loop on array instead of entries() to avoid iterator issues
+        for (const item of context.previousRolesListData) {
+          queryClient.setQueryData(item.queryKey, item.queryData);
         }
       }
+      
+      // Log detailed error for debugging
+      console.error('Create role mutation failed:', error);
     },
   });
 
   /**
    * Update an existing role with optimistic update
+   * Enhanced with better conflict resolution
    */
   const updateRoleMutation = useMutation({
-    mutationFn: ({
+    mutationFn: async ({
       id,
       data,
     }: {
       id: string;
       data: Omit<TRoleSchema, 'id' | 'createdAt' | 'updatedAt'>;
-    }) => updateRole({id, data}),
-    onMutate: async ({id, data}) => {
-      // Cancel any outgoing refetches to avoid overwriting optimistic update
-      await queryClient.cancelQueries({queryKey: ['roles-list']});
-      await queryClient.cancelQueries({queryKey: ['role', id]});
-
-      // Get current data
-      const previousRole = queryClient.getQueryData(['role', id]);
+    }) => {
+      // Prevent concurrent updates to the same role
+      if (pendingMutationsRef.current.has(`update-${id}`)) {
+        throw new Error('Thao tác đang được thực hiện. Vui lòng đợi.');
+      }
       
-      // Find and store the current query data for roles-list
-      const queries = queryClient.getQueriesData({queryKey: ['roles-list']});
-      const previousRolesListData = [];
+      // Track this update operation
+      const operationId = `update-${id}`;
+      pendingMutationsRef.current.set(operationId, Date.now());
+      
+      try {
+        // Add validation or preprocessing here if needed
+        const normalizedData = {
+          ...data,
+          code: data.code?.trim(),
+          name: data.name?.trim(),
+          description: data.description?.trim() || null
+        };
+        
+        return await updateRole({ id, data: normalizedData });
+      } finally {
+        pendingMutationsRef.current.delete(operationId);
+      }
+    },
+    onMutate: async ({ id, data }) => {
+      // Use timestamp for versioning
+      const updateTimestamp = Date.now();
+      
+      // Cancel any outgoing refetches to avoid overwriting optimistic update
+      await queryClient.cancelQueries({ queryKey: ['roles-list'] });
+      await queryClient.cancelQueries({ queryKey: ['role', id] });
+
+      // Store current data for potential rollback
+      const previousRole = queryClient.getQueryData(['role', id]);
+      // Fix: Use array instead of Map to avoid iterator issues
+      const previousRolesListData: Array<{queryKey: any, queryData: any}> = [];
+      
+      // Find and update all queries that might contain this role
+      const queriesData = queryClient.getQueriesData({ queryKey: ['roles-list'] });
+      
+      // Fix: Convert to array to avoid iterator issues
+      const queries = Array.from(queriesData);
       
       for (const [queryKey, queryData] of queries) {
-        previousRolesListData.push({queryKey, queryData});
+        previousRolesListData.push({ queryKey, queryData });
         
-        // Update the roles list data optimistically
-        queryClient.setQueryData(queryKey, (old: any) => {
-          if (!old || !old.data) return old;
+        // Update cached data optimistically
+        queryClient.setQueryData(queryKey, (oldData: any) => {
+          if (!oldData || !oldData.data) return oldData;
+          
           return {
-            ...old,
-            data: old.data.map((role: RoleType) =>
-              role.id === id ? {...role, ...data, updatedAt: new Date()} : role,
+            ...oldData,
+            data: oldData.data.map((role: RoleType) =>
+              role.id === id ? {
+                ...role,
+                ...data,
+                updatedAt: new Date(),
+                _v: updateTimestamp // Add version for conflict detection
+              } : role
             ),
           };
         });
       }
 
-      // Update individual role
+      // Update individual role query if it exists
       if (previousRole) {
-        queryClient.setQueryData(['role', id], (old: any) => ({
-          ...old,
+        queryClient.setQueryData(['role', id], (oldData: any) => ({
+          ...oldData,
           ...data,
           updatedAt: new Date(),
+          _v: updateTimestamp
         }));
       }
 
-      return {previousRole, previousRolesListData};
+      return {
+        previousRole,
+        previousRolesListData,
+        optimisticData: {
+          ...data,
+          id,
+          updatedAt: new Date(),
+          _v: updateTimestamp
+        }
+      };
     },
-    onSuccess: async (_, variables) => {
-      // Show success toast
-      toast({
-        title: 'Vai trò đã được cập nhật thành công',
-        duration: 2000,
-      });
+    onSuccess: async (result, variables) => {
+      // Show success notification with brief delay to ensure UI consistency
+      setTimeout(() => {
+        toast({
+          title: 'Vai trò đã được cập nhật thành công',
+          duration: 2000,
+        });
+      }, 100);
 
-      // Chỉ đánh dấu queries là stale mà không tự động refetch
+      // Selectively invalidate related queries without forcing immediate refetch
       queryClient.invalidateQueries({
         queryKey: ['roles-list'],
         refetchType: 'none',
@@ -171,7 +292,7 @@ export const useRoleMutations = () => {
         refetchType: 'none',
       });
 
-      // If code is updated, invalidate that query too
+      // If code is updated, invalidate code-based queries too
       if (variables.data.code) {
         queryClient.invalidateQueries({
           queryKey: ['role-by-code', variables.data.code],
@@ -180,65 +301,100 @@ export const useRoleMutations = () => {
       }
     },
     onError: (error, variables, context) => {
-      // Show error toast
+      // Show error notification
       toast({
         title: 'Không thể cập nhật vai trò',
         description: (error as Error).message,
         variant: 'destructive',
-        duration: 2000,
+        duration: 3000,
       });
 
-      // Rollback
+      // Rollback individual role cache
       if (context?.previousRole) {
         queryClient.setQueryData(['role', variables.id], context.previousRole);
       }
       
-      // Restore all roles-list queries
+      // Rollback all roles-list queries
       if (context?.previousRolesListData) {
-        for (const {queryKey, queryData} of context.previousRolesListData) {
-          queryClient.setQueryData(queryKey, queryData);
+        // Fix: Use for...of loop on array instead of entries() to avoid iterator issues
+        for (const item of context.previousRolesListData) {
+          queryClient.setQueryData(item.queryKey, item.queryData);
         }
       }
+      
+      // Log detailed error for debugging
+      console.error('Update role mutation failed:', error, variables);
     },
   });
 
   /**
    * Delete a role with optimistic update
+   * Enhanced with better concurrency handling
    */
   const deleteRoleMutation = useMutation({
-    mutationFn: (id: string) => deleteRole(id),
+    mutationFn: async (id: string) => {
+      // Prevent concurrent delete operations on the same role
+      if (pendingMutationsRef.current.has(`delete-${id}`)) {
+        throw new Error('Thao tác đang được thực hiện. Vui lòng đợi.');
+      }
+      
+      // Track this delete operation
+      const operationId = `delete-${id}`;
+      pendingMutationsRef.current.set(operationId, Date.now());
+      
+      try {
+        return await deleteRole(id);
+      } finally {
+        pendingMutationsRef.current.delete(operationId);
+      }
+    },
     onMutate: async id => {
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries({queryKey: ['roles-list']});
+      // Cancel any outgoing refetches to avoid conflicts
+      await queryClient.cancelQueries({ queryKey: ['roles-list'] });
+      await queryClient.cancelQueries({ queryKey: ['role', id] });
 
-      // Find and store the current query data for roles-list
-      const queries = queryClient.getQueriesData({queryKey: ['roles-list']});
-      const previousRolesListData = [];
+      // Store current data for potential rollback
+      // Fix: Use array instead of Map to avoid iterator issues
+      const previousRolesListData: Array<{queryKey: any, queryData: any}> = [];
+      const previousRole = queryClient.getQueryData(['role', id]);
+      
+      // Find and update all relevant queries
+      const queriesData = queryClient.getQueriesData({ queryKey: ['roles-list'] });
+      
+      // Fix: Convert to array to avoid iterator issues
+      const queries = Array.from(queriesData);
       
       for (const [queryKey, queryData] of queries) {
-        previousRolesListData.push({queryKey, queryData});
+        previousRolesListData.push({ queryKey, queryData });
         
-        // Update the roles list data optimistically
-        queryClient.setQueryData(queryKey, (old: any) => {
-          if (!old || !old.data) return old;
+        // Update cache optimistically by removing the role
+        queryClient.setQueryData(queryKey, (oldData: any) => {
+          if (!oldData || !oldData.data) return oldData;
+          
+          // Filter out the deleted role
+          const newData = oldData.data.filter((role: RoleType) => role.id !== id);
+          
           return {
-            ...old,
-            data: old.data.filter((role: RoleType) => role.id !== id),
-            total: Math.max(0, old.total - 1),
+            ...oldData,
+            data: newData,
+            meta: oldData.meta ? {
+              ...oldData.meta,
+              total: Math.max(0, (oldData.meta.total || 0) - 1),
+            } : undefined
           };
         });
       }
 
-      return {previousRolesListData};
+      return { previousRolesListData, previousRole, deletedId: id };
     },
     onSuccess: async (_, id) => {
-      // Show success toast
+      // Show success notification
       toast({
         title: 'Vai trò đã được xóa thành công',
         duration: 2000,
       });
 
-      // Chỉ đánh dấu queries là stale mà không tự động refetch
+      // Mark queries as stale without forcing immediate refetch
       queryClient.invalidateQueries({
         queryKey: ['roles-list'],
         refetchType: 'none',
@@ -249,31 +405,78 @@ export const useRoleMutations = () => {
         refetchType: 'none',
       });
 
-      // Remove specific role queries
-      queryClient.removeQueries({queryKey: ['role', id]});
-      queryClient.removeQueries({queryKey: ['role-with-relations', id]});
+      // Remove specific role queries completely
+      queryClient.removeQueries({ queryKey: ['role', id] });
+      queryClient.removeQueries({ queryKey: ['role-with-relations', id] });
     },
     onError: (error, id, context) => {
-      // Show error toast
+      // Show error notification
       toast({
         title: 'Không thể xóa vai trò',
         description: (error as Error).message,
         variant: 'destructive',
-        duration: 2000,
+        duration: 3000,
       });
 
+      // Restore individual role data if it existed
+      if (context?.previousRole) {
+        queryClient.setQueryData(['role', id], context.previousRole);
+      }
+      
       // Restore all roles-list queries
       if (context?.previousRolesListData) {
-        for (const {queryKey, queryData} of context.previousRolesListData) {
-          queryClient.setQueryData(queryKey, queryData);
+        // Fix: Use for...of loop on array instead of entries() to avoid iterator issues
+        for (const item of context.previousRolesListData) {
+          queryClient.setQueryData(item.queryKey, item.queryData);
         }
       }
+      
+      // Log detailed error for debugging
+      console.error('Delete role mutation failed:', error, id);
     },
   });
 
+  /**
+   * Helper to check if there are any pending mutations
+   * Useful for UI to show loading state or prevent actions
+   */
+  const hasPendingMutations = () => pendingMutationsRef.current.size > 0;
+  
+  /**
+   * Helper to check if a specific entity has pending mutations
+   * @param id The entity ID to check
+   * @param operation Optional operation type (create, update, delete)
+   */
+  const hasEntityPendingMutation = (id: string, operation?: 'create' | 'update' | 'delete') => {
+    if (operation) {
+      return pendingMutationsRef.current.has(`${operation}-${id}`);
+    }
+    
+    // Check for any operation on this entity
+    return (
+      pendingMutationsRef.current.has(`update-${id}`) ||
+      pendingMutationsRef.current.has(`delete-${id}`)
+    );
+  };
+  
+  /**
+   * Helper function to check if creation is in progress
+   */
+  const isCreating = () => {
+    return Array.from(pendingMutationsRef.current.keys()).some(key =>
+      key.startsWith('create-')
+    );
+  };
+
   return {
+    // Core mutations
     createRoleMutation,
     updateRoleMutation,
     deleteRoleMutation,
+    
+    // Status helpers
+    hasPendingMutations,
+    hasEntityPendingMutation,
+    isCreating
   };
 };
