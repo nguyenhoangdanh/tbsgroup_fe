@@ -13,7 +13,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { ChevronDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Download, FileSpreadsheet, FileText, FileType, Search } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Download, FileSpreadsheet, FileText, FileType, Search, Trash } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -38,8 +38,9 @@ import autoTable from 'jspdf-autotable'
 import ButtonGroupAction from "./actions/button-group-actions";
 import PageLoader from '../PageLoader';
 import { useTheme } from "next-themes";
-import { useDialog } from "@/context/DialogProvider";
+import { DialogType, useDialog } from "@/context/DialogProvider";
 import { extractPlainValue, removeVietnameseAccents } from "@/utils";
+import { toast } from "@/hooks/use-toast";
 
 
 // Explicitly define types and actions
@@ -60,6 +61,7 @@ interface DataTableProps<TData extends BaseData, TValue> {
   viewFormComponent?: React.ReactNode;
   refetchData?: () => void;
   onDelete?: (id: string) => Promise<void>;
+  onBatchDelete?: (ids: string[]) => Promise<void>;
   onEdit?: (data: TData) => void;
   onSelected?: (ids: string[]) => void;
   actions: TActions[];
@@ -98,6 +100,7 @@ export function DataTable<TData extends BaseData, TValue>({
   actions,
   refetchData,
   onDelete,
+  onBatchDelete,
   onEdit,
   onSelected,
   searchColumn,
@@ -251,6 +254,66 @@ export function DataTable<TData extends BaseData, TValue>({
     },
     [table]
   );
+
+  const renderBatchDeleteButton = () => {
+    const selectedRows = table.getFilteredSelectedRowModel().rows;
+    const selectedCount = selectedRows.length;
+
+    if (selectedCount === 0) return null;
+
+    // Get your dialog context - đã có sẵn trong component
+    const { showDialog } = useDialog();
+
+    return (
+      <div className="flex items-center gap-2 my-2">
+        <span className="text-sm font-medium">
+          {selectedCount} dòng đã chọn
+        </span>
+        <Button
+          variant="destructive"
+          size="sm"
+          onClick={() => {
+            if (!onBatchDelete) return;
+
+            const selectedIds = selectedRows.map(row => row.original.id);
+
+            // Hiển thị dialog xác nhận trước khi xóa
+            showDialog({
+              type: DialogType.DELETE,
+              title: `Xóa ${selectedCount} dòng đã chọn?`,
+              description: "Thao tác này không thể hoàn tác.",
+              onSubmit: async () => {
+                try {
+                  await onBatchDelete(selectedIds);
+                  setRowSelection({});
+                  if (refetchData) refetchData();
+
+                  toast({
+                    title: "Xóa hàng loạt thành công",
+                    description: `${selectedCount} mục đã được xóa`,
+                    variant: "default"
+                  });
+                  return true;
+                } catch (error) {
+                  console.error("Lỗi khi xóa hàng loạt:", error);
+                  toast({
+                    title: "Xóa hàng loạt thất bại",
+                    description: error instanceof Error ? error.message : "Đã xảy ra lỗi",
+                    variant: "destructive"
+                  });
+                  throw error;
+                }
+              }
+            });
+          }}
+          className="flex items-center gap-1"
+        >
+          <Trash className="h-4 w-4" />
+          <span>Xóa đã chọn</span>
+        </Button>
+      </div>
+    );
+  };
 
   // 6. Cải tiến hàm render nút phân trang - thêm xử lý cho nhiều trang
   const renderPaginationButtons = () => {
@@ -814,8 +877,8 @@ export function DataTable<TData extends BaseData, TValue>({
         showTableSkeleton={true}
         isLoading={isLoading && !dialog.open}
         darkMode={theme === "dark"}
-        loadingTime={3000}
-        skeletonLoadingTime={3500}
+        loadingTime={2000}
+        skeletonLoadingTime={2500}
       >
         <div className="w-full">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between py-2 sm:py-4 gap-2">
@@ -978,6 +1041,8 @@ export function DataTable<TData extends BaseData, TValue>({
               </TableBody>
             </Table>
           </div>
+
+          {renderBatchDeleteButton()}
 
           {/* Cải tiến phần phân trang */}
           {!disablePagination && renderPagination()}

@@ -16,6 +16,7 @@ export enum DialogType {
   CREATE = 'create',
   EDIT = 'edit',
   DELETE = 'delete',
+  BATCH_DELETE = 'batch_delete',
   VIEW = 'view'
 }
 

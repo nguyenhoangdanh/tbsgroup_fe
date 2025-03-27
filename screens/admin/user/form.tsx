@@ -7,10 +7,9 @@ import { Form } from "@/components/ui/form";
 import { TUserSchema, userSchema, defaultUserValues } from "@/schemas/user";
 import { useDialog } from "@/context/DialogProvider";
 import { FieldInput } from "@/components/common/Form/FieldInput";
-import { SelectField } from "@/components/common/Form/SelectField";
-import { FieldCheckbox } from "@/components/common/Form/FieldCheckbox";
 import FormActions from "@/components/common/Form/FormAction";
 import useAuthManager from "@/hooks/useAuthManager";
+import { FieldSelect } from "@/components/common/Form/FieldSelect";
 
 interface UserFormProps {
     onSubmit?: (data: TUserSchema) => Promise<void | boolean>;
@@ -151,7 +150,7 @@ const UserForm: React.FC<UserFormProps> = memo(({
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <SelectField
+                    <FieldSelect
                         control={form.control}
                         name="roleId"
                         label="Vai trò"
@@ -160,7 +159,7 @@ const UserForm: React.FC<UserFormProps> = memo(({
                         required
                     />
 
-                    <SelectField
+                    <FieldSelect
                         control={form.control}
                         name="status"
                         label="Trạng thái"

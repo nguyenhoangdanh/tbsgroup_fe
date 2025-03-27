@@ -1,4 +1,4 @@
-import { LockKeyhole, LucideIcon } from "lucide-react"
+import { LockKeyhole, LucideIcon, Users } from "lucide-react"
 import {
     AudioWaveform,
     BookOpen,
@@ -149,7 +149,7 @@ export const sidebarData = {
         {
             name: "User",
             url: "users",
-            icon: Briefcase,
+            icon: Users,
         },
         {
             name: "Permissions",
@@ -159,7 +159,22 @@ export const sidebarData = {
         {
             name: "Túi xách",
             url: "handbags",
-            icon: BookOpen,
+            icon: Briefcase,
+        },
+        {
+            name: "Colors",
+            url: "handbags/bag-colors",
+            icon: PieChart,
+        },
+        {
+            name: "Stages",
+            url: "stages",
+            icon: Map,
+        },
+        {
+            name: "Process",
+            url: "bags-process",
+            icon: Command,
         }
         // {
         //     name: "Sales & Marketing",

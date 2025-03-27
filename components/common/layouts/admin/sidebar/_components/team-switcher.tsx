@@ -2,11 +2,6 @@
 
 import * as React from "react"
 import { cn } from "@/lib/utils"
-import {
-    Avatar,
-    AvatarFallback,
-    AvatarImage,
-} from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import {
     Command,
@@ -34,7 +29,19 @@ import {
     PopoverTrigger,
 } from "@/components/ui/popover"
 import { useMediaQuery } from "@/hooks/useMediaQuery"
-import { CheckIcon, PlusCircleIcon, SortDesc } from "lucide-react"
+import {
+    CheckIcon,
+    PlusCircleIcon,
+    SortDesc,
+    Briefcase,
+    Building,
+    Users,
+    Construction,
+    Laptop,
+    ShieldCheck,
+    Server,
+    Layers
+} from "lucide-react"
 import { Team } from "./sidebar-data"
 import { useSidebarState } from "../../SidebarStateProvider"
 
@@ -42,6 +49,24 @@ import { useSidebarState } from "../../SidebarStateProvider"
 interface TeamSwitcherProps {
     teams: Team[]
 }
+
+// Function để map tên team đến Lucide icon tương ứng
+const getTeamIcon = (teamLabel: string) => {
+    // Map team labels to appropriate icons based on name
+    const iconMap: Record<string, React.ReactNode> = {
+        "Acme Inc": <Building size={16} />,
+        "Development": <Laptop size={16} />,
+        "Engineering": <Construction size={16} />,
+        "Operations": <Server size={16} />,
+        "Security": <ShieldCheck size={16} />,
+        "Management": <Briefcase size={16} />,
+        "Human Resources": <Users size={16} />
+    };
+
+    // Return mapped icon or default icon
+    return (iconMap[teamLabel] as React.ReactNode) || <Layers size={16} />;
+};
+
 
 export function TeamSwitcher({ teams }: TeamSwitcherProps) {
     const [open, setOpen] = React.useState(false)
@@ -65,16 +90,12 @@ export function TeamSwitcher({ teams }: TeamSwitcherProps) {
                         aria-label="Select a team"
                         className={`justify-between ${isIconMode ? "w-12 px-0" : "w-[200px]"}`}
                     >
-                        <Avatar className={cn("mr-2 h-5 w-5", isIconMode && "mr-0")}>
-                            <AvatarImage
-                                src={`https://avatar.vercel.sh/${selectedTeam.label}.png`}
-                                alt={selectedTeam.label}
-                            />
-                            <AvatarFallback>SC</AvatarFallback>
-                        </Avatar>
+                        <div className={cn("mr-2 flex items-center justify-center h-5 w-5", isIconMode && "mr-0")}>
+                            {getTeamIcon(selectedTeam.label)}
+                        </div>
                         {!isIconMode && (
                             <>
-                                <span className="team.label">{selectedTeam.label}</span>
+                                <span>{selectedTeam.label}</span>
                                 <SortDesc className="ml-auto h-4 w-4 shrink-0 opacity-50" />
                             </>
                         )}
@@ -95,15 +116,9 @@ export function TeamSwitcher({ teams }: TeamSwitcherProps) {
                                         }}
                                         className="text-sm"
                                     >
-                                        <Avatar className="mr-2 h-5 w-5">
-                                            <AvatarImage
-                                                src={`https://avatar.vercel.sh/${team.label}.png`}
-                                                alt={team.label}
-                                            />
-                                            <AvatarFallback>
-                                                {team.label[0].toUpperCase()}
-                                            </AvatarFallback>
-                                        </Avatar>
+                                        <div className="mr-2 flex items-center justify-center h-5 w-5">
+                                            {getTeamIcon(team.label)}
+                                        </div>
                                         {team.label}
                                         <CheckIcon
                                             className={cn(
@@ -120,7 +135,6 @@ export function TeamSwitcher({ teams }: TeamSwitcherProps) {
                         <CommandSeparator />
                         <CommandList>
                             <CommandGroup>
-                                {/* Wrap the DialogTrigger with Dialog */}
                                 <Dialog open={showNewTeamDialog} onOpenChange={setShowNewTeamDialog}>
                                     <DialogTrigger asChild>
                                         <CommandItem

@@ -17,9 +17,9 @@ const _MainLayout: React.FC<IMainLayoutProps> = ({ title, children }) => {
             {/* Main Content */}
             <main className="flex-grow flex flex-col">
                 {/* Slider Section */}
-                <section className="w-full px-4 py-4">
+                {/* <section className="w-full px-4 py-4">
                     <CompanyImageSlider />
-                </section>
+                </section> */}
 
                 {/* Content Section */}
                 <section className="flex-grow w-full px-4 py-4">

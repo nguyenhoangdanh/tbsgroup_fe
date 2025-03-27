@@ -16,7 +16,6 @@ import { BasePaginationParams, BaseResponseData } from '@/hooks/base/useBaseQuer
 import { HandBagWithDetails } from '@/hooks/handbag/useHandBagDetails';
 import { fetchWithAuth } from '@/lib/fetcher';
 
-
 // === HANDBAG API FUNCTIONS ===
 
 /**
@@ -39,25 +38,24 @@ export const getHandBagsList = async (
   if (params.active !== undefined) queryParams.append('active', params.active.toString());
   if (params.search) queryParams.append('search', params.search);
   
-  return fetchWithAuth(`/handbags?${queryParams.toString()}`);
+  const response = await fetchWithAuth(`/handbags?${queryParams.toString()}`);
+  return response;
 };
 
 /**
  * Lấy chi tiết một túi theo ID
  */
 export const getHandBagById = async (id: string): Promise<HandBag> => {
-  return fetchWithAuth(`/handbags/${id}`);
+  const response = await fetchWithAuth(`/handbags/${id}`);
+  return response.data;
 };
 
 /**
  * Lấy chi tiết đầy đủ của túi bao gồm các màu và công đoạn
  */
-// Sửa đổi hàm getHandBagFullDetails để trả về đúng kiểu dữ liệu
-/**
- * Lấy chi tiết đầy đủ của túi bao gồm các màu và công đoạn
- */
 export const getHandBagFullDetails = async (id: string): Promise<HandBagWithDetails> => {
-  return fetchWithAuth(`/handbags/${id}/full-details`);
+  const response = await fetchWithAuth(`/handbags/${id}/full-details`);
+  return response.data;
 };
 
 /**
@@ -66,10 +64,12 @@ export const getHandBagFullDetails = async (id: string): Promise<HandBagWithDeta
 export const createHandBag = async (
   data: HandBagCreateDTO
 ): Promise<{ id: string }> => {
-  return fetchWithAuth('/handbags', {
+  const response = await fetchWithAuth('/handbags', {
     method: 'POST',
     body: JSON.stringify(data),
   });
+
+  return { id: response.data.id };
 };
 
 /**
@@ -79,19 +79,23 @@ export const updateHandBag = async (
   id: string,
   data: HandBagUpdateDTO
 ): Promise<void> => {
-  return fetchWithAuth(`/handbags/${id}`, {
+  const response = await fetchWithAuth(`/handbags/${id}`, {
     method: 'PATCH',
     body: JSON.stringify(data),
   });
+  
+  return response.data;
 };
 
 /**
  * Xóa một túi
  */
 export const deleteHandBag = async (id: string): Promise<void> => {
-  return fetchWithAuth(`/handbags/${id}`, {
+  const response = await fetchWithAuth(`/handbags/${id}`, {
     method: 'DELETE',
   });
+  
+  return response.data;
 };
 
 // === BAGCOLOR API FUNCTIONS ===
@@ -116,14 +120,16 @@ export const getBagColorsList = async (
   if (params.active !== undefined) queryParams.append('active', params.active.toString());
   if (params.search) queryParams.append('search', params.search);
   
-  return fetchWithAuth(`handbags/colors?${queryParams.toString()}`);
+  const response = await fetchWithAuth(`handbags/colors?${queryParams.toString()}`);
+  return response;
 };
 
 /**
  * Lấy chi tiết một màu túi theo ID
  */
 export const getBagColorById = async (id: string): Promise<BagColor> => {
-  return fetchWithAuth(`/handbags/colors/${id}`);
+  const response = await fetchWithAuth(`/handbags/colors/${id}`);
+  return response.data;
 };
 
 /**
@@ -132,10 +138,12 @@ export const getBagColorById = async (id: string): Promise<BagColor> => {
 export const createBagColor = async (
   data: BagColorCreateDTO
 ): Promise<{ id: string }> => {
-  return fetchWithAuth('/handbags/colors', {
+  const response = await fetchWithAuth('/handbags/colors', {
     method: 'POST',
     body: JSON.stringify(data),
   });
+  
+  return { id: response.data.id };
 };
 
 /**
@@ -145,19 +153,23 @@ export const updateBagColor = async (
   id: string,
   data: BagColorUpdateDTO
 ): Promise<void> => {
-  return fetchWithAuth(`/handbags/colors/${id}`, {
+  const response = await fetchWithAuth(`/handbags/colors/${id}`, {
     method: 'PATCH',
     body: JSON.stringify(data),
   });
+  
+  return response.data;
 };
 
 /**
  * Xóa một màu túi
  */
 export const deleteBagColor = async (id: string): Promise<void> => {
-  return fetchWithAuth(`/handbags/colors/${id}`, {
+  const response = await fetchWithAuth(`/handbags/colors/${id}`, {
     method: 'DELETE',
   });
+  
+  return response.data;
 };
 
 // === BAGCOLORPROCESS API FUNCTIONS ===
@@ -179,14 +191,16 @@ export const getBagColorProcessesList = async (
   if (params.bagColorId) queryParams.append('bagColorId', params.bagColorId);
   if (params.bagProcessId) queryParams.append('bagProcessId', params.bagProcessId);
   
-  return fetchWithAuth(`/handbags/processes?${queryParams.toString()}`);
+  const response = await fetchWithAuth(`/handbags/processes?${queryParams.toString()}`);
+  return response;
 };
 
 /**
  * Lấy chi tiết một công đoạn màu túi theo ID
  */
 export const getBagColorProcessById = async (id: string): Promise<BagColorProcess> => {
-  return fetchWithAuth(`/handbags/processes/${id}`);
+  const response = await fetchWithAuth(`/handbags/processes/${id}`);
+  return response.data;
 };
 
 /**
@@ -195,10 +209,12 @@ export const getBagColorProcessById = async (id: string): Promise<BagColorProces
 export const createBagColorProcess = async (
   data: BagColorProcessCreateDTO
 ): Promise<{ id: string }> => {
-  return fetchWithAuth('/handbags/processes', {
+  const response = await fetchWithAuth('/handbags/processes', {
     method: 'POST',
     body: JSON.stringify(data),
   });
+  
+  return { id: response.data.id };
 };
 
 /**
@@ -208,17 +224,32 @@ export const updateBagColorProcess = async (
   id: string,
   data: BagColorProcessUpdateDTO
 ): Promise<void> => {
-  return fetchWithAuth(`/handbags/processes/${id}`, {
+  const response = await fetchWithAuth(`/handbags/processes/${id}`, {
     method: 'PATCH',
     body: JSON.stringify(data),
   });
+  
+  return response.data;
 };
 
 /**
  * Xóa một công đoạn màu túi
  */
 export const deleteBagColorProcess = async (id: string): Promise<void> => {
-  return fetchWithAuth(`/handbags/processes/${id}`, {
+  const response = await fetchWithAuth(`/handbags/processes/${id}`, {
     method: 'DELETE',
   });
+  
+  return response.data;
+};
+
+export const batchDeleteBagColorsParallel = async (ids: string[]): Promise<void> => {
+  await Promise.all(ids.map(id => deleteBagColor(id)));
+};
+
+
+// Alternatively, if you don't have a batch delete endpoint, you can implement it like this:
+// This uses Promise.all to delete multiple items in parallel
+export const batchDeleteHandBagsParallel = async (ids: string[]): Promise<void> => {
+  await Promise.all(ids.map(id => deleteHandBag(id)));
 };

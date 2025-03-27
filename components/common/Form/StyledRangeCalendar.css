@@ -1,0 +1,102 @@
+/* StyledRangeCalendar.css */
+
+/* Cải thiện khả năng đọc các số */
+.high-contrast-calendar .rdp-day {
+  font-size: 1rem !important; /* Tăng kích thước font */
+  font-weight: 500 !important; /* Tăng độ đậm */
+  color: #111827 !important; /* Màu đen đậm hơn để tăng độ tương phản */
+}
+
+/* Chế độ tối */
+.dark .high-contrast-calendar .rdp-day {
+  color: #f3f4f6 !important; /* Màu trắng sáng hơn trong dark mode */
+}
+
+/* Tăng độ tương phản cho ngày ngoài tháng hiện tại */
+.high-contrast-calendar .rdp-day_outside {
+  color: #6b7280 !important; /* Màu xám đậm hơn */
+  opacity: 0.8 !important; /* Giảm opacity nhưng vẫn đọc được */
+}
+
+.dark .high-contrast-calendar .rdp-day_outside {
+  color: #9ca3af !important; /* Màu xám sáng hơn trong dark mode */
+}
+
+/* Tạo hiệu ứng nổi bật khi hover */
+.high-contrast-calendar .rdp-day:hover {
+  transform: scale(1.1);
+  z-index: 5;
+  font-weight: 600 !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.dark .high-contrast-calendar .rdp-day:hover {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Hiển thị rõ hơn ngày đang được chọn */
+.high-contrast-calendar .rdp-day_selected,
+.high-contrast-calendar .rdp-day_range_start,
+.high-contrast-calendar .rdp-day_range_end {
+  font-weight: 700 !important;
+  transform: scale(1.05);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Tăng độ rõ của khoảng ngày */
+.high-contrast-calendar .rdp-day_range_middle {
+  font-weight: 500 !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+}
+
+.dark .high-contrast-calendar .rdp-day_range_middle {
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Hiệu ứng transition mượt mà */
+.high-contrast-calendar .rdp-day {
+  transition: all 0.2s ease-in-out !important;
+}
+
+/* Tăng độ rõ cho tiêu đề tháng */
+.high-contrast-calendar .rdp-caption_label {
+  font-size: 1.1rem !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.025em;
+}
+
+/* Tạo khung cho các ngày */
+.high-contrast-calendar .rdp-cell {
+  padding: 2px !important;
+}
+
+/* Cải thiện buttons navigation */
+.high-contrast-calendar .rdp-nav_button {
+  padding: 4px !important;
+  border-radius: 9999px !important;
+}
+
+.high-contrast-calendar .rdp-nav_button:hover {
+  background-color: rgba(0, 0, 0, 0.05) !important;
+}
+
+.dark .high-contrast-calendar .rdp-nav_button:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Tạo khung rõ ràng cho calendar */
+.high-contrast-calendar {
+  padding: 1rem !important;
+  border-radius: 0.75rem !important;
+}
+
+/* Hiệu ứng chuyển động mượt mà khi thay đổi tháng */
+.high-contrast-calendar .rdp-months {
+  transition: transform 0.3s ease-in-out;
+}
+
+/* Focus styles rõ ràng hơn */
+.high-contrast-calendar .rdp-button:focus:not([disabled]) {
+  outline: 2px solid var(--calendar-accent) !important;
+  outline-offset: 2px !important;
+}

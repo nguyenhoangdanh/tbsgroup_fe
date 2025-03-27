@@ -14,7 +14,7 @@ interface Option {
     label: string;
 }
 
-interface SelectFieldProps<T extends FieldValues> {
+interface FieldSelectProps<T extends FieldValues> {
     name: Path<T>;
     label: string;
     control: Control<T>;
@@ -25,7 +25,7 @@ interface SelectFieldProps<T extends FieldValues> {
     required?: boolean;
 }
 
-export const SelectField = <T extends FieldValues>({
+export const FieldSelect = <T extends FieldValues>({
     name,
     label,
     control,
@@ -34,7 +34,7 @@ export const SelectField = <T extends FieldValues>({
     className,
     disabled = false,
     required = false,
-}: SelectFieldProps<T>) => {
+}: FieldSelectProps<T>) => {
     return (
         <Controller
             control={control}

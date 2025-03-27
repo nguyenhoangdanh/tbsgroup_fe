@@ -2,7 +2,7 @@
 import React, { useMemo } from "react";
 import { User, DollarSign, ShoppingCart, CreditCard } from "lucide-react";
 import { DataTable } from "@/components/common/table/data-table";
-import { DashboardCardComponent } from "./_components/DashboardCard";
+import { DashboardCardComponent } from "../../../components/common/layouts/admin/DashboardCard";
 import { columns, Payment } from "./_components/columns";
 import { useTheme } from "next-themes";
 

@@ -40,6 +40,21 @@ export interface HandBag {
     createdAt: string;
     updatedAt: string;
   }
+
+  export interface BagProcess {
+    id: string;
+    code: string;
+    name: string;
+    description: string | null;
+    orderIndex: number;
+    processType: string | null;
+    standardOutput: number;
+    cycleDuration: number | null;
+    machineType: string | null;
+    active?: boolean;
+    createdAt: string;
+    updatedAt: string;
+  }
   
   // DTOs
   export interface HandBagCreateDTO {

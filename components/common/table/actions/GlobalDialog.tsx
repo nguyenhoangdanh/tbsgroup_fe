@@ -51,8 +51,8 @@ const GlobalDialog = memo(() => {
         // Default delete dialog
         if (dialog.type === DialogType.DELETE) {
             return (
-                <div className="p-4 text-center">
-                    <p className="mb-4">Bạn có chắc chắn muốn xóa?</p>
+                <div className="p-4 justify-end items-center flex">
+                    {/* <p className="mb-4">Bạn có chắc chắn muốn xóa?</p> */}
                     <div className="flex justify-center gap-2">
                         <Button
                             variant="destructive"
