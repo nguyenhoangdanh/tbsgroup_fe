@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useCallback, useEffect } from "react";
+import React, { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/common/table/data-table";
 import { Badge } from "@/components/ui/badge";
@@ -252,6 +252,27 @@ const RoleManagementScreen = () => {
 
     const initialPageIndex = Math.max(0, (paginationMeta.currentPage || 1) - 1);
 
+    const createForm = useMemo(() => {
+        return (
+            <RoleForm
+                onSubmit={handleRoleFormSubmit}
+            />
+        );
+    }
+        , [handleRoleFormSubmit]);
+
+    const editForm = useMemo(() => {
+        return (
+            <RoleForm
+                onSubmit={handleRoleFormSubmit}
+            />
+        );
+    }
+        , [handleRoleFormSubmit]);
+    const viewForm = useMemo(() => {
+        return <RoleForm />
+    }, []);
+
     return (
         <div className="container mx-auto py-6">
             <DataTable
@@ -266,25 +287,15 @@ const RoleManagementScreen = () => {
                 onDelete={handleDeleteRole}
                 refetchData={safeRefetch}
                 isLoading={isLoading}
-                createFormComponent={
-                    <RoleForm
-                        onSubmit={handleRoleFormSubmit}
-                    />
-                }
-                editFormComponent={
-                    <RoleForm
-                        onSubmit={handleRoleFormSubmit}
-                    />
-                }
-                viewFormComponent={
-                    <RoleForm />
-
-                }
+                createFormComponent={createForm}
+                editFormComponent={editForm}
+                viewFormComponent={viewForm}
                 serverSidePagination={true}
                 totalItems={paginationMeta.totalItems}
                 initialPageIndex={initialPageIndex}
                 initialPageSize={paginationMeta.pageSize}
                 onPageChange={handlePageChange}
+                serverPageSize={20}
             />
         </div>
     );

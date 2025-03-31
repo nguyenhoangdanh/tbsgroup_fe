@@ -1,0 +1,57 @@
+/* Thêm vào global-dialog.css để cải thiện khả năng cuộn */
+
+/* Tăng chiều cao tối đa cho vùng cuộn trong dialog */
+.dialog-scrollable-wrapper {
+  max-height: 70vh !important; /* Tăng từ giá trị hiện tại */
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important; /* Cải thiện cuộn trên thiết bị cảm ứng */
+}
+
+/* Đảm bảo rằng thanh cuộn luôn hiển thị khi cần thiết */
+.dialog-scrollable-wrapper::-webkit-scrollbar {
+  width: 8px !important;
+  height: 8px !important;
+  display: block !important;
+  background: transparent !important;
+}
+
+/* Đảm bảo tương thích với Firefox */
+.dialog-scrollable-wrapper {
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent !important;
+}
+
+/* Đảm bảo không có hiệu ứng nào cản trở cuộn */
+.dialog-content-container {
+  overflow: hidden !important;
+  max-height: none !important; /* Xóa giới hạn chiều cao */
+}
+
+/* Đảm bảo nội dung form không bị cắt */
+.dialog-scrollable-wrapper form {
+  padding-bottom: 20px !important; /* Thêm padding dưới cùng để tránh nội dung bị cắt */
+}
+
+/* Hỗ trợ cho mobile */
+@media (max-width: 768px) {
+  .dialog-scrollable-wrapper {
+    max-height: 65vh !important; /* Giảm chiều cao một chút trên mobile */
+    padding-bottom: 40px !important; /* Tăng padding dưới cùng */
+  }
+
+  /* Đảm bảo các nút hành động cuối form nhìn thấy được */
+  .dialog-scrollable-wrapper form > :last-child {
+    margin-bottom: 60px !important;
+  }
+}
+
+/* Đảm bảo form actions luôn hiển thị đủ */
+.form-actions {
+  margin-top: 1.5rem !important;
+  padding-bottom: 1.5rem !important;
+}
+
+/* Đảm bảo không có overflow-x */
+.dialog-scrollable-wrapper {
+  overflow-x: hidden !important;
+}

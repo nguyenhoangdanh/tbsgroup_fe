@@ -1,3 +1,4 @@
+"use client";
 
 import React, {
   createContext,
@@ -7,9 +8,9 @@ import React, {
   useCallback,
   useRef,
   useEffect,
-  useMemo,
-  memo
+  useMemo
 } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 // Enum to define dialog types
 export enum DialogType {
@@ -17,11 +18,12 @@ export enum DialogType {
   EDIT = 'edit',
   DELETE = 'delete',
   BATCH_DELETE = 'batch_delete',
-  VIEW = 'view'
+  VIEW = 'view',
+  CUSTOM = 'custom',
 }
 
 // Generic interface for dialog configuration
-export interface DialogConfig<TData> {
+export interface DialogConfig<TData = any> {
   type?: DialogType;
   open: boolean;
   title?: string;
@@ -31,164 +33,170 @@ export interface DialogConfig<TData> {
   onSubmit?: (data?: TData) => Promise<void | boolean>;
   onClose?: () => void;
   fullWidth?: boolean;
-  id?: string; // Thêm ID để phân biệt giữa các dialog
+  maxWidth?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | 'full'; // Enhanced size options
+  id?: string;
   isReadOnly?: boolean;
+  preventOutsideClick?: boolean; // Prevent closing when clicking outside
 }
 
 // Interface for dialog children props
-export interface DialogChildrenProps<TData> {
+export interface DialogChildrenProps<TData = any> {
   data?: TData;
   isSubmitting: boolean;
   onSubmit: (data?: TData) => Promise<void | boolean>;
   onClose: () => void;
+  isReadOnly?: boolean;
+  type?: DialogType;
 }
 
 // Interface for dialog context
-interface DialogContextType<TData> {
+interface DialogContextType<TData = any> {
   dialog: DialogConfig<TData>;
   isOpen: boolean;
   isSubmitting: boolean;
   showDialog: (config: Partial<Omit<DialogConfig<TData>, 'open'>>) => void;
   hideDialog: () => void;
   submit: (data?: TData) => Promise<void | boolean>;
-  updateDialogData: (newData: TData) => void;
+  updateDialogData: (newData: Partial<TData>) => void;
   isReadOnly: boolean;
 }
 
 // Define a type for the default data structure
 export type DefaultDialogData = Record<string, unknown>;
 
-// Create dialog context
+// Default values for context to prevent undefineds
+const defaultDialogConfig: DialogConfig = { open: false };
+
+// Create dialog context with default values
 const DialogContext = createContext<DialogContextType<DefaultDialogData>>({
-  dialog: { open: false },
+  dialog: defaultDialogConfig,
   isOpen: false,
   isSubmitting: false,
   showDialog: () => { },
   hideDialog: () => { },
   submit: async () => { },
   updateDialogData: () => { },
-  isReadOnly: false
+  isReadOnly: false,
 });
 
 // Provider for managing dialog state
 export const DialogProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [dialog, setDialog] = useState<DialogConfig<DefaultDialogData>>({
-    open: false
-  });
-
+  // State for dialog configuration
+  const [dialog, setDialog] = useState<DialogConfig<DefaultDialogData>>(defaultDialogConfig);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Refs for managing dialog state between renders
   const isClosingRef = useRef(false);
-
-  // Sử dụng ref để theo dõi dữ liệu hiện tại và tránh stale closure
   const currentDataRef = useRef<any>(null);
-
-  // Sử dụng ref để theo dõi thời gian hiển thị dialog để tối ưu hóa hiệu suất
   const dialogTimerRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Thêm một ID ref để theo dõi các dialog khác nhau
   const dialogIdRef = useRef<string>("");
+  const submitInProgressRef = useRef(false);
 
+  // Show dialog with new configuration
   const showDialog = useCallback((config: Partial<Omit<DialogConfig<DefaultDialogData>, 'open'>>) => {
-    // Dừng timer đóng dialog nếu có
+    // Clear any pending close timer
     if (dialogTimerRef.current) {
       clearTimeout(dialogTimerRef.current);
       dialogTimerRef.current = null;
     }
 
+    // Reset closing state
     isClosingRef.current = false;
 
-    // Tạo ID nếu không có
+    // Create unique ID if not provided
     const dialogId = config.id || `dialog-${Date.now()}`;
     dialogIdRef.current = dialogId;
 
-    // Lưu trữ data trong ref
-    if (config.data) {
-      currentDataRef.current = config.data;
-    } else {
-      currentDataRef.current = null;
-    }
+    // Store data reference
+    currentDataRef.current = config.data || null;
 
-    // Dùng functional update để đảm bảo state mới nhất
+    // Update dialog state
     setDialog(prev => ({
       ...prev,
       ...config,
       id: dialogId,
       open: true
     }));
-
   }, []);
 
+  // Hide/close dialog
   const hideDialog = useCallback(() => {
-    // Ngăn đóng nhiều lần
-    if (isClosingRef.current) {
-      return;
-    }
-
+    // Prevent multiple close calls
+    if (isClosingRef.current) return;
     isClosingRef.current = true;
 
-    // Gọi onClose callback nếu có
+    // Call onClose callback if provided
     if (dialog.onClose) {
-      dialog.onClose();
+      try {
+        dialog.onClose();
+      } catch (error) {
+        console.error("[DialogProvider] Error in onClose handler:", error);
+      }
     }
 
-    // Đặt open = false trước
+    // Set open to false immediately for animation
     setDialog(prev => ({ ...prev, open: false }));
 
-    // Đặt timer để clear các dữ liệu khác sau khi animation kết thúc
+    // Schedule cleanup after animation completes
     dialogTimerRef.current = setTimeout(() => {
-      setDialog({ open: false });
+      // Reset dialog state
+      setDialog(defaultDialogConfig);
       currentDataRef.current = null;
       dialogIdRef.current = "";
       isClosingRef.current = false;
-
-      // Dừng timer sau khi thực hiện
       dialogTimerRef.current = null;
-    }, 300); // 300ms cho animation
+    }, 300); // Match animation duration
   }, [dialog]);
 
-  // Cập nhật dữ liệu cho dialog đang mở
-  // Modify updateDialogData to be more reliable
-  // In DialogProvider.tsx, ensure the updateDialogData function correctly updates the state
-  const updateDialogData = useCallback((newData: any) => {
+  // Update data for current dialog
+  const updateDialogData = useCallback((newData: Partial<DefaultDialogData>) => {
     if (!dialog.open) return;
 
-    // Use functional update to avoid stale closures
+    // Update both ref and state
     setDialog(prev => {
+      const updatedData = { ...prev.data, ...newData };
+      currentDataRef.current = updatedData;
       return {
         ...prev,
-        data: newData
+        data: updatedData
       };
     });
   }, [dialog.open]);
 
+  // Handle form submission
   const submit = useCallback(async (data?: any) => {
-    if (!dialog.onSubmit) {
-      return;
-    }
+    // Skip if no submit handler or already submitting
+    if (!dialog.onSubmit || submitInProgressRef.current) return;
+
+    // Set submitting state
+    submitInProgressRef.current = true;
+    setIsSubmitting(true);
 
     try {
-      setIsSubmitting(true);
-
-      // Sử dụng dữ liệu từ tham số hoặc từ ref nếu không có
+      // Use provided data or fallback to stored data
       const dataToSubmit = data || currentDataRef.current;
 
-      // Gọi onSubmit và đợi kết quả
+      // Call onSubmit and await result
       const result = await dialog.onSubmit(dataToSubmit);
 
-      // Luôn đóng dialog sau khi submit thành công
-      hideDialog();
+      // Close dialog after successful submission if result is true
+      if (result === true) {
+        hideDialog();
+      }
 
       return result;
     } catch (error) {
       console.error(`[DialogProvider] Dialog ${dialogIdRef.current} submit error:`, error);
-      // Không đóng dialog khi có lỗi để người dùng có thể thử lại
+      // Propagate error to caller
       return Promise.reject(error);
     } finally {
+      // Reset submitting state
+      submitInProgressRef.current = false;
       setIsSubmitting(false);
     }
   }, [dialog, hideDialog]);
 
-  // Đảm bảo cleanup khi unmount
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (dialogTimerRef.current) {
@@ -197,7 +205,7 @@ export const DialogProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     };
   }, []);
 
-  // Tối ưu hóa context value để tránh re-render không cần thiết
+  // Memoized context value
   const contextValue = useMemo(() => ({
     dialog,
     isOpen: dialog.open,
@@ -216,7 +224,7 @@ export const DialogProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   );
 };
 
-// Hook to use dialog context - Tối ưu hóa với generic type
+// Custom hook to use dialog context - with generic type support
 export const useDialog = <T = any>() => {
   const context = useContext(DialogContext) as DialogContextType<T>;
   if (!context) {
@@ -237,34 +245,6 @@ export const useDialog = <T = any>() => {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// "use client"
 // import React, {
 //   createContext,
 //   useContext,
@@ -272,7 +252,8 @@ export const useDialog = <T = any>() => {
 //   ReactNode,
 //   useCallback,
 //   useRef,
-//   useEffect
+//   useEffect,
+//   useMemo
 // } from 'react';
 
 // // Enum to define dialog types
@@ -280,94 +261,145 @@ export const useDialog = <T = any>() => {
 //   CREATE = 'create',
 //   EDIT = 'edit',
 //   DELETE = 'delete',
-//   VIEW = 'view'
+//   BATCH_DELETE = 'batch_delete',
+//   VIEW = 'view',
+//   CUSTOM = 'custom',
 // }
 
 // // Generic interface for dialog configuration
-// export interface DialogConfig<T = any> {
+// export interface DialogConfig<TData> {
 //   type?: DialogType;
 //   open: boolean;
 //   title?: string;
 //   description?: string;
-//   data?: T;
-//   children?: React.ReactNode | ((props: DialogChildrenProps<T>) => React.ReactNode);
-//   onSubmit?: (data?: T) => Promise<void | boolean>;
+//   data?: TData;
+//   children?: React.ReactNode | ((props: DialogChildrenProps<TData>) => React.ReactNode);
+//   onSubmit?: (data?: TData) => Promise<void | boolean>;
 //   onClose?: () => void;
 //   fullWidth?: boolean;
-//   id?: string
-// };
+//   maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl'; // Additional size option
+//   id?: string;
+//   isReadOnly?: boolean;
+//   preventOutsideClick?: boolean; // Prevent closing when clicking outside
+// }
 
 // // Interface for dialog children props
-// export interface DialogChildrenProps<T = any> {
-//   data?: T;
+// export interface DialogChildrenProps<TData> {
+//   data?: TData;
 //   isSubmitting: boolean;
-//   onSubmit: (data?: T) => Promise<void | boolean>;
+//   onSubmit: (data?: TData) => Promise<void | boolean>;
 //   onClose: () => void;
+//   isReadOnly?: boolean;
 // }
 
 // // Interface for dialog context
-// interface DialogContextType<T = any> {
-//   dialog: DialogConfig<T>;
+// interface DialogContextType<TData> {
+//   dialog: DialogConfig<TData>;
 //   isOpen: boolean;
 //   isSubmitting: boolean;
-//   showDialog: (config: Partial<Omit<DialogConfig<T>, 'open'>>) => void;
+//   showDialog: (config: Partial<Omit<DialogConfig<TData>, 'open'>>) => void;
 //   hideDialog: () => void;
-//   submit: (data?: T) => Promise<void | boolean>;
-//   updateDialogData: (newData: T) => void;
+//   submit: (data?: TData) => Promise<void | boolean>;
+//   updateDialogData: (newData: Partial<TData>) => void;
+//   isReadOnly: boolean;
 // }
 
+// // Define a type for the default data structure
+// export type DefaultDialogData = Record<string, unknown>;
+
 // // Create dialog context
-// const DialogContext = createContext<DialogContextType>({
+// const DialogContext = createContext<DialogContextType<DefaultDialogData>>({
 //   dialog: { open: false },
 //   isOpen: false,
 //   isSubmitting: false,
 //   showDialog: () => { },
 //   hideDialog: () => { },
 //   submit: async () => { },
-//  updateDialogData: () => { }
+//   updateDialogData: () => { },
+//   isReadOnly: false
 // });
 
 // // Provider for managing dialog state
 // export const DialogProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-//   const [dialog, setDialog] = useState<DialogConfig>({
+//   const [dialog, setDialog] = useState<DialogConfig<DefaultDialogData>>({
 //     open: false
 //   });
 
 //   const [isSubmitting, setIsSubmitting] = useState(false);
-//   const [isClosing, setIsClosing] = useState(false);
+//   const isClosingRef = useRef(false);
+//   const currentDataRef = useRef<any>(null);
+//   const dialogTimerRef = useRef<NodeJS.Timeout | null>(null);
+//   const dialogIdRef = useRef<string>("");
 
-//   const showDialog = useCallback((config: Partial<Omit<DialogConfig, 'open'>>) => {
-//     setIsClosing(false);
-//     setDialog({
+//   const showDialog = useCallback((config: Partial<Omit<DialogConfig<DefaultDialogData>, 'open'>>) => {
+//     // Stop dialog closing timer if exists
+//     if (dialogTimerRef.current) {
+//       clearTimeout(dialogTimerRef.current);
+//       dialogTimerRef.current = null;
+//     }
+
+//     isClosingRef.current = false;
+
+//     // Create ID if not provided
+//     const dialogId = config.id || `dialog-${Date.now()}`;
+//     dialogIdRef.current = dialogId;
+
+//     // Store data in ref
+//     if (config.data) {
+//       currentDataRef.current = config.data;
+//     } else {
+//       currentDataRef.current = null;
+//     }
+
+//     // Use functional update to ensure latest state
+//     setDialog(prev => ({
+//       ...prev,
 //       ...config,
+//       id: dialogId,
 //       open: true
-//     });
+//     }));
 //   }, []);
 
 //   const hideDialog = useCallback(() => {
-//     // Mark as closing to prevent multiple close attempts
-//     if (isClosing) {
-//       console.log("[DialogProvider] Dialog already closing, ignoring duplicate call");
+//     // Prevent closing multiple times
+//     if (isClosingRef.current) {
 //       return;
 //     }
 
-//     setIsClosing(true);
+//     isClosingRef.current = true;
 
-//     // Call onClose callback if provided
+//     // Call onClose callback if exists
 //     if (dialog.onClose) {
-//       console.log("[DialogProvider] Calling dialog onClose callback");
 //       dialog.onClose();
 //     }
 
-//     // Reset dialog state - first set open to false
-//     setDialog((prev) => ({ ...prev, open: false }));
+//     // Set open to false first
+//     setDialog(prev => ({ ...prev, open: false }));
 
-//     // Then clear dialog content after animation completes
-//     setTimeout(() => {
+//     // Set timer to clear other data after animation ends
+//     dialogTimerRef.current = setTimeout(() => {
 //       setDialog({ open: false });
-//       setIsClosing(false);
-//     }, 300);
-//   }, [dialog, isClosing]);
+//       currentDataRef.current = null;
+//       dialogIdRef.current = "";
+//       isClosingRef.current = false;
+//       dialogTimerRef.current = null;
+//     }, 300); // 300ms for animation
+//   }, [dialog]);
+
+//   // Update data for open dialog
+//   const updateDialogData = useCallback((newData: any) => {
+//     if (!dialog.open) return;
+
+//     // Update both the ref and state
+//     setDialog(prev => {
+//       const updatedData = { ...prev.data, ...newData };
+//       currentDataRef.current = updatedData;
+//       return {
+//         ...prev,
+//         data: updatedData
+//       };
+//     });
+//   }, [dialog.open]);
 
 //   const submit = useCallback(async (data?: any) => {
 //     if (!dialog.onSubmit) {
@@ -377,40 +409,54 @@ export const useDialog = <T = any>() => {
 //     try {
 //       setIsSubmitting(true);
 
-//       // Call onSubmit and await result
-//       const result = await dialog.onSubmit(data);
+//       // Use data from parameter or from ref if not provided
+//       const dataToSubmit = data || currentDataRef.current;
 
-//       // IMPORTANT: Always hide dialog after successful submission,
-//       // even if onSubmit doesn't return a value (void)
+//       // Call onSubmit and await result
+//       const result = await dialog.onSubmit(dataToSubmit);
+
+//       // Always close dialog after successful submission
 //       hideDialog();
 
 //       return result;
 //     } catch (error) {
-//       console.error("[DialogProvider] Dialog submit error:", error);
-//       // Don't hide dialog on error to allow user to retry
+//       console.error(`[DialogProvider] Dialog ${dialogIdRef.current} submit error:`, error);
+//       // Don't close dialog on error to allow user to retry
 //       return Promise.reject(error);
 //     } finally {
 //       setIsSubmitting(false);
 //     }
 //   }, [dialog, hideDialog]);
 
+//   // Ensure cleanup when unmounting
+//   useEffect(() => {
+//     return () => {
+//       if (dialogTimerRef.current) {
+//         clearTimeout(dialogTimerRef.current);
+//       }
+//     };
+//   }, []);
+
+//   // Optimize context value to avoid unnecessary re-renders
+//   const contextValue = useMemo(() => ({
+//     dialog,
+//     isOpen: dialog.open,
+//     isSubmitting,
+//     showDialog,
+//     hideDialog,
+//     submit,
+//     updateDialogData,
+//     isReadOnly: dialog.isReadOnly || false
+//   }), [dialog, isSubmitting, showDialog, hideDialog, submit, updateDialogData]);
+
 //   return (
-//     <DialogContext.Provider
-//       value={{
-//         dialog,
-//         isOpen: dialog.open,
-//         isSubmitting,
-//         showDialog,
-//         hideDialog,
-//         submit
-//       }}
-//     >
+//     <DialogContext.Provider value={contextValue}>
 //       {children}
 //     </DialogContext.Provider>
 //   );
 // };
 
-// // Hook to use dialog context
+// // Hook to use dialog context - Optimized with generic type
 // export const useDialog = <T = any>() => {
 //   const context = useContext(DialogContext) as DialogContextType<T>;
 //   if (!context) {

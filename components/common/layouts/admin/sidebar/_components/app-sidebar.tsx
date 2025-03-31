@@ -97,9 +97,9 @@ export const AppSidebar = React.memo(function AppSidebar() {
 
             </div>
             <div className="flex-1 overflow-y-auto p-2.5">
-                {/* <MemoNavMain items={navMainItems} /> */}
+                <MemoNavMain items={navMainItems} />
                 <div className="mt-4">
-                    <MemoNavProjects projects={projectItems} />
+                    {/* <MemoNavProjects projects={projectItems} /> */}
                 </div>
             </div>
             <div className="border-t p-2.5">

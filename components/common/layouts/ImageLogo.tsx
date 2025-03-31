@@ -66,7 +66,7 @@ export default function ImageLogo({
             height={height}
             className={`${className} object-contain`}
             onError={handleError}
-            priority={true}
+            priority={false}
         />
     );
 }

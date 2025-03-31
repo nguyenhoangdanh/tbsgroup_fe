@@ -15,6 +15,9 @@ interface FieldInputProps<T extends FieldValues> {
     autoComplete?: string;
     disabled?: boolean;
     required?: boolean;
+    min?: number;
+    max?: number;
+    step?: number;
 }
 
 export const FieldInput = <T extends FieldValues>({
@@ -27,6 +30,9 @@ export const FieldInput = <T extends FieldValues>({
     className,
     disabled = false,
     required = false,
+    min,
+    max,
+    step,
 }: FieldInputProps<T>) => {
     const [showPassword, setShowPassword] = useState(false);
     const isPassword = type === "password";
@@ -50,8 +56,11 @@ export const FieldInput = <T extends FieldValues>({
                                 autoComplete={autoComplete}
                                 disabled={disabled}
                                 value={field.value ?? ""}
+                                min={min}
+                                max={max}
+                                step={step}
                                 className={clsx(
-                                    "border rounded-md px-3 py-2 transition-all focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none",
+                                    "border rounded-md px-3 py-2 transition-all focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none w-full field-input-fix",
                                     disabled && "bg-gray-100 cursor-not-allowed dark:bg-gray-800",
                                     error ? "border-red-500 focus:ring-red-500" : "border-gray-300"
                                 )}

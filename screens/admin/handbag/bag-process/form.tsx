@@ -7,15 +7,10 @@ import { z } from "zod";
 import { Form } from "@/components/ui/form";
 import { FieldInput } from "@/components/common/Form/FieldInput";
 import { FieldTextarea } from "@/components/common/Form/FieldTextarea";
-import { FieldCheckbox } from "@/components/common/Form/FieldCheckbox";
 import FormActions from "@/components/common/Form/FormAction";
 import { useDialog } from "@/context/DialogProvider";
-import { FieldCombobox } from "@/components/common/Form/FieldCombobox";
-import { FieldColorPicker } from "@/components/common/Form/FieldColorPicker";
-import { FieldDateTimePicker } from "@/components/common/Form/FieldDateTimePicker";
 import dayjs from "dayjs";
-import { FieldTimeRangePicker } from "@/components/common/Form/FieldTimeRangePicker";
-import { FieldRangeDateTimePicker } from "@/components/common/Form/FieldRangeDateTimePicker";
+import DialogFormWrapper from "./DialogFormWrapper";
 
 // Define schema validation for the process
 const bagProcessSchema = z.object({
@@ -35,16 +30,6 @@ const bagProcessSchema = z.object({
     createdAt: z.string().optional(),
     updatedAt: z.string().optional(),
     teamId: z.string().optional(),
-    color: z.string().optional(),
-    eventDateTime: z.date().optional(),
-    workHours: z.object({
-        startDate: z.date().optional(),
-        endDate: z.date().optional(),
-    }).optional(),
-    eventPeriod: z.object({
-        startDate: z.date().optional(),
-        endDate: z.date().optional(),
-    }).optional(),
 });
 
 type BagProcessSchema = z.infer<typeof bagProcessSchema>;
@@ -113,126 +98,77 @@ const BagProcessForm: React.FC<BagProcessFormProps> = memo(({
     }, [isReadOnly, isSubmitting, onSubmit, hideDialog, refetchData]);
 
     return (
-        <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <FieldInput
+        <DialogFormWrapper>
+            <Form {...form}>
+                <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <FieldInput
+                            control={form.control}
+                            name="code"
+                            label="Mã công đoạn"
+                            placeholder="Nhập mã công đoạn"
+                            disabled={isSubmitting || isReadOnly}
+                            required
+                        />
+
+                        <FieldInput
+                            control={form.control}
+                            name="name"
+                            label="Tên công đoạn"
+                            placeholder="Nhập tên công đoạn"
+                            disabled={isSubmitting || isReadOnly}
+                            required
+                        />
+                    </div>
+
+                    <FieldTextarea
                         control={form.control}
-                        name="code"
-                        label="Mã công đoạn"
-                        placeholder="Nhập mã công đoạn"
+                        name="description"
+                        label="Mô tả"
+                        placeholder="Nhập mô tả về công đoạn"
                         disabled={isSubmitting || isReadOnly}
-                        required
+                        rows={4}
                     />
 
-                    <FieldInput
-                        control={form.control}
-                        name="name"
-                        label="Tên công đoạn"
-                        placeholder="Nhập tên công đoạn"
-                        disabled={isSubmitting || isReadOnly}
-                        required
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <FieldInput
+                            control={form.control}
+                            name="processType"
+                            label="Loại công đoạn"
+                            placeholder="Nhập loại công đoạn"
+                            disabled={isSubmitting || isReadOnly}
+                        />
+
+                        <FieldInput
+                            control={form.control}
+                            name="orderIndex"
+                            label="Thứ tự"
+                            placeholder="Nhập thứ tự công đoạn"
+                            type="number"
+                            disabled={isSubmitting || isReadOnly}
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <FieldInput
+                            control={form.control}
+                            name="standardOutput"
+                            label="Sản lượng tiêu chuẩn"
+                            placeholder="Nhập sản lượng tiêu chuẩn"
+                            type="number"
+                            disabled={isSubmitting || isReadOnly}
+                        />
+
+                    </div>
+
+                    <FormActions
+                        isSubmitting={isSubmitting}
+                        isReadOnly={isReadOnly}
+                        isEdit={!!dialog.data?.id}
                     />
-                </div>
-
-                <FieldTextarea
-                    control={form.control}
-                    name="description"
-                    label="Mô tả"
-                    placeholder="Nhập mô tả về công đoạn"
-                    disabled={isSubmitting || isReadOnly}
-                    rows={4}
-                />
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <FieldInput
-                        control={form.control}
-                        name="processType"
-                        label="Loại công đoạn"
-                        placeholder="Nhập loại công đoạn"
-                        disabled={isSubmitting || isReadOnly}
-                    />
-
-                    <FieldInput
-                        control={form.control}
-                        name="orderIndex"
-                        label="Thứ tự"
-                        placeholder="Nhập thứ tự công đoạn"
-                        type="number"
-                        disabled={isSubmitting || isReadOnly}
-                    />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <FieldInput
-                        control={form.control}
-                        name="standardOutput"
-                        label="Sản lượng tiêu chuẩn"
-                        placeholder="Nhập sản lượng tiêu chuẩn"
-                        type="number"
-                        disabled={isSubmitting || isReadOnly}
-                    />
-
-                    <FieldCombobox
-                        control={form.control}
-                        name="teamId"
-                        label="Thuộc tổ"
-                        placeholder="Chọn tổ"
-                        options={[
-                            { value: '1', label: 'Team A' },
-                            { value: '2', label: 'Team B' }
-                        ]}
-                        disabled={isSubmitting}
-                        required
-                    />
-
-                    <FieldColorPicker
-                        control={form.control}
-                        name="color"
-                        label="Chọn màu"
-                        customColors={['#FF0000', '#00FF00', '#0000FF']}
-                    />
-
-                    <FieldDateTimePicker
-                        control={form.control}
-                        name="eventDateTime"
-                        label="Thời gian sự kiện"
-                        minDate={new Date()}
-                        maxDate={dayjs().add(1, 'month').toDate()}
-                        required
-                    />
-
-                    <FieldTimeRangePicker
-                        name="workHours"
-                        label="Giờ làm việc"
-                        control={form.control}
-                        required
-                        allowSameTime={false}
-                    // rules={{
-                    //     validate: (value) => {
-                    //         // Custom validation logic
-                    //         return true;
-                    //     }
-                    // }}
-                    />
-
-                    <FieldRangeDateTimePicker
-                        name="eventPeriod"
-                        label="Thời gian sự kiện"
-                        control={form.control}
-                        required
-                        minDate={new Date()}
-                        allowSameDateTime={false}
-                    />
-                </div>
-
-                <FormActions
-                    isSubmitting={isSubmitting}
-                    isReadOnly={isReadOnly}
-                    isEdit={!!dialog.data?.id}
-                />
-            </form>
-        </Form>
+                </form>
+            </Form>
+        </DialogFormWrapper>
     );
 });
 

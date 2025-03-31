@@ -6,6 +6,7 @@ import {
     Forward,
     MoreHorizontal,
     Trash2,
+    ChevronRight,
     type LucideIcon,
 } from "lucide-react"
 
@@ -23,25 +24,89 @@ import {
     SidebarMenuAction,
     SidebarMenuButton,
     SidebarMenuItem,
+    SidebarMenuSub,
+    SidebarMenuSubButton,
+    SidebarMenuSubItem,
     useSidebar,
 } from "@/components/ui/sidebar"
+import {
+    Collapsible,
+    CollapsibleContent,
+    CollapsibleTrigger,
+} from "@/components/ui/collapsible"
+import { useSidebarCollapsed, useSidebarIsMobileView } from "../../SidebarStateProvider"
+import { usePathname } from "next/navigation"
 import Link from "next/link"
 
-// Tối ưu hóa các menu item bằng cách tách thành component riêng
+// Type definition for Project with nested items
+interface ProjectItem {
+    name: string;
+    url: string;
+    icon: LucideIcon;
+    items?: ProjectItem[];
+}
+
+// Component for rendering a project menu item with nested functionality
 const ProjectMenuItem = React.memo(({
     item,
+    level = 0,
     isMobile
 }: {
-    item: { name: string; url: string; icon: LucideIcon };
+    item: ProjectItem;
+    level?: number;
     isMobile: boolean;
 }) => {
+    const pathname = usePathname();
+    const isActive = pathname?.startsWith(item.url);
+    const hasChildren = item.items && item.items.length > 0;
     const Icon = item.icon;
 
+    // If the item has children, render a collapsible section
+    if (hasChildren) {
+        return (
+            <Collapsible
+                asChild
+                defaultOpen={isActive}
+                className="group/collapsible"
+            >
+                <SidebarMenuItem>
+                    <CollapsibleTrigger asChild>
+                        <SidebarMenuButton
+                            className={`pl-${level * 2}`}
+                            tooltip={item.name}
+                        >
+                            <Icon className="flex-shrink-0" />
+                            <span>{item.name}</span>
+                            <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                        </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                        <SidebarMenuSub>
+                            {/* Fix: Added a null check and conditional rendering */}
+                            {item.items?.map((subItem) => (
+                                <ProjectMenuItem
+                                    key={subItem.url}
+                                    item={subItem}
+                                    level={level + 1}
+                                    isMobile={isMobile}
+                                />
+                            ))}
+                        </SidebarMenuSub>
+                    </CollapsibleContent>
+                </SidebarMenuItem>
+            </Collapsible>
+        );
+    }
+
+    // If the item has no children, render a standard menu item with link
     return (
         <SidebarMenuItem>
-            <SidebarMenuButton asChild>
+            <SidebarMenuButton
+                asChild
+                className={`pl-${level * 2} ${isActive ? 'bg-accent text-accent-foreground' : ''}`}
+            >
                 <Link href={item.url}>
-                    <Icon />
+                    <Icon className="flex-shrink-0" />
                     <span>{item.name}</span>
                 </Link>
             </SidebarMenuButton>
@@ -59,16 +124,16 @@ const ProjectMenuItem = React.memo(({
                 >
                     <DropdownMenuItem>
                         <Folder className="text-muted-foreground" />
-                        <span>View Project</span>
+                        <span>View {item.name}</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem>
                         <Forward className="text-muted-foreground" />
-                        <span>Share Project</span>
+                        <span>Share {item.name}</span>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem>
                         <Trash2 className="text-muted-foreground" />
-                        <span>Delete Project</span>
+                        <span>Delete {item.name}</span>
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
@@ -78,31 +143,17 @@ const ProjectMenuItem = React.memo(({
 
 ProjectMenuItem.displayName = "ProjectMenuItem";
 
-// Component "More" riêng biệt
-const MoreProjectsButton = React.memo(() => (
-    <SidebarMenuItem>
-        <SidebarMenuButton className="text-sidebar-foreground/70">
-            <MoreHorizontal className="text-sidebar-foreground/70" />
-            <span>More</span>
-        </SidebarMenuButton>
-    </SidebarMenuItem>
-));
-
-MoreProjectsButton.displayName = "MoreProjectsButton";
-
-// Tối ưu NavProjects component với React.memo
+// Main NavProjects component
 export const NavProjects = React.memo(({
     projects,
 }: {
-    projects: {
-        name: string
-        url: string
-        icon: LucideIcon
-    }[]
+    projects: ProjectItem[]
 }) => {
-    const { isMobile } = useSidebar();
+    const isMobile = useSidebarIsMobileView();
+    const collapsed = useSidebarCollapsed();
+    const isIconMode = !isMobile && collapsed;
 
-    // Memoize projects list để tránh re-render
+    // Memoize projects list to avoid re-render
     const projectItems = React.useMemo(() =>
         projects.map(item => (
             <ProjectMenuItem
@@ -115,11 +166,10 @@ export const NavProjects = React.memo(({
     );
 
     return (
-        <SidebarGroup className="group-data-[collapsible=icon]:hidden">
+        <SidebarGroup className={isIconMode ? "hidden" : ""}>
             <SidebarGroupLabel>Projects</SidebarGroupLabel>
             <SidebarMenu>
                 {projectItems}
-                {/* <MoreProjectsButton /> */}
             </SidebarMenu>
         </SidebarGroup>
     );

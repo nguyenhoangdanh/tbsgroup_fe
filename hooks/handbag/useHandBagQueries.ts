@@ -185,6 +185,7 @@ export const useHandBagQueries = () => {
   return {
     // Base HandBag queries
     ...handBagQueries,
+    listHandBags: handBagQueries.listItems,
     
     // Base BagColor queries 
     getBagColorById: bagColorQueries.getById,

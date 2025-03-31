@@ -1,190 +1,444 @@
-import { LockKeyhole, LucideIcon, Users } from "lucide-react"
-import {
-    AudioWaveform,
-    BookOpen,
-    Bot,
-    Briefcase,
-    Command,
-    GalleryVerticalEnd,
-    Map,
-    PieChart,
-    Settings2,
+import { BarChart } from 'lucide-react';
+import { 
+  LucideIcon, 
+  Users, 
+  Briefcase, 
+  Factory, 
+  Settings, 
+  PieChart, 
+  Command, 
+  Map, 
+  LineChart, 
+  UserCog, 
+  KeyRound, 
+  FileText, 
+  Building,
+  AudioWaveform,
+  GalleryVerticalEnd,
+  Group,
+  Layers,
+  LayoutDashboard
 } from "lucide-react"
 
-// Team data interface (đã sửa để phù hợp với TeamSwitcher)
+// Team data interface
 export interface Team {
-    label: string; // Thay thế "name" bằng "label"
-    value: string; // Thêm trường "value"
-    icon?: LucideIcon; // Thay thế "logo" bằng "icon"
+  label: string;
+  value: string;
+  icon?: LucideIcon;
 }
 
-// Navigation item interface
+// Navigation item interface with support for nested sub-items
 export interface NavItem {
-    title: string;
-    url: string;
-    icon?: LucideIcon;
-    isActive?: boolean;
-    items?: {
-        title: string;
-        url: string;
-    }[];
+  title: string;
+  url: string;
+  icon?: LucideIcon;
+  isActive?: boolean;
+  items?: NavItem[];
 }
 
 // Project interface
 export interface Project {
-    name: string;
-    url: string;
-    icon: LucideIcon;
+  name: string;
+  url: string;
+  icon: LucideIcon;
+  items?: Project[];
 }
 
 // Export sidebar data
 export const sidebarData = {
-    teams: [
+  teams: [
+    {
+      label: "Acme Inc",
+      value: "acme-inc",
+      icon: GalleryVerticalEnd,
+    },
+    {
+      label: "Acme Corp.",
+      value: "acme-corp",
+      icon: AudioWaveform,
+    },
+    {
+      label: "Evil Corp.",
+      value: "evil-corp",
+      icon: Command,
+    },
+  ] as Team[],
+  
+  navMain: [
+    {
+      title: "Dashboard",
+      url: "/admin/dashboard",
+      icon: LayoutDashboard,
+      isActive: true,
+    },
+    {
+      title: "Users Management",
+      url: "/admin/users",
+      icon: Users,
+      items: [
         {
-            label: "Acme Inc", // Thay đổi từ "name" thành "label"
-            value: "acme-inc", // Thêm trường "value"
-            icon: GalleryVerticalEnd, // Thay đổi từ "logo" thành "icon"
+          title: "All Users",
+          url: "/admin/users/all",
         },
         {
-            label: "Acme Corp.",
-            value: "acme-corp",
-            icon: AudioWaveform,
+          title: "User Groups",
+          url: "/admin/users/groups",
         },
         {
-            label: "Evil Corp.",
-            value: "evil-corp",
-            icon: Command,
+          title: "User Roles",
+          url: "/admin/users/roles",
         },
-    ] as Team[],
-    
-    navMain: [
+      ],
+    },
+    {
+      title: "Handbags",
+      url: "/admin/handbags",
+      icon: Briefcase,
+      items: [
         {
-            title: "Handbags",
-            url: "#",
-            icon: Briefcase,
-            isActive: true,
-            items: [
-                {
-                    title: "Stages",
-                    url: "/admin/handbag/stages",
-                },
-                {
-                    title: "Starred",
-                    url: "#",
-                },
-                {
-                    title: "Settings",
-                    url: "#",
-                },
-            ],
+          title: "All Handbags",
+          url: "/admin/handbags/all",
         },
         {
-            title: "Models",
-            url: "#",
-            icon: Bot,
-            items: [
-                {
-                    title: "Genesis",
-                    url: "#",
-                },
-                {
-                    title: "Explorer",
-                    url: "#",
-                },
-                {
-                    title: "Quantum",
-                    url: "#",
-                },
-            ],
+          title: "Bag Colors",
+          url: "/admin/handbags/bag-colors",
         },
         {
-            title: "Documentation",
-            url: "#",
-            icon: BookOpen,
-            items: [
-                {
-                    title: "Introduction",
-                    url: "#",
-                },
-                {
-                    title: "Get Started",
-                    url: "#",
-                },
-                {
-                    title: "Tutorials",
-                    url: "#",
-                },
-                {
-                    title: "Changelog",
-                    url: "#",
-                },
-            ],
+          title: "Bag Processes",
+          url: "/admin/handbags/bag-processes",
         },
         {
-            title: "Settings",
-            url: "#",
-            icon: Settings2,
-            items: [
+          title: "Bag Groups",
+          url: "/admin/handbags/bag-groups",
+        },
+        {
+          title: "Bag Group Rates",
+          url: "/admin/handbags/bag-group-rates",
+        },
+            {
+              title: 'Túi xách & Nhóm',
+              url: '/admin/handbags/bag-group-rates/hand-bags',
+            },
+            {
+              title: 'Danh sách năng suất',
+              url: '/admin/handbags/bag-group-rates',
+            },
+        {
+          title: "Bag Group Rates Stats",
+          url: "/admin/handbags/bag-group-rates/stats",
+        },
+        {
+          title: "Bag Group Rates History",
+          url: "/admin/handbags/bag-group-rates/history",
+        },
+        {
+          title: "Bag Group Rates Details",
+          url: "/admin/handbags/bag-group-rates/details",
+        },
+        {
+          title: "Models",
+          url: "/admin/handbags/models",
+        },
+        {
+          title: "Materials",
+          url: "/admin/handbags/materials",
+        },
+      ],
+    },
+    {
+      title: "Factories",
+      url: "/admin/factories",
+      icon: Factory,
+      items: [
+        {
+          title: "Factory 1",
+          url: "/admin/factories/factory-1",
+          items: [
+            {
+              title: "Line 1",
+              url: "/admin/factories/factory-1/line-1",
+              items: [
                 {
-                    title: "General",
-                    url: "#",
+                  title: "Teams",
+                  url: "/admin/factories/factory-1/line-1/teams",
+                  items: [
+                    {
+                      title: "Group A",
+                      url: "/admin/factories/factory-1/line-1/teams/group-a",
+                    },
+                    {
+                      title: "Group B",
+                      url: "/admin/factories/factory-1/line-1/teams/group-b",
+                    },
+                  ],
                 },
+              ],
+            },
+            {
+              title: "Line 2",
+              url: "/admin/factories/factory-1/line-2",
+              items: [
                 {
-                    title: "Team",
-                    url: "#",
+                  title: "Teams",
+                  url: "/admin/factories/factory-1/line-2/teams",
+                  items: [
+                    {
+                      title: "Group A",
+                      url: "/admin/factories/factory-1/line-2/teams/group-a",
+                    },
+                    {
+                      title: "Group B",
+                      url: "/admin/factories/factory-1/line-2/teams/group-b",
+                    },
+                  ],
                 },
+              ],
+            },
+            {
+              title: "Line 3",
+              url: "/admin/factories/factory-1/line-3",
+              items: [
                 {
-                    title: "Billing",
-                    url: "#",
+                  title: "Teams",
+                  url: "/admin/factories/factory-1/line-3/teams",
                 },
+              ],
+            },
+            {
+              title: "Line 4",
+              url: "/admin/factories/factory-1/line-4",
+              items: [
                 {
-                    title: "Limits",
-                    url: "#",
+                  title: "Teams",
+                  url: "/admin/factories/factory-1/line-4/teams",
                 },
-            ],
-        },
-    ] as NavItem[],
-    
-    projects: [
-        {
-            name: "User",
-            url: "users",
-            icon: Users,
+              ],
+            },
+          ],
         },
         {
-            name: "Permissions",
-            url: "permissions",
-            icon: LockKeyhole,
+          title: "Factory 2",
+          url: "/admin/factories/factory-2",
+          items: [
+            {
+              title: "Line 1",
+              url: "/admin/factories/factory-2/line-1",
+              items: [
+                {
+                  title: "Teams",
+                  url: "/admin/factories/factory-2/line-1/teams",
+                },
+              ],
+            },
+            {
+              title: "Line 2",
+              url: "/admin/factories/factory-2/line-2",
+              items: [
+                {
+                  title: "Teams",
+                  url: "/admin/factories/factory-2/line-2/teams",
+                },
+              ],
+            },
+            {
+              title: "Line 3",
+              url: "/admin/factories/factory-2/line-3",
+              items: [
+                {
+                  title: "Teams",
+                  url: "/admin/factories/factory-2/line-3/teams",
+                },
+              ],
+            },
+            {
+              title: "Line 4",
+              url: "/admin/factories/factory-2/line-4",
+              items: [
+                {
+                  title: "Teams",
+                  url: "/admin/factories/factory-2/line-4/teams",
+                },
+              ],
+            },
+          ],
         },
         {
-            name: "Túi xách",
-            url: "handbags",
-            icon: Briefcase,
+          title: "Factory 3",
+          url: "/admin/factories/factory-3",
+          items: [
+            {
+              title: "Line 1",
+              url: "/admin/factories/factory-3/line-1",
+              items: [
+                {
+                  title: "Teams",
+                  url: "/admin/factories/factory-3/line-1/teams",
+                },
+              ],
+            },
+            {
+              title: "Line 2",
+              url: "/admin/factories/factory-3/line-2",
+              items: [
+                {
+                  title: "Teams",
+                  url: "/admin/factories/factory-3/line-2/teams",
+                },
+              ],
+            },
+            {
+              title: "Line 3",
+              url: "/admin/factories/factory-3/line-3",
+              items: [
+                {
+                  title: "Teams",
+                  url: "/admin/factories/factory-3/line-3/teams",
+                },
+              ],
+            },
+            {
+              title: "Line 4",
+              url: "/admin/factories/factory-3/line-4",
+              items: [
+                {
+                  title: "Teams",
+                  url: "/admin/factories/factory-3/line-4/teams",
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+    {
+      title: "Settings",
+      url: "/admin/settings",
+      icon: Settings,
+      items: [
+        {
+          title: "General",
+          url: "/admin/settings/general",
         },
         {
-            name: "Colors",
-            url: "handbags/bag-colors",
-            icon: PieChart,
+          title: "Permissions",
+          url: "/admin/settings/permissions",
         },
         {
-            name: "Stages",
-            url: "stages",
-            icon: Map,
+          title: "Profile",
+          url: "/admin/settings/profile",
         },
         {
-            name: "Process",
-            url: "bags-process",
-            icon: Command,
+          title: "Change Password",
+          url: "/admin/settings/change-password",
+        },
+        {
+          title: "System Config",
+          url: "/admin/settings/system-config",
+        },
+      ],
+    },
+  ] as NavItem[],
+  
+  projects: [
+    {
+      name: "Dashboard",
+      url: "/admin/dashboard",
+      icon: LayoutDashboard,
+    },
+    {
+      name: "Users",
+      url: "/admin/users",
+      icon: Users,
+      items: [
+        {
+          name: "All Users",
+          url: "/admin/users/all",
+          icon: Users
+        },
+        {
+          name: "User Roles",
+          url: "/admin/users/roles",
+          icon: UserCog
         }
-        // {
-        //     name: "Sales & Marketing",
-        //     url: "#",
-        //     icon: PieChart,
-        // },
-        // {
-        //     name: "Travel",
-        //     url: "#",
-        //     icon: Map,
-        // },
-    ] as Project[],
+      ]
+    },
+    {
+      name: "Handbags",
+      url: "/admin/handbags",
+      icon: Briefcase,
+      items: [
+        {
+          name: "All Handbags",
+          url: "/admin/handbags/all",
+          icon: Briefcase
+        },
+        {
+          name: "Colors",
+          url: "/admin/handbags/bag-colors",
+          icon: PieChart
+        },
+        {
+          name: "Processes",
+          url: "/admin/handbags/bag-processes",
+          icon: Command
+        }
+      ]
+    },
+    {
+      name: "Factories",
+      url: "/admin/factories",
+      icon: Factory,
+      items: [
+        {
+          name: "Factory 1",
+          url: "/admin/factories/factory-1",
+          icon: Building,
+          items: [
+            {
+              name: "Lines",
+              url: "/admin/factories/factory-1/lines",
+              icon: LineChart
+            },
+            {
+              name: "Teams",
+              url: "/admin/factories/factory-1/teams",
+              icon: Group
+            }
+          ]
+        },
+        {
+          name: "Factory 2",
+          url: "/admin/factories/factory-2",
+          icon: Building
+        },
+        {
+          name: "Factory 3",
+          url: "/admin/factories/factory-3",
+          icon: Building
+        }
+      ]
+    },
+    {
+      name: "Settings",
+      url: "/admin/settings",
+      icon: Settings,
+      items: [
+        {
+          name: "General",
+          url: "/admin/settings/general",
+          icon: Settings
+        },
+        {
+          name: "Permissions",
+          url: "/admin/settings/permissions",
+          icon: KeyRound
+        },
+        {
+          name: "Profile",
+          url: "/admin/settings/profile",
+          icon: UserCog
+        }
+      ]
+    }
+  ] as Project[],
 }
