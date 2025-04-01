@@ -74,14 +74,14 @@ const BagGroupRateCardsContent: React.FC<BagGroupRateCardsProps> = ({ handBags, 
                         <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => router.push(`/bag-group-rates/hand-bag/${handBag.id}`)}
+                            onClick={() => router.push(`/admin/handbags/bag-group-rates/hand-bags/${handBag.id}`)}
                         >
                             <Eye className="h-4 w-4 mr-1" /> Chi tiết
                         </Button>
                         <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => router.push(`/bag-group-rates/analysis/${handBag.id}`)}
+                            onClick={() => router.push(`/admin/handbags/bag-group-rates/analysis/${handBag.id}`)}
                         >
                             <BarChart className="h-4 w-4 mr-1" /> Phân tích
                         </Button>

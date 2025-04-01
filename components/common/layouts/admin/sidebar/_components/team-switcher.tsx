@@ -71,13 +71,21 @@ const getTeamIcon = (teamLabel: string) => {
 export function TeamSwitcher({ teams }: TeamSwitcherProps) {
     const [open, setOpen] = React.useState(false)
     const [showNewTeamDialog, setShowNewTeamDialog] = React.useState(false)
-    const [selectedTeam, setSelectedTeam] = React.useState(teams[0])
+
+    // Add a default empty array if teams is undefined and use optional chaining
+    const safeTeams = teams || []
+    const [selectedTeam, setSelectedTeam] = React.useState(safeTeams.length > 0 ? safeTeams[0] : { label: "Default Team", value: "default" })
 
     const { collapsed } = useSidebarState()
     const isMobileScreen = useMediaQuery("(max-width: 768px)")
 
     // Không áp dụng chế độ icon trên mobile
     const isIconMode = !isMobileScreen && collapsed
+
+    // Return early if no teams are provided
+    if (!teams || teams.length === 0) {
+        return null // Or you could render a placeholder message or empty state component
+    }
 
     return (
         <>

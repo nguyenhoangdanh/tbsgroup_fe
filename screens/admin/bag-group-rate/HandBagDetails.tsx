@@ -33,8 +33,6 @@ const HandBagDetailsContent: React.FC<HandBagDetailsProps> = ({ handBagId: propH
     // Use handBagId from props or from route params
     const handBagId = propHandBagId || (params?.handBagId as string);
 
-    const [loading, setLoading] = useState(true);
-
     // Sử dụng React Query trực tiếp để tận dụng caching
     const { data: details, isLoading, error } = useQuery({
         queryKey: ['handBag-details', handBagId],
@@ -43,7 +41,7 @@ const HandBagDetailsContent: React.FC<HandBagDetailsProps> = ({ handBagId: propH
         staleTime: 5 * 60 * 1000, // 5 phút
     });
 
-    if (loading) {
+    if (isLoading) {
         return (
             <div className="space-y-4">
                 <Skeleton className="h-10 w-full max-w-md" />
@@ -79,7 +77,7 @@ const HandBagDetailsContent: React.FC<HandBagDetailsProps> = ({ handBagId: propH
                 <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => router.push(`/bag-group-rates/analysis/${handBagId}`)}
+                    onClick={() => router.push(`/admin/handbags/bag-group-rates/analysis/${handBagId}`)}
                 >
                     <BarChart className="h-4 w-4 mr-2" /> Xem phân tích
                 </Button>

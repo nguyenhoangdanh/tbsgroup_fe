@@ -55,7 +55,7 @@ const HandBagsListContent: React.FC<HandBagsListProps> = ({ handBags: propHandBa
     }, [getAllHandBagsWithStats, propHandBags, propIsLoading]);
 
     const handleViewDetails = (handBagId: string) => {
-        router.push(`/admin/handbags/bag-group-rates/hand-bag/${handBagId}`);
+        router.push(`/admin/handbags/bag-group-rates/hand-bags/${handBagId}`);
     };
 
     const handleShowAnalysis = (handBagId: string) => {

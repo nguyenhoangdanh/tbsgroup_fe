@@ -17,7 +17,6 @@ import { useBagGroupRateQueries } from "./useBagGroupRateQueries";
 import { useHandBagQueries } from "@/hooks/handbag/useHandBagQueries";
 import { useBagGroupRateMutations } from "./useBagGroupRateMutations";
 import { toast } from "@/hooks/use-toast";
-import { fetchWithAuth } from "@/lib/fetcher";
 
 // Default values for context data
 const DEFAULT_STATS = {

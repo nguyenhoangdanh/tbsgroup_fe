@@ -49,11 +49,11 @@ const BagGroupRateContainer = () => {
         <BagGroupRateContextBridge>
             <div className="container mx-auto px-4 py-6">
                 <div className="flex flex-col space-y-4">
-                    <div className="w-full mb-4">
+                    {/* <div className="w-full mb-4">
                         <Suspense fallback={<div>Đang tải thống kê...</div>}>
                             <BagGroupRateStats />
                         </Suspense>
-                    </div>
+                    </div> */}
 
                     <Tabs
                         defaultValue="handBags"
