@@ -7,6 +7,10 @@ import type { NextRequest } from 'next/server';
  * Các trình duyệt hiện đại sẽ tự động gửi báo cáo đến endpoint này 
  * khi phát hiện vi phạm CSP nếu directive report-uri được thiết lập
  */
+
+// Cấu hình mới cho App Router
+export const dynamic = 'force-dynamic';
+export const runtime = 'edge';
 export async function POST(request: NextRequest) {
   try {
     // Parse JSON từ request body, sử dụng cấu trúc tiêu chuẩn của báo cáo CSP
@@ -46,10 +50,3 @@ export async function POST(request: NextRequest) {
     return new NextResponse(null, { status: 204 });
   }
 }
-
-// Không cần middleware xác thực cho endpoint này
-export const config = {
-  api: {
-    bodyParser: false, // Tắt bodyParser tự động để xử lý raw request
-  },
-};
