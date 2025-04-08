@@ -26,7 +26,7 @@ export interface Factory {
     userId: string;
     isPrimary: boolean;
     startDate: string;
-    endDate: string | null;
+    endDate?: string | null;
     user?: {
       id: string;
       fullName: string;

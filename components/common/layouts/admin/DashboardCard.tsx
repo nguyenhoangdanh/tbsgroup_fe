@@ -1,7 +1,7 @@
 "use client";
 
-import { type LucideIcon } from 'lucide-react';
-import React, { memo } from 'react';
+import { LucideProps, type LucideIcon } from 'lucide-react';
+import React, { memo, ReactElement } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -9,7 +9,7 @@ export interface DashboardCardProps {
     title: string;
     description: string;
     data: string | number;
-    icon: LucideIcon;
+    icon: LucideIcon | React.ForwardRefExoticComponent<Omit<LucideProps, "ref"> & React.RefAttributes<SVGSVGElement>> | ReactElement;
     bgcolor?: string;
     iconColor?: string;
     theme?: string;
@@ -22,7 +22,7 @@ export const DashboardCardComponent = memo<DashboardCardProps>(({
     title,
     description,
     data,
-    icon: Icon,
+    icon,
     iconColor,
     theme,
     bgcolor = "bg-gray-100",
@@ -60,7 +60,16 @@ export const DashboardCardComponent = memo<DashboardCardProps>(({
                 <div className="flex justify-between items-center">
                     <CardTitle className="text-sm font-medium truncate">{title}</CardTitle>
                     <div className={`w-9 h-9 rounded-full flex items-center justify-center ${bgColor} flex-shrink-0`}>
-                        <Icon size={18} className={`${isDark ? 'text-white' : 'text-gray-900'} ${iconColor}`} />
+                        {/* <Icon size={18} className={`${isDark ? 'text-white' : 'text-gray-900'} ${iconColor}`} /> */}
+                        {React.isValidElement(icon) ? (
+                            icon
+                        ) : (
+                            // For LucideIcon or ForwardRefExoticComponent
+                            React.createElement(icon as any, {
+                                size: 18,
+                                className: `${isDark ? 'text-white' : 'text-gray-900'} ${iconColor || ''}`
+                            })
+                        )}
                     </div>
                 </div>
                 <CardDescription className="text-xs truncate">{description}</CardDescription>

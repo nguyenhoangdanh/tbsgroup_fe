@@ -1,9 +1,9 @@
 "use client";
 import { useState, useEffect, ReactNode, useCallback, useRef } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
-import LazyLoader from "@/components/common/LazyLoader";
-import { TableSkeleton } from "./table/TableSkeleton";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { TableSkeleton } from "../table/TableSkeleton";
+import LazyLoader from "./LazyLoader";
 
 interface PageLoaderProps {
     children?: ReactNode;

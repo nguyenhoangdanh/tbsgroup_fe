@@ -17,6 +17,7 @@ import { useBagGroupRateQueries } from "./useBagGroupRateQueries";
 import { useHandBagQueries } from "@/hooks/handbag/useHandBagQueries";
 import { useBagGroupRateMutations } from "./useBagGroupRateMutations";
 import { toast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 
 // Default values for context data
 const DEFAULT_STATS = {
@@ -186,6 +187,7 @@ export const BagGroupRateProvider: React.FC<{ children: React.ReactNode }> = ({ 
     const syncingRef = useRef(false);
     const operationTypeCountsRef = useRef<Record<string, number>>({});
     const errorLoggedRef = useRef(false);
+    const queryClient = useQueryClient();
 
     // Reset state on mount and cleanup on unmount
     useEffect(() => {
@@ -362,7 +364,11 @@ export const BagGroupRateProvider: React.FC<{ children: React.ReactNode }> = ({ 
         // Debounce refetch to prevent multiple calls
         refetchTimeoutRef.current = setTimeout(() => {
             if (isMounted) {
-                refetchBagGroupRates().finally(() => {
+                refetchBagGroupRates({
+                    // Cấu hình để giảm thiểu việc truy vấn không cần thiết
+                    cancelRefetch: false,
+                    throwOnError: false
+                }).finally(() => {
                     if (isMounted) {
                         pendingRequestsRef.current.delete(requestId);
                         refetchTimeoutRef.current = null;
@@ -880,7 +886,182 @@ export const BagGroupRateProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }, []);
 
 
+    // const handleBatchUpdateBagGroupRates = useCallback(async (dto: BatchCreateBagGroupRateDTO): Promise<string[]> => {
+
+    //     console.log('Batch Update DTO:', dto);
+    //     console.log('Batch Update BagGroupRates:', bagGroupRates);
+
+    //     const comparePayload = dto.groupRates.map(record => {
+    //         const originalRecord = bagGroupRates.find(r =>
+    //             r.groupId === record.groupId
+    //         );
+    //         if (!originalRecord) return null;
+    //         return {
+    //             ...originalRecord,
+    //             outputRate: record.outputRate
+    //         };
+    //     });
+    //     console.log('Compare Payload:', comparePayload);
+
+    //     // Define changedRecords by comparing the incoming payload with existing records
+    //     const changedRecords = dto.groupRates.filter(record => {
+    //         const originalRecord = bagGroupRates.find(r =>
+    //             r.groupId === record.groupId &&
+    //             r.handBagId === dto.handBagId
+    //         );
+
+    //         // If record doesn't exist in current state or outputRate has changed
+    //         if (!originalRecord) return true;
+
+    //         // Check if the outputRate has changed
+    //         return record.outputRate !== originalRecord.outputRate;
+    //     });
+
+    //     // If no records changed, show toast and return early
+    //     if (changedRecords.length === 0) {
+    //         toast({
+    //             title: 'Không có thay đổi',
+    //             description: 'Không có bản ghi nào cần cập nhật',
+    //             duration: 2000,
+    //         });
+    //         return [];
+    //     }
+
+
+    //     console.log('Changed Records:', changedRecords);
+
+    //     const filteredDto: BatchCreateBagGroupRateDTO = {
+    //         handBagId: dto.handBagId,
+    //         groupRates: changedRecords
+    //     };
+
+    //     console.log('Update Payload:', {
+    //         originalPayload: dto,
+    //         filteredPayload: filteredDto
+    //     });
+    //     if (isSubmittingRef.current || !incrementOperationCount('batch_update')) {
+    //         throw new Error("Thao tác đang được xử lý, vui lòng đợi");
+    //     }
+
+    //     const requestId = `batch-update-${Date.now()}`;
+    //     try {
+    //         isSubmittingRef.current = true;
+    //         pendingRequestsRef.current.add(requestId);
+    //         setLoading(true);
+
+    //         const result = await batchCreateBagGroupRatesMutation.mutateAsync(filteredDto);
+
+    //         await invalidateBagGroupRatesCache(false);
+
+    //         // Get IDs from result
+    //         const updatedIds = result || [];
+
+    //         if (!updatedIds.length) {
+    //             console.error("API response missing IDs:", result);
+    //             throw new Error("Không thể cập nhật năng suất nhóm túi - Không có ID trả về từ API");
+    //         }
+
+    //         // Invalidate caches
+    //         await Promise.all(updatedIds.map(id => invalidateBagGroupRateCache(id)));
+    //         await invalidateBagGroupRatesCache(true);
+
+    //         toast({
+    //             title: 'Thành công',
+    //             description: `Đã cập nhật ${updatedIds.length} năng suất nhóm túi thành công`,
+    //             duration: 2000,
+    //         });
+
+    //         queryClient.setQueryData(['bag-group-rate-list'], (oldData: any) => {
+    //             if (!oldData) return oldData;
+
+    //             // Cập nhật dữ liệu cục bộ để tránh gọi API
+    //             const updatedData = {
+    //                 ...oldData,
+    //                 data: oldData.data.map(item =>
+    //                     changedRecords.some(changed => changed.groupId === item.groupId)
+    //                         ? { ...item, ...changedRecords.find(r => r.groupId === item.groupId) }
+    //                         : item
+    //                 )
+    //             };
+
+    //             return updatedData;
+    //         });
+
+    //         return updatedIds;
+    //     } catch (error) {
+    //         console.error("Error during batch update:", error);
+
+    //         // Show error toast
+    //         toast({
+    //             title: 'Lỗi',
+    //             description: error instanceof Error ? error.message : "Đã xảy ra lỗi khi cập nhật dữ liệu",
+    //             variant: 'destructive',
+    //             duration: 3000,
+    //         });
+
+    //         throw error;
+    //     } finally {
+    //         if (isMounted) {
+    //             isSubmittingRef.current = false;
+    //             pendingRequestsRef.current.delete(requestId);
+    //             setLoading(false);
+    //         }
+    //     }
+    // }, [
+    //     batchCreateBagGroupRatesMutation,
+    //     invalidateBagGroupRateCache,
+    //     invalidateBagGroupRatesCache,
+    //     safeRefetch,
+    //     isMounted,
+    //     incrementOperationCount
+    // ]);
+
+
+    // Updated handleBatchUpdateBagGroupRates function to handle both updates and removals
     const handleBatchUpdateBagGroupRates = useCallback(async (dto: BatchCreateBagGroupRateDTO): Promise<string[]> => {
+        console.log('Batch Update DTO:', dto);
+        console.log('Current BagGroupRates:', bagGroupRates);
+
+        // Find all existing records for the selected handBag
+        const existingRecords = bagGroupRates.filter(r => r.handBagId === dto.handBagId);
+        console.log('Existing Records for this HandBag:', existingRecords);
+
+        // Split operations into updates and removals
+
+        // 1. Find records to update (changed output rates)
+        const recordsToUpdate = dto.groupRates.filter(record => {
+            const originalRecord = existingRecords.find(r => r.groupId === record.groupId);
+
+            // If record exists and output rate has changed
+            return originalRecord && record.outputRate !== originalRecord.outputRate;
+        });
+
+        // 2. Find records to remove (exist in database but not in the submitted DTO)
+        const existingGroupIds = existingRecords.map(r => r.groupId);
+        const submittedGroupIds = dto.groupRates.map(r => r.groupId);
+
+        // IDs that exist in database but not in submission should be removed
+        const groupIdsToRemove = existingGroupIds.filter(id => !submittedGroupIds.includes(id));
+        const recordsToRemove = existingRecords.filter(r => groupIdsToRemove.includes(r.groupId));
+
+        console.log('Records to Update:', recordsToUpdate);
+        console.log('Records to Remove:', recordsToRemove);
+
+        // If no updates or removals, show message and return early
+        if (recordsToUpdate.length === 0 && recordsToRemove.length === 0) {
+            toast({
+                title: 'Không có thay đổi',
+                description: 'Không có bản ghi nào cần cập nhật',
+                duration: 2000,
+            });
+            return [];
+        }
+
+        // Handle operations
+        const updatedIds: string[] = [];
+        const removedIds: string[] = [];
+
+        // Set loading state and guards
         if (isSubmittingRef.current || !incrementOperationCount('batch_update')) {
             throw new Error("Thao tác đang được xử lý, vui lòng đợi");
         }
@@ -891,64 +1072,106 @@ export const BagGroupRateProvider: React.FC<{ children: React.ReactNode }> = ({ 
             pendingRequestsRef.current.add(requestId);
             setLoading(true);
 
-            // Sử dụng cùng API endpoint như tạo hàng loạt vì endpoint này
-            // có thể vừa tạo mới vừa cập nhật (upsert)
-            const result = await batchCreateBagGroupRatesMutation.mutateAsync(dto);
+            // 1. Perform updates if needed
+            if (recordsToUpdate.length > 0) {
+                const updateDto: BatchCreateBagGroupRateDTO = {
+                    handBagId: dto.handBagId,
+                    groupRates: recordsToUpdate
+                };
+                const result = await batchCreateBagGroupRatesMutation.mutateAsync(updateDto);
+                updatedIds.push(...(result || []));
+            }
 
-            // Get IDs from result
-            const updatedIds = result || [];
+            // 2. Perform removals if needed
+            if (recordsToRemove.length > 0) {
+                // Delete each record in parallel
+                const removedResults = await Promise.all(
+                    recordsToRemove.map(record =>
+                        deleteBagGroupRateMutation.mutateAsync(record.id)
+                            .then(() => record.id)
+                            .catch(error => {
+                                console.error(`Error deleting record ${record.id}:`, error);
+                                return null;
+                            })
+                    )
+                );
 
-            if (!updatedIds.length) {
-                console.error("API response missing IDs:", result);
-                throw new Error("Không thể cập nhật năng suất nhóm túi - Không có ID trả về từ API");
+                // Filter out any null results (failed deletions)
+                removedIds.push(...removedResults.filter(id => id !== null));
             }
 
             // Invalidate caches
-            await Promise.all(updatedIds.map(id => invalidateBagGroupRateCache(id)));
             await invalidateBagGroupRatesCache(true);
 
-            // Show success toast
+            // Show success toast with appropriate message
+            let toastMessage = '';
+            if (updatedIds.length > 0 && removedIds.length > 0) {
+                toastMessage = `Đã cập nhật ${updatedIds.length} và xóa ${removedIds.length} năng suất nhóm túi`;
+            } else if (updatedIds.length > 0) {
+                toastMessage = `Đã cập nhật ${updatedIds.length} năng suất nhóm túi`;
+            } else {
+                toastMessage = `Đã xóa ${removedIds.length} năng suất nhóm túi`;
+            }
+
             toast({
                 title: 'Thành công',
-                description: `Đã cập nhật ${updatedIds.length} năng suất nhóm túi thành công`,
+                description: toastMessage,
                 duration: 2000,
             });
 
-            // Schedule a refetch
-            setTimeout(() => {
-                if (isMounted) {
-                    safeRefetch();
-                }
-            }, 300);
+            // Optimistic UI update to avoid unnecessary API call
+            queryClient.setQueryData(['bag-group-rate-list'], (oldData: any) => {
+                if (!oldData) return oldData;
 
-            return updatedIds;
+                // Update data locally
+                let updatedData = {
+                    ...oldData,
+                    data: oldData.data
+                        // Remove deleted records
+                        .filter(item => !removedIds.includes(item.id))
+                        // Update changed records
+                        .map(item => {
+                            const updatedRecord = recordsToUpdate.find(r => r.groupId === item.groupId);
+                            return updatedRecord ? { ...item, outputRate: updatedRecord.outputRate } : item;
+                        })
+                };
+
+                return updatedData;
+            });
+
+            // Return all affected IDs
+            return [...updatedIds, ...removedIds];
         } catch (error) {
             console.error("Error during batch update:", error);
-
-            // Show error toast
             toast({
                 title: 'Lỗi',
                 description: error instanceof Error ? error.message : "Đã xảy ra lỗi khi cập nhật dữ liệu",
                 variant: 'destructive',
                 duration: 3000,
             });
-
             throw error;
         } finally {
             if (isMounted) {
                 isSubmittingRef.current = false;
                 pendingRequestsRef.current.delete(requestId);
                 setLoading(false);
+
+                // Refresh the data if needed
+                safeRefetch();
             }
         }
     }, [
+        bagGroupRates,
         batchCreateBagGroupRatesMutation,
+        deleteBagGroupRateMutation,
         invalidateBagGroupRateCache,
         invalidateBagGroupRatesCache,
+        queryClient,
         safeRefetch,
         isMounted,
         incrementOperationCount
     ]);
+
 
     // Thêm cài đặt cho handleBatchDeleteBagGroupRates
     const handleBatchDeleteBagGroupRates = useCallback(async (ids: string[]): Promise<void> => {

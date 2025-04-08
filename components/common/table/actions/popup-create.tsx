@@ -4,6 +4,7 @@ import { Plus } from "lucide-react";
 import React from "react";
 import { toast } from "@/hooks/use-toast";
 import { DialogType, useDialog, DialogChildrenProps } from "@/context/DialogProvider";
+import { on } from "events";
 
 interface CreateActionDialogProps<T = any> {
   name: string;
@@ -17,6 +18,7 @@ interface CreateActionDialogProps<T = any> {
   fullWidth?: boolean;
   disableButton?: boolean;
   onClose?: () => void;
+  onClick?: () => void;
 }
 
 export function CreateActionDialog<T = any>({
@@ -31,6 +33,7 @@ export function CreateActionDialog<T = any>({
   fullWidth = false,
   disableButton = false,
   onClose,
+  onClick
 }: CreateActionDialogProps<T>) {
   const { showDialog, hideDialog } = useDialog<T>();
 
@@ -94,7 +97,9 @@ export function CreateActionDialog<T = any>({
       size={buttonSize}
       className={`flex items-center gap-1 bg-green-800 text-white hover:bg-green-700 ${fullWidth ? 'w-full' : 'sm:w-auto'}`}
       disabled={disableButton}
-      onClick={handleOpenDialog}
+      onClick={() => {
+        onClick ? onClick() : handleOpenDialog();
+      }}
     >
       {buttonIcon}
       {buttonText}

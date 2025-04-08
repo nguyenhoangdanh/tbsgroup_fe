@@ -11,6 +11,7 @@ import { AuthSecurityProvider } from "@/context/AuthProvider";
 import ActivityMonitor from "@/components/security/ActivityMonitor";
 import Script from "next/script";
 import SecurityBanner from "@/components/security/SecurityBanner";
+import { LoadingProvider } from "@/components/common/Loading/UnifieldLoadingSystem";
 
 const dm_sans = DM_Sans({ subsets: ["latin"] });
 export const metadata: Metadata = {
@@ -150,7 +151,9 @@ export default function RootLayout({
                 <RootLayoutWrapper>
                   {/* <SecurityBanner /> */}
                   <Toaster />
-                  {children}
+                  <LoadingProvider>
+                    {children}
+                  </LoadingProvider>
                 </RootLayoutWrapper>
               </AuthSecurityProvider>
             </QueryProvider>

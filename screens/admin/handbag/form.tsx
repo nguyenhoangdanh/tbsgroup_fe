@@ -116,7 +116,7 @@ const HandBagForm: React.FC<HandBagFormProps> = memo(({
                     control={form.control}
                     name="category"
                     label="Danh mục"
-                    placeholder="Nhập danh mục túi xách"
+                    placeholder="Nhập danh mục túi xách (nếu có)"
                     disabled={isSubmitting || isReadOnly}
                 />
 

@@ -13,7 +13,8 @@ import {
     Pencil,
     ArrowLeft,
     Plus,
-    Trash2
+    Trash2,
+    Workflow
 } from 'lucide-react';
 import { FactoryWithDetails, FactoryManager } from '@/common/interface/factory';
 import { Badge } from '@/components/ui/badge';
@@ -74,6 +75,11 @@ export const FactoryDetails: React.FC<FactoryDetailsProps> = ({ factoryId }) => 
             }
         });
     }, [factoryDetails, showDialog, invalidateFactoryDetailsCache, factoryId, refetch]);
+
+    const handleNavigateToLines = useCallback(() => {
+        router.push(`/admin/factories/${factoryId}/lines`);
+    }, [router, factoryId]);
+
 
     // Handle add manager with optimized cache updates
     const handleAddManager = useCallback(() => {
@@ -234,6 +240,10 @@ export const FactoryDetails: React.FC<FactoryDetailsProps> = ({ factoryId }) => 
                         <Users className="mr-2 h-4 w-4" />
                         Quản lý ({factoryDetails.managers?.length || 0})
                     </TabsTrigger>
+                    <TabsTrigger value="lines">
+                        <Workflow className="mr-2 h-4 w-4" />
+                        Dây chuyền
+                    </TabsTrigger>
                 </TabsList>
 
                 {/* General information tab */}
@@ -309,17 +319,18 @@ export const FactoryDetails: React.FC<FactoryDetailsProps> = ({ factoryId }) => 
                 {/* Managers tab */}
                 <TabsContent value="managers" className="space-y-4">
                     <FactoryManagersTable
-                        factoryId={factoryDetails.id}
+                        factoryId={factoryDetails.id || ''}
                         managers={factoryDetails.managers || []}
                         users={users || []}
-                        onAddManager={() => {
-                            // Implement add manager logic
-                        }}
-                        onEditManager={(manager) => {
-                            // Implement edit manager logic
-                        }}
+                        onAddManager={handleAddManager}
+                        onEditManager={handleUpdateManager}
                         onDeleteManager={(userId) => {
-                            // Implement delete manager logic
+                            // Find the user name from the managers array
+                            const manager = factoryDetails.managers?.find(m => m.userId === userId);
+                            const userName = manager?.user?.fullName || userId;
+
+                            // Now call handleConfirmRemoveManager with both parameters
+                            handleConfirmRemoveManager(userId, userName);
                         }}
                     />
                     {/* <Card>
@@ -394,6 +405,29 @@ export const FactoryDetails: React.FC<FactoryDetailsProps> = ({ factoryId }) => 
                             )}
                         </CardContent>
                     </Card> */}
+                </TabsContent>
+
+                {/* Lines tab */}
+                <TabsContent value="lines" className="space-y-4">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Quản lý dây chuyền</CardTitle>
+                            <CardDescription>Dây chuyền sản xuất của nhà máy {factoryDetails.name}</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="flex flex-col items-center justify-center p-6 text-center">
+                                <Workflow className="h-12 w-12 text-primary mb-4" />
+                                <h3 className="text-lg font-medium mb-2">Quản lý dây chuyền sản xuất</h3>
+                                <p className="text-muted-foreground mb-4">
+                                    Quản lý các dây chuyền sản xuất và thiết lập kế hoạch sản xuất
+                                </p>
+                                <Button onClick={handleNavigateToLines}>
+                                    <Workflow className="mr-2 h-4 w-4" />
+                                    Đi đến quản lý dây chuyền
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
                 </TabsContent>
             </Tabs>
         </div>

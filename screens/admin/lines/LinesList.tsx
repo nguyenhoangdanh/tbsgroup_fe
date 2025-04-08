@@ -8,7 +8,8 @@ import {
     Activity,
     Settings,
     Workflow,
-    Building
+    Building,
+    Trash2
 } from 'lucide-react';
 import {
     DropdownMenu,
@@ -17,35 +18,132 @@ import {
     DropdownMenuLabel,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Line } from '@/common/interface/line';
-import { useFactoryQueries } from '@/hooks/factory/useFactoryQueries';
+import { Line, LineWithDetails } from '@/common/interface/line';
+
+// LineItem component to handle individual line rendering
+const LineItem = React.memo(({
+    line,
+    factoryName,
+    onSelect,
+    onEdit,
+    onDelete
+}: {
+    line: Line & { capacityPercentage: number };
+    factoryName?: string;
+    onSelect: (lineId: string) => void;
+    onEdit?: (line: LineWithDetails) => void;
+    onDelete?: (lineId: string) => void;
+}) => {
+    return (
+        <Card
+            key={line.id}
+            className="hover:shadow-md transition-shadow cursor-pointer group"
+            onClick={() => onSelect(line.id)}
+        >
+            <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                        <div className="flex-shrink-0">
+                            <Activity className="h-8 w-8 text-muted-foreground" />
+                        </div>
+                        <div>
+                            <div className="flex items-center space-x-2">
+                                <h3 className="text-lg font-medium">{line.name}</h3>
+                                <Badge variant="outline">{line.code}</Badge>
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                                {line.description || 'Không có mô tả'}
+                            </p>
+                        </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        {(onEdit || onDelete) && (
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                                    <Button variant="ghost" size="icon">
+                                        <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                                    <DropdownMenuLabel>Tùy chọn</DropdownMenuLabel>
+                                    {onEdit && (
+                                        <DropdownMenuItem onClick={() => onEdit(line)}>
+                                            <Settings className="mr-2 h-4 w-4" /> Chỉnh sửa
+                                        </DropdownMenuItem>
+                                    )}
+                                    {onDelete && (
+                                        <DropdownMenuItem
+                                            onClick={() => onDelete(line.id)}
+                                            className="text-destructive"
+                                        >
+                                            <Trash2 className="mr-2 h-4 w-4" /> Xóa
+                                        </DropdownMenuItem>
+                                    )}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        )}
+                    </div>
+                </div>
+                <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                        <span className="text-muted-foreground">Công suất:</span>
+                        <p>{line.capacity ? `${line.capacity} sản phẩm/ngày` : 'Chưa cập nhật'}</p>
+                    </div>
+                    <div>
+                        <span className="text-muted-foreground">Ngày tạo:</span>
+                        <p>{line.createdAt ? new Date(line.createdAt).toLocaleDateString('vi-VN') : 'N/A'}</p>
+                    </div>
+                </div>
+
+                {/* Factory and Line Details Section */}
+                <div className="mt-4 flex items-center justify-between border-t pt-3">
+                    <div className="flex items-center space-x-2">
+                        <Building className="h-5 w-5 text-muted-foreground" />
+                        <span className="text-sm">
+                            {factoryName || 'Nhà máy chưa xác định'}
+                        </span>
+                    </div>
+
+                    {/* Capacity Visualization */}
+                    <div className="flex items-center space-x-2">
+                        <Workflow className="h-5 w-5 text-muted-foreground" />
+                        <div className="w-24 bg-muted rounded-full h-2.5">
+                            <div
+                                className="bg-primary rounded-full h-2.5"
+                                style={{
+                                    width: `${line.capacityPercentage}%`,
+                                    transition: 'width 0.5s ease-in-out'
+                                }}
+                            ></div>
+                        </div>
+                        <span className="text-xs text-muted-foreground">
+                            {line.capacityPercentage}%
+                        </span>
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+    );
+});
+
+LineItem.displayName = 'LineItem';
 
 interface LinesListProps {
     lines: Line[];
     factoryId: string;
+    factoryName?: string;
     onLineSelect: (lineId: string) => void;
+    onEditLine?: (line: Line) => void;
+    onDeleteLine?: (lineId: string) => void;
 }
 
-const LinesList: React.FC<LinesListProps> = ({ lines, onLineSelect, factoryId }) => {
-    // Fetch factory details
-    const { getFactoryWithDetails } = useFactoryQueries();
-    const { data: factory } = getFactoryWithDetails(factoryId, {
-        includeManagers: false
-    });
-    // Function to render line status badge
-    const renderStatusBadge = (status: string) => {
-        switch (status) {
-            case 'ACTIVE':
-                return <Badge variant="secondary">Hoạt động</Badge>;
-            case 'INACTIVE':
-                return <Badge variant="outline">Tạm dừng</Badge>;
-            case 'MAINTENANCE':
-                return <Badge variant="destructive">Bảo trì</Badge>;
-            default:
-                return <Badge>Không xác định</Badge>;
-        }
-    };
-
+const LinesList: React.FC<LinesListProps> = ({
+    lines,
+    factoryName,
+    onLineSelect,
+    onEditLine,
+    onDeleteLine
+}) => {
     // Memoized lines processing for better performance
     const processedLines = useMemo(() => {
         return lines.map(line => ({
@@ -71,91 +169,18 @@ const LinesList: React.FC<LinesListProps> = ({ lines, onLineSelect, factoryId })
             </Card>
         );
     }
+
     return (
         <div className="space-y-4">
             {processedLines.map((line) => (
-                <Card
+                <LineItem
                     key={line.id}
-                    className="hover:shadow-md transition-shadow cursor-pointer group"
-                    onClick={() => onLineSelect(line.id)}
-                >
-                    <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-4">
-                                <div className="flex-shrink-0">
-                                    <Activity className="h-8 w-8 text-muted-foreground" />
-                                </div>
-                                <div>
-                                    <div className="flex items-center space-x-2">
-                                        <h3 className="text-lg font-medium">{line.name}</h3>
-                                        <Badge variant="outline">{line.code}</Badge>
-                                    </div>
-                                    <p className="text-sm text-muted-foreground">
-                                        {line.description || 'Không có mô tả'}
-                                    </p>
-                                </div>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                                {renderStatusBadge(line.status || 'ACTIVE')}
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="icon">
-                                            <MoreHorizontal className="h-4 w-4" />
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                        <DropdownMenuLabel>Tùy chọn</DropdownMenuLabel>
-                                        <DropdownMenuItem
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                // Implement edit functionality
-                                            }}
-                                        >
-                                            <Settings className="mr-2 h-4 w-4" /> Chỉnh sửa
-                                        </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                            </div>
-                        </div>
-                        <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
-                            <div>
-                                <span className="text-muted-foreground">Công suất:</span>
-                                <p>{line.capacity ? `${line.capacity} sản phẩm/ngày` : 'Chưa cập nhật'}</p>
-                            </div>
-                            <div>
-                                <span className="text-muted-foreground">Ngày tạo:</span>
-                                <p>{line.createdAt ? new Date(line.createdAt).toLocaleDateString('vi-VN') : 'N/A'}</p>
-                            </div>
-                        </div>
-
-                        {/* Factory and Line Details Section */}
-                        <div className="mt-4 flex items-center justify-between border-t pt-3">
-                            <div className="flex items-center space-x-2">
-                                <Building className="h-5 w-5 text-muted-foreground" />
-                                <span className="text-sm">
-                                    {factory?.name || 'Nhà máy chưa xác định'}
-                                </span>
-                            </div>
-
-                            {/* Capacity Visualization */}
-                            <div className="flex items-center space-x-2">
-                                <Workflow className="h-5 w-5 text-muted-foreground" />
-                                <div className="w-24 bg-muted rounded-full h-2.5">
-                                    <div
-                                        className="bg-primary rounded-full h-2.5"
-                                        style={{
-                                            width: `${line.capacityPercentage}%`,
-                                            transition: 'width 0.5s ease-in-out'
-                                        }}
-                                    ></div>
-                                </div>
-                                <span className="text-xs text-muted-foreground">
-                                    {line.capacityPercentage}%
-                                </span>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
+                    line={line}
+                    factoryName={factoryName}
+                    onSelect={onLineSelect}
+                    onEdit={onEditLine}
+                    onDelete={onDeleteLine}
+                />
             ))}
         </div>
     );

@@ -15,6 +15,7 @@ import { useHandBagHelpers } from "./useHandBagHelpers";
 import { useHandBagQueries } from "./useHandBagQueries";
 import { toast } from "../use-toast";
 import { batchDeleteHandBagsParallel, getHandBagById as getHandBagByIdApi } from "@/apis/handbag/handbag.api";
+import { useDataLoading } from "@/components/common/Loading/useLoading";
 
 interface HandBagContextType {
     listHandBags: (
@@ -24,7 +25,6 @@ interface HandBagContextType {
     deleteHandBagMutation: ReturnType<typeof useHandBagMutations>['deleteHandBagMutation'];
     setSelectedHandBag: (handbag: HandBag | null) => void;
     selectedHandBag: HandBag | null;
-    loading: boolean;
     activeFilters: HandBagCondDTO & BasePaginationParams;
     handleCreateHandBag: (data: Omit<HandBagCreateDTO, 'id'>) => Promise<HandBag>;
     handleUpdateHandBag: (id: string, data: Omit<HandBagUpdateDTO, 'id'>) => Promise<HandBag>;
@@ -41,7 +41,10 @@ export const HandBagProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     // State management with stable initializers
     const [selectedHandBag, setSelectedHandBag] = useState<HandBag | null>(null);
-    const [loading, setLoading] = useState(false);
+    const { startLoading, stopLoading, isLoading } = useDataLoading('handbag-data', {
+        variant: 'table',
+        message: 'Đang tải dữ liệu túi xách...'
+    });
 
     // Important refs to prevent update loops
     const isUpdatingPaginationRef = useRef(false);
@@ -189,7 +192,7 @@ export const HandBagProvider: React.FC<{ children: React.ReactNode }> = ({ child
         }
 
         pendingOperationsRef.current.add(requestId);
-        setLoading(true);
+        startLoading();
 
         try {
             // Perform mutation
@@ -258,7 +261,7 @@ export const HandBagProvider: React.FC<{ children: React.ReactNode }> = ({ child
             // Clean up
             if (isMountedRef.current) {
                 pendingOperationsRef.current.delete(requestId);
-                setLoading(false);
+                stopLoading();
             }
         }
     }, [createHandBagMutation, onHandBagMutationSuccess, fetchLatestHandBag, incrementOperationCount]);
@@ -279,7 +282,7 @@ export const HandBagProvider: React.FC<{ children: React.ReactNode }> = ({ child
         }
 
         pendingOperationsRef.current.add(requestId);
-        setLoading(true);
+        startLoading();
 
         try {
             // Perform mutation
@@ -319,7 +322,7 @@ export const HandBagProvider: React.FC<{ children: React.ReactNode }> = ({ child
             // Clean up
             if (isMountedRef.current) {
                 pendingOperationsRef.current.delete(requestId);
-                setLoading(false);
+                stopLoading();
             }
         }
     }, [updateHandBagMutation, onHandBagMutationSuccess, fetchLatestHandBag, incrementOperationCount]);
@@ -386,7 +389,7 @@ export const HandBagProvider: React.FC<{ children: React.ReactNode }> = ({ child
             throw new Error("Too many delete operations, try again later");
         }
 
-        setLoading(true);
+        startLoading();
         try {
             // Direct batch delete API call
             await batchDeleteHandBagsParallel(ids);
@@ -417,7 +420,8 @@ export const HandBagProvider: React.FC<{ children: React.ReactNode }> = ({ child
             throw error;
         } finally {
             if (isMountedRef.current) {
-                setLoading(false);
+                pendingOperationsRef.current.delete(`batch-delete-${ids.join(',')}`);
+                stopLoading();
             }
         }
     }, [invalidateItemCache, invalidateListCache, incrementOperationCount]);
@@ -428,7 +432,6 @@ export const HandBagProvider: React.FC<{ children: React.ReactNode }> = ({ child
         deleteHandBagMutation,
         setSelectedHandBag,
         selectedHandBag,
-        loading,
         activeFilters,
         handleCreateHandBag,
         handleUpdateHandBag,
@@ -440,7 +443,6 @@ export const HandBagProvider: React.FC<{ children: React.ReactNode }> = ({ child
         deleteHandBagMutation,
         setSelectedHandBag,
         selectedHandBag,
-        loading,
         activeFilters,
         handleCreateHandBag,
         handleUpdateHandBag,

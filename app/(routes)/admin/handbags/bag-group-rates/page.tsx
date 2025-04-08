@@ -1,6 +1,7 @@
 "use client";
 
 import { BagGroupRateProvider } from '@/hooks/group/bag-group-rate/BagGroupRateContext';
+import { HandBagProvider } from '@/hooks/handbag/HandBagContext';
 import dynamic from 'next/dynamic';
 import React from 'react';
 
@@ -16,8 +17,10 @@ const DynamicBagGroupRateContainer = dynamic(
  */
 export default function BagGroupRatePage() {
     return (
-        <BagGroupRateProvider>
-            <DynamicBagGroupRateContainer />
-        </BagGroupRateProvider>
+        <HandBagProvider>
+            <BagGroupRateProvider>
+                <DynamicBagGroupRateContainer />
+            </BagGroupRateProvider>
+        </HandBagProvider>
     );
 }

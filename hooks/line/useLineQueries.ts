@@ -65,19 +65,22 @@ export const useLineQueries = () => {
         if (!lineId) throw new Error('Line ID is required');
         
         try {
-          return await getLineManagers(lineId);
+          const managers = await getLineManagers(lineId);
+          
+          // Transform string dates to Date objects
+          return managers.map(manager => ({
+            ...manager,
+            startDate: new Date(manager.startDate),
+            endDate: manager.endDate ? new Date(manager.endDate) : null
+          }));
         } catch (error) {
           handleQueryError(error, 'quản lý dây chuyền');
           throw error instanceof Error ? error : new Error('Unknown error');
         }
       },
       enabled: !!lineId && options?.enabled !== false,
-      
-      // Optimized caching strategy
-      staleTime: options?.staleTime || 5 * 60 * 1000, // 5 minutes
-      gcTime: 30 * 60 * 1000, // 30 minutes
-      
-      // Reduce unnecessary fetches
+      staleTime: options?.staleTime || 5 * 60 * 1000,
+      gcTime: 30 * 60 * 1000,
       refetchOnWindowFocus: options?.refetchOnWindowFocus ?? false,
       refetchOnReconnect: false,
       refetchOnMount: true,
@@ -88,37 +91,55 @@ export const useLineQueries = () => {
    * Get lines by factory ID with optimized caching
    */
   const getLinesByFactoryId = (
-    factoryId?: string, 
-    options?: { 
-      enabled?: boolean,
-      staleTime?: number,
-      refetchOnWindowFocus?: boolean
-    }
-  ): UseQueryResult<Line[], Error> => {
-    return useQuery<Line[], Error>({
-      queryKey: ['factory', factoryId, 'lines'],
-      queryFn: async () => {
-        if (!factoryId) throw new Error('Factory ID is required');
-        
-        try {
-          return await getLinesByFactory(factoryId);
-        } catch (error) {
-          handleQueryError(error, 'dây chuyền của nhà máy');
-          throw error instanceof Error ? error : new Error('Unknown error');
+  factoryId?: string, 
+  options?: { 
+    enabled?: boolean,
+    staleTime?: number,
+    refetchOnWindowFocus?: boolean,
+    retry?: number | boolean,
+    suspense?: boolean,
+    placeholderData?: Line[] | (() => Line[])
+  }
+): UseQueryResult<Line[], Error> => {
+  return useQuery<Line[], Error>({
+    queryKey: ['factory', factoryId, 'lines'],
+    queryFn: async ({ signal }) => {
+      if (!factoryId) throw new Error('Factory ID is required');
+      
+      try {
+        return await getLinesByFactory(factoryId);
+      } catch (error) {
+        if (error && error?.response?.status === 404) {
+          throw new Error(`Không tìm thấy nhà máy với ID: ${factoryId}`);
         }
-      },
-      enabled: !!factoryId && options?.enabled !== false,
-      
-      // Optimized caching strategy
-      staleTime: options?.staleTime || 5 * 60 * 1000, // 5 minutes
-      gcTime: 30 * 60 * 1000, // 30 minutes
-      
-      // Reduce unnecessary fetches
-      refetchOnWindowFocus: options?.refetchOnWindowFocus ?? false,
-      refetchOnReconnect: false,
-      refetchOnMount: true,
-    });
-  };
+        handleQueryError(error, 'dây chuyền của nhà máy');
+        throw error instanceof Error ? error : new Error('Unknown error');
+      }
+    },
+    enabled: !!factoryId && options?.enabled !== false,
+    
+    // Optimized caching strategy
+    staleTime: options?.staleTime || 5 * 60 * 1000, // 5 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
+    
+    // Performance optimizations
+    refetchOnWindowFocus: options?.refetchOnWindowFocus ?? false,
+    refetchOnReconnect: false,
+    refetchOnMount: true,
+    
+    // Better error handling with retry logic
+    retry: options?.retry ?? 1,
+    
+    // Enable placeholder data for faster UI rendering
+    placeholderData: options?.placeholderData,
+    
+    // Enable structural sharing to minimize re-renders
+    structuralSharing: true,
+    
+    // Better network handling
+    networkMode: 'always',
+  });
+};
 
   /**
    * Get accessible lines with optimizations
@@ -197,12 +218,19 @@ export const useLineQueries = () => {
           const linePromise = getLineById(lineId);
           
           // If managers requested, fetch them in parallel
-          const managersPromise = includeManagers 
-            ? getLineManagers(lineId).catch(error => {
-                console.error('Error fetching line managers:', error);
-                return [];
-              })
-            : Promise.resolve([]);
+         // Inside the getLineWithDetails function queryFn
+const managersPromise = includeManagers 
+? getLineManagers(lineId)
+    .then(managers => managers.map(manager => ({
+      ...manager,
+      startDate: new Date(manager.startDate),
+      endDate: manager.endDate ? new Date(manager.endDate) : null
+    })))
+    .catch(error => {
+      console.error('Error fetching line managers:', error);
+      return [];
+    })
+: Promise.resolve([]);
           
           // Wait for parallel requests to complete
           const [lineData, managersData] = await Promise.all([
@@ -314,12 +342,19 @@ export const useLineQueries = () => {
                 queryKey: detailsQueryKey,
                 queryFn: async () => {
                     // Fetch in parallel for better performance
-                    const [lineData, managersData] = await Promise.all([
-                        getLineById(lineId),
-                        includeManagers 
-                          ? getLineManagers(lineId).catch(() => []) 
-                          : Promise.resolve([])
-                    ]);
+                    // Inside the prefetchLineDetails function queryFn
+const [lineData, managersData] = await Promise.all([
+  getLineById(lineId),
+  includeManagers 
+    ? getLineManagers(lineId)
+        .then(managers => managers.map(manager => ({
+          ...manager,
+          startDate: new Date(manager.startDate),
+          endDate: manager.endDate ? new Date(manager.endDate) : null
+        })))
+        .catch(() => []) 
+    : Promise.resolve([])
+]);
                     
                     const result: Partial<LineWithDetails> = {
                         ...lineData,
@@ -489,6 +524,33 @@ export const useLineQueries = () => {
     [prefetchLineDetails]
   );
 
+  // Add this to your useLineQueries hook
+const prefetchLinesByFactory = useCallback(
+  async (factoryId: string, options?: { staleTime?: number }) => {
+    if (!factoryId) return;
+    
+    // Check if we already have fresh data
+    const queryKey = ['factory', factoryId, 'lines'];
+    const cachedState = queryClient.getQueryState(queryKey);
+    const staleTime = options?.staleTime || 5 * 60 * 1000;
+    
+    if (cachedState?.data && 
+        cachedState.dataUpdatedAt > Date.now() - staleTime) {
+      // Data is fresh, no need to prefetch
+      return;
+    }
+    
+    // Prefetch lines for this factory
+    await queryClient.prefetchQuery({
+      queryKey,
+      queryFn: () => getLinesByFactory(factoryId),
+      staleTime
+    });
+  },
+  [queryClient]
+);
+
+
   return {
     // Base line queries
     ...lineQueries,
@@ -508,6 +570,7 @@ export const useLineQueries = () => {
     prefetchLineManagers,
     prefetchLineList,
     updateLineCache,
-    batchPrefetchLines
+    batchPrefetchLines,
+    prefetchLinesByFactory,
   };
 };

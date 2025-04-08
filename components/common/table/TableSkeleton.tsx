@@ -10,6 +10,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
+import useMediaQuery from "@/hooks/useMediaQuery";
 
 interface TableSkeletonProps {
     columns: number;
@@ -26,6 +27,24 @@ export function TableSkeleton({ columns = 5, rows = 10, darkMode = false }: Tabl
         const index = (rowIndex + colIndex) % options.length;
         return options[index];
     };
+    const isMobile = useMediaQuery("(max-width: 640px)");
+    const isTablet = useMediaQuery("(min-width: 641px) and (max-width: 1024px)")
+
+    // Điều chỉnh thông số dựa vào kích thước màn hình
+    const adjustedColumns = React.useCallback(() => {
+        if (columns) return columns;
+        if (isMobile) return 3;
+        if (isTablet) return 4;
+        return 5;
+    }, [isMobile, isTablet, columns]);
+
+    const adjustedRows = React.useCallback(() => {
+        if (rows) return rows;
+        if (isMobile) return 4;
+        if (isTablet) return 5;
+        return 6;
+    }, [isMobile, isTablet, rows]);
+
 
     return (
         <div className="w-full animate-pulse">
@@ -43,7 +62,7 @@ export function TableSkeleton({ columns = 5, rows = 10, darkMode = false }: Tabl
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            {Array.from({ length: columns }).map((_, index) => (
+                            {Array.from({ length: adjustedColumns() }).map((_, index) => (
                                 <TableHead key={`header-${index}`}>
                                     <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
                                 </TableHead>
@@ -51,17 +70,17 @@ export function TableSkeleton({ columns = 5, rows = 10, darkMode = false }: Tabl
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {Array.from({ length: rows }).map((_, rowIndex) => (
-                            <TableRow key={`row-${rowIndex}`}>
-                                {Array.from({ length: columns }).map((_, colIndex) => (
-                                    <TableCell key={`cell-${rowIndex}-${colIndex}`} className="py-3">
-                                        <div
-                                            className={`h-5 bg-gray-200 dark:bg-gray-700 rounded ${getWidthClass(rowIndex, colIndex)}`}>
-                                        </div>
-                                    </TableCell>
-                                ))}
-                            </TableRow>
+                        {/* {Array.from({ length: adjustedRows() }).map((_, rowIndex) => (
+                            <TableRow key={`row-${rowIndex}`}> */}
+                        {Array.from({ length: adjustedColumns() }).map((_, colIndex) => (
+                            <TableCell key={`cell-${3}-${colIndex}`} className="py-3">
+                                <div
+                                    className={`h-5 bg-gray-200 dark:bg-gray-700 rounded ${getWidthClass(3, colIndex)}`}>
+                                </div>
+                            </TableCell>
                         ))}
+                        {/* </TableRow> */}
+                        {/* ))} */}
                     </TableBody>
                 </Table>
             </div>

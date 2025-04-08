@@ -1,7 +1,7 @@
 "use client";
 import React from 'react';
-import AuthImage from "./layouts/auth/AuthImage";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
+import AuthImage from '../layouts/auth/AuthImage';
 
 const LazyLoader = () => {
     const isMobile = useMediaQuery("(max-width: 640px)");

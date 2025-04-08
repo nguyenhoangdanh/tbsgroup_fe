@@ -40,7 +40,7 @@ const LoginForm = () => {
                     <FieldCheckbox
                         control={methods.control}
                         name="rememberMe"
-                        label="Ghi nho"
+                        label="Ghi nhớ"
                     />
                     <SubmitButton
                         disabled={isLoading}

@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { BagGroupRateContextBridge } from "./BagGroupRateContextBridge";
 import { useBagGroupRateContext } from "@/hooks/group/bag-group-rate/BagGroupRateContext";
 import { HandBagWithStats } from "@/apis/group/bagGroupRate/bag-group-rate.api";
+import { ColumnDef } from "@tanstack/react-table";
 
 interface HandBagsListProps {
     handBags?: HandBagWithStats[];
@@ -62,7 +63,7 @@ const HandBagsListContent: React.FC<HandBagsListProps> = ({ handBags: propHandBa
         router.push(`/admin/handbags/bag-group-rates/analysis/${handBagId}`);
     };
 
-    const columns = [
+    const columns: ColumnDef<HandBagWithStats>[] = [
         {
             accessorKey: "code",
             header: "Mã túi",
@@ -166,24 +167,17 @@ const HandBagsListContent: React.FC<HandBagsListProps> = ({ handBags: propHandBa
     }
 
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle>Danh sách túi và năng suất nhóm</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <DataTable
-                    columns={columns}
-                    data={handBags}
-                    title="Danh sách túi xách"
-                    description="Tổng hợp năng suất theo túi"
-                    actions={["create", "edit", "delete"]}
-                    searchColumn="code"
-                    searchPlaceholder="Tìm kiếm theo mã túi..."
-                    exportData={true}
-                    exportFormats={["excel"]}
-                />
-            </CardContent>
-        </Card>
+        <DataTable
+            columns={columns}
+            data={handBags}
+            title="Danh sách túi xách và năng suất nhóm"
+            description="Tổng hợp năng suất theo túi"
+            actions={["create"]}
+            searchColumn="code"
+            searchPlaceholder="Tìm kiếm theo mã túi..."
+            exportData={true}
+            exportFormats={["excel"]}
+        />
     );
 };
 

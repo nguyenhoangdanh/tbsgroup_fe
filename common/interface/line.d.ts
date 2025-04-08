@@ -7,7 +7,6 @@ export interface Line {
   description?: string | null;
   factoryId: string;
   capacity?: number;
-  status?: 'ACTIVE' | 'INACTIVE' | 'MAINTENANCE';
   createdAt: string | Date;
   updatedAt: string | Date;
 }
@@ -18,7 +17,6 @@ export interface LineCreateDTO {
   factoryId: string;
   description?: string | null;
   capacity?: number;
-  status?: 'ACTIVE' | 'INACTIVE' | 'MAINTENANCE';
 }
 
 export interface LineUpdateDTO {
@@ -28,7 +26,6 @@ export interface LineUpdateDTO {
   name: string;
   description?: string | null;
   capacity?: number;
-  status: 'ACTIVE' | 'INACTIVE' | 'MAINTENANCE';
 }
 
 export interface LineCondDTO {
@@ -48,8 +45,8 @@ export interface LineManagerDTO {
 export interface LineManager {
   userId: string;
   isPrimary: boolean;
-  startDate: Date;
-  endDate: Date | null;
+  startDate: Date | string;
+  endDate: Date | null | string;
   user?: {
     id: string;
     fullName: string;

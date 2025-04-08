@@ -30,12 +30,13 @@ export const FieldInput = <T extends FieldValues>({
     className,
     disabled = false,
     required = false,
-    min,
-    max,
-    step,
+    min = undefined,
+    max = undefined,
+    step = undefined,
 }: FieldInputProps<T>) => {
     const [showPassword, setShowPassword] = useState(false);
     const isPassword = type === "password";
+
     return (
         <Controller
             control={control}
@@ -55,7 +56,7 @@ export const FieldInput = <T extends FieldValues>({
                                 placeholder={placeholder}
                                 autoComplete={autoComplete}
                                 disabled={disabled}
-                                value={field.value ?? ""}
+                                value={(typeof field.value === "number" && field.value === 0) ? "" : field.value || ""}
                                 min={min}
                                 max={max}
                                 step={step}

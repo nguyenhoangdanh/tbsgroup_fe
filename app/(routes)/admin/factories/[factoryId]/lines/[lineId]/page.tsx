@@ -3,6 +3,7 @@
 import React from 'react';
 import { LineProvider } from '@/hooks/line/LineContext';
 import { LineDetails } from '@/screens/admin/lines/LineDetails';
+import { TeamProvider } from '@/hooks/teams/TeamContext';
 
 interface LineDetailsPageProps {
     params: {
@@ -14,12 +15,14 @@ interface LineDetailsPageProps {
 const LineDetailsPage: React.FC<LineDetailsPageProps> = ({ params }) => {
     return (
         <LineProvider>
-            <div className="container mx-auto py-6">
-                <LineDetails
-                    factoryId={params.factoryId}
-                    lineId={params.lineId}
-                />
-            </div>
+            <TeamProvider>
+                <div className="container mx-auto py-6">
+                    <LineDetails
+                        factoryId={params.factoryId}
+                        lineId={params.lineId}
+                    />
+                </div>
+            </TeamProvider>
         </LineProvider>
     );
 };

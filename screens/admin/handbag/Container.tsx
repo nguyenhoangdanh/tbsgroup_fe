@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { ColumnDef } from "@tanstack/react-table";
-import { DataTable } from "@/components/common/table/data-table";
+import removeAccents, { DataTable } from "@/components/common/table/data-table";
 import { Badge } from "@/components/ui/badge";
 import { HandBag } from "@/common/interface/handbag";
 import HandBagForm from "./form";
@@ -10,6 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { AlertCircle, CheckCircle2, DollarSign, Package, ShoppingBag } from "lucide-react";
 import { DashboardCardComponent } from "../../../components/common/layouts/admin/DashboardCard";
 import { useTheme } from "next-themes";
+import { BagGroupRate } from "@/common/interface/bag-group-rate";
 
 // Define explicit tracker state type
 type FilterTrackerState = {
@@ -30,7 +31,6 @@ const HandBagManagementScreen: React.FC = React.memo(() => {
     deleteHandBagMutation,
     setSelectedHandBag,
     selectedHandBag,
-    loading,
     activeFilters,
     handleCreateHandBag,
     handleUpdateHandBag,
@@ -42,6 +42,7 @@ const HandBagManagementScreen: React.FC = React.memo(() => {
   // State for tracking whether component is mounted
   const [isMounted, setIsMounted] = useState(true)
 
+  const { theme } = useTheme();
   // Stats for dashboard cards
   const [stats, setStats] = useState({
     totalHandbags: 0,
@@ -547,7 +548,6 @@ const HandBagManagementScreen: React.FC = React.memo(() => {
 
   // Memoized derived values
   const handbags = useMemo(() => handBagList?.data || [], [handBagList?.data]);
-  const isLoading = loading || isLoadingHandBags || isRefetching;
 
   // Initial page index calculation
   const initialPageIndex = useMemo(() =>
@@ -640,14 +640,16 @@ const HandBagManagementScreen: React.FC = React.memo(() => {
     },
   ], [stats])
 
-  const { theme } = useTheme();
+
+  // Trong Container.tsx
+  const isLoading = isLoadingHandBags || isRefetching
 
 
   return (
     <div className="container mx-auto py-6 gap-4 flex flex-col">
 
       {/* Dashboard Cards */}
-      <div className="flex flex-wrap gap-4">
+      {/* <div className="flex flex-wrap gap-4">
         {dashboardCards.map((card, index) => (
           <div key={`handbag-card-${index}`} className="flex-grow basis-60 max-w-xs min-w-60">
             <DashboardCardComponent
@@ -656,9 +658,7 @@ const HandBagManagementScreen: React.FC = React.memo(() => {
             />
           </div>
         ))}
-      </div>
-
-      {/* DataTable */}
+      </div> */}
 
       <DataTable
         columns={columns}

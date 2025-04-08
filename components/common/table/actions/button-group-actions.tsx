@@ -15,6 +15,8 @@ interface ButtonGroupActionProps<T extends BaseData = BaseData> {
   onRefetchData?: () => void;
   editComponent?: React.ReactNode | ((props: DialogChildrenProps<T>) => React.ReactNode);
   viewComponent?: React.ReactNode | ((props: DialogChildrenProps<T>) => React.ReactNode);
+  editClick?: ((data: T) => void) | (() => void);
+  viewClick?: ((data: T) => void) | (() => void);
   rowData: T;
   children?: React.ReactNode | ((props: DialogChildrenProps<T>) => React.ReactNode);
 }
@@ -28,6 +30,8 @@ const ButtonGroupAction = <T extends BaseData>({
   viewComponent,
   rowData,
   children,
+  editClick,
+  viewClick
 }: ButtonGroupActionProps<T>) => {
   const { showDialog, dialog } = useDialog<T>();
 
@@ -86,6 +90,7 @@ const ButtonGroupAction = <T extends BaseData>({
           buttonSize="icon"
           buttonIcon={<SquarePen className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
           data={rowData}
+          onClick={editClick}
           onSubmit={async (data) => {
             if (onEdit && data) {
               onEdit(data as T);

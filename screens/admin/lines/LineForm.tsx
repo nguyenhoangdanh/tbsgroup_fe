@@ -1,4 +1,4 @@
-import React, { useState, memo } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -7,109 +7,176 @@ import { FieldInput } from '@/components/common/Form/FieldInput';
 import { FieldTextarea } from '@/components/common/Form/FieldTextarea';
 import { FieldSelect } from '@/components/common/Form/FieldSelect';
 import FormActions from '@/components/common/Form/FormAction';
-import { useDialog } from '@/context/DialogProvider';
+import { useLine } from '@/hooks/line/LineContext';
+import { toast } from '@/hooks/use-toast';
 import { Factory } from '@/common/interface/factory';
-import { Line, LineCreateDTO, LineUpdateDTO, LineWithDetails } from '@/common/interface/line';
-import { Button } from '@/components/ui/button';
+import { Line, LineCreateDTO, LineUpdateDTO } from '@/common/interface/line';
+import { useDialog } from '@/context/DialogProvider';
 
-// Schema validation for line
+// Validation schema for line
 const lineSchema = z.object({
-    id: z.string().optional(),
-    factoryId: z.string(),
-    code: z.string().min(2, { message: 'Mã dây chuyền phải có ít nhất 2 ký tự' }),
-    name: z.string().min(3, { message: 'Tên dây chuyền phải có ít nhất 3 ký tự' }),
-    description: z.string().optional().nullable(),
-    capacity: z.number().optional().nullable().transform(val => val ?? undefined),
-    status: z.enum(['ACTIVE', 'INACTIVE', 'MAINTENANCE']).default('ACTIVE'),
-    createdAt: z.union([z.string(), z.date()]).optional(),
-    updatedAt: z.union([z.string(), z.date()]).optional(),
+    code: z.string()
+        .min(2, { message: 'Mã dây chuyền phải có ít nhất 2 ký tự' })
+        .max(50, { message: 'Mã dây chuyền không được vượt quá 50 ký tự' }),
+    name: z.string()
+        .min(3, { message: 'Tên dây chuyền phải có ít nhất 3 ký tự' })
+        .max(100, { message: 'Tên dây chuyền không được vượt quá 100 ký tự' }),
+    description: z.string()
+        .optional()
+        .nullable()
+        .refine(val => val == null || val.length <= 500, {
+            message: 'Mô tả không được vượt quá 500 ký tự'
+        }),
+    capacity: z.preprocess(
+        (val) => (val === '' || val === null || val === undefined) ? null : Number(val),
+        z.number()
+            .optional()
+            .nullable()
+            .refine(val => val == null || (val >= 0 && val <= 10000), {
+                message: 'Công suất phải nằm trong khoảng 0-10,000'
+            })
+    ),
 });
 
-type LineSchema = z.infer<typeof lineSchema>;
+// Type for form data
+type LineFormData = z.infer<typeof lineSchema> & {
+    factoryId: string;
+    id?: string;
+};
 
+// Props for LineForm
 interface LineFormProps {
     factoryId: string;
-    factory: Pick<Factory, 'id' | 'name' | 'code'>;
-    line?: Partial<LineWithDetails>;
+    factory: Partial<Pick<Factory, 'id' | 'name' | 'code'>> & { id?: string };
+    line?: Partial<Line>;
     onSuccess?: () => void;
+    onCancel?: () => void;
 }
 
-const LineForm: React.FC<LineFormProps> = memo(({
+const LineForm: React.FC<LineFormProps> = ({
     factoryId,
     factory,
     line,
     onSuccess,
+    onCancel
 }) => {
+    const { mutations, cache } = useLine();
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const { hideDialog, isReadOnly } = useDialog();
+    const { hideDialog } = useDialog();
 
-    // Status options
-    const statusOptions = [
-        { value: 'ACTIVE', label: 'Hoạt động' },
-        { value: 'INACTIVE', label: 'Tạm dừng' },
-        { value: 'MAINTENANCE', label: 'Bảo trì' },
-    ];
-
-    // Initialize form with default or existing values
-    const form = useForm<LineSchema>({
+    // Form initialization
+    const form = useForm<LineFormData>({
         resolver: zodResolver(lineSchema),
-        defaultValues: line
-            ? {
-                id: line.id,
-                factoryId: factoryId,
-                code: line.code ?? '',
-                name: line.name ?? '',
-                description: line.description ?? '',
-                capacity: line.capacity ?? undefined,
-                status: line.status ?? 'ACTIVE',
-                createdAt: line.createdAt,
-                updatedAt: line.updatedAt,
-            }
-            : {
-                factoryId: factoryId,
-                code: '',
-                name: '',
-                description: '',
-                capacity: undefined,
-                status: 'ACTIVE',
-            },
+        defaultValues: line ? {
+            id: line.id,
+            factoryId,
+            code: line.code ?? '',
+            name: line.name ?? '',
+            description: line.description ?? null,
+            capacity: line.capacity ?? null,
+        } : {
+            factoryId,
+            code: '',
+            name: '',
+            description: null,
+            capacity: null,
+        }
     });
 
-    // Handle form submission
-    const handleSubmit = async (values: LineSchema) => {
-        if (isReadOnly || isSubmitting) return;
+    // Form submission handler
+    const handleSubmit = useCallback(async (data: LineFormData) => {
+        if (isSubmitting) return false;
+
+        setIsSubmitting(true);
 
         try {
-            setIsSubmitting(true);
-
-            // Numeric handling
-            const capacity = values.capacity !== null ? Number(values.capacity) : undefined;
-
-            // Prepare data for submission
-            const submitData = {
-                ...values,
-                capacity,
+            // Prepare submission data
+            const submitData: LineCreateDTO | LineUpdateDTO = {
+                ...data,
+                factoryId,
+                capacity: data.capacity ?? undefined
             };
 
-            // Close dialog and call success callback
-            hideDialog();
+            // Determine if this is create or update
+            if (line?.id) {
+                // Update existing line
+                await mutations.update({
+                    id: line.id,
+                    ...submitData,
+                });
 
-            if (onSuccess) {
-                onSuccess();
+                hideDialog();
+
+                toast({
+                    title: 'Cập nhật dây chuyền thành công',
+                    description: `Dây chuyền "${data.name}" đã được cập nhật`,
+                    duration: 2000
+                });
+
+                // Invalidate cache for this line
+                try {
+                    await cache.invalidateDetails(line.id, { forceRefetch: true });
+                } catch (cacheError) {
+                    console.error('Cache invalidation error:', cacheError);
+                    // Fallback to direct refetch if needed (could add implementation here)
+                }
+            } else {
+                // Create new line
+                const result = await mutations.create(submitData);
+
+                hideDialog();
+                toast({
+                    title: 'Tạo dây chuyền thành công',
+                    description: `Dây chuyền "${data.name}" đã được tạo`,
+                    duration: 2000
+                });
+
+                // Invalidate factory lines cache
+                if (result?.id) {
+                    try {
+                        await cache.prefetchByFactory(factoryId);
+                    } catch (cacheError) {
+                        console.error('Cache prefetch error:', cacheError);
+                        // Handle cache error silently
+                    }
+                }
             }
+
+            // Call success callback if provided
+            onSuccess?.();
 
             return true;
         } catch (error) {
-            console.error('Error saving line data:', error);
+            // Handle submission errors
+            toast({
+                title: 'Lỗi',
+                description: error instanceof Error
+                    ? error.message
+                    : 'Đã xảy ra lỗi không xác định',
+                variant: 'destructive',
+                duration: 3000
+            });
+
             return false;
         } finally {
             setIsSubmitting(false);
         }
-    };
+    }, [
+        isSubmitting,
+        factoryId,
+        line?.id,
+        mutations,
+        cache,
+        onSuccess
+    ]);
 
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+            <form
+                onSubmit={form.handleSubmit(handleSubmit)}
+                className="space-y-4"
+            >
+                {/* Form header */}
                 <div className="mb-4">
                     <h2 className="text-lg font-medium">
                         {line?.id ? 'Cập nhật dây chuyền' : 'Thêm dây chuyền mới'}
@@ -119,13 +186,14 @@ const LineForm: React.FC<LineFormProps> = memo(({
                     </p>
                 </div>
 
+                {/* Basic information fields */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FieldInput
                         control={form.control}
                         name="code"
                         label="Mã dây chuyền"
                         placeholder="Nhập mã dây chuyền"
-                        disabled={isSubmitting || isReadOnly || !!line?.id}
+                        disabled={!!line?.id || isSubmitting}
                         required
                     />
 
@@ -134,20 +202,22 @@ const LineForm: React.FC<LineFormProps> = memo(({
                         name="name"
                         label="Tên dây chuyền"
                         placeholder="Nhập tên dây chuyền"
-                        disabled={isSubmitting || isReadOnly}
+                        disabled={isSubmitting}
                         required
                     />
                 </div>
 
+                {/* Description field */}
                 <FieldTextarea
                     control={form.control}
                     name="description"
                     label="Mô tả"
                     placeholder="Nhập mô tả dây chuyền"
-                    disabled={isSubmitting || isReadOnly}
+                    disabled={isSubmitting}
                     rows={3}
                 />
 
+                {/* Additional details */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FieldInput
                         control={form.control}
@@ -155,27 +225,20 @@ const LineForm: React.FC<LineFormProps> = memo(({
                         label="Công suất (sản phẩm/ngày)"
                         placeholder="Nhập công suất"
                         type="number"
-                        disabled={isSubmitting || isReadOnly}
+                        disabled={isSubmitting}
                     />
 
-                    <FieldSelect
-                        control={form.control}
-                        name="status"
-                        label="Trạng thái"
-                        placeholder="Chọn trạng thái"
-                        disabled={isSubmitting || isReadOnly}
-                        options={statusOptions}
-                    />
                 </div>
 
+                {/* Form actions */}
                 <FormActions
                     isSubmitting={isSubmitting}
-                    isReadOnly={isReadOnly}
                     isEdit={!!line?.id}
+                    onCancel={onCancel}
                 />
             </form>
         </Form>
     );
-});
+};
 
 export default LineForm;

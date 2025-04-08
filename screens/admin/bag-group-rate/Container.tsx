@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useCallback, Suspense } from "react";
-import { BarChart, Package } from "lucide-react";
+import { BarChart, Briefcase, Package } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import BagGroupRateStats from "./BagGroupRateStats";
 import ProductivityAnalysis from "./ProductivityAnalysis";
@@ -9,6 +9,7 @@ import BagGroupRateList from "./BagGroupRateList";
 import HandBagGroups from "./HandBagGroups";
 import FilterBar from './FilterBar';
 import { BagGroupRateContextBridge } from "./BagGroupRateContextBridge";
+import HandBagManagementScreen from "../handbag/Container";
 
 const BagGroupRateContainer = () => {
     const [activeTab, setActiveTab] = useState<string>("handBags");
@@ -63,8 +64,12 @@ const BagGroupRateContainer = () => {
                     >
                         <TabsList className="mb-4">
                             <TabsTrigger value="handBags">
+                                <Briefcase className="h-4 w-4 mr-2" />
+                                Túi xách
+                            </TabsTrigger>
+                            <TabsTrigger value="handBagsAndGroups">
                                 <Package className="h-4 w-4 mr-2" />
-                                Túi xách & nhóm
+                                Thống kê
                             </TabsTrigger>
                             <TabsTrigger value="list">Danh sách năng suất</TabsTrigger>
                             <TabsTrigger value="analysis" disabled={!selectedHandBagId}>
@@ -75,6 +80,12 @@ const BagGroupRateContainer = () => {
 
                         <TabsContent value="handBags" className="space-y-4">
                             <Suspense fallback={<div>Đang tải danh sách túi...</div>}>
+                                <HandBagManagementScreen />
+                            </Suspense>
+                        </TabsContent>
+
+                        <TabsContent value="handBagsAndGroups" className="space-y-4">
+                            <Suspense fallback={<div>Đang tải danh sách túi...</div>}>
                                 {/* <HandBagGroups /> */}
                                 <CachedHandBagGroups />
                             </Suspense>
@@ -82,9 +93,9 @@ const BagGroupRateContainer = () => {
 
                         <TabsContent value="list" className="space-y-4">
                             {/* FilterBar */}
-                            <Suspense fallback={<div>Đang tải bộ lọc...</div>}>
+                            {/* <Suspense fallback={<div>Đang tải bộ lọc...</div>}>
                                 <FilterBar />
-                            </Suspense>
+                            </Suspense> */}
 
                             {/* List */}
                             <Suspense fallback={<div>Đang tải danh sách...</div>}>

@@ -1,0 +1,171 @@
+/* Enhanced table.css with better styling for functionality */
+
+/* Group row styling with improved hover and pointer effects */
+.group-row {
+  background-color: rgba(0, 0, 0, 0.03);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  position: relative;
+  z-index: 20; /* Ensure the row is clickable */
+}
+
+.dark .group-row {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+/* Add hover effect to make it clear the row is clickable */
+.group-row:hover {
+  background-color: rgba(0, 0, 0, 0.07);
+}
+
+.dark .group-row:hover {
+  background-color: rgba(255, 255, 255, 0.07);
+}
+
+/* Make expand/collapse button more visible */
+.expand-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  position: relative;
+  z-index: 30; /* Higher z-index to ensure the button is clickable */
+}
+
+.expand-button:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.dark .expand-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Style for group count badge */
+.group-count {
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 9999px;
+  padding: 0.125rem 0.5rem;
+  font-size: 0.75rem;
+}
+
+.dark .group-count {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Child row styling with subtle indentation */
+.child-row {
+  background-color: rgba(0, 0, 0, 0.01);
+  position: relative;
+}
+
+.child-row > td:first-child {
+  position: relative;
+}
+
+.child-row > td:first-child::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.dark .child-row > td:first-child::before {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.dark .child-row {
+  background-color: rgba(255, 255, 255, 0.01);
+}
+
+/* Ensure proper z-index on elements */
+.table-wrapper {
+  position: relative;
+  z-index: 10;
+  overflow-x: auto;
+  overflow-y: visible;
+  max-width: 100%;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* Ensure table doesn't have height limitations */
+.data-table-container {
+  max-height: none !important;
+  height: auto !important;
+  overflow: visible !important;
+}
+
+.table-body {
+  max-height: none !important;
+  height: auto !important;
+  overflow: visible !important;
+}
+
+/* Fix for cursor pointer on expand buttons */
+.group-row button {
+  pointer-events: all !important;
+  cursor: pointer !important;
+}
+
+/* Ensure rows remain visible */
+.group-row,
+.child-row {
+  display: table-row !important;
+  visibility: visible !important;
+}
+
+/* Ensure proper spacing in cells */
+.table-cell {
+  max-height: none !important;
+  white-space: normal;
+  padding: 0.75rem !important;
+}
+
+/* Improve styling for search input */
+.search-input-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 300px;
+}
+
+.search-input {
+  width: 100%;
+  padding-left: 2.5rem !important;
+  background-color: transparent;
+}
+
+.search-icon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+}
+
+.dark .search-icon {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* Style for checkboxes */
+.row-checkbox {
+  cursor: pointer !important;
+  position: relative;
+  z-index: 20;
+}
+
+/* Fix for scrollbars */
+html,
+body {
+  overflow-y: auto !important;
+}

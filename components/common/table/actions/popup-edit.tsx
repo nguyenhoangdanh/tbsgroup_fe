@@ -18,6 +18,7 @@ interface EditActionDialogProps<T extends BaseData = BaseData> {
     disableButton?: boolean;
     onClose?: () => void;
     data: T;
+    onClick?: () => void;
 }
 
 export function EditActionDialog<T extends BaseData = BaseData>({
@@ -33,6 +34,7 @@ export function EditActionDialog<T extends BaseData = BaseData>({
     disableButton = false,
     onClose,
     data,
+    onClick,
 }: EditActionDialogProps<T>) {
     const { showDialog } = useDialog<T>();
 
@@ -84,13 +86,27 @@ export function EditActionDialog<T extends BaseData = BaseData>({
         ? "bg-blue-800 hover:bg-blue-700 text-white h-7 w-7 md:w-8 md:h-8 p-0"
         : `flex items-center gap-1 bg-blue-800 hover:bg-blue-700 text-white ${fullWidth ? 'w-full' : 'sm:w-auto'}`;
 
+    const handleClick = () => {
+        if (onClick) {
+            // Check if onClick expects parameters
+            if (onClick.length > 0) {
+                (onClick as (data: T) => void)(data);
+            } else {
+                (onClick as () => void)();
+            }
+        } else {
+            // If no onClick is provided, use the default behavior
+            handleOpenDialog();
+        }
+    };
+
     return (
         <Button
             variant={buttonVariant}
             size={buttonSize}
             className={buttonClasses}
             disabled={disableButton}
-            onClick={handleOpenDialog}
+            onClick={handleClick}
             title={buttonText || "Chỉnh sửa"}
             aria-label={buttonText || "Chỉnh sửa"}
         >

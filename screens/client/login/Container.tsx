@@ -2,7 +2,7 @@ import React, { Suspense } from 'react'
 import AuthLayout from '@/components/common/layouts/auth/AuthLayout'
 import AuthImage from '@/components/common/layouts/auth/AuthImage'
 import LoginForm from './form'
-import LazyLoader from '@/components/common/LazyLoader'
+import LazyLoader from '@/components/common/Loading/LazyLoader'
 
 export const LoginContainer = () => {
   return (

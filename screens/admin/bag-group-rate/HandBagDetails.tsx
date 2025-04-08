@@ -12,6 +12,7 @@ import { BagGroupRateContextBridge } from "./BagGroupRateContextBridge";
 import { useBagGroupRateContext } from "@/hooks/group/bag-group-rate/BagGroupRateContext";
 import { HandBagDetailsResponse } from "@/apis/group/bagGroupRate/bag-group-rate.api";
 import { useQuery } from "@tanstack/react-query";
+import { DashboardCardComponent } from "@/components/common/layouts/admin/DashboardCard";
 
 interface HandBagDetailsProps {
     handBagId?: string;
@@ -30,10 +31,8 @@ const HandBagDetailsContent: React.FC<HandBagDetailsProps> = ({ handBagId: propH
     const router = useRouter();
     const { getHandBagGroupRatesDetails } = useBagGroupRateContext();
 
-    // Use handBagId from props or from route params
     const handBagId = propHandBagId || (params?.handBagId as string);
 
-    // Sử dụng React Query trực tiếp để tận dụng caching
     const { data: details, isLoading, error } = useQuery({
         queryKey: ['handBag-details', handBagId],
         queryFn: () => getHandBagGroupRatesDetails(handBagId),
@@ -93,52 +92,33 @@ const HandBagDetailsContent: React.FC<HandBagDetailsProps> = ({ handBagId: propH
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                        <Card>
-                            <CardContent className="pt-6">
-                                <div className="flex items-center">
-                                    <Users className="h-5 w-5 mr-2 text-blue-500" />
-                                    <div>
-                                        <p className="text-sm text-muted-foreground">Tổng số nhóm</p>
-                                        <p className="text-2xl font-bold">{statistics.totalGroups}</p>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
+                    <div className="flex flex-wrap gap-4 mb-6">
+                        <div className="flex-grow basis-60 max-w-xs min-w-60">
+                            <DashboardCardComponent
+                                title="Tổng số nhóm"
+                                description="Tổng số nhóm sản xuất"
+                                data={statistics.totalGroups}
+                                icon={<Users className="h-5 w-5 mr-2 text-blue-500" />}
+                            />
+                        </div>
 
-                        <Card>
-                            <CardContent className="pt-6">
-                                <div className="flex items-center">
-                                    <Clock className="h-5 w-5 mr-2 text-green-500" />
-                                    <div>
-                                        <p className="text-sm text-muted-foreground">Năng suất trung bình</p>
-                                        <p className="text-2xl font-bold">
-                                            {statistics.averageOutputRate.toFixed(1)}
-                                            <span className="text-sm font-normal ml-1">SP/giờ</span>
-                                        </p>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <Card>
-                            <CardContent className="pt-6">
-                                <div className="flex items-center">
-                                    <BarChart className="h-5 w-5 mr-2 text-purple-500" />
-                                    <div>
-                                        <p className="text-sm text-muted-foreground">Phạm vi năng suất</p>
-                                        <p className="text-lg font-semibold">
-                                            <span className="text-red-500">{statistics.lowestOutputRate.toFixed(1)}</span>
-                                            {" - "}
-                                            <span className="text-green-500">{statistics.highestOutputRate.toFixed(1)}</span>
-                                            <span className="text-sm font-normal ml-1">SP/giờ</span>
-                                        </p>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
+                        <div className="flex-grow basis-60 max-w-xs min-w-60">
+                            <DashboardCardComponent
+                                title="Năng suất trung bình"
+                                description="Năng suất trung bình"
+                                data={`${statistics.averageOutputRate.toFixed(1)} SP/giờ`}
+                                icon={<Clock className="h-5 w-5 mr-2 text-green-500" />}
+                            />
+                        </div>
+                        <div className="flex-grow basis-60 max-w-xs min-w-60">
+                            <DashboardCardComponent
+                                title="Phạm vi năng suất"
+                                description="Phạm vi năng suất"
+                                data={`${statistics.lowestOutputRate.toFixed(1)} - ${statistics.highestOutputRate.toFixed(1)} SP/giờ`}
+                                icon={<BarChart className="h-5 w-5 mr-2 text-purple-500" />}
+                            />
+                        </div>
                     </div>
-
                     <Tabs defaultValue="groups" className="w-full">
                         <TabsList>
                             <TabsTrigger value="groups">Danh sách nhóm</TabsTrigger>

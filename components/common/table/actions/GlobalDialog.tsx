@@ -9,7 +9,7 @@ import { Loader } from "lucide-react";
 import './global-dialog.css';
 
 const GlobalDialog = memo(() => {
-    const { dialog, hideDialog, submit, isSubmitting } = useDialog();
+    const { dialog, hideDialog, submit, isSubmitting, } = useDialog();
     const contentRef = useRef<HTMLDivElement>(null);
 
     // Xử lý vấn đề cuộn trên mobile
@@ -148,8 +148,10 @@ const GlobalDialog = memo(() => {
         if (dialog.type === DialogType.DELETE) {
             return (
                 <div className="p-4 space-y-4">
-                    <p className="text-center">Bạn có chắc chắn muốn xóa?</p>
-                    <div className="flex justify-center gap-2">
+                    {/* <p className="text-center">
+                        {dialog.title ? dialog.title : "Bạn có chắc chắn muốn xóa?"}
+                    </p> */}
+                    <div className="flex justify-end gap-2">
                         <Button
                             variant="destructive"
                             disabled={isSubmitting}
@@ -194,8 +196,8 @@ const GlobalDialog = memo(() => {
         if (dialog.type === DialogType.BATCH_DELETE) {
             return (
                 <div className="p-4 space-y-4">
-                    <p className="text-center">Bạn có chắc chắn muốn xóa các mục đã chọn?</p>
-                    <div className="flex justify-center gap-2">
+                    {/* <p className="text-center">Bạn có chắc chắn muốn xóa các mục đã chọn?</p> */}
+                    <div className="flex justify-end gap-2">
                         <Button
                             variant="destructive"
                             disabled={isSubmitting}
