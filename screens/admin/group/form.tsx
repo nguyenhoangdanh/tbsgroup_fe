@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, memo } from "react";
+import React, { useState, useCallback, memo, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -10,7 +10,8 @@ import { FieldTextarea } from "@/components/common/Form/FieldTextarea";
 import FormActions from "@/components/common/Form/FormAction";
 import { useDialog } from "@/context/DialogProvider";
 import { FieldCombobox } from "@/components/common/Form/FieldCombobox";
-import { useTeamQueries } from "@/hooks/team/useTeamQueries";
+import { useTeamQueries } from "@/hooks/teams/useTeamQueries";
+import { useTeam } from "@/hooks/teams/TeamContext";
 
 // Define schema validation for the group
 const groupSchema = z.object({
@@ -46,14 +47,18 @@ const GroupForm: React.FC<GroupFormProps> = memo(({
     const { hideDialog, dialog, isReadOnly } = useDialog();
 
     // Fetch teams for combobox
-    const { getAllTeams } = useTeamQueries();
-    const { data: teams } = getAllTeams || { data: [] };
+    const { getAllTeams } = useTeam();
+    const { data: teams } = getAllTeams();
 
-    // Prepare teams for combobox
-    const teamOptions = teams?.map(team => ({
-        value: team.id,
-        label: team.name
-    })) || [];
+    // Define the type for teams
+    type Team = { id: string; name: string };
+
+    const teamOptions = useMemo(() => {
+        return teams?.map((team: Team) => ({
+            value: team.id,
+            label: team.name,
+        })) || [];
+    }, [teams]);
 
     // Initialize form with default values or data from dialog
     const form = useForm<GroupSchema>({

@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { Clock } from "./Clock"; // Assuming the Clock component is in the same directory
+import { Clock } from "./custom/Clock"; // Assuming the Clock component is in the same directory
 import { CalendarIcon, ClockIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Matcher } from "react-day-picker";

@@ -1,6 +1,7 @@
+
+import { UserListParams, UserListResponse } from '@/common/interface/user';
 import { fetchWithAuth } from '@/lib/fetcher';
 import { TUserSchema } from '@/schemas/user';
-import { UserType, UserListParams, UserListResponse } from '@/hooks/users/useUserQueries';
 
 // Tạo kiểu dữ liệu cho các API request
 export type LoginType = {
@@ -60,7 +61,7 @@ export const logoutMutationFn = async () =>
   });
 
 // User profile API endpoints
-export const getUserProfileQueryFn = async () => fetchWithAuth('/profile');
+export const getUserProfileQueryFn = async () => { return await fetchWithAuth('/profile') };
 
 export const updateStatusMutationFn = async (data: { status: string }) =>
   fetchWithAuth('/profile', {
@@ -70,8 +71,7 @@ export const updateStatusMutationFn = async (data: { status: string }) =>
 
 // User management API endpoints
 export const getAllUsersQueryFn = async () => {
-  const response = await fetchWithAuth('/users');
-  return response.data;
+  return await fetchWithAuth('/users');
 };
 
 export const getUserByIdQueryFn = async (id: string) => {

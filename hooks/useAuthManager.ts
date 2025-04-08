@@ -53,6 +53,7 @@ export type AuthUser = {
   email: string;
   isEmailVerified: boolean;
   role: string;
+  roleId: string;
   position: string;
   department: string;
   fullName: string;
@@ -62,8 +63,8 @@ export type AuthUser = {
   userPreferences: {
     enable2FA: boolean;
   };
-  employeeId?: string;
-  cardId?: string;
+  employeeId: string;
+  cardId: string;
   status: string;
 };
 

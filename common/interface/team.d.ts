@@ -6,8 +6,14 @@ export interface Team {
   name: string;
   description?: string | null;
   lineId: string;
+  lineName?: string;
   createdAt: string | Date;
   updatedAt: string | Date;
+  leaders?: TeamLeader[];
+  isPublic?: boolean;
+  isLineLimited?: boolean;
+  isEditLimited?: boolean;
+  autoAssign?: boolean;
 }
 
 export interface TeamCreateDTO {

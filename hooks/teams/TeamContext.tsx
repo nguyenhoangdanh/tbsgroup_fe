@@ -4,6 +4,8 @@ import { BasePaginationParams, BaseResponseData } from '@/hooks/base/useBaseQuer
 import { toast } from '@/hooks/use-toast';
 import { useTeamQueries } from './useTeamQueries';
 import { useTeamMutations } from './useTeamMutations';
+import { getTeamById, getTeamsList } from '@/apis/team/team.api'; // Import trực tiếp từ API
+import { useQuery, useQueryClient, UseQueryResult } from '@tanstack/react-query';
 
 // Define the context shape
 interface TeamContextType {
@@ -29,6 +31,7 @@ interface TeamContextType {
     getTeamsByLine: (lineId: string) => Promise<Team[]>;
     listTeams: (params: TeamCondDTO & BasePaginationParams) => Promise<BaseResponseData<Team> | undefined>;
     getAccessibleTeams: () => Promise<Team[]>;
+    getAllTeams: () => UseQueryResult<Team[], Error>;
 
     // Team leaders management
     getTeamLeaders: (teamId: string) => Promise<TeamLeader[]>;
@@ -70,7 +73,7 @@ export const TeamProvider: React.FC<TeamProviderProps> = ({ children }) => {
         getAccessibleTeamsForUser,
         invalidateTeamDetailsCache,
         prefetchTeamDetails: prefetchDetails,
-        queries, // Now exposed by useTeamQueries
+        queries, // QueryClient exposed by useTeamQueries
         fetchQuery
     } = teamQueries;
 
@@ -108,10 +111,10 @@ export const TeamProvider: React.FC<TeamProviderProps> = ({ children }) => {
                 return cachedTeam;
             }
 
-            // Fetch the team data
+            // Fetch the team data directly using the imported API function
             const team = await fetchQuery({
                 queryKey,
-                queryFn: () => teamQueries.getTeamById(id)
+                queryFn: () => getTeamById(id)
             });
 
             return team || null;
@@ -124,7 +127,7 @@ export const TeamProvider: React.FC<TeamProviderProps> = ({ children }) => {
             });
             return null;
         }
-    }, [queries, fetchQuery, teamQueries]);
+    }, [queries, fetchQuery]);
 
     const selectTeamById = useCallback(async (id: string | null) => {
         if (!id) {
@@ -266,7 +269,7 @@ export const TeamProvider: React.FC<TeamProviderProps> = ({ children }) => {
             // Fetch leaders data
             const leaders = await fetchQuery({
                 queryKey,
-                queryFn: () => teamQueries.getLeadersByTeamId(teamId).data
+                queryFn: () => getLeadersByTeamId(teamId).data
             });
 
             return leaders || [];
@@ -279,7 +282,7 @@ export const TeamProvider: React.FC<TeamProviderProps> = ({ children }) => {
             });
             return [];
         }
-    }, [queries, fetchQuery, teamQueries]);
+    }, [queries, fetchQuery, getLeadersByTeamId]);
 
     const addTeamLeader = useCallback(async (teamId: string, leaderDTO: TeamLeaderDTO): Promise<boolean> => {
         try {
@@ -467,6 +470,52 @@ export const TeamProvider: React.FC<TeamProviderProps> = ({ children }) => {
         await prefetchDetails(teamId, { includeLeaders });
     }, [prefetchDetails]);
 
+
+    /**
+ * Get all teams as a simple array
+ */
+    /**
+  * Get all teams as a simple array
+  */
+    /**
+ * Get all teams as a simple array
+ */
+    const getAllTeams = (
+        options?: {
+            enabled?: boolean,
+            refetchOnWindowFocus?: boolean,
+            staleTime?: number
+        }
+    ): UseQueryResult<Team[], Error> => {
+        return useQuery<Team[], Error>({
+            queryKey: ['teams', 'all'],
+            queryFn: async (): Promise<Team[]> => {
+                try {
+                    // Use your existing API function
+                    const response = await getTeamsList({
+                        page: 1,
+                        limit: 1000 // Set a high limit to get all teams
+                    });
+
+                    // Return just the teams array from the response
+                    return response.data || [];
+                } catch (error) {
+                    console.error('Error fetching all teams:', error);
+                    toast({
+                        title: 'Không thể tải danh sách tổ',
+                        description: error instanceof Error ? error.message : 'Đã xảy ra lỗi khi tải danh sách tổ',
+                        variant: 'destructive',
+                    });
+                    return []; // Return empty array on error
+                }
+            },
+            enabled: options?.enabled !== false,
+            staleTime: options?.staleTime || 10 * 60 * 1000, // 10 minutes
+            gcTime: 30 * 60 * 1000, // 30 minutes
+            refetchOnWindowFocus: options?.refetchOnWindowFocus ?? false,
+        });
+    };
+
     // Context value
     const contextValue = useMemo(() => ({
         // State
@@ -491,6 +540,7 @@ export const TeamProvider: React.FC<TeamProviderProps> = ({ children }) => {
         getTeamsByLine,
         listTeams: listTeamsAsync,
         getAccessibleTeams,
+        getAllTeams,
 
         // Team leaders management
         getTeamLeaders,
@@ -522,6 +572,7 @@ export const TeamProvider: React.FC<TeamProviderProps> = ({ children }) => {
         getTeamWithDetailsAsync,
         getTeamsByLine,
         listTeamsAsync,
+        getAllTeams,
         getAccessibleTeams,
         getTeamLeaders,
         addTeamLeader,

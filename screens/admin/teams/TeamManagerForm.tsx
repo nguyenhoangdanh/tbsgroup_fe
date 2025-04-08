@@ -8,8 +8,8 @@ import { useTeam } from '@/hooks/teams/TeamContext';
 import { toast } from '@/hooks/use-toast';
 import { TeamLeader, TeamLeaderDTO } from '@/common/interface/team';
 import UnifiedFormField from '@/components/common/Form/custom/UnifiedFormField';
-import { UserType } from '@/hooks/users/useUserQueries';
 import { useDialog } from '@/context/DialogProvider';
+import { UserType } from '@/common/interface/user';
 
 // Schema validation for manager
 const managerSchema = z.object({

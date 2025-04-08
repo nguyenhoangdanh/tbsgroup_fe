@@ -13,6 +13,7 @@ interface TimeRangeProps {
     className?: string;
     label?: string;
     allowSameTime?: boolean; // Allow start and end time to be the same
+    disabled?: boolean;
 }
 
 export const TimeRangePicker: React.FC<TimeRangeProps> = ({
@@ -23,7 +24,8 @@ export const TimeRangePicker: React.FC<TimeRangeProps> = ({
     endMinutes: initialEndMinutes = new Date().getMinutes(),
     className,
     label = "Chọn khoảng thời gian",
-    allowSameTime = false
+    allowSameTime = false,
+    disabled = false,
 }) => {
     const [startHours, setStartHours] = useState(initialStartHours);
     const [startMinutes, setStartMinutes] = useState(initialStartMinutes);

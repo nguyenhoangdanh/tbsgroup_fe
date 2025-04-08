@@ -8,9 +8,9 @@ import { TUserSchema } from "@/schemas/user";
 import { useUserContext } from "@/hooks/users/userContext";
 import { DialogType, useDialog } from "@/context/DialogProvider";
 import { useRoleContext } from "@/hooks/roles/roleContext";
-import { UserType } from "@/hooks/users/useUserQueries";
 import UserForm from "./form";
 import { UserStatusEnum } from "@/common/enum";
+import { UserType } from "@/common/interface/user";
 
 const UserContainer = () => {
     // Sử dụng context
@@ -281,7 +281,7 @@ const UserContainer = () => {
         },
     ];
 
-    const users = usersData || [];
+    const users = usersData?.data || [];
     const isLoading = loading || isLoadingUsers || isRefetching;
 
     // Cập nhật metadata phân trang khi dữ liệu thay đổi

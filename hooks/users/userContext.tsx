@@ -3,8 +3,8 @@
 import React, { createContext, useContext, ReactNode } from "react";
 import { initializeUserContext } from "./useUser";
 import { TUserSchema } from "@/schemas/user";
-import { UserType } from "./useUserQueries";
 import { UserStatusEnum } from "@/common/enum";
+import { UserType } from "@/common/interface/user";
 
 // Create user context with type definitions
 type UserContextType = ReturnType<typeof initializeUserContext>;

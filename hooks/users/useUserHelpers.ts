@@ -2,10 +2,10 @@
 
 import { useCallback, useEffect, useState, useRef } from 'react';
 import { TUserSchema } from '@/schemas/user';
-import { UserType } from './useUserQueries';
 import { useDebounce } from '../useDebounce';
 import { useUserMutations } from './userMutations';
 import { UserStatusEnum } from '@/common/enum';
+import { UserType } from '@/common/interface/user';
 
 /**
  * Hook for user-related helper functions and state management

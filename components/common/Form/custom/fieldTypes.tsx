@@ -53,11 +53,11 @@ import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { FormFieldOption } from "./types";
 import { useFormField } from "./useFormField";
-import { Clock } from "../Clock";
 import { TimeRangePicker } from "../TimeRangePicker";
 import StyledRangeCalendar from "../StyledRangeCalendar";
 import clsx from "clsx";
 import { Switch } from "@/components/ui/switch";
+import { Clock } from "./Clock";
 
 // Props for each field type component
 interface FieldTypeProps<T extends FieldValues> {
@@ -620,6 +620,11 @@ export const DateTimeField = memo(<T extends FieldValues>({
         ? format(new Date(field.value), "dd/MM/yyyy HH:mm", { locale: vi })
         : "";
 
+    // Extract hours and minutes for the clock component
+    const currentDate = field.value ? new Date(field.value) : new Date();
+    const currentHours = currentDate.getHours();
+    const currentMinutes = currentDate.getMinutes();
+
     return (
         <FieldContainer className={className}>
             <FieldLabel name={name} label={label} required={required} />
@@ -677,8 +682,9 @@ export const DateTimeField = memo(<T extends FieldValues>({
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-4" align="start">
                         <Clock
-                            date={field.value ? new Date(field.value) : undefined}
-                            setDate={(hours, minutes) => handleTimeSelect(hours, minutes)}
+                            hours={currentHours}
+                            minutes={currentMinutes}
+                            onSelect={(hours, minutes) => handleTimeSelect(hours, minutes)}
                             disabled={disabled}
                         />
                     </PopoverContent>
@@ -714,7 +720,7 @@ export const TimeField = memo(<T extends FieldValues>({
     const timeValue = field.value || "";
 
     // Parse the hours and minutes from the stored string
-    const [hours, minutes] = timeValue.split(':').map(v => parseInt(v) || 0);
+    const [hours, minutes] = timeValue.split(':').map((v: string) => parseInt(v) || 0);
 
     return (
         <FieldContainer className={className}>
@@ -743,7 +749,7 @@ export const TimeField = memo(<T extends FieldValues>({
                     <Clock
                         hours={hours}
                         minutes={minutes}
-                        setDate={(hours, minutes) => handleTimeSelect(hours, minutes)}
+                        onSelect={(hours, minutes) => handleTimeSelect(hours, minutes)}
                         disabled={disabled}
                     />
                 </PopoverContent>
@@ -808,7 +814,7 @@ export const TimeRangeField = memo(<T extends FieldValues>({
                         startMinutes={currentTimeRange.startMinutes}
                         endHours={currentTimeRange.endHours}
                         endMinutes={currentTimeRange.endMinutes}
-                        onChange={(startHours, startMinutes, endHours, endMinutes) =>
+                        onSelect={(startHours, startMinutes, endHours, endMinutes) =>
                             handleTimeRangeSelect(startHours, startMinutes, endHours, endMinutes)
                         }
                         disabled={disabled}

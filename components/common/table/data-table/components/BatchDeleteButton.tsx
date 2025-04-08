@@ -33,9 +33,9 @@ function BatchDeleteButton({
                 size="sm"
                 onClick={() => {
                     // Lọc ra các ID không phải nhóm
-                    const selectedRowIds = selectedRows.map(row => {
+                    const selectedRowIds = selectedRows.map((row: { original: { isGroupRow?: boolean; id: string } }) => {
                         return row.original?.isGroupRow ? null : row.original.id;
-                    }).filter(id => id !== null) as string[];
+                    }).filter((id: string | null) => id !== null) as string[];
 
                     showDialog({
                         type: DialogType.DELETE,

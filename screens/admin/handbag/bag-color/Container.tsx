@@ -765,7 +765,7 @@ const BagColorManagementScreen: React.FC = React.memo(() => {
     ], []);
 
     // Memoized derived values
-    const bagColors = useMemo(() => bagColorList || [], [bagColorList]);
+    const bagColors = useMemo(() => bagColorList?.data || [], [bagColorList]);
     const isLoading = loading || isLoadingBagColors || isRefetching;
 
     // Initial page index calculation

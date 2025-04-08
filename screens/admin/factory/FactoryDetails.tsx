@@ -70,7 +70,7 @@ export const FactoryDetails: React.FC<FactoryDetailsProps> = ({ factoryId }) => 
             data: factoryDetails,
             onClose: () => {
                 // Use a more targeted refetch approach
-                invalidateFactoryDetailsCache(factoryId, true);
+                invalidateFactoryDetailsCache(factoryId);
                 refetch();
             }
         });
@@ -100,7 +100,7 @@ export const FactoryDetails: React.FC<FactoryDetailsProps> = ({ factoryId }) => 
                     isLoadingUsers={isLoadingUsers}
                     onSuccess={() => {
                         // More targeted approach to cache invalidation
-                        invalidateFactoryDetailsCache(factoryId, true);
+                        invalidateFactoryDetailsCache(factoryId);
                     }}
                 />
             ),
@@ -124,7 +124,7 @@ export const FactoryDetails: React.FC<FactoryDetailsProps> = ({ factoryId }) => 
                     factoryId={factoryDetails.id}
                     existingManager={manager}
                     onSuccess={() => {
-                        invalidateFactoryDetailsCache(factoryId, true);
+                        invalidateFactoryDetailsCache(factoryId);
                     }}
                 />
             ),
@@ -155,7 +155,7 @@ export const FactoryDetails: React.FC<FactoryDetailsProps> = ({ factoryId }) => 
                     });
 
                     // Single operation for cache invalidation
-                    invalidateFactoryDetailsCache(factoryId, true);
+                    invalidateFactoryDetailsCache(factoryId);
 
                     return true;
                 } catch (error) {

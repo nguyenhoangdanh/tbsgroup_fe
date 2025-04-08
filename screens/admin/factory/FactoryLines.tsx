@@ -29,11 +29,10 @@ const FactoryLines: React.FC<FactoryLinesProps> = ({ factoryId }) => {
     const { getFactoryById } = useFactoryQueries();
     const { data: factory, isLoading: isLoadingFactory } = getFactoryById(factoryId, {
         enabled: true,
-        refetchOnWindowFocus: false,
     });
 
     // Line queries
-    const { getLinesByFactoryId, invalidateLineCache } = useLineQueries();
+    const { getLinesByFactoryId } = useLineQueries();
     const { data: lines, isLoading: isLoadingLines, refetch: refetchLines } = getLinesByFactoryId(factoryId, {
         enabled: true,
         refetchOnWindowFocus: false,
@@ -287,6 +286,7 @@ const FactoryLines: React.FC<FactoryLinesProps> = ({ factoryId }) => {
                         </CardHeader>
                         <CardContent>
                             <DataTable
+                                title='Danh sách dây chuyền'
                                 columns={columns}
                                 data={lines || []}
                                 isLoading={isLoadingLines}

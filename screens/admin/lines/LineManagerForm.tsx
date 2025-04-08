@@ -10,8 +10,8 @@ import { useLine } from '@/hooks/line/LineContext';
 import { toast } from '@/hooks/use-toast';
 import { LineManager, LineManagerDTO } from '@/common/interface/line';
 import UnifiedFormField from '@/components/common/Form/custom/UnifiedFormField';
-import { UserType } from '@/hooks/users/useUserQueries';
 import { useDialog } from '@/context/DialogProvider';
+import { UserType } from '@/common/interface/user';
 
 // Schema validation for manager
 const managerSchema = z.object({

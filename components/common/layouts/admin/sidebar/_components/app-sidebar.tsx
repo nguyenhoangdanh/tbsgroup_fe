@@ -10,7 +10,6 @@ import { sidebarData } from "./sidebar-data"
 import { useSidebarCollapsed, useSidebarSetCollapsed, useSidebarIsMobileView } from "../../SidebarStateProvider"
 import { useRenderTracker } from "@/hooks/useRenderTracker"
 import { ChevronRight } from "lucide-react"
-import Link from "next/link"
 
 // Định nghĩa component SidebarToggle và memo nó
 const SidebarToggle = React.memo(({
@@ -79,14 +78,14 @@ export const AppSidebar = React.memo(function AppSidebar() {
     // Memoize các item data để giảm re-renders
     const navMainItems = React.useMemo(() => sidebarData.navMain, []);
     const projectItems = React.useMemo(() => sidebarData.projects, []);
-    const teamItems = React.useMemo(() => sidebarData.teams, []);
+    // const teamItems = React.useMemo(() => sidebarData.teams, []);
 
     useRenderTracker("AppSidebar", {});
 
     return (
         <div className="h-screen bg-white dark:bg-black border-r border-border/40 flex flex-col overflow-y-auto w-full">
             <div className="p-2.5 border-b flex items-center justify-between">
-                <MemoTeamSwitcher teams={teamItems} />
+                {/* <MemoTeamSwitcher teams={teamItems} /> */}
                 {!isMobileView && (
                     <SidebarToggle
                         onClick={handleToggle}

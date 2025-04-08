@@ -11,8 +11,8 @@ import PageLoader from '@/components/common/Loading/PageLoader';
 // Create a type that extends BaseData for use with DataTable
 interface ManagerData extends BaseData {
     userId: string;
-    startDate: string;
-    endDate?: string | null;
+    startDate: Date;
+    endDate?: Date | null;
     isPrimary: boolean;
     user?: {
         id: string;
@@ -162,7 +162,7 @@ export const TeamManagersTable: React.FC<TeamManagersTableProps> = ({
         <PageLoader isLoading={isLoading}>
             <DataTable
                 columns={columns}
-                data={managersWithId as ManagerData[]}
+                data={managersWithId}
                 title="Danh sách quản lý"
                 description="Những người quản lý nhóm"
                 actions={canManage ? ["create", "edit", "delete"] : []}

@@ -246,8 +246,8 @@ export default function LinesListContainer({ params }: ContainerProps) {
                             factoryId={factoryId}
                             factoryName={factory?.name}
                             onLineSelect={handleLineSelect}
-                            onEdit={handleEditLine}
-                            onDelete={handleDeleteLine}
+                            onEditLine={handleEditLine}
+                            onDeleteLine={handleDeleteLine}
                         />
                     )}
 

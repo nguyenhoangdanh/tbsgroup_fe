@@ -52,7 +52,7 @@ const UserProfileForm = () => {
         if (user) {
             methods.setValue('username', user.username);
             methods.setValue('employeeId', user.employeeId);
-            methods.setValue('role', user.role);
+            methods.setValue('roleId', user.roleId);
             methods.setValue('fullName', user.fullName);
             methods.setValue('cardId', user.cardId);
         }
@@ -88,7 +88,7 @@ const UserProfileForm = () => {
                     <FieldInput
                         control={methods.control}
                         label="Vai trò"
-                        name="role"
+                        name="roleId"
                         placeholder="Nhập vai trò"
                     />
                     {/* <SubmitButton

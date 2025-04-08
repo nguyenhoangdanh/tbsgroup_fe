@@ -11,8 +11,8 @@ import { useFactoryMutations } from "@/hooks/factory/useFactoryMutations";
 import { toast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import UnifiedFormField from "@/components/common/Form/custom/UnifiedFormField";
-import { UserType } from "@/hooks/users/useUserQueries";
 import { FactoryManager } from "@/common/interface/factory";
+import { UserType } from "@/common/interface/user";
 
 // Enum for form mode
 enum ManagerFormMode {

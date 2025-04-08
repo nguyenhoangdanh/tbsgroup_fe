@@ -9,6 +9,7 @@ export interface Line {
   capacity?: number;
   createdAt: string | Date;
   updatedAt: string | Date;
+  status: 'ACTIVE' | 'INACTIVE' | 'MAINTENANCE';
 }
 
 export interface LineCreateDTO {

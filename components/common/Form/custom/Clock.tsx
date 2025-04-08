@@ -9,13 +9,15 @@ interface ClockProps {
     hours?: number;
     minutes?: number;
     className?: string;
+    disabled?: boolean;
 }
 
 export const Clock: React.FC<ClockProps> = ({
     onSelect,
     hours: initialHours = new Date().getHours(),
     minutes: initialMinutes = new Date().getMinutes(),
-    className
+    className,
+    disabled = false,
 }) => {
     const [hours, setHours] = useState(initialHours);
     const [minutes, setMinutes] = useState(initialMinutes);

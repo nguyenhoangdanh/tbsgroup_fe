@@ -3,7 +3,7 @@
 import React, { useCallback, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
-import { PlusIcon, Search, Trash2, RefreshCw } from "lucide-react";
+import { PlusIcon, Search, Trash2, RefreshCw, ArrowLeft } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from '@/components/ui/input';
 import { DataTable } from "@/components/common/table/data-table";
@@ -447,15 +447,10 @@ const LineTeamsContainer: React.FC<LineTeamsContainerProps> = ({ factoryId, line
                         >
                             <DataTable
                                 columns={columns}
+                                title='Danh sách tổ'
                                 data={lineTeams}
-                                rowActions={rowActions}
-                                isSelectable={true}
-                                onSelectedRowsChange={(rows) => setSelectedTeams(new Set(rows.map(row => row.id)))}
-                                searchValue={searchTerm}
-                                onSearchChange={setSearchTerm}
-                                emptyStateMessage="Không tìm thấy tổ nào"
-                                emptyStateCreateMessage="Tạo tổ mới"
-                                onEmptyStateCreate={handleCreateTeam}
+                                searchColumn='name'
+                                searchPlaceholder='Tìm kiếm tổ...'
                             />
                         </PageLoader>
                     </CardContent>

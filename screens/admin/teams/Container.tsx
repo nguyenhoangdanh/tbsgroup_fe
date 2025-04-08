@@ -61,7 +61,7 @@ const TeamsContainer = ({ params }: ContainerProps) => {
 
     // Fetch teams for this line with optimized query
     const {
-        data: lineTeams = [],
+        data: lineTeams,
         isLoading: isLoadingTeams,
         error: teamsError,
         refetch: refetchTeams
@@ -157,7 +157,7 @@ const TeamsContainer = ({ params }: ContainerProps) => {
 
     // Delete a team with confirmation
     const handleDeleteTeam = useCallback((teamId: string) => {
-        const teamName = lineTeams.find(t => t.id === teamId)?.name || 'tổ này';
+        const teamName = lineTeams && lineTeams.find(t => t.id === teamId)?.name || 'tổ này';
 
         setIsProcessing(true);
 
@@ -420,15 +420,9 @@ const TeamsContainer = ({ params }: ContainerProps) => {
                         >
                             <DataTable
                                 columns={columns}
-                                data={lineTeams}
-                                rowActions={rowActions}
-                                isSelectable={true}
-                                onSelectedRowsChange={(rows) => setSelectedTeams(new Set(rows.map(row => row.id)))}
-                                searchValue={searchTerm}
-                                onSearchChange={setSearchTerm}
-                                emptyStateMessage="Không tìm thấy tổ nào"
-                                emptyStateCreateMessage="Tạo tổ mới"
-                                onEmptyStateCreate={handleCreateTeam}
+                                data={lineTeams || []}
+                                title='Danh sách tổ'
+
                             />
                         </PageLoader>
                     </CardContent>

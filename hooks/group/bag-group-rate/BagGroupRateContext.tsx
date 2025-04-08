@@ -1128,9 +1128,9 @@ export const BagGroupRateProvider: React.FC<{ children: React.ReactNode }> = ({ 
                     ...oldData,
                     data: oldData.data
                         // Remove deleted records
-                        .filter(item => !removedIds.includes(item.id))
+                        .filter((item: { id: string }) => !removedIds.includes(item.id))
                         // Update changed records
-                        .map(item => {
+                        .map((item: { id: string; groupId: string; outputRate: number }) => {
                             const updatedRecord = recordsToUpdate.find(r => r.groupId === item.groupId);
                             return updatedRecord ? { ...item, outputRate: updatedRecord.outputRate } : item;
                         })

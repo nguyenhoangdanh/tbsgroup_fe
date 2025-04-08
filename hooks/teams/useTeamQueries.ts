@@ -117,7 +117,7 @@ export const useTeamQueries = () => {
         try {
           return await getTeamsByLine(lineId);
         } catch (error) {
-          if (error && error?.response?.status === 404) {
+          if (error && typeof error === 'object' && 'response' in error && (error as any).response?.status === 404) {
             throw new Error(`Không tìm thấy dây chuyền với ID: ${lineId}`);
           }
           handleQueryError(error, 'tổ của dây chuyền');

@@ -9,8 +9,8 @@ import {
 } from '@/apis/user/user.api';
 import {TUserSchema} from '@/schemas/user';
 import {toast} from '../use-toast';
-import {UserType} from './useUserQueries';
 import {UserStatusEnum} from '@/common/enum';
+import { UserType } from '@/common/interface/user';
 
 // API functions cho user management
 const createUser = async (data: Omit<TUserSchema, 'id'>) => {

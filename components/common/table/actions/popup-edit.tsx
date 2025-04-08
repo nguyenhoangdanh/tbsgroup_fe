@@ -18,7 +18,7 @@ interface EditActionDialogProps<T extends BaseData = BaseData> {
     disableButton?: boolean;
     onClose?: () => void;
     data: T;
-    onClick?: () => void;
+    onClick?: ((data: T) => void) | (() => void);
 }
 
 export function EditActionDialog<T extends BaseData = BaseData>({

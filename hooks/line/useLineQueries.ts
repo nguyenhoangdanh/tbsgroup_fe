@@ -109,7 +109,7 @@ export const useLineQueries = () => {
       try {
         return await getLinesByFactory(factoryId);
       } catch (error) {
-        if (error && error?.response?.status === 404) {
+        if (error && typeof error === 'object' && 'response' in error && (error.response as { status?: number })?.status === 404) {
           throw new Error(`Không tìm thấy nhà máy với ID: ${factoryId}`);
         }
         handleQueryError(error, 'dây chuyền của nhà máy');

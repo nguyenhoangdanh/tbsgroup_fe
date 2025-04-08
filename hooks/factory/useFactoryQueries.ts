@@ -429,6 +429,7 @@ export const useFactoryQueries = () => {
     // Base factory queries
     ...factoryQueries,
     listFactories: factoryQueries.listItems,
+    getFactoryById: factoryQueries.getById,
     
     // Additional specialized queries
     getManagersByFactoryId,
