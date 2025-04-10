@@ -57,12 +57,8 @@ export const useUserHelpers = () => {
     setPagination(prev => {
       // Không trigger re-render nếu giá trị không thay đổi
       if (prev.page === page && prev.limit === limit) {
-        console.log('No change in pagination values, skipping update');
         return prev;
       }
-      console.log(
-        `Updating pagination state from {page: ${prev.page}, limit: ${prev.limit}} to {page: ${page}, limit: ${limit}}`,
-      );
       return { page, limit };
     });
   }, []);
@@ -116,22 +112,12 @@ export const useUserHelpers = () => {
 
   // Đồng bộ thay đổi pagination vào active filters
   useEffect(() => {
-    console.log(
-      `Pagination state changed: page=${pagination.page}, limit=${pagination.limit}`,
-    );
-
     setActiveFilters(prev => {
       // Kiểm tra nếu thực sự có thay đổi
       if (prev.page === pagination.page && prev.limit === pagination.limit) {
-        console.log(
-          'No change in pagination for active filters, skipping update',
-        );
         return prev;
       }
 
-      console.log(
-        `Updating active filters with new pagination: page=${pagination.page}, limit=${pagination.limit}`,
-      );
       return {
         ...prev,
         page: pagination.page,

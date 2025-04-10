@@ -1,25 +1,63 @@
-// src/utils/uuid-utils.ts
+import { z } from 'zod';
 
 /**
- * Kiểm tra xem một chuỗi có phải là UUID hợp lệ hay không
- * @param uuid Chuỗi cần kiểm tra
- * @returns true nếu là UUID hợp lệ, false nếu không
+ * Schema Zod cho UUID
+ * Sử dụng để validate dữ liệu ID
  */
-export function isValidUUID(uuid: string): boolean {
-    if (!uuid) return false;
-    
-    // UUID regex format: 8-4-4-4-12 hexadecimal digits
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    return uuidRegex.test(uuid);
+export const uuidSchema = z.string().uuid('ID phải là UUID hợp lệ');
+
+/**
+ * Schema Zod cho mảng UUID
+ * Sử dụng để validate danh sách ID
+ */
+export const uuidArraySchema = z.array(uuidSchema)
+  .nonempty('Danh sách ID không được rỗng');
+
+/**
+ * Kiểm tra một chuỗi có phải là UUID hợp lệ không
+ * @param id - chuỗi cần kiểm tra
+ * @returns boolean - true nếu hợp lệ
+ */
+export const isValidUUID = (id: string): boolean => {
+  try {
+    uuidSchema.parse(id);
+    return true;
+  } catch (error) {
+    return false;
   }
-  
-  /**
-   * Kiểm tra xem một giá trị bất kỳ có phải là UUID hợp lệ hay không
-   * Trả về null nếu không hợp lệ
-   * @param input Giá trị đầu vào
-   * @returns UUID hợp lệ hoặc null
-   */
-  export function validateUUID(input: any): string | null {
-    if (!input || typeof input !== 'string') return null;
-    return isValidUUID(input) ? input : null;
+};
+
+/**
+ * Đảm bảo một chuỗi là UUID hợp lệ trước khi sử dụng trong API
+ * Nếu không hợp lệ, trả về null và tùy chọn hiển thị lỗi
+ * @param id - chuỗi cần kiểm tra
+ * @param showError - hàm hiển thị lỗi (tùy chọn)
+ * @returns string | null - id nếu hợp lệ, null nếu không hợp lệ
+ */
+export const validateUUIDOrShowError = (
+  id: string | undefined, 
+  showError?: (message: string) => void
+): string | null => {
+  if (!id) {
+    if (showError) showError('ID không được để trống');
+    return null;
   }
+
+  if (!isValidUUID(id)) {
+    if (showError) showError(`ID không đúng định dạng UUID: ${id}`);
+    return null;
+  }
+
+  return id;
+};
+
+/**
+ * Tạo schema cho tham số trong URL
+ * @param paramName Tên tham số
+ * @returns Zod schema
+ */
+export const createParamSchema = (paramName: string) => {
+  return z.object({
+    [paramName]: uuidSchema,
+  });
+};

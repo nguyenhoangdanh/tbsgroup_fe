@@ -25,7 +25,7 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { useUserQueries } from '@/hooks/users';
 import { LineManagersTable } from './LineManagersTable';
 import LineTeamsTab from './LineTeamsTab'; // Import our new component
-import PageLoader from '@/components/common/Loading/PageLoader';
+import PageLoader from '@/components/common/loading/PageLoader';
 
 interface ErrorStateProps {
     error: Error | unknown;

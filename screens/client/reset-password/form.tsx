@@ -8,7 +8,7 @@ import { FieldInput } from "@/components/common/Form/FieldInput";
 import { useRouter } from "next/navigation";
 import { toast } from "@/hooks/use-toast";
 import SubmitButton from "@/components/SubmitButton";
-import LazyLoader from "@/components/common/Loading/LazyLoader";
+import LazyLoader from "@/components/common/loading/LazyLoader";
 import { ArrowLeft, ChevronLeft, CircleCheckBig } from "lucide-react";
 import { UserStatusEnum } from "@/common/enum";
 import useAuthManager from "@/hooks/useAuthManager";

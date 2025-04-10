@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { DM_Sans } from "next/font/google";
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/context/ThemeProvider";
 import SagaProviders from "@/context/SagaProvider";
@@ -11,9 +10,8 @@ import { AuthSecurityProvider } from "@/context/AuthProvider";
 import ActivityMonitor from "@/components/security/ActivityMonitor";
 import Script from "next/script";
 import SecurityBanner from "@/components/security/SecurityBanner";
-import { LoadingProvider } from "@/components/common/Loading/UnifieldLoadingSystem";
-
-const dm_sans = DM_Sans({ subsets: ["latin"] });
+import ClientProviders from "@/context/ClientProviders";
+import { LoadingProvider } from "@/components/common/loading/LoadingProvider";
 export const metadata: Metadata = {
   title: "Thoai Son Handbag Factory",
   description: "TBS Group - Thoai Son Handbag Factory"
@@ -149,11 +147,13 @@ export default function RootLayout({
               <AuthSecurityProvider>
                 <ActivityMonitor />
                 <RootLayoutWrapper>
-                  {/* <SecurityBanner /> */}
-                  <Toaster />
-                  <LoadingProvider>
-                    {children}
-                  </LoadingProvider>
+                  <ClientProviders>
+                    {/* <SecurityBanner /> */}
+                    <Toaster />
+                    <LoadingProvider>
+                      {children}
+                    </LoadingProvider>
+                  </ClientProviders>
                 </RootLayoutWrapper>
               </AuthSecurityProvider>
             </QueryProvider>

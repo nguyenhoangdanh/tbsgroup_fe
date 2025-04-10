@@ -10,7 +10,7 @@ import { toast } from '@/hooks/use-toast';
 import { useTeam } from '@/hooks/teams/TeamContext';
 import { TeamUpdateDTO } from '@/common/interface/team';
 import { ErrorBoundary } from 'react-error-boundary';
-import PageLoader from '@/components/common/Loading/PageLoader';
+import PageLoader from '@/components/common/loading/PageLoader';
 
 // Error fallback component for ErrorBoundary
 const ErrorFallback = ({ error, resetErrorBoundary }: { error: Error, resetErrorBoundary: () => void }) => (

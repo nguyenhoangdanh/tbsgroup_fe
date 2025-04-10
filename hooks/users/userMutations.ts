@@ -22,7 +22,7 @@ const updateUser = async ({
   data,
 }: {
   id: string;
-  data: Omit<TUserSchema, 'id'>;
+  data: Omit<TUserSchema, 'id' | 'password'>;
 }) => {
   return updateUserMutationFn({id, data});
 }; 

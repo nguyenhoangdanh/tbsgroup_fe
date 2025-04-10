@@ -51,7 +51,8 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { TableSkeleton } from "./TableSkeleton";
+import { useLoading } from "../loading/LoadingProvider";
+import TableSkeletonLoader from "../loading/TableSkeletonLoader";
 // import './table.css';
 
 // Explicitly define types and actions
@@ -189,6 +190,21 @@ export function DataTable<TData extends BaseData, TValue>({
   // 1. Add a ref to track pagination changes
   const isPaginationChange = React.useRef(false);
   const [isDataFetching, setIsDataFetching] = React.useState(false);
+
+
+  const { startLoading, stopLoading, isLoading: isTableLoading, configs } = useLoading();
+  const loadingKey = `table-data-${title.replace(/\s+/g, "-").toLowerCase()}`;
+
+  React.useEffect(() => {
+    if (isLoading) {
+      startLoading(loadingKey, {
+        variant: "table",
+        skeletonConfig: { columns: columns.length + (actions ? 1 : 0), rows: initialPageSize },
+      });
+    } else {
+      stopLoading(loadingKey);
+    }
+  }, [isLoading, startLoading, stopLoading, columns.length, initialPageSize, actions]);
 
   // Filter data based on search
   const filteredData = React.useMemo(() => {
@@ -454,11 +470,34 @@ export function DataTable<TData extends BaseData, TValue>({
     if (isFirstRender.current) {
       isFirstRender.current = false;
       const initialServerPage = getServerPageForClientPage(initialPageIndex, initialPageSize);
+
+      // Bật loading khi bắt đầu fetch data
+      startLoading(loadingKey, {
+        variant: "table",
+        delay: 300,
+        skeletonConfig: {
+          columns: columns.length + (actions ? 1 : 0),
+          rows: pageSize
+        },
+        message: "Đang tải dữ liệu bảng...",
+        customClass: "w-full"
+      });
       onPageChange(initialServerPage, serverPageSize);
       return;
     }
 
     const serverPageIndex = getServerPageForClientPage(pageIndex, pageSize);
+
+    startLoading(loadingKey, {
+      variant: "table",
+      delay: 300,
+      skeletonConfig: {
+        columns: columns.length + (actions ? 1 : 0),
+        rows: pageSize
+      },
+      message: "Đang tải dữ liệu bảng...",
+      customClass: "w-full"
+    });
 
     // Only set fetching state, don't trigger full page loader
     setIsDataFetching(true);
@@ -490,8 +529,10 @@ export function DataTable<TData extends BaseData, TValue>({
     isPaginationChange.current = false;
 
     // Reset data fetching state
-    setIsDataFetching(false);
-  }, [data]);;
+    setIsDataFetching(false)
+    // Tắt loading khi có data mới
+    stopLoading(loadingKey);;
+  }, [data, stopLoading]);;
 
 
   // Track selected rows
@@ -983,6 +1024,7 @@ export function DataTable<TData extends BaseData, TValue>({
         )} */}
       </div>
 
+
       <div className="w-full">
         {enableRowGrouping && <GroupControls />}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between py-2 sm:py-4 gap-2">
@@ -1081,41 +1123,32 @@ export function DataTable<TData extends BaseData, TValue>({
 
         {/* Table */}
 
-        {isLoading ? (
-          <div className="w-full">
-            <TableSkeleton
-              columns={columns.length + ((actions ?? []).includes("edit") || (actions ?? []).includes("delete") || (actions ?? []).includes("read-only") ? 1 : 0)}
-              rows={initialPageSize}
-              darkMode={theme === 'dark'}
-            />
-          </div>
-        ) : (
-          <div className="overflow-x-auto border rounded-md">
-            <Table>
-              <TableHeader>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow key={headerGroup.id}>
-                    <TableHead key="select" className="whitespace-nowrap">
-                      STT
+        <div className="overflow-x-auto border rounded-md">
+          <Table>
+            <TableHeader>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  <TableHead key="select" className="whitespace-nowrap">
+                    STT
+                  </TableHead>
+                  {headerGroup.headers.map((header) => (
+                    <TableHead key={header.id} className="whitespace-nowrap">
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
                     </TableHead>
-                    {headerGroup.headers.map((header) => (
-                      <TableHead key={header.id} className="whitespace-nowrap">
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                      </TableHead>
-                    ))}
-                    {(actions && (actions.includes("edit") || actions.includes("delete") || actions.includes("read-only"))) && (
-                      <TableHead key="actions" className="whitespace-nowrap">Thao tác</TableHead>
-                    )}
-                  </TableRow>
-                ))}
-              </TableHeader>
-              <TableBody>
-                {/* {table.getRowModel().rows?.length ? (
+                  ))}
+                  {(actions && (actions.includes("edit") || actions.includes("delete") || actions.includes("read-only"))) && (
+                    <TableHead key="actions" className="whitespace-nowrap">Thao tác</TableHead>
+                  )}
+                </TableRow>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {/* {table.getRowModel().rows?.length ? (
                   table.getRowModel().rows.map((row, rowIndex) => (
                     <TableRow
                       key={row.id}
@@ -1126,7 +1159,7 @@ export function DataTable<TData extends BaseData, TValue>({
                           ? <span className="text-xs text-muted-foreground">Nhóm</span>
                           : pageIndex * pageSize + rowIndex + 1}
                       </TableCell> */}
-                {/* {row.getVisibleCells().map((cell) => (
+              {/* {row.getVisibleCells().map((cell) => (
                         <TableCell key={cell.id} className="py-2">
                           {flexRender(
                             cell.column.columnDef.cell,
@@ -1134,109 +1167,110 @@ export function DataTable<TData extends BaseData, TValue>({
                           )}
                         </TableCell>
                       ))} */}
-                {table.getRowModel().rows?.length ? (
-                  table.getRowModel().rows.map((row, rowIndex) => {
-                    const isGroupRow = row.original?.isGroupRow === true;
-                    const isChildRow = row.original?.isChildRow === true;
+              {table.getRowModel().rows?.length ? (
+                table.getRowModel().rows.map((row, rowIndex) => {
+                  const isGroupRow = row.original?.isGroupRow === true;
+                  const isChildRow = row.original?.isChildRow === true;
 
-                    return (
-                      <TableRow
-                        key={isGroupRow ? `group-${row.original.groupValue}` : row.id}
-                        data-state={row.getIsSelected() && "selected"}
-                        className={`${isGroupRow ? 'group-row' : ''} ${isChildRow ? 'child-row' : ''}`}
-                      // className={isChildRow ? "bg-muted/30" : ""}
-                      >
-                        <TableCell key="select" className="py-2">
-                          {isGroupRow
-                            ? <span className="text-xs text-muted-foreground">Nhóm</span>
-                            : pageIndex * pageSize + rowIndex + 1}
-                        </TableCell>
+                  return (
+                    <TableRow
+                      key={isGroupRow ? `group-${row.original.groupValue}` : row.id}
+                      data-state={row.getIsSelected() && "selected"}
+                      className={`${isGroupRow ? 'group-row' : ''} ${isChildRow ? 'child-row' : ''}`}
+                    // className={isChildRow ? "bg-muted/30" : ""}
+                    >
+                      <TableCell key="select" className="py-2">
+                        {isGroupRow
+                          ? <span className="text-xs text-muted-foreground">Nhóm</span>
+                          : pageIndex * pageSize + rowIndex + 1}
+                      </TableCell>
 
-                        {row.getVisibleCells().map((cell) => {
-                          const column = cell.column;
+                      {row.getVisibleCells().map((cell) => {
+                        const column = cell.column;
 
-                          // Handle group row special case
-                          if (isGroupRow) {
-                            // For the first column, show the group header with expand/collapse button
-                            if (column.id === columns[0].id) {
-                              return (
-                                <TableCell key={cell.id} className="py-2">
-                                  <div className="flex items-center">
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      onClick={() => row.original.groupValue && toggleGroup(row.original.groupValue)}
-                                      className="h-6 w-6 mr-1 p-0"
-                                    >
-                                      {row.original.isExpanded ? (
-                                        <ChevronDown className="h-4 w-4" />
-                                      ) : (
-                                        <ChevronRight className="h-4 w-4" />
-                                      )}
-                                    </Button>
-                                    <span className="font-medium">
-                                      {row.original.groupName || row.original.groupValue}
-                                    </span>
-                                    <span className="ml-2 px-2 py-0.5 bg-gray-100 dark:bg-gray-800 text-xs rounded-full">
-                                      {row.original.groupCount}
-                                    </span>
-                                  </div>
-                                </TableCell>
-                              );
-                            }
-                            // Other columns in group row should be empty
-                            return <TableCell key={cell.id} className="py-2"></TableCell>;
-                          }
-
-                          // Child row styling for the first column
-                          if (isChildRow && column.id === columns[0].id) {
+                        // Handle group row special case
+                        if (isGroupRow) {
+                          // For the first column, show the group header with expand/collapse button
+                          if (column.id === columns[0].id) {
                             return (
-                              <TableCell key={cell.id} className="py-2 pl-8">
-                                {flexRender(column.columnDef.cell, cell.getContext())}
+                              <TableCell key={cell.id} className="py-2">
+                                <div className="flex items-center">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => row.original.groupValue && toggleGroup(row.original.groupValue)}
+                                    className="h-6 w-6 mr-1 p-0"
+                                  >
+                                    {row.original.isExpanded ? (
+                                      <ChevronDown className="h-4 w-4" />
+                                    ) : (
+                                      <ChevronRight className="h-4 w-4" />
+                                    )}
+                                  </Button>
+                                  <span className="font-medium">
+                                    {row.original.groupName || row.original.groupValue}
+                                  </span>
+                                  <span className="ml-2 px-2 py-0.5 bg-gray-100 dark:bg-gray-800 text-xs rounded-full">
+                                    {row.original.groupCount}
+                                  </span>
+                                </div>
                               </TableCell>
                             );
                           }
+                          // Other columns in group row should be empty
+                          return <TableCell key={cell.id} className="py-2"></TableCell>;
+                        }
 
-                          // Standard cell rendering
+                        // Child row styling for the first column
+                        if (isChildRow && column.id === columns[0].id) {
                           return (
-                            <TableCell key={cell.id} className="py-2">
+                            <TableCell key={cell.id} className="py-2 pl-8">
                               {flexRender(column.columnDef.cell, cell.getContext())}
                             </TableCell>
                           );
-                        })}
-                        {(actions && (actions.includes("edit") || actions.includes("delete") || actions.includes("read-only"))) && (
-                          <TableCell key={`${row.id}-actions`} className="py-2">
-                            {!isGroupRow && (
-                              <ButtonGroupAction
-                                actions={actions}
-                                onEdit={(data) => onEdit && onEdit(data)}
-                                onDelete={async (id) => onDelete && await onDelete(id)}
-                                onRefetchData={refetchData}
-                                rowData={row.original}
-                                editComponent={editFormComponent}
-                                viewComponent={viewFormComponent}
-                                editClick={editClickAction}
-                              />
-                            )}
+                        }
+
+                        // Standard cell rendering
+                        return (
+                          <TableCell key={cell.id} className="py-2">
+                            {flexRender(column.columnDef.cell, cell.getContext())}
                           </TableCell>
-                        )}
-                      </TableRow>
-                    )
-                  })
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={columns.length + ((actions ?? []).includes("edit") || (actions ?? []).includes("delete") || (actions ?? []).includes("read-only") ? 2 : 1)}
-                      className="h-24 text-center"
-                    >
-                      Không có dữ liệu.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        )}
+                        );
+                      })}
+                      {(actions && (actions.includes("edit") || actions.includes("delete") || actions.includes("read-only"))) && (
+                        <TableCell key={`${row.id}-actions`} className="py-2">
+                          {!isGroupRow && (
+                            <ButtonGroupAction
+                              actions={actions}
+                              onEdit={(data) => onEdit && onEdit(data)}
+                              onDelete={async (id) => onDelete && await onDelete(id)}
+                              onRefetchData={refetchData}
+                              rowData={row.original}
+                              editComponent={editFormComponent}
+                              viewComponent={viewFormComponent}
+                              editClick={editClickAction}
+                            />
+                          )}
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  )
+                })
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={columns.length + ((actions ?? []).includes("edit") || (actions ?? []).includes("delete") || (actions ?? []).includes("read-only") ? 2 : 1)}
+                    className="h-24 text-center"
+                  >
+                    {Object.entries(configs).map(([key, config]) => (
+                      <TableSkeletonLoader key={key} config={config} onExitComplete={() => stopLoading(key)} />
+                    ))}
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
 
         {renderBatchDeleteButton()}
 

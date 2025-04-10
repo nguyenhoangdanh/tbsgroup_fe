@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TeamLeader } from '@/common/interface/team';
-import PageLoader from '@/components/common/Loading/PageLoader';
+import PageLoader from '@/components/common/loading/PageLoader';
 
 // Create a type that extends BaseData for use with DataTable
 interface ManagerData extends BaseData {

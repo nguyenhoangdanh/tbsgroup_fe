@@ -14,7 +14,7 @@ import { toast } from '@/hooks/use-toast';
 import { ColumnDef } from "@tanstack/react-table";
 import { DialogType, useDialog } from "@/context/DialogProvider";
 import { ErrorBoundary } from 'react-error-boundary';
-import PageLoader from '@/components/common/Loading/PageLoader';
+import PageLoader from '@/components/common/loading/PageLoader';
 import { Badge } from '@/components/ui/badge';
 import { TeamForm } from '../teams/TeamForm';
 

@@ -10,7 +10,7 @@ import LineForm from './LineForm';
 import { Line } from '@/common/interface/line';
 import { PlusIcon } from "lucide-react";
 import { ErrorBoundary } from 'react-error-boundary';
-import PageLoader from '@/components/common/Loading/PageLoader';
+import PageLoader from '@/components/common/loading/PageLoader';
 
 interface FactoryLinesManagementProps {
     factoryId: string;

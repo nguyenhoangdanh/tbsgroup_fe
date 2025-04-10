@@ -2,7 +2,7 @@ import AuthLayout from '@/components/common/layouts/auth/AuthLayout'
 import ResetPasswordForm from './form'
 import AuthImage from '@/components/common/layouts/auth/AuthImage'
 import { Suspense } from 'react'
-import LazyLoader from '@/components/common/Loading/LazyLoader'
+import LazyLoader from '@/components/common/loading/LazyLoader'
 
 export const ResetPasswordContainer = () => {
     return (

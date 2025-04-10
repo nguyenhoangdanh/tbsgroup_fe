@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { ChevronRight, type LucideIcon } from "lucide-react"
+import { ChevronRight, type LucideIcon, Shield, AlertCircle } from "lucide-react"
 import { usePathname } from 'next/navigation';
 import {
     Collapsible,
@@ -23,17 +23,55 @@ import {
     PopoverContent,
     PopoverTrigger
 } from "@/components/ui/popover"
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger
+} from "@/components/ui/tooltip"
 import { useSidebarCollapsed, useSidebarIsMobileView } from "../../SidebarStateProvider"
 import Link from "next/link"
+import useAuthManager from "@/hooks/useAuthManager"
+import { hasRouteAccess } from "@/utils/permission-utils";
+
+// Define the interface for SubItem props
+interface SubItemProps {
+    title: string;
+    url: string;
+    hasAccess?: boolean;
+}
 
 // Sử dụng React.memo với kiểm tra so sánh sâu để tránh re-render không cần thiết
-const SubItem = React.memo(({ title, url }: { title: string, url: string }) => {
+const SubItem = React.memo(({
+    title,
+    url,
+    hasAccess = true
+}: SubItemProps) => {
     return (
         <SidebarMenuSubItem>
-            <SidebarMenuSubButton asChild>
-                <Link href={url}>
-                    <span>{title}</span>
-                </Link>
+            <SidebarMenuSubButton
+                asChild={hasAccess}
+                className={!hasAccess ? "opacity-50 cursor-not-allowed" : ""}
+            >
+                {hasAccess ? (
+                    <Link href={url}>
+                        <span>{title}</span>
+                    </Link>
+                ) : (
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <div className="flex items-center">
+                                    <span>{title}</span>
+                                    <Shield size={14} className="ml-2 text-muted-foreground" />
+                                </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>Bạn không có quyền truy cập vào tính năng này</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                )}
             </SidebarMenuSubButton>
         </SidebarMenuSubItem>
     );
@@ -41,17 +79,24 @@ const SubItem = React.memo(({ title, url }: { title: string, url: string }) => {
 
 SubItem.displayName = "SubItem";
 
+// Define the interfaces for consistent type usage
+interface NavItemType {
+    title: string;
+    url: string;
+    icon?: LucideIcon;
+    isActive?: boolean;
+    items?: NavSubItemType[];
+}
+
+interface NavSubItemType {
+    title: string;
+    url: string;
+}
+
 // Popover item component
-const PopoverNavItem = React.memo(({ item }: {
-    item: {
-        title: string;
-        url: string;
-        icon?: LucideIcon;
-        items?: {
-            title: string;
-            url: string;
-        }[];
-    }
+const PopoverNavItem = React.memo(({ item, userRole }: {
+    item: NavItemType,
+    userRole?: string
 }) => {
     return (
         <SidebarMenuItem>
@@ -73,15 +118,35 @@ const PopoverNavItem = React.memo(({ item }: {
                             {item.title}
                         </div>
                         <div className="mt-1">
-                            {item.items?.map((subItem) => (
-                                <Link
-                                    key={subItem.title}
-                                    href={subItem.url}
-                                    className="flex items-center px-3 py-1.5 text-sm hover:bg-slate-100 dark:hover:bg-slate-800"
-                                >
-                                    {subItem.title}
-                                </Link>
-                            ))}
+                            {item.items?.map((subItem: NavSubItemType) => {
+                                const itemHasAccess = hasRouteAccess(subItem.url, userRole || '');
+                                return (
+                                    <div key={subItem.title} className="flex items-center px-3 py-1.5 text-sm">
+                                        {itemHasAccess ? (
+                                            <Link
+                                                href={subItem.url}
+                                                className="w-full hover:bg-slate-100 dark:hover:bg-slate-800"
+                                            >
+                                                {subItem.title}
+                                            </Link>
+                                        ) : (
+                                            <TooltipProvider>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <div className="w-full flex justify-between items-center opacity-50 cursor-not-allowed">
+                                                            {subItem.title}
+                                                            <Shield size={14} className="ml-2 text-muted-foreground" />
+                                                        </div>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                        <p>Bạn không có quyền truy cập vào tính năng này</p>
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            </TooltipProvider>
+                                        )}
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
                 </PopoverContent>
@@ -93,17 +158,9 @@ const PopoverNavItem = React.memo(({ item }: {
 PopoverNavItem.displayName = "PopoverNavItem";
 
 // Collapsible item component
-const CollapsibleNavItem = React.memo(({ item }: {
-    item: {
-        title: string;
-        url: string;
-        icon?: LucideIcon;
-        isActive?: boolean;
-        items?: {
-            title: string;
-            url: string;
-        }[];
-    }
+const CollapsibleNavItem = React.memo(({ item, userRole }: {
+    item: NavItemType,
+    userRole?: string
 }) => {
     return (
         <Collapsible
@@ -121,13 +178,17 @@ const CollapsibleNavItem = React.memo(({ item }: {
                 </CollapsibleTrigger>
                 <CollapsibleContent>
                     <SidebarMenuSub>
-                        {item.items?.map((subItem) => (
-                            <SubItem
-                                key={subItem.title}
-                                title={subItem.title}
-                                url={subItem.url}
-                            />
-                        ))}
+                        {item.items?.map((subItem) => {
+                            const itemHasAccess = hasRouteAccess(subItem.url, userRole || '');
+                            return (
+                                <SubItem
+                                    key={subItem.title}
+                                    title={subItem.title}
+                                    url={subItem.url}
+                                    hasAccess={itemHasAccess}
+                                />
+                            );
+                        })}
                     </SidebarMenuSub>
                 </CollapsibleContent>
             </SidebarMenuItem>
@@ -140,23 +201,16 @@ CollapsibleNavItem.displayName = "CollapsibleNavItem";
 // Component để tối ưu render dựa trên trạng thái isIconMode
 const NavItemRenderer = React.memo(({
     item,
-    isIconMode
+    isIconMode,
+    userRole
 }: {
-    item: {
-        title: string;
-        url: string;
-        icon?: LucideIcon;
-        isActive?: boolean;
-        items?: {
-            title: string;
-            url: string;
-        }[];
-    },
-    isIconMode: boolean
+    item: NavItemType,
+    isIconMode: boolean,
+    userRole?: string
 }) => {
     return isIconMode
-        ? <PopoverNavItem item={item} />
-        : <CollapsibleNavItem item={item} />;
+        ? <PopoverNavItem item={item} userRole={userRole} />
+        : <CollapsibleNavItem item={item} userRole={userRole} />;
 });
 
 NavItemRenderer.displayName = "NavItemRenderer";
@@ -165,21 +219,15 @@ NavItemRenderer.displayName = "NavItemRenderer";
 export const NavMain = React.memo(({
     items,
 }: {
-    items: {
-        title: string
-        url: string
-        icon?: LucideIcon
-        isActive?: boolean
-        items?: {
-            title: string
-            url: string
-        }[]
-    }[]
+    items: NavItemType[]
 }) => {
     const pathname = usePathname();
     // Sử dụng context đã tách
     const collapsed = useSidebarCollapsed();
     const isMobileView = useSidebarIsMobileView();
+    // Get user role from auth manager
+    const { user } = useAuthManager();
+    const userRole = user?.role;
 
     // Xác định chế độ icon - tính toán một lần duy nhất khi dependencies thay đổi
     const isIconMode = React.useMemo(() => {
@@ -196,6 +244,23 @@ export const NavMain = React.memo(({
         }));
     }, [items, pathname]);
 
+    // If no items are passed or user has no permissions, show a message
+    if (!processedItems || processedItems.length === 0) {
+        return (
+            <SidebarGroup>
+                <SidebarGroupLabel className={isIconMode ? "hidden" : ""}>Platform</SidebarGroupLabel>
+                <SidebarMenu>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton className="cursor-default">
+                            <AlertCircle size={18} className="text-muted-foreground" />
+                            <span>Không có menu hiển thị</span>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                </SidebarMenu>
+            </SidebarGroup>
+        );
+    }
+
     return (
         <SidebarGroup>
             <SidebarGroupLabel className={isIconMode ? "hidden" : ""}>Platform</SidebarGroupLabel>
@@ -205,6 +270,7 @@ export const NavMain = React.memo(({
                         key={item.title}
                         item={item}
                         isIconMode={isIconMode}
+                        userRole={userRole}
                     />
                 ))}
             </SidebarMenu>
@@ -230,10 +296,23 @@ NavMain.displayName = "NavMain";
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 // "use client"
 
 // import * as React from "react"
-// import { ChevronRight, type LucideIcon } from "lucide-react"
+// import { ChevronRight, Shield, type LucideIcon } from "lucide-react"
 // import { usePathname } from 'next/navigation';
 // import {
 //     Collapsible,
@@ -249,74 +328,127 @@ NavMain.displayName = "NavMain";
 //     SidebarMenuSub,
 //     SidebarMenuSubButton,
 //     SidebarMenuSubItem,
-//     useSidebar,
 // } from "@/components/ui/sidebar"
-// import useMediaQuery from "@/hooks/useMediaQuery"
 // import {
 //     Popover,
 //     PopoverContent,
 //     PopoverTrigger
 // } from "@/components/ui/popover"
-// import { useSidebarState } from "../../SidebarStateProvider"
+// import { useSidebarCollapsed, useSidebarIsMobileView } from "../../SidebarStateProvider"
 // import Link from "next/link"
+// import { hasRouteAccess } from "./permission-utils";
+// import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-// // Item interface để dùng cho memoization
-// interface NavMainItemProps {
+// // Sử dụng React.memo với kiểm tra so sánh sâu để tránh re-render không cần thiết
+// const SubItem = React.memo(({ title, url }: { title: string, url: string }) => {
+//     return (
+//         <SidebarMenuSubItem>
+//             <SidebarMenuSubButton asChild>
+//                 <Link href={url}>
+//                     <span>{title}</span>
+//                 </Link>
+//             </SidebarMenuSubButton>
+//         </SidebarMenuSubItem>
+//     );
+// });
+
+// SubItem.displayName = "SubItem";
+
+// // Popover item component
+// const PopoverNavItem = React.memo(({ item, userRole }: {
 //     item: {
-//         title: string
-//         url: string
-//         icon?: LucideIcon
-//         isActive?: boolean
+//         title: string;
+//         url: string;
+//         icon?: LucideIcon;
 //         items?: {
-//             title: string
-//             url: string
-//         }[]
-//     }
-//     isIconMode: boolean
-// }
-
-// // Tách logic của từng item thành component riêng để tối ưu render
-// const NavMainItem = React.memo(({ item, isIconMode }: NavMainItemProps) => {
-//     if (isIconMode) {
-//         // Chế độ icon - Sử dụng Popover
-//         return (
-//             <SidebarMenuItem>
-//                 <Popover>
-//                     <PopoverTrigger asChild>
-//                         <SidebarMenuButton tooltip={item.title}>
-//                             {item.icon && <item.icon />}
-//                             <span className="sr-only">{item.title}</span>
-//                         </SidebarMenuButton>
-//                     </PopoverTrigger>
-//                     <PopoverContent
-//                         side="right"
-//                         align="start"
-//                         alignOffset={-8}
-//                         className="p-0 w-56"
-//                     >
-//                         <div className="py-1">
-//                             <div className="px-2 py-1.5 text-sm font-semibold">
-//                                 {item.title}
-//                             </div>
-//                             <div className="mt-1">
-//                                 {item.items?.map((subItem) => (
-//                                     <a
-//                                         key={subItem.title}
-//                                         href={subItem.url}
-//                                         className="flex items-center px-3 py-1.5 text-sm hover:bg-slate-100 dark:hover:bg-slate-800"
-//                                     >
-//                                         {subItem.title}
-//                                     </a>
-//                                 ))}
-//                             </div>
+//             title: string;
+//             url: string;
+//         }[];
+//     },
+//     userRole?: string
+// }) => {
+//     return (
+//         <SidebarMenuItem>
+//             <Popover>
+//                 <PopoverTrigger asChild>
+//                     <SidebarMenuButton tooltip={item.title}>
+//                         {item.icon && <item.icon />}
+//                         <span className="sr-only">{item.title}</span>
+//                     </SidebarMenuButton>
+//                 </PopoverTrigger>
+//                 <PopoverContent
+//                     side="right"
+//                     align="start"
+//                     alignOffset={-8}
+//                     className="p-0 w-56"
+//                 >
+//                     <div className="py-1">
+//                         <div className="px-2 py-1.5 text-sm font-semibold">
+//                             {item.title}
 //                         </div>
-//                     </PopoverContent>
-//                 </Popover>
-//             </SidebarMenuItem>
-//         );
-//     }
+//                         <div className="mt-1">
+//                             {/* {item.items?.map((subItem) => (
+//                                 <Link
+//                                     key={subItem.title}
+//                                     href={subItem.url}
+//                                     className="flex items-center px-3 py-1.5 text-sm hover:bg-slate-100 dark:hover:bg-slate-800"
+//                                 >
+//                                     {subItem.title}
+//                                 </Link>
+//                             ))} */}
+//                             {item.items?.map((subItem) => {
+//                                 const itemHasAccess = hasRouteAccess(subItem.url, userRole || '');
+//                                 return (
+//                                     <div key={subItem.title} className="flex items-center px-3 py-1.5 text-sm">
+//                                         {itemHasAccess ? (
+//                                             <Link
+//                                                 href={subItem.url}
+//                                                 className="w-full hover:bg-slate-100 dark:hover:bg-slate-800"
+//                                             >
+//                                                 {subItem.title}
+//                                             </Link>
+//                                         ) : (
+//                                             <TooltipProvider>
+//                                                 <Tooltip>
+//                                                     <TooltipTrigger asChild>
+//                                                         <div className="w-full flex justify-between items-center opacity-50 cursor-not-allowed">
+//                                                             {subItem.title}
+//                                                             <Shield size={14} className="ml-2 text-muted-foreground" />
+//                                                         </div>
+//                                                     </TooltipTrigger>
+//                                                     <TooltipContent>
+//                                                         <p>Bạn không có quyền truy cập vào tính năng này</p>
+//                                                     </TooltipContent>
+//                                                 </Tooltip>
+//                                             </TooltipProvider>
+//                                         )}
+//                                     </div>
+//                                 );
+//                             })}
+//                         </div>
+//                     </div>
+//                 </PopoverContent>
+//             </Popover>
+//         </SidebarMenuItem>
+//     );
+// });
 
-//     // Chế độ thường - Sử dụng Collapsible
+// PopoverNavItem.displayName = "PopoverNavItem";
+
+// // Collapsible item component
+// const CollapsibleNavItem = React.memo(({ item, userRole }: {
+//     item: {
+//         title: string;
+//         url: string;
+//         icon?: LucideIcon;
+//         isActive?: boolean;
+//         items?: {
+//             title: string;
+//             url: string;
+//         }[];
+//     },
+//     userRole?: string
+// }) => {
 //     return (
 //         <Collapsible
 //             asChild
@@ -333,32 +465,49 @@ NavMain.displayName = "NavMain";
 //                 </CollapsibleTrigger>
 //                 <CollapsibleContent>
 //                     <SidebarMenuSub>
-//                         {item.items?.map((subItem) => (
-//                             <SidebarMenuSubItem key={subItem.title}>
-//                                 <SidebarMenuSubButton asChild>
-//                                     <Link href={subItem.url}>
-//                                         <span>{subItem.title}</span>
-//                                     </Link>
-//                                 </SidebarMenuSubButton>
-//                             </SidebarMenuSubItem>
-//                         ))}
+//                         {item.items?.map((subItem) => {
+//                             const itemHasAccess = hasRouteAccess(subItem.url, userRole || '');
+//                             return (
+//                                 <SubItem
+//                                     key={subItem.title}
+//                                     title={subItem.title}
+//                                     url={subItem.url}
+//                                     hasAccess={itemHasAccess}
+//                                 />
+//                             );
+//                         })}
 //                     </SidebarMenuSub>
 //                 </CollapsibleContent>
 //             </SidebarMenuItem>
 //         </Collapsible>
 //     );
-// },
-//     (prevProps: NavMainItemProps, nextProps: NavMainItemProps) => {
-//         return (
-//             prevProps.isIconMode === nextProps.isIconMode &&
-//             prevProps.item.title === nextProps.item.title &&
-//             prevProps.item.url === nextProps.item.url &&
-//             prevProps.item.isActive === nextProps.item.isActive
-//         );
-//     }
-// );
+// });
 
-// NavMainItem.displayName = "NavMainItem";
+// CollapsibleNavItem.displayName = "CollapsibleNavItem";
+
+// // Component để tối ưu render dựa trên trạng thái isIconMode
+// const NavItemRenderer = React.memo(({
+//     item,
+//     isIconMode
+// }: {
+//     item: {
+//         title: string;
+//         url: string;
+//         icon?: LucideIcon;
+//         isActive?: boolean;
+//         items?: {
+//             title: string;
+//             url: string;
+//         }[];
+//     },
+//     isIconMode: boolean
+// }) => {
+//     return isIconMode
+//         ? <PopoverNavItem item={item} />
+//         : <CollapsibleNavItem item={item} />;
+// });
+
+// NavItemRenderer.displayName = "NavItemRenderer";
 
 // // Component chính đã tối ưu
 // export const NavMain = React.memo(({
@@ -376,15 +525,16 @@ NavMain.displayName = "NavMain";
 //     }[]
 // }) => {
 //     const pathname = usePathname();
-//     // Sử dụng context mới
-//     const { collapsed } = useSidebarState();
-//     const isMobileScreen = useMediaQuery("(max-width: 768px)");
+//     // Sử dụng context đã tách
+//     const collapsed = useSidebarCollapsed();
+//     const isMobileView = useSidebarIsMobileView();
 
 //     // Xác định chế độ icon - tính toán một lần duy nhất khi dependencies thay đổi
 //     const isIconMode = React.useMemo(() => {
-//         return !isMobileScreen && collapsed;
-//     }, [isMobileScreen, collapsed])
+//         return !isMobileView && collapsed;
+//     }, [isMobileView, collapsed]);
 
+//     // Chỉ xử lý lại items khi pathname thay đổi, không liên quan đến sidebar
 //     const processedItems = React.useMemo(() => {
 //         return items.map(item => ({
 //             ...item,
@@ -392,15 +542,14 @@ NavMain.displayName = "NavMain";
 //                 (pathname && pathname.startsWith(item.url) && item.url !== '#') ||
 //                 item.items?.some(subItem => pathname && pathname.startsWith(subItem.url))
 //         }));
-//     }, [items, pathname]);;
+//     }, [items, pathname]);
 
 //     return (
 //         <SidebarGroup>
-//             {/* Có thể ẩn label khi ở chế độ icon */}
 //             <SidebarGroupLabel className={isIconMode ? "hidden" : ""}>Platform</SidebarGroupLabel>
 //             <SidebarMenu>
 //                 {processedItems.map((item) => (
-//                     <NavMainItem
+//                     <NavItemRenderer
 //                         key={item.title}
 //                         item={item}
 //                         isIconMode={isIconMode}

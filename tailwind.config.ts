@@ -73,6 +73,8 @@ const config: Config = {
         'spin-reverse': 'spin-reverse 1s linear infinite',
         'pulse-slow': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'spin': 'spin 1s linear infinite',
+        'float': 'float 3s ease-in-out infinite',
+        'float-delay': 'float 3s ease-in-out 0.3s infinite',
       },
       keyframes: {
         'spin-reverse': {

@@ -15,7 +15,6 @@ import { useHandBagHelpers } from "./useHandBagHelpers";
 import { useHandBagQueries } from "./useHandBagQueries";
 import { toast } from "../use-toast";
 import { batchDeleteHandBagsParallel, getHandBagById as getHandBagByIdApi } from "@/apis/handbag/handbag.api";
-import { useDataLoading } from "@/components/common/Loading/useLoading";
 
 interface HandBagContextType {
     listHandBags: (
@@ -41,10 +40,6 @@ export const HandBagProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     // State management with stable initializers
     const [selectedHandBag, setSelectedHandBag] = useState<HandBag | null>(null);
-    const { startLoading, stopLoading, isLoading } = useDataLoading('handbag-data', {
-        variant: 'table',
-        message: 'Đang tải dữ liệu túi xách...'
-    });
 
     // Important refs to prevent update loops
     const isUpdatingPaginationRef = useRef(false);
@@ -192,7 +187,6 @@ export const HandBagProvider: React.FC<{ children: React.ReactNode }> = ({ child
         }
 
         pendingOperationsRef.current.add(requestId);
-        startLoading();
 
         try {
             // Perform mutation
@@ -261,7 +255,6 @@ export const HandBagProvider: React.FC<{ children: React.ReactNode }> = ({ child
             // Clean up
             if (isMountedRef.current) {
                 pendingOperationsRef.current.delete(requestId);
-                stopLoading();
             }
         }
     }, [createHandBagMutation, onHandBagMutationSuccess, fetchLatestHandBag, incrementOperationCount]);
@@ -282,7 +275,6 @@ export const HandBagProvider: React.FC<{ children: React.ReactNode }> = ({ child
         }
 
         pendingOperationsRef.current.add(requestId);
-        startLoading();
 
         try {
             // Perform mutation
@@ -322,7 +314,6 @@ export const HandBagProvider: React.FC<{ children: React.ReactNode }> = ({ child
             // Clean up
             if (isMountedRef.current) {
                 pendingOperationsRef.current.delete(requestId);
-                stopLoading();
             }
         }
     }, [updateHandBagMutation, onHandBagMutationSuccess, fetchLatestHandBag, incrementOperationCount]);
@@ -389,7 +380,6 @@ export const HandBagProvider: React.FC<{ children: React.ReactNode }> = ({ child
             throw new Error("Too many delete operations, try again later");
         }
 
-        startLoading();
         try {
             // Direct batch delete API call
             await batchDeleteHandBagsParallel(ids);
@@ -421,7 +411,6 @@ export const HandBagProvider: React.FC<{ children: React.ReactNode }> = ({ child
         } finally {
             if (isMountedRef.current) {
                 pendingOperationsRef.current.delete(`batch-delete-${ids.join(',')}`);
-                stopLoading();
             }
         }
     }, [invalidateItemCache, invalidateListCache, incrementOperationCount]);

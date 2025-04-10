@@ -5,3 +5,10 @@ export enum UserStatusEnum {
   BANNED = "BANNED",
   DELETED = "DELETED",
 }
+
+export enum PermissionType {
+  PAGE_ACCESS = 'PAGE_ACCESS',
+  FEATURE_ACCESS = 'FEATURE_ACCESS',
+  DATA_ACCESS = 'DATA_ACCESS',
+}
+

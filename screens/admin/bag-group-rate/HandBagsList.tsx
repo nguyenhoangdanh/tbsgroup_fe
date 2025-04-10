@@ -157,26 +157,17 @@ const HandBagsListContent: React.FC<HandBagsListProps> = ({ handBags: propHandBa
         },
     ];
 
-    if (loading) {
-        return (
-            <div className="space-y-4">
-                <Skeleton className="h-10 w-full max-w-md" />
-                <Skeleton className="h-96 w-full" />
-            </div>
-        );
-    }
 
     return (
         <DataTable
             columns={columns}
             data={handBags}
+            isLoading={loading}
             title="Danh sách túi xách và năng suất nhóm"
             description="Tổng hợp năng suất theo túi"
-            actions={["create"]}
             searchColumn="code"
             searchPlaceholder="Tìm kiếm theo mã túi..."
             exportData={true}
-            exportFormats={["excel"]}
         />
     );
 };

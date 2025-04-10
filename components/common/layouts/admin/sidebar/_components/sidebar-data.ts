@@ -151,6 +151,12 @@ export const sidebarData = {
         },
       ],
     },
+  {
+      title: "Nhóm túi",
+      url: "/admin/handbags/bag-group-rates",
+      icon: Briefcase,
+    },
+    
   ] as NavItem[],
   
   projects: [
@@ -231,6 +237,7 @@ export const sidebarData = {
           icon: UserCog
         }
       ]
-    }
+    },
+    
   ] as Project[],
 }

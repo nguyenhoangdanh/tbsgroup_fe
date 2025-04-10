@@ -11,7 +11,7 @@ import { useLine } from '@/hooks/line/LineContext';
 import { useFactoryQueries } from '@/hooks/factory/useFactoryQueries';
 import { LineUpdateDTO } from '@/common/interface/line';
 import { ErrorBoundary } from 'react-error-boundary';
-import PageLoader from '@/components/common/Loading/PageLoader';
+import PageLoader from '@/components/common/loading/PageLoader';
 
 // Define LineStatus type to ensure type safety
 type LineStatus = 'ACTIVE' | 'INACTIVE' | 'MAINTENANCE';

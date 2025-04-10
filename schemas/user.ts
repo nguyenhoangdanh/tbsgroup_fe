@@ -9,9 +9,9 @@ export const userSchema = z.object({
   }),
   employeeId: z.string(),
   roleId: z.string(),
-  // password: z.string().min(6, {
-  //   message: 'Mật khẩu phải có ít  nhất 6 ký tự',
-  // }),
+  password: z.string().min(6, {
+    message: 'Mật khẩu phải có ít  nhất 6 ký tự',
+  }),
   status: z.enum([
     UserStatusEnum.PENDING_ACTIVATION,
     UserStatusEnum.ACTIVE,
@@ -32,7 +32,7 @@ export const defaultUserValues: TUserSchema = {
   username: '',
   employeeId: '',
   roleId: '',
-  // password: 'Abc@123',
+  password: 'Abc@123',
   status: UserStatusEnum.PENDING_ACTIVATION,
   fullName: '',
   cardId: '',

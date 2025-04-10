@@ -10,7 +10,7 @@ import { DialogType, useDialog } from '@/context/DialogProvider';
 import LineForm from './LineForm';
 import { toast } from '@/hooks/use-toast';
 import { LineWithDetails } from '@/common/interface/line';
-import PageLoader from '@/components/common/Loading/PageLoader';
+import PageLoader from '@/components/common/loading/PageLoader';
 
 interface ContainerProps {
     params: {
