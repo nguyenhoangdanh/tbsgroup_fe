@@ -32,7 +32,7 @@ import {
 import { useSidebarCollapsed, useSidebarIsMobileView } from "../../SidebarStateProvider"
 import Link from "next/link"
 import useAuthManager from "@/hooks/useAuthManager"
-import { hasRouteAccess } from "@/utils/permission-utils";
+import { hasRouteAccess, UserRole } from "@/utils/permission-utils";
 
 // Define the interface for SubItem props
 interface SubItemProps {
@@ -93,10 +93,10 @@ interface NavSubItemType {
     url: string;
 }
 
-// Popover item component
+// Popover item component - Update to handle optional userRole
 const PopoverNavItem = React.memo(({ item, userRole }: {
     item: NavItemType,
-    userRole?: string
+    userRole?: UserRole;
 }) => {
     return (
         <SidebarMenuItem>
@@ -119,7 +119,8 @@ const PopoverNavItem = React.memo(({ item, userRole }: {
                         </div>
                         <div className="mt-1">
                             {item.items?.map((subItem: NavSubItemType) => {
-                                const itemHasAccess = hasRouteAccess(subItem.url, userRole || '');
+                                // Safe check for userRole - default to no access if undefined
+                                const itemHasAccess = userRole ? hasRouteAccess(subItem.url, userRole) : false;
                                 return (
                                     <div key={subItem.title} className="flex items-center px-3 py-1.5 text-sm">
                                         {itemHasAccess ? (
@@ -157,10 +158,10 @@ const PopoverNavItem = React.memo(({ item, userRole }: {
 
 PopoverNavItem.displayName = "PopoverNavItem";
 
-// Collapsible item component
+// Collapsible item component - Update to handle optional userRole
 const CollapsibleNavItem = React.memo(({ item, userRole }: {
     item: NavItemType,
-    userRole?: string
+    userRole?: UserRole;
 }) => {
     return (
         <Collapsible
@@ -179,7 +180,8 @@ const CollapsibleNavItem = React.memo(({ item, userRole }: {
                 <CollapsibleContent>
                     <SidebarMenuSub>
                         {item.items?.map((subItem) => {
-                            const itemHasAccess = hasRouteAccess(subItem.url, userRole || '');
+                            // Safe check for userRole - default to no access if undefined
+                            const itemHasAccess = userRole ? hasRouteAccess(subItem.url, userRole) : false;
                             return (
                                 <SubItem
                                     key={subItem.title}
@@ -198,7 +200,7 @@ const CollapsibleNavItem = React.memo(({ item, userRole }: {
 
 CollapsibleNavItem.displayName = "CollapsibleNavItem";
 
-// Component để tối ưu render dựa trên trạng thái isIconMode
+// Component để tối ưu render dựa trên trạng thái isIconMode - Update to handle optional userRole
 const NavItemRenderer = React.memo(({
     item,
     isIconMode,
@@ -206,7 +208,7 @@ const NavItemRenderer = React.memo(({
 }: {
     item: NavItemType,
     isIconMode: boolean,
-    userRole?: string
+    userRole?: UserRole;
 }) => {
     return isIconMode
         ? <PopoverNavItem item={item} userRole={userRole} />
@@ -227,7 +229,8 @@ export const NavMain = React.memo(({
     const isMobileView = useSidebarIsMobileView();
     // Get user role from auth manager
     const { user } = useAuthManager();
-    const userRole = user?.role;
+    // Cast the user role to UserRole type if it exists
+    const userRole = user?.role as UserRole | undefined;
 
     // Xác định chế độ icon - tính toán một lần duy nhất khi dependencies thay đổi
     const isIconMode = React.useMemo(() => {
@@ -279,7 +282,6 @@ export const NavMain = React.memo(({
 });
 
 NavMain.displayName = "NavMain";
-
 
 
 
