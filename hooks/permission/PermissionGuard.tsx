@@ -48,7 +48,7 @@ export const PermissionGuard: React.FC<PermissionGuardProps> = React.memo(({
         if (featureCode) keyParts.push(`feat-${featureCode}`);
         if (anyOf?.length) keyParts.push(`any-${anyOf.join('-')}`);
         if (allOf?.length) keyParts.push(`all-${allOf.join('-')}`);
-        return `pg-${keyParts.join('-') || 'default'}`;
+        return `permission-pg-${keyParts.join('-') || 'default'}`;
     }, [permissionCode, pageCode, featureCode, anyOf, allOf]);
 
     // Cải thiện checkAccess để không phụ thuộc vào các hàm trong useEffect
@@ -67,8 +67,13 @@ export const PermissionGuard: React.FC<PermissionGuardProps> = React.memo(({
 
     // Tách biệt useEffect cho việc khởi tạo loading và kiểm tra quyền
     useEffect(() => {
-        startLoading(loadingKey, { variant: 'fullscreen', message: loadingMessage, delay: 0 });
-
+        // startLoading(loadingKey, { variant: 'fullscreen', message: loadingMessage, delay: 0 });
+        startLoading(loadingKey, {
+            variant: 'fullscreen',
+            message: loadingMessage,
+            delay: 0,
+            customClass: 'permission-guard-loader' // Add a custom class
+        });
         const timer = setTimeout(() => {
             setHasAccess(checkAccess);
             stopLoading(loadingKey);

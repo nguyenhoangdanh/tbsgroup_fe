@@ -47,6 +47,8 @@ export const defaultPermissions: PermissionConfig = {
     '/admin/settings/profile': ['SUPER_ADMIN', 'ADMIN', 'MANAGER',  'USER'],
     '/admin/settings/change-password': ['SUPER_ADMIN', 'ADMIN', 'MANAGER','USER'],
     '/admin/settings/system-config': ['SUPER_ADMIN', 'ADMIN'],
+    '/admin/settings/permissions-management': ['SUPER_ADMIN', 'ADMIN'],
+    '/admin/settings/role-permissions-assignment': ['SUPER_ADMIN', 'ADMIN'],
   }
 };
 

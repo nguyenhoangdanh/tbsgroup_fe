@@ -10,7 +10,6 @@ import { Team } from '@/common/interface/team';
 import { toast } from '@/hooks/use-toast';
 import { ColumnDef } from "@tanstack/react-table";
 import { DialogType, useDialog } from "@/context/DialogProvider";
-import PageLoader from '@/components/common/loading/PageLoader';
 import { Badge } from '@/components/ui/badge';
 import { TeamForm } from '../teams/TeamForm';
 
@@ -283,33 +282,26 @@ export const LineTeamsTab: React.FC<LineTeamsTabProps> = ({
                 <CardDescription>Danh sách các tổ trong dây chuyền</CardDescription>
             </CardHeader>
             <CardContent>
-                <PageLoader
+                <DataTable
+                    title="Danh sách tổ"
+                    description="Danh sách các tổ trong dây chuyền"
+                    columns={columns}
+                    data={lineTeams}
+                    actions={canManage ? ["create", "edit", "delete"] : []}
+                    createClickAction={handleCreateTeam}
+                    editClickAction={handleEditTeam}
+                    onEdit={handleEditTeam}
+                    onDelete={handleDeleteTeam}
+                    onBatchDelete={handleBatchDeleteTeams}
+                    onSelected={(ids) => setSelectedTeams(new Set(ids))}
+                    searchColumn="name"
+                    searchPlaceholder="Tìm kiếm tổ..."
+                    refetchData={handleRefresh}
                     isLoading={isLoading}
-                    showTableSkeleton={true}
-                    skeletonColumns={4}
-                    skeletonRows={5}
-                >
-                    <DataTable
-                        title="Danh sách tổ"
-                        description="Danh sách các tổ trong dây chuyền"
-                        columns={columns}
-                        data={lineTeams}
-                        actions={canManage ? ["create", "edit", "delete"] : []}
-                        createClickAction={handleCreateTeam}
-                        editClickAction={handleEditTeam}
-                        onEdit={handleEditTeam}
-                        onDelete={handleDeleteTeam}
-                        onBatchDelete={handleBatchDeleteTeams}
-                        onSelected={(ids) => setSelectedTeams(new Set(ids))}
-                        searchColumn="name"
-                        searchPlaceholder="Tìm kiếm tổ..."
-                        refetchData={handleRefresh}
-                        isLoading={isLoading}
-                        exportData={false}
-                        initialPageSize={10}
-                        disablePagination={lineTeams.length <= 10}
-                    />
-                </PageLoader>
+                    exportData={false}
+                    initialPageSize={10}
+                    disablePagination={lineTeams.length <= 10}
+                />
             </CardContent>
         </Card>
     );

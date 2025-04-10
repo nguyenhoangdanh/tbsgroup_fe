@@ -12,6 +12,7 @@ export interface UserListParams {
 export interface UserType {
   id: string;
   username: string;
+  password: string;
   email?: string;
   fullName: string;
   employeeId?: string;

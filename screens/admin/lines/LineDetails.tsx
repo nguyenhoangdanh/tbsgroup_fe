@@ -25,8 +25,6 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { useUserQueries } from '@/hooks/users';
 import { LineManagersTable } from './LineManagersTable';
 import LineTeamsTab from './LineTeamsTab'; // Import our new component
-import PageLoader from '@/components/common/loading/PageLoader';
-
 interface ErrorStateProps {
     error: Error | unknown;
     onBack: () => void;
@@ -341,145 +339,138 @@ export const LineDetails: React.FC<LineDetailsProps> = ({ factoryId, lineId }) =
                 }}
                 />}
         >
-            <PageLoader
-                isLoading={isPageLoading}
-                showTableSkeleton={true}
-                skeletonColumns={3}
-                skeletonRows={5}
-            >
-                <div className="space-y-6">
-                    {/* Header with back button and actions */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <div className="flex items-center gap-2">
-                            <Button variant="outline" size="icon" onClick={handleBack}>
-                                <ArrowLeft className="h-4 w-4" />
-                            </Button>
-                            <div>
-                                <h1 className="text-2xl font-bold flex items-center gap-2">
-                                    {lineDetails?.name}
-                                    {lineDetails?.code && <Badge>{lineDetails.code}</Badge>}
-                                </h1>
-                                <p className="text-muted-foreground">
-                                    Nhà máy: {factory?.name || 'Đang tải...'}
-                                </p>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <Button variant="outline" onClick={handleEdit} disabled={!canManage || isPageLoading}>
-                                <Pencil className="mr-2 h-4 w-4" />
-                                Chỉnh sửa
-                            </Button>
-                            <Button
-                                variant="outline"
-                                onClick={() => router.push(`/admin/factories/${factoryId}/lines/${lineId}/settings`)}
-                                disabled={isPageLoading}
-                            >
-                                <Settings className="mr-2 h-4 w-4" />
-                                Cài đặt
-                            </Button>
-                            <Button
-                                variant="destructive"
-                                onClick={handleDelete}
-                                disabled={!canManage || isPageLoading}
-                            >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Xóa
-                            </Button>
+            <div className="space-y-6">
+                {/* Header with back button and actions */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-2">
+                        <Button variant="outline" size="icon" onClick={handleBack}>
+                            <ArrowLeft className="h-4 w-4" />
+                        </Button>
+                        <div>
+                            <h1 className="text-2xl font-bold flex items-center gap-2">
+                                {lineDetails?.name}
+                                {lineDetails?.code && <Badge>{lineDetails.code}</Badge>}
+                            </h1>
+                            <p className="text-muted-foreground">
+                                Nhà máy: {factory?.name || 'Đang tải...'}
+                            </p>
                         </div>
                     </div>
+                    <div className="flex items-center gap-2">
+                        <Button variant="outline" onClick={handleEdit} disabled={!canManage || isPageLoading}>
+                            <Pencil className="mr-2 h-4 w-4" />
+                            Chỉnh sửa
+                        </Button>
+                        <Button
+                            variant="outline"
+                            onClick={() => router.push(`/admin/factories/${factoryId}/lines/${lineId}/settings`)}
+                            disabled={isPageLoading}
+                        >
+                            <Settings className="mr-2 h-4 w-4" />
+                            Cài đặt
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            onClick={handleDelete}
+                            disabled={!canManage || isPageLoading}
+                        >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Xóa
+                        </Button>
+                    </div>
+                </div>
 
-                    {/* Line details in tabs */}
-                    <Tabs defaultValue="general" className="w-full">
-                        <TabsList>
-                            <TabsTrigger value="general">
-                                <Workflow className="mr-2 h-4 w-4" />
-                                Thông tin chung
-                            </TabsTrigger>
-                            <TabsTrigger value="managers">
-                                <Users className="mr-2 h-4 w-4" />
-                                Quản lý ({lineDetails?.managers?.length || 0})
-                            </TabsTrigger>
-                            <TabsTrigger value="teams">
-                                <Users className="mr-2 h-4 w-4" />
-                                Tổ sản xuất ({lineTeams?.length || 0})
-                            </TabsTrigger>
-                        </TabsList>
+                {/* Line details in tabs */}
+                <Tabs defaultValue="general" className="w-full">
+                    <TabsList>
+                        <TabsTrigger value="general">
+                            <Workflow className="mr-2 h-4 w-4" />
+                            Thông tin chung
+                        </TabsTrigger>
+                        <TabsTrigger value="managers">
+                            <Users className="mr-2 h-4 w-4" />
+                            Quản lý ({lineDetails?.managers?.length || 0})
+                        </TabsTrigger>
+                        <TabsTrigger value="teams">
+                            <Users className="mr-2 h-4 w-4" />
+                            Tổ sản xuất ({lineTeams?.length || 0})
+                        </TabsTrigger>
+                    </TabsList>
 
-                        {/* General information tab */}
-                        <TabsContent value="general" className="space-y-4">
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Thông tin dây chuyền</CardTitle>
-                                    <CardDescription>Thông tin chi tiết về dây chuyền {lineDetails?.name}</CardDescription>
-                                </CardHeader>
-                                <CardContent className="space-y-4">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div className="space-y-2">
-                                            <h3 className="text-sm font-medium text-muted-foreground">Mã dây chuyền</h3>
-                                            <p className="font-medium">{lineDetails?.code}</p>
-                                        </div>
-
-                                        <div className="space-y-2">
-                                            <h3 className="text-sm font-medium text-muted-foreground">Tên dây chuyền</h3>
-                                            <p className="font-medium">{lineDetails?.name}</p>
-                                        </div>
-
-                                        <div className="space-y-2">
-                                            <h3 className="text-sm font-medium text-muted-foreground">Công suất</h3>
-                                            <p className="font-medium">
-                                                {lineDetails?.capacity ? `${lineDetails.capacity} sản phẩm/ngày` : 'Chưa cập nhật'}
-                                            </p>
-                                        </div>
-
-                                        <div className="space-y-2">
-                                            <h3 className="text-sm font-medium text-muted-foreground">Thời gian tạo</h3>
-                                            <p className="font-medium">
-                                                {lineDetails?.createdAt ? new Date(lineDetails.createdAt).toLocaleString('vi-VN') : 'N/A'}
-                                            </p>
-                                        </div>
+                    {/* General information tab */}
+                    <TabsContent value="general" className="space-y-4">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Thông tin dây chuyền</CardTitle>
+                                <CardDescription>Thông tin chi tiết về dây chuyền {lineDetails?.name}</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-2">
+                                        <h3 className="text-sm font-medium text-muted-foreground">Mã dây chuyền</h3>
+                                        <p className="font-medium">{lineDetails?.code}</p>
                                     </div>
-
-                                    <Separator />
 
                                     <div className="space-y-2">
-                                        <h3 className="text-sm font-medium text-muted-foreground">Mô tả</h3>
-                                        <p className="text-sm">{lineDetails?.description || 'Không có mô tả'}</p>
+                                        <h3 className="text-sm font-medium text-muted-foreground">Tên dây chuyền</h3>
+                                        <p className="font-medium">{lineDetails?.name}</p>
                                     </div>
 
-                                    <Separator />
-                                </CardContent>
-                            </Card>
-                        </TabsContent>
+                                    <div className="space-y-2">
+                                        <h3 className="text-sm font-medium text-muted-foreground">Công suất</h3>
+                                        <p className="font-medium">
+                                            {lineDetails?.capacity ? `${lineDetails.capacity} sản phẩm/ngày` : 'Chưa cập nhật'}
+                                        </p>
+                                    </div>
 
-                        {/* Teams Tab - Using our dedicated component */}
-                        <TabsContent value="teams" className="space-y-4">
-                            <LineTeamsTab
-                                factoryId={factoryId}
+                                    <div className="space-y-2">
+                                        <h3 className="text-sm font-medium text-muted-foreground">Thời gian tạo</h3>
+                                        <p className="font-medium">
+                                            {lineDetails?.createdAt ? new Date(lineDetails.createdAt).toLocaleString('vi-VN') : 'N/A'}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <Separator />
+
+                                <div className="space-y-2">
+                                    <h3 className="text-sm font-medium text-muted-foreground">Mô tả</h3>
+                                    <p className="text-sm">{lineDetails?.description || 'Không có mô tả'}</p>
+                                </div>
+
+                                <Separator />
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+
+                    {/* Teams Tab - Using our dedicated component */}
+                    <TabsContent value="teams" className="space-y-4">
+                        <LineTeamsTab
+                            factoryId={factoryId}
+                            lineId={lineId}
+                            canManage={!!canManage}
+                        />
+                    </TabsContent>
+
+                    {/* Managers tab */}
+                    <TabsContent value="managers" className="space-y-4">
+                        {lineDetails && (
+                            <LineManagersTable
                                 lineId={lineId}
+                                factoryId={factoryId}
+                                managers={lineDetails.managers || []}
+                                users={users || []}
                                 canManage={!!canManage}
+                                isLoading={isPageLoading}
+                                onAddManager={handleAddManager}
+                                onEditManager={handleEditManager}
+                                onDeleteManager={handleRemoveManager}
+                                onRefresh={handleRefresh}
                             />
-                        </TabsContent>
-
-                        {/* Managers tab */}
-                        <TabsContent value="managers" className="space-y-4">
-                            {lineDetails && (
-                                <LineManagersTable
-                                    lineId={lineId}
-                                    factoryId={factoryId}
-                                    managers={lineDetails.managers || []}
-                                    users={users || []}
-                                    canManage={!!canManage}
-                                    isLoading={isPageLoading}
-                                    onAddManager={handleAddManager}
-                                    onEditManager={handleEditManager}
-                                    onDeleteManager={handleRemoveManager}
-                                    onRefresh={handleRefresh}
-                                />
-                            )}
-                        </TabsContent>
-                    </Tabs>
-                </div>
-            </PageLoader>
+                        )}
+                    </TabsContent>
+                </Tabs>
+            </div>
         </ErrorBoundary>
     );
 };

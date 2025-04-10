@@ -138,6 +138,14 @@ export const sidebarData = {
           url: "/admin/settings/permissions",
         },
         {
+          title: "Quản lý trang",
+          url: "/admin/settings/permissions-management",
+        },
+        {
+          title: "Quản lý trang và phân quyền",
+          url: "/admin/settings/role-permissions-assignment",
+        },
+        {
           title: "Hồ sơ cá nhân",
           url: "/admin/settings/profile",
         },
@@ -150,11 +158,6 @@ export const sidebarData = {
           url: "/admin/settings/system-config",
         },
       ],
-    },
-  {
-      title: "Nhóm túi",
-      url: "/admin/handbags/bag-group-rates",
-      icon: Briefcase,
     },
     
   ] as NavItem[],

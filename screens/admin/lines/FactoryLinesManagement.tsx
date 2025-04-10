@@ -10,7 +10,6 @@ import LineForm from './LineForm';
 import { Line } from '@/common/interface/line';
 import { PlusIcon } from "lucide-react";
 import { ErrorBoundary } from 'react-error-boundary';
-import PageLoader from '@/components/common/loading/PageLoader';
 
 interface FactoryLinesManagementProps {
     factoryId: string;
@@ -198,33 +197,26 @@ export const FactoryLinesManagement: React.FC<FactoryLinesManagementProps> = ({ 
 
     return (
         <ErrorBoundary FallbackComponent={ErrorFallback} onReset={handleRefetch}>
-            <PageLoader
-                isLoading={isLoading}
-                showTableSkeleton={true}
-                skeletonColumns={5}
-                skeletonRows={6}
-            >
-                <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                        <h1 className="text-2xl font-bold">
-                            Dây chuyền - {factoryName}
-                        </h1>
-                        <Button onClick={handleCreateLine}>
-                            <PlusIcon className="mr-2 h-4 w-4" />
-                            Thêm dây chuyền
-                        </Button>
-                    </div>
-
-                    <LinesList
-                        lines={lines || []}
-                        factoryId={factoryId}
-                        factoryName={factoryName}
-                        onLineSelect={handleLineSelect}
-                        onEditLine={handleEditLine}
-                        onDeleteLine={handleDeleteLine}
-                    />
+            <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                    <h1 className="text-2xl font-bold">
+                        Dây chuyền - {factoryName}
+                    </h1>
+                    <Button onClick={handleCreateLine}>
+                        <PlusIcon className="mr-2 h-4 w-4" />
+                        Thêm dây chuyền
+                    </Button>
                 </div>
-            </PageLoader>
+
+                <LinesList
+                    lines={lines || []}
+                    factoryId={factoryId}
+                    factoryName={factoryName}
+                    onLineSelect={handleLineSelect}
+                    onEditLine={handleEditLine}
+                    onDeleteLine={handleDeleteLine}
+                />
+            </div>
         </ErrorBoundary>
     );
 };

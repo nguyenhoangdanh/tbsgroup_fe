@@ -34,7 +34,6 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { TeamManagersTable } from './TeamLeadersTable';
 import { useUserQueries } from '@/hooks/users';
 import { ErrorBoundary } from 'react-error-boundary';
-import PageLoader from '@/components/common/loading/PageLoader';
 import { DialogType, useDialog } from '@/context/DialogProvider';
 import TeamManagerForm from './TeamManagerForm';
 import { toast } from '@/hooks/use-toast';
@@ -398,147 +397,140 @@ export default function TeamDetails({ params }: TeamDetailsProps) {
                 />
             )}
         >
-            <PageLoader
-                isLoading={isLoading}
-                showTableSkeleton={true}
-                skeletonColumns={3}
-                skeletonRows={5}
-            >
-                <div className="container mx-auto p-4">
-                    {/* Header with actions */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-                        <div className="flex items-center gap-2">
-                            <Button variant="outline" size="icon" onClick={handleBack}>
-                                <ArrowLeft className="h-4 w-4" />
-                            </Button>
-                            <div>
-                                <h1 className="text-2xl font-bold flex items-center gap-2">
-                                    {teamDetails?.name}
-                                    {teamDetails?.code && <Badge>{teamDetails.code}</Badge>}
-                                </h1>
-                                <p className="text-muted-foreground">
-                                    Dây chuyền: {teamDetails?.lineName || teamDetails?.lineId || 'Chưa xác định'}
-                                </p>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <Button variant="outline" onClick={handleEdit} disabled={isLoading}>
-                                <Edit className="mr-2 h-4 w-4" />
-                                Chỉnh sửa
-                            </Button>
-                            <Button variant="outline" onClick={handleSettings} disabled={isLoading}>
-                                <Settings className="mr-2 h-4 w-4" />
-                                Cài đặt
-                            </Button>
-                            <Button variant="destructive" onClick={handleDeleteClick} disabled={isLoading}>
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Xóa
-                            </Button>
+            <div className="container mx-auto p-4">
+                {/* Header with actions */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                    <div className="flex items-center gap-2">
+                        <Button variant="outline" size="icon" onClick={handleBack}>
+                            <ArrowLeft className="h-4 w-4" />
+                        </Button>
+                        <div>
+                            <h1 className="text-2xl font-bold flex items-center gap-2">
+                                {teamDetails?.name}
+                                {teamDetails?.code && <Badge>{teamDetails.code}</Badge>}
+                            </h1>
+                            <p className="text-muted-foreground">
+                                Dây chuyền: {teamDetails?.lineName || teamDetails?.lineId || 'Chưa xác định'}
+                            </p>
                         </div>
                     </div>
+                    <div className="flex items-center gap-2">
+                        <Button variant="outline" onClick={handleEdit} disabled={isLoading}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Chỉnh sửa
+                        </Button>
+                        <Button variant="outline" onClick={handleSettings} disabled={isLoading}>
+                            <Settings className="mr-2 h-4 w-4" />
+                            Cài đặt
+                        </Button>
+                        <Button variant="destructive" onClick={handleDeleteClick} disabled={isLoading}>
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Xóa
+                        </Button>
+                    </div>
+                </div>
 
-                    {/* Team details tabs */}
-                    <Tabs defaultValue="general" className="w-full">
-                        <TabsList>
-                            <TabsTrigger value="general">
-                                <Factory className="mr-2 h-4 w-4" />
-                                Thông tin chung
-                            </TabsTrigger>
-                            <TabsTrigger value="leaders">
-                                <Users className="mr-2 h-4 w-4" />
-                                Tổ trưởng ({leaders.length})
-                            </TabsTrigger>
-                        </TabsList>
+                {/* Team details tabs */}
+                <Tabs defaultValue="general" className="w-full">
+                    <TabsList>
+                        <TabsTrigger value="general">
+                            <Factory className="mr-2 h-4 w-4" />
+                            Thông tin chung
+                        </TabsTrigger>
+                        <TabsTrigger value="leaders">
+                            <Users className="mr-2 h-4 w-4" />
+                            Tổ trưởng ({leaders.length})
+                        </TabsTrigger>
+                    </TabsList>
 
-                        {/* General information tab */}
-                        <TabsContent value="general" className="space-y-4">
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Thông tin tổ</CardTitle>
-                                    <CardDescription>Chi tiết về tổ {teamDetails?.name}</CardDescription>
-                                </CardHeader>
-                                <CardContent className="space-y-4">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div className="space-y-2">
-                                            <h3 className="text-sm font-medium text-muted-foreground">Mã tổ</h3>
-                                            <p className="font-medium">{teamDetails?.code}</p>
-                                        </div>
-
-                                        <div className="space-y-2">
-                                            <h3 className="text-sm font-medium text-muted-foreground">Tên tổ</h3>
-                                            <p className="font-medium">{teamDetails?.name}</p>
-                                        </div>
-
-                                        <div className="space-y-2">
-                                            <h3 className="text-sm font-medium text-muted-foreground">Dây chuyền sản xuất</h3>
-                                            <p className="font-medium">{teamDetails?.lineName || teamDetails?.lineId || 'Chưa xác định'}</p>
-                                        </div>
-
-                                        <div className="space-y-2">
-                                            <h3 className="text-sm font-medium text-muted-foreground">Ngày tạo</h3>
-                                            <p className="font-medium">
-                                                {teamDetails?.createdAt ? new Date(teamDetails.createdAt).toLocaleString('vi-VN') : 'N/A'}
-                                            </p>
-                                        </div>
+                    {/* General information tab */}
+                    <TabsContent value="general" className="space-y-4">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Thông tin tổ</CardTitle>
+                                <CardDescription>Chi tiết về tổ {teamDetails?.name}</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-2">
+                                        <h3 className="text-sm font-medium text-muted-foreground">Mã tổ</h3>
+                                        <p className="font-medium">{teamDetails?.code}</p>
                                     </div>
 
-                                    <Separator />
-
                                     <div className="space-y-2">
-                                        <h3 className="text-sm font-medium text-muted-foreground">Mô tả</h3>
-                                        <p className="text-sm">{teamDetails?.description || 'Không có mô tả'}</p>
+                                        <h3 className="text-sm font-medium text-muted-foreground">Tên tổ</h3>
+                                        <p className="font-medium">{teamDetails?.name}</p>
                                     </div>
 
-                                    <Separator />
+                                    <div className="space-y-2">
+                                        <h3 className="text-sm font-medium text-muted-foreground">Dây chuyền sản xuất</h3>
+                                        <p className="font-medium">{teamDetails?.lineName || teamDetails?.lineId || 'Chưa xác định'}</p>
+                                    </div>
 
                                     <div className="space-y-2">
-                                        <h3 className="text-sm font-medium text-muted-foreground">Thời gian cập nhật</h3>
-                                        <p className="text-sm">
-                                            {teamDetails?.updatedAt ? new Date(teamDetails.updatedAt).toLocaleString('vi-VN') : 'N/A'}
+                                        <h3 className="text-sm font-medium text-muted-foreground">Ngày tạo</h3>
+                                        <p className="font-medium">
+                                            {teamDetails?.createdAt ? new Date(teamDetails.createdAt).toLocaleString('vi-VN') : 'N/A'}
                                         </p>
                                     </div>
-                                </CardContent>
-                            </Card>
-                        </TabsContent>
+                                </div>
 
-                        {/* Team Leaders tab */}
-                        <TabsContent value="leaders" className="space-y-4">
-                            <TeamManagersTable
-                                teamId={teamId}
-                                leaders={leaders}
-                                users={users}
-                                canManage={true}
-                                isLoading={isLoading}
-                                onAddManager={handleAddLeader}
-                                onEditManager={handleEditLeader}
-                                onDeleteManager={handleRemoveLeader}
-                                onRefresh={handleRefresh}
-                            />
-                        </TabsContent>
-                    </Tabs>
+                                <Separator />
 
-                    {/* Confirm Delete Dialog */}
-                    <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
-                        <AlertDialogContent>
-                            <AlertDialogHeader>
-                                <AlertDialogTitle>Xóa tổ</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                    Bạn có chắc chắn muốn xóa tổ "{teamDetails?.name}"? Hành động này không thể hoàn tác.
-                                </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                                <AlertDialogCancel>Hủy</AlertDialogCancel>
-                                <AlertDialogAction
-                                    onClick={executeDelete}
-                                    className="bg-destructive text-destructive-foreground"
-                                >
-                                    {isLoading ? 'Đang xóa...' : 'Xóa'}
-                                </AlertDialogAction>
-                            </AlertDialogFooter>
-                        </AlertDialogContent>
-                    </AlertDialog>
-                </div>
-            </PageLoader>
+                                <div className="space-y-2">
+                                    <h3 className="text-sm font-medium text-muted-foreground">Mô tả</h3>
+                                    <p className="text-sm">{teamDetails?.description || 'Không có mô tả'}</p>
+                                </div>
+
+                                <Separator />
+
+                                <div className="space-y-2">
+                                    <h3 className="text-sm font-medium text-muted-foreground">Thời gian cập nhật</h3>
+                                    <p className="text-sm">
+                                        {teamDetails?.updatedAt ? new Date(teamDetails.updatedAt).toLocaleString('vi-VN') : 'N/A'}
+                                    </p>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+
+                    {/* Team Leaders tab */}
+                    <TabsContent value="leaders" className="space-y-4">
+                        <TeamManagersTable
+                            teamId={teamId}
+                            leaders={leaders}
+                            users={users}
+                            canManage={true}
+                            isLoading={isLoading}
+                            onAddManager={handleAddLeader}
+                            onEditManager={handleEditLeader}
+                            onDeleteManager={handleRemoveLeader}
+                            onRefresh={handleRefresh}
+                        />
+                    </TabsContent>
+                </Tabs>
+
+                {/* Confirm Delete Dialog */}
+                <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Xóa tổ</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                Bạn có chắc chắn muốn xóa tổ "{teamDetails?.name}"? Hành động này không thể hoàn tác.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Hủy</AlertDialogCancel>
+                            <AlertDialogAction
+                                onClick={executeDelete}
+                                className="bg-destructive text-destructive-foreground"
+                            >
+                                {isLoading ? 'Đang xóa...' : 'Xóa'}
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            </div>
         </ErrorBoundary>
     );
 }

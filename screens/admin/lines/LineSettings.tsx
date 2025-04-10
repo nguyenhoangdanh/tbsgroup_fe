@@ -11,7 +11,6 @@ import { useLine } from '@/hooks/line/LineContext';
 import { useFactoryQueries } from '@/hooks/factory/useFactoryQueries';
 import { LineUpdateDTO } from '@/common/interface/line';
 import { ErrorBoundary } from 'react-error-boundary';
-import PageLoader from '@/components/common/loading/PageLoader';
 
 // Define LineStatus type to ensure type safety
 type LineStatus = 'ACTIVE' | 'INACTIVE' | 'MAINTENANCE';
@@ -166,175 +165,170 @@ export const LineSettings: React.FC<LineSettingsProps> = ({ factoryId, lineId })
                 }}
                 />}
         >
-            <PageLoader
-                isLoading={isPageLoading}
-                showTableSkeleton={false}
-            >
-                <div className="space-y-6">
-                    {/* Header with back button */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <div className="flex items-center gap-2">
-                            <Button variant="outline" size="icon" onClick={handleBack}>
-                                <ArrowLeft className="h-4 w-4" />
-                            </Button>
-                            <div>
-                                <h1 className="text-2xl font-bold">Cài đặt dây chuyền</h1>
-                                <p className="text-muted-foreground">
-                                    {lineDetails?.name} ({lineDetails?.code}) - Nhà máy: {factory?.name || 'Đang tải...'}
-                                </p>
-                            </div>
+            <div className="space-y-6">
+                {/* Header with back button */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-2">
+                        <Button variant="outline" size="icon" onClick={handleBack}>
+                            <ArrowLeft className="h-4 w-4" />
+                        </Button>
+                        <div>
+                            <h1 className="text-2xl font-bold">Cài đặt dây chuyền</h1>
+                            <p className="text-muted-foreground">
+                                {lineDetails?.name} ({lineDetails?.code}) - Nhà máy: {factory?.name || 'Đang tải...'}
+                            </p>
                         </div>
                     </div>
-
-                    {/* Settings tabs */}
-                    <Tabs defaultValue="status" className="w-full">
-                        <TabsList>
-                            <TabsTrigger value="status">
-                                <Activity className="mr-2 h-4 w-4" />
-                                Trạng thái hoạt động
-                            </TabsTrigger>
-                            <TabsTrigger value="access">
-                                <ShieldAlert className="mr-2 h-4 w-4" />
-                                Quyền truy cập
-                            </TabsTrigger>
-                            <TabsTrigger value="staff">
-                                <Users className="mr-2 h-4 w-4" />
-                                Nhân sự
-                            </TabsTrigger>
-                        </TabsList>
-
-                        {/* Access tab */}
-                        <TabsContent value="access" className="space-y-4">
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Quyền truy cập</CardTitle>
-                                    <CardDescription>Quản lý quyền truy cập dây chuyền</CardDescription>
-                                </CardHeader>
-                                <CardContent className="space-y-6">
-                                    <div className="space-y-4">
-                                        <div className="flex items-center justify-between py-4">
-                                            <div>
-                                                <h3 className="font-medium">Công khai</h3>
-                                                <p className="text-sm text-muted-foreground">
-                                                    Cho phép tất cả người dùng trong hệ thống xem dây chuyền này
-                                                </p>
-                                            </div>
-                                            <Switch id="public-access" disabled={!canManage || isPageLoading} />
-                                        </div>
-
-                                        <Separator />
-
-                                        <div className="flex items-center justify-between py-4">
-                                            <div>
-                                                <h3 className="font-medium">Giới hạn theo nhà máy</h3>
-                                                <p className="text-sm text-muted-foreground">
-                                                    Chỉ người dùng thuộc nhà máy mới có thể xem dây chuyền này
-                                                </p>
-                                            </div>
-                                            <Switch id="factory-limited" defaultChecked disabled={!canManage || isPageLoading} />
-                                        </div>
-
-                                        <Separator />
-
-                                        <div className="flex items-center justify-between py-4">
-                                            <div>
-                                                <h3 className="font-medium">Giới hạn chỉnh sửa</h3>
-                                                <p className="text-sm text-muted-foreground">
-                                                    Chỉ quản lý dây chuyền mới có thể chỉnh sửa thông tin
-                                                </p>
-                                            </div>
-                                            <Switch id="edit-limited" defaultChecked disabled={!canManage || isPageLoading} />
-                                        </div>
-
-                                        <Separator />
-
-                                        <div className="mt-6">
-                                            <h3 className="font-medium mb-4">Quản lý quyền quản trị</h3>
-                                            <Button
-                                                variant="outline"
-                                                onClick={handleGoToManagers}
-                                                className="w-full justify-start"
-                                                disabled={!canManage || isPageLoading}
-                                            >
-                                                <Users className="mr-2 h-4 w-4" />
-                                                Quản lý danh sách quản lý dây chuyền
-                                            </Button>
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        </TabsContent>
-
-                        {/* Staff tab */}
-                        <TabsContent value="staff" className="space-y-4">
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Quản lý nhân sự</CardTitle>
-                                    <CardDescription>Quản lý nhân sự làm việc trên dây chuyền</CardDescription>
-                                </CardHeader>
-                                <CardContent className="space-y-6">
-                                    <div className="space-y-4">
-                                        <div className="flex items-center justify-between py-4">
-                                            <div>
-                                                <h3 className="font-medium">Nhóm sản xuất</h3>
-                                                <p className="text-sm text-muted-foreground">
-                                                    Quản lý các nhóm làm việc trên dây chuyền
-                                                </p>
-                                            </div>
-                                            <Button
-                                                onClick={handleGoToTeams}
-                                                variant="outline"
-                                                disabled={!canManage || isPageLoading}
-                                            >
-                                                <Users className="mr-2 h-4 w-4" />
-                                                Quản lý nhóm
-                                            </Button>
-                                        </div>
-
-                                        <Separator />
-
-                                        <div className="flex items-center justify-between py-4">
-                                            <div>
-                                                <h3 className="font-medium">Tổ sản xuất</h3>
-                                                <p className="text-sm text-muted-foreground">
-                                                    Quản lý các tổ sản xuất thuộc dây chuyền
-                                                </p>
-                                            </div>
-                                            <Button
-                                                variant="outline"
-                                                onClick={() => router.push(`/admin/factories/${factoryId}/lines/${lineId}/groups`)}
-                                                disabled={!canManage || isPageLoading}
-                                            >
-                                                <Users className="mr-2 h-4 w-4" />
-                                                Quản lý tổ
-                                            </Button>
-                                        </div>
-
-                                        <Separator />
-
-                                        <div className="flex items-center justify-between py-4">
-                                            <div>
-                                                <h3 className="font-medium">Công nhân</h3>
-                                                <p className="text-sm text-muted-foreground">
-                                                    Quản lý công nhân làm việc trên dây chuyền
-                                                </p>
-                                            </div>
-                                            <Button
-                                                variant="outline"
-                                                onClick={() => router.push(`/admin/factories/${factoryId}/lines/${lineId}/workers`)}
-                                                disabled={!canManage || isPageLoading}
-                                            >
-                                                <Users className="mr-2 h-4 w-4" />
-                                                Quản lý công nhân
-                                            </Button>
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        </TabsContent>
-                    </Tabs>
                 </div>
-            </PageLoader>
+
+                {/* Settings tabs */}
+                <Tabs defaultValue="status" className="w-full">
+                    <TabsList>
+                        <TabsTrigger value="status">
+                            <Activity className="mr-2 h-4 w-4" />
+                            Trạng thái hoạt động
+                        </TabsTrigger>
+                        <TabsTrigger value="access">
+                            <ShieldAlert className="mr-2 h-4 w-4" />
+                            Quyền truy cập
+                        </TabsTrigger>
+                        <TabsTrigger value="staff">
+                            <Users className="mr-2 h-4 w-4" />
+                            Nhân sự
+                        </TabsTrigger>
+                    </TabsList>
+
+                    {/* Access tab */}
+                    <TabsContent value="access" className="space-y-4">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Quyền truy cập</CardTitle>
+                                <CardDescription>Quản lý quyền truy cập dây chuyền</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-6">
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between py-4">
+                                        <div>
+                                            <h3 className="font-medium">Công khai</h3>
+                                            <p className="text-sm text-muted-foreground">
+                                                Cho phép tất cả người dùng trong hệ thống xem dây chuyền này
+                                            </p>
+                                        </div>
+                                        <Switch id="public-access" disabled={!canManage || isPageLoading} />
+                                    </div>
+
+                                    <Separator />
+
+                                    <div className="flex items-center justify-between py-4">
+                                        <div>
+                                            <h3 className="font-medium">Giới hạn theo nhà máy</h3>
+                                            <p className="text-sm text-muted-foreground">
+                                                Chỉ người dùng thuộc nhà máy mới có thể xem dây chuyền này
+                                            </p>
+                                        </div>
+                                        <Switch id="factory-limited" defaultChecked disabled={!canManage || isPageLoading} />
+                                    </div>
+
+                                    <Separator />
+
+                                    <div className="flex items-center justify-between py-4">
+                                        <div>
+                                            <h3 className="font-medium">Giới hạn chỉnh sửa</h3>
+                                            <p className="text-sm text-muted-foreground">
+                                                Chỉ quản lý dây chuyền mới có thể chỉnh sửa thông tin
+                                            </p>
+                                        </div>
+                                        <Switch id="edit-limited" defaultChecked disabled={!canManage || isPageLoading} />
+                                    </div>
+
+                                    <Separator />
+
+                                    <div className="mt-6">
+                                        <h3 className="font-medium mb-4">Quản lý quyền quản trị</h3>
+                                        <Button
+                                            variant="outline"
+                                            onClick={handleGoToManagers}
+                                            className="w-full justify-start"
+                                            disabled={!canManage || isPageLoading}
+                                        >
+                                            <Users className="mr-2 h-4 w-4" />
+                                            Quản lý danh sách quản lý dây chuyền
+                                        </Button>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+
+                    {/* Staff tab */}
+                    <TabsContent value="staff" className="space-y-4">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Quản lý nhân sự</CardTitle>
+                                <CardDescription>Quản lý nhân sự làm việc trên dây chuyền</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-6">
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between py-4">
+                                        <div>
+                                            <h3 className="font-medium">Nhóm sản xuất</h3>
+                                            <p className="text-sm text-muted-foreground">
+                                                Quản lý các nhóm làm việc trên dây chuyền
+                                            </p>
+                                        </div>
+                                        <Button
+                                            onClick={handleGoToTeams}
+                                            variant="outline"
+                                            disabled={!canManage || isPageLoading}
+                                        >
+                                            <Users className="mr-2 h-4 w-4" />
+                                            Quản lý nhóm
+                                        </Button>
+                                    </div>
+
+                                    <Separator />
+
+                                    <div className="flex items-center justify-between py-4">
+                                        <div>
+                                            <h3 className="font-medium">Tổ sản xuất</h3>
+                                            <p className="text-sm text-muted-foreground">
+                                                Quản lý các tổ sản xuất thuộc dây chuyền
+                                            </p>
+                                        </div>
+                                        <Button
+                                            variant="outline"
+                                            onClick={() => router.push(`/admin/factories/${factoryId}/lines/${lineId}/groups`)}
+                                            disabled={!canManage || isPageLoading}
+                                        >
+                                            <Users className="mr-2 h-4 w-4" />
+                                            Quản lý tổ
+                                        </Button>
+                                    </div>
+
+                                    <Separator />
+
+                                    <div className="flex items-center justify-between py-4">
+                                        <div>
+                                            <h3 className="font-medium">Công nhân</h3>
+                                            <p className="text-sm text-muted-foreground">
+                                                Quản lý công nhân làm việc trên dây chuyền
+                                            </p>
+                                        </div>
+                                        <Button
+                                            variant="outline"
+                                            onClick={() => router.push(`/admin/factories/${factoryId}/lines/${lineId}/workers`)}
+                                            disabled={!canManage || isPageLoading}
+                                        >
+                                            <Users className="mr-2 h-4 w-4" />
+                                            Quản lý công nhân
+                                        </Button>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+                </Tabs>
+            </div>
         </ErrorBoundary>
     );
 };

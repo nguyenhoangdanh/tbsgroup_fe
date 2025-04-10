@@ -52,6 +52,7 @@ export const useUserForm = () => {
     const [formData, setFormData] = React.useState<Omit<TUserSchema, "id">>({
         username: "",
         fullName: "",
+        password: 'Abc@123',
         roleId: "",
         employeeId: "",
         cardId: "",
@@ -74,7 +75,7 @@ export const useUserForm = () => {
             roleId: "",
             employeeId: "",
             cardId: "",
-
+            password: 'Abc@123',
             status: UserStatusEnum.PENDING_ACTIVATION
 
         });
@@ -85,6 +86,7 @@ export const useUserForm = () => {
         if (user) {
             setFormData({
                 username: user.username,
+                password: user.password,
                 fullName: user.fullName || "",
                 roleId: user.roleId || "",
                 employeeId: user.employeeId || "",

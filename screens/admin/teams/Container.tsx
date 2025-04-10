@@ -13,7 +13,6 @@ import { toast } from '@/hooks/use-toast';
 import { ColumnDef } from "@tanstack/react-table";
 import { DialogType, useDialog } from "@/context/DialogProvider";
 import { ErrorBoundary } from 'react-error-boundary';
-import PageLoader from '@/components/common/loading/PageLoader';
 import { Badge } from '@/components/ui/badge';
 import { TeamForm } from './TeamForm'; // Import TeamForm từ file riêng
 
@@ -412,19 +411,12 @@ const TeamsContainer = ({ params }: ContainerProps) => {
                             </Button>
                         </div>
 
-                        <PageLoader
-                            isLoading={isLoading}
-                            showTableSkeleton={true}
-                            skeletonColumns={4}
-                            skeletonRows={5}
-                        >
-                            <DataTable
-                                columns={columns}
-                                data={lineTeams || []}
-                                title='Danh sách tổ'
+                        <DataTable
+                            columns={columns}
+                            data={lineTeams || []}
+                            title='Danh sách tổ'
 
-                            />
-                        </PageLoader>
+                        />
                     </CardContent>
                 </Card>
             </div>

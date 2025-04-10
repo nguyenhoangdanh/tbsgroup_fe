@@ -224,7 +224,7 @@ export default function BulkOperationsPanel({
                         </DialogDescription>
                     </DialogHeader>
                     <div className="py-4">
-                        <Alert variant="warning">
+                        <Alert variant="default">
                             <AlertCircle className="h-4 w-4" />
                             <AlertDescription>
                                 This action will affect all users that have these roles assigned.

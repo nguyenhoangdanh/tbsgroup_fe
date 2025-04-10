@@ -199,7 +199,7 @@ export function DataTable<TData extends BaseData, TValue>({
     if (isLoading) {
       startLoading(loadingKey, {
         variant: "table",
-        skeletonConfig: { columns: columns.length + (actions ? 1 : 0), rows: initialPageSize },
+        // skeletonConfig: { columns: columns.length + (actions ? 1 : 0), rows: initialPageSize },
       });
     } else {
       stopLoading(loadingKey);
@@ -303,18 +303,13 @@ export function DataTable<TData extends BaseData, TValue>({
 
   const toggleGroup = React.useCallback((groupValue: string) => {
     if (!groupValue) {
-      console.error("Attempted to toggle group with no groupValue");
       return;
     }
-
-    console.log("Toggling group:", groupValue, "Current state:", expandedGroups[groupValue]);
 
     // Use functional update to avoid race conditions
     setExpandedGroups(prev => {
       const newState = { ...prev };
       newState[groupValue] = !prev[groupValue];
-
-      console.log("New expanded groups state:", newState);
       return newState;
     });
   }, [expandedGroups]); // Include expandedGroups in dependencies
@@ -474,13 +469,6 @@ export function DataTable<TData extends BaseData, TValue>({
       // Bật loading khi bắt đầu fetch data
       startLoading(loadingKey, {
         variant: "table",
-        delay: 300,
-        skeletonConfig: {
-          columns: columns.length + (actions ? 1 : 0),
-          rows: pageSize
-        },
-        message: "Đang tải dữ liệu bảng...",
-        customClass: "w-full"
       });
       onPageChange(initialServerPage, serverPageSize);
       return;
@@ -490,13 +478,6 @@ export function DataTable<TData extends BaseData, TValue>({
 
     startLoading(loadingKey, {
       variant: "table",
-      delay: 300,
-      skeletonConfig: {
-        columns: columns.length + (actions ? 1 : 0),
-        rows: pageSize
-      },
-      message: "Đang tải dữ liệu bảng...",
-      customClass: "w-full"
     });
 
     // Only set fetching state, don't trigger full page loader

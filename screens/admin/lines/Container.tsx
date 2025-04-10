@@ -10,8 +10,6 @@ import { DialogType, useDialog } from '@/context/DialogProvider';
 import LineForm from './LineForm';
 import { toast } from '@/hooks/use-toast';
 import { LineWithDetails } from '@/common/interface/line';
-import PageLoader from '@/components/common/loading/PageLoader';
-
 interface ContainerProps {
     params: {
         factoryId: string
@@ -234,37 +232,30 @@ export default function LinesListContainer({ params }: ContainerProps) {
                     actionButton={actionButton}
                 />
 
-                <PageLoader
-                    isLoading={isLoading}
-                    showTableSkeleton={true}
-                    skeletonColumns={5}
-                    skeletonRows={6}
-                >
-                    {!error && (
-                        <LinesList
-                            lines={lines || []}
-                            factoryId={factoryId}
-                            factoryName={factory?.name}
-                            onLineSelect={handleLineSelect}
-                            onEditLine={handleEditLine}
-                            onDeleteLine={handleDeleteLine}
-                        />
-                    )}
+                {!error && (
+                    <LinesList
+                        lines={lines || []}
+                        factoryId={factoryId}
+                        factoryName={factory?.name}
+                        onLineSelect={handleLineSelect}
+                        onEditLine={handleEditLine}
+                        onDeleteLine={handleDeleteLine}
+                    />
+                )}
 
-                    {error && (
-                        <div className="p-4 border border-red-300 rounded-md bg-red-50">
-                            <h3 className="text-lg font-semibold text-red-800">Lỗi tải dữ liệu</h3>
-                            <p className="text-red-600">Không thể tải danh sách dây chuyền. Vui lòng thử lại sau.</p>
-                            <Button
-                                variant="outline"
-                                onClick={handleRefresh}
-                                className="mt-4"
-                            >
-                                Thử lại
-                            </Button>
-                        </div>
-                    )}
-                </PageLoader>
+                {error && (
+                    <div className="p-4 border border-red-300 rounded-md bg-red-50">
+                        <h3 className="text-lg font-semibold text-red-800">Lỗi tải dữ liệu</h3>
+                        <p className="text-red-600">Không thể tải danh sách dây chuyền. Vui lòng thử lại sau.</p>
+                        <Button
+                            variant="outline"
+                            onClick={handleRefresh}
+                            className="mt-4"
+                        >
+                            Thử lại
+                        </Button>
+                    </div>
+                )}
             </div>
         </ErrorBoundary>
     );

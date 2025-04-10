@@ -14,7 +14,6 @@ import { toast } from '@/hooks/use-toast';
 import { ColumnDef } from "@tanstack/react-table";
 import { DialogType, useDialog } from "@/context/DialogProvider";
 import { ErrorBoundary } from 'react-error-boundary';
-import PageLoader from '@/components/common/loading/PageLoader';
 import { Badge } from '@/components/ui/badge';
 import { TeamForm } from '../teams/TeamForm';
 
@@ -439,20 +438,13 @@ const LineTeamsContainer: React.FC<LineTeamsContainerProps> = ({ factoryId, line
                             </Button>
                         </div>
 
-                        <PageLoader
-                            isLoading={isLoading}
-                            showTableSkeleton={true}
-                            skeletonColumns={4}
-                            skeletonRows={5}
-                        >
-                            <DataTable
-                                columns={columns}
-                                title='Danh sách tổ'
-                                data={lineTeams}
-                                searchColumn='name'
-                                searchPlaceholder='Tìm kiếm tổ...'
-                            />
-                        </PageLoader>
+                        <DataTable
+                            columns={columns}
+                            title='Danh sách tổ'
+                            data={lineTeams}
+                            searchColumn='name'
+                            searchPlaceholder='Tìm kiếm tổ...'
+                        />
                     </CardContent>
                 </Card>
             </div>

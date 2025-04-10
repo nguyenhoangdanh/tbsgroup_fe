@@ -1,5 +1,4 @@
 import { UserStatusEnum } from '@/common/enum';
-import { flatMap } from 'lodash';
 import {z} from 'zod';
 
 export const userSchema = z.object({

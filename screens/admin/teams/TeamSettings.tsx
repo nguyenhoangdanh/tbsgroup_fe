@@ -10,7 +10,6 @@ import { toast } from '@/hooks/use-toast';
 import { useTeam } from '@/hooks/teams/TeamContext';
 import { TeamUpdateDTO } from '@/common/interface/team';
 import { ErrorBoundary } from 'react-error-boundary';
-import PageLoader from '@/components/common/loading/PageLoader';
 
 // Error fallback component for ErrorBoundary
 const ErrorFallback = ({ error, resetErrorBoundary }: { error: Error, resetErrorBoundary: () => void }) => (
@@ -189,184 +188,179 @@ export default function TeamSettings({ params }: TeamSettingsProps) {
             )}
         >
             <div className="container mx-auto p-4">
-                <PageLoader
-                    isLoading={isPageLoading}
-                    showTableSkeleton={false}
-                >
-                    {/* Header with back button */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-                        <div className="flex items-center gap-2">
-                            <Button variant="outline" size="icon" onClick={handleBack}>
-                                <ArrowLeft className="h-4 w-4" />
-                            </Button>
-                            <div>
-                                <h1 className="text-2xl font-bold">Cài đặt tổ</h1>
-                                <p className="text-muted-foreground">
-                                    {teamDetails?.name} ({teamDetails?.code}) - Dây chuyền: {teamDetails?.lineName || 'Đang tải...'}
-                                </p>
-                            </div>
+                {/* Header with back button */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                    <div className="flex items-center gap-2">
+                        <Button variant="outline" size="icon" onClick={handleBack}>
+                            <ArrowLeft className="h-4 w-4" />
+                        </Button>
+                        <div>
+                            <h1 className="text-2xl font-bold">Cài đặt tổ</h1>
+                            <p className="text-muted-foreground">
+                                {teamDetails?.name} ({teamDetails?.code}) - Dây chuyền: {teamDetails?.lineName || 'Đang tải...'}
+                            </p>
                         </div>
                     </div>
+                </div>
 
-                    {/* Settings tabs */}
-                    <Tabs defaultValue="access" className="w-full">
-                        <TabsList>
-                            <TabsTrigger value="access">
-                                <ShieldAlert className="mr-2 h-4 w-4" />
-                                Quyền truy cập
-                            </TabsTrigger>
-                            <TabsTrigger value="staff">
-                                <Users className="mr-2 h-4 w-4" />
-                                Nhân sự
-                            </TabsTrigger>
-                        </TabsList>
+                {/* Settings tabs */}
+                <Tabs defaultValue="access" className="w-full">
+                    <TabsList>
+                        <TabsTrigger value="access">
+                            <ShieldAlert className="mr-2 h-4 w-4" />
+                            Quyền truy cập
+                        </TabsTrigger>
+                        <TabsTrigger value="staff">
+                            <Users className="mr-2 h-4 w-4" />
+                            Nhân sự
+                        </TabsTrigger>
+                    </TabsList>
 
-                        {/* Access tab */}
-                        <TabsContent value="access" className="space-y-4">
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Quyền truy cập</CardTitle>
-                                    <CardDescription>Quản lý quyền truy cập tổ</CardDescription>
-                                </CardHeader>
-                                <CardContent className="space-y-6">
-                                    <div className="space-y-4">
-                                        <div className="flex items-center justify-between py-4">
-                                            <div>
-                                                <h3 className="font-medium">Công khai</h3>
-                                                <p className="text-sm text-muted-foreground">
-                                                    Cho phép tất cả người dùng trong hệ thống xem tổ này
-                                                </p>
-                                            </div>
-                                            <Switch
-                                                id="public-access"
-                                                disabled={isPageLoading}
-                                                onCheckedChange={(checked) => handleToggleSetting('isPublic', checked)}
-                                                checked={teamDetails?.isPublic || false}
-                                            />
+                    {/* Access tab */}
+                    <TabsContent value="access" className="space-y-4">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Quyền truy cập</CardTitle>
+                                <CardDescription>Quản lý quyền truy cập tổ</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-6">
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between py-4">
+                                        <div>
+                                            <h3 className="font-medium">Công khai</h3>
+                                            <p className="text-sm text-muted-foreground">
+                                                Cho phép tất cả người dùng trong hệ thống xem tổ này
+                                            </p>
                                         </div>
-
-                                        <Separator />
-
-                                        <div className="flex items-center justify-between py-4">
-                                            <div>
-                                                <h3 className="font-medium">Giới hạn theo dây chuyền</h3>
-                                                <p className="text-sm text-muted-foreground">
-                                                    Chỉ người dùng thuộc dây chuyền mới có thể xem tổ này
-                                                </p>
-                                            </div>
-                                            <Switch
-                                                id="line-limited"
-                                                defaultChecked
-                                                disabled={isPageLoading}
-                                                onCheckedChange={(checked) => handleToggleSetting('isLineLimited', checked)}
-                                                checked={teamDetails?.isLineLimited || true}
-                                            />
-                                        </div>
-
-                                        <Separator />
-
-                                        <div className="flex items-center justify-between py-4">
-                                            <div>
-                                                <h3 className="font-medium">Giới hạn chỉnh sửa</h3>
-                                                <p className="text-sm text-muted-foreground">
-                                                    Chỉ tổ trưởng mới có thể chỉnh sửa thông tin
-                                                </p>
-                                            </div>
-                                            <Switch
-                                                id="edit-limited"
-                                                defaultChecked
-                                                disabled={isPageLoading}
-                                                onCheckedChange={(checked) => handleToggleSetting('isEditLimited', checked)}
-                                                checked={teamDetails?.isEditLimited || true}
-                                            />
-                                        </div>
-
-                                        <Separator />
-
-                                        <div className="mt-6">
-                                            <h3 className="font-medium mb-4">Quản lý quyền quản trị</h3>
-                                            <Button
-                                                variant="outline"
-                                                onClick={handleGoToLeaders}
-                                                className="w-full justify-start"
-                                                disabled={isPageLoading}
-                                            >
-                                                <UserCog className="mr-2 h-4 w-4" />
-                                                Quản lý danh sách tổ trưởng
-                                            </Button>
-                                        </div>
+                                        <Switch
+                                            id="public-access"
+                                            disabled={isPageLoading}
+                                            onCheckedChange={(checked) => handleToggleSetting('isPublic', checked)}
+                                            checked={teamDetails?.isPublic || false}
+                                        />
                                     </div>
-                                </CardContent>
-                            </Card>
-                        </TabsContent>
 
-                        {/* Staff tab */}
-                        <TabsContent value="staff" className="space-y-4">
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Quản lý nhân sự</CardTitle>
-                                    <CardDescription>Quản lý nhân sự làm việc trong tổ</CardDescription>
-                                </CardHeader>
-                                <CardContent className="space-y-6">
-                                    <div className="space-y-4">
-                                        <div className="flex items-center justify-between py-4">
-                                            <div>
-                                                <h3 className="font-medium">Thành viên</h3>
-                                                <p className="text-sm text-muted-foreground">
-                                                    Quản lý các thành viên làm việc trong tổ
-                                                </p>
-                                            </div>
-                                            <Button
-                                                onClick={handleGoToMembers}
-                                                variant="outline"
-                                                disabled={isPageLoading}
-                                            >
-                                                <Users className="mr-2 h-4 w-4" />
-                                                Quản lý thành viên
-                                            </Button>
+                                    <Separator />
+
+                                    <div className="flex items-center justify-between py-4">
+                                        <div>
+                                            <h3 className="font-medium">Giới hạn theo dây chuyền</h3>
+                                            <p className="text-sm text-muted-foreground">
+                                                Chỉ người dùng thuộc dây chuyền mới có thể xem tổ này
+                                            </p>
                                         </div>
-
-                                        <Separator />
-
-                                        <div className="flex items-center justify-between py-4">
-                                            <div>
-                                                <h3 className="font-medium">Tự động phân công</h3>
-                                                <p className="text-sm text-muted-foreground">
-                                                    Tự động phân công công việc cho các thành viên trong tổ
-                                                </p>
-                                            </div>
-                                            <Switch
-                                                id="auto-assign"
-                                                disabled={isPageLoading}
-                                                onCheckedChange={(checked) => handleToggleSetting('autoAssign', checked)}
-                                                checked={teamDetails?.autoAssign || false}
-                                            />
-                                        </div>
-
-                                        <Separator />
-
-                                        <div className="flex items-center justify-between py-4">
-                                            <div>
-                                                <h3 className="font-medium">Thời gian làm việc</h3>
-                                                <p className="text-sm text-muted-foreground">
-                                                    Thiết lập thời gian làm việc của tổ
-                                                </p>
-                                            </div>
-                                            <Button
-                                                variant="outline"
-                                                onClick={() => router.push(`/teams/${teamId}/schedule`)}
-                                                disabled={isPageLoading}
-                                            >
-                                                <Activity className="mr-2 h-4 w-4" />
-                                                Thiết lập lịch làm việc
-                                            </Button>
-                                        </div>
+                                        <Switch
+                                            id="line-limited"
+                                            defaultChecked
+                                            disabled={isPageLoading}
+                                            onCheckedChange={(checked) => handleToggleSetting('isLineLimited', checked)}
+                                            checked={teamDetails?.isLineLimited || true}
+                                        />
                                     </div>
-                                </CardContent>
-                            </Card>
-                        </TabsContent>
-                    </Tabs>
-                </PageLoader>
+
+                                    <Separator />
+
+                                    <div className="flex items-center justify-between py-4">
+                                        <div>
+                                            <h3 className="font-medium">Giới hạn chỉnh sửa</h3>
+                                            <p className="text-sm text-muted-foreground">
+                                                Chỉ tổ trưởng mới có thể chỉnh sửa thông tin
+                                            </p>
+                                        </div>
+                                        <Switch
+                                            id="edit-limited"
+                                            defaultChecked
+                                            disabled={isPageLoading}
+                                            onCheckedChange={(checked) => handleToggleSetting('isEditLimited', checked)}
+                                            checked={teamDetails?.isEditLimited || true}
+                                        />
+                                    </div>
+
+                                    <Separator />
+
+                                    <div className="mt-6">
+                                        <h3 className="font-medium mb-4">Quản lý quyền quản trị</h3>
+                                        <Button
+                                            variant="outline"
+                                            onClick={handleGoToLeaders}
+                                            className="w-full justify-start"
+                                            disabled={isPageLoading}
+                                        >
+                                            <UserCog className="mr-2 h-4 w-4" />
+                                            Quản lý danh sách tổ trưởng
+                                        </Button>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+
+                    {/* Staff tab */}
+                    <TabsContent value="staff" className="space-y-4">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Quản lý nhân sự</CardTitle>
+                                <CardDescription>Quản lý nhân sự làm việc trong tổ</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-6">
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between py-4">
+                                        <div>
+                                            <h3 className="font-medium">Thành viên</h3>
+                                            <p className="text-sm text-muted-foreground">
+                                                Quản lý các thành viên làm việc trong tổ
+                                            </p>
+                                        </div>
+                                        <Button
+                                            onClick={handleGoToMembers}
+                                            variant="outline"
+                                            disabled={isPageLoading}
+                                        >
+                                            <Users className="mr-2 h-4 w-4" />
+                                            Quản lý thành viên
+                                        </Button>
+                                    </div>
+
+                                    <Separator />
+
+                                    <div className="flex items-center justify-between py-4">
+                                        <div>
+                                            <h3 className="font-medium">Tự động phân công</h3>
+                                            <p className="text-sm text-muted-foreground">
+                                                Tự động phân công công việc cho các thành viên trong tổ
+                                            </p>
+                                        </div>
+                                        <Switch
+                                            id="auto-assign"
+                                            disabled={isPageLoading}
+                                            onCheckedChange={(checked) => handleToggleSetting('autoAssign', checked)}
+                                            checked={teamDetails?.autoAssign || false}
+                                        />
+                                    </div>
+
+                                    <Separator />
+
+                                    <div className="flex items-center justify-between py-4">
+                                        <div>
+                                            <h3 className="font-medium">Thời gian làm việc</h3>
+                                            <p className="text-sm text-muted-foreground">
+                                                Thiết lập thời gian làm việc của tổ
+                                            </p>
+                                        </div>
+                                        <Button
+                                            variant="outline"
+                                            onClick={() => router.push(`/teams/${teamId}/schedule`)}
+                                            disabled={isPageLoading}
+                                        >
+                                            <Activity className="mr-2 h-4 w-4" />
+                                            Thiết lập lịch làm việc
+                                        </Button>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+                </Tabs>
             </div>
         </ErrorBoundary>
     );

@@ -6,7 +6,6 @@ import { Badge } from '@/components/ui/badge';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { LineManager } from '@/common/interface/line';
-import PageLoader from '@/components/common/loading/PageLoader';
 
 // Create a type that extends BaseData for use with DataTable
 interface ManagerData extends BaseData {
@@ -168,32 +167,30 @@ export const LineManagersTable: React.FC<LineManagersTableProps> = ({
     }, [managers, onEditManager]);
 
     return (
-        <PageLoader isLoading={isLoading}>
-            <DataTable
-                columns={columns}
-                data={managersWithId as ManagerData[]}
-                title="Danh sách quản lý"
-                description="Những người quản lý dây chuyền"
-                actions={canManage ? ["create", "edit", "delete"] : []}
-                onDelete={handleDelete}
-                createClickAction={onAddManager}
-                editClickAction={handleEditClick}
-                // onEdit is still needed for compatibility with older code
-                onEdit={(data) => {
-                    const manager = managers.find(m => m.userId === data.id);
-                    if (manager && onEditManager) {
-                        onEditManager(manager);
-                    }
-                }}
-                refetchData={onRefresh}
-                searchColumn="user"
-                searchPlaceholder="Tìm kiếm quản lý..."
-                isLoading={isLoading}
-                disablePagination={managers.length <= 10}
-                exportData={false}
-            >
-                {managers.length === 0 && emptyStateContent}
-            </DataTable>
-        </PageLoader>
+        <DataTable
+            columns={columns}
+            data={managersWithId as ManagerData[]}
+            title="Danh sách quản lý"
+            description="Những người quản lý dây chuyền"
+            actions={canManage ? ["create", "edit", "delete"] : []}
+            onDelete={handleDelete}
+            createClickAction={onAddManager}
+            editClickAction={handleEditClick}
+            // onEdit is still needed for compatibility with older code
+            onEdit={(data) => {
+                const manager = managers.find(m => m.userId === data.id);
+                if (manager && onEditManager) {
+                    onEditManager(manager);
+                }
+            }}
+            refetchData={onRefresh}
+            searchColumn="user"
+            searchPlaceholder="Tìm kiếm quản lý..."
+            isLoading={isLoading}
+            disablePagination={managers.length <= 10}
+            exportData={false}
+        >
+            {managers.length === 0 && emptyStateContent}
+        </DataTable>
     );
 };
