@@ -30,7 +30,7 @@ const LIST_STALE_TIME = 5 * 60 * 1000; // 5 minutes (increased from 1 minute)
 
 // Improved retry configuration with exponential backoff
 const DEFAULT_RETRY_OPTIONS = {
-  retry: 3, // Increased from 2
+  retry:  1,
   retryDelay: (attemptIndex: number) =>
     Math.min(1000 * Math.pow(2, attemptIndex), 30000), // exponential backoff capped at 30s
 };

@@ -31,8 +31,8 @@ export const PermissionGuard: React.FC<PermissionGuardProps> = React.memo(({
     children,
     fallback = null,
     renderNull = true,
-    loadingMessage = 'Đang tải...',
-    loadingDelay = 3000,
+    loadingMessage,
+    loadingDelay = 30000,
     useDefaultAccessDenied = false,
 
 }) => {

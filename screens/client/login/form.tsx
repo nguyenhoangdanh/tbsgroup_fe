@@ -25,7 +25,7 @@ const LoginForm = () => {
                     <FieldInput
                         control={methods.control}
                         name="username"
-                        label="MSNV"
+                        label="Mã số nhân viên"
                         disabled={isLoading}
                         placeholder="Vui lòng nhập mã số nhân viên của bạn..."
                     />
@@ -41,6 +41,7 @@ const LoginForm = () => {
                         control={methods.control}
                         name="rememberMe"
                         label="Ghi nhớ"
+                        className="border-none"
                     />
                     <SubmitButton
                         disabled={isLoading}

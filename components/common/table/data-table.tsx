@@ -198,7 +198,7 @@ export function DataTable<TData extends BaseData, TValue>({
   React.useEffect(() => {
     if (isLoading) {
       startLoading(loadingKey, {
-        variant: "table",
+        variant: "custom",
         // skeletonConfig: { columns: columns.length + (actions ? 1 : 0), rows: initialPageSize },
       });
     } else {
@@ -468,7 +468,7 @@ export function DataTable<TData extends BaseData, TValue>({
 
       // Bật loading khi bắt đầu fetch data
       startLoading(loadingKey, {
-        variant: "table",
+        variant: "custom",
       });
       onPageChange(initialServerPage, serverPageSize);
       return;
@@ -477,7 +477,7 @@ export function DataTable<TData extends BaseData, TValue>({
     const serverPageIndex = getServerPageForClientPage(pageIndex, pageSize);
 
     startLoading(loadingKey, {
-      variant: "table",
+      variant: "custom",
     });
 
     // Only set fetching state, don't trigger full page loader
@@ -751,12 +751,12 @@ export function DataTable<TData extends BaseData, TValue>({
         </Pagination>
 
         {/* Optional loading indicator for server-side pagination */}
-        {serverSidePagination && isDataFetching && (
+        {/* {serverSidePagination && isDataFetching && (
           <div className="flex items-center justify-center py-2">
             <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin mr-2"></div>
             <span className="text-sm text-muted-foreground">Đang tải dữ liệu...</span>
           </div>
-        )}
+        )} */}
       </div>
     );
   };

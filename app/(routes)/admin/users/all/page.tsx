@@ -9,8 +9,6 @@ export default function UserPage() {
     return (
         <PermissionGuard
             pageCode="PAGE"
-            // fallback={<AccessDeniedMessage />}
-            loadingMessage="Đang tải trang quản lý người dùng..."
             useDefaultAccessDenied={true}
         >
             <UserProvider>

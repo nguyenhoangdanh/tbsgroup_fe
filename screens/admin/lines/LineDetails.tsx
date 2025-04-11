@@ -24,7 +24,7 @@ import LineManagerForm from './LineManagerForm';
 import { ErrorBoundary } from 'react-error-boundary';
 import { useUserQueries } from '@/hooks/users';
 import { LineManagersTable } from './LineManagersTable';
-import LineTeamsTab from './LineTeamsTab'; // Import our new component
+import LineTeamsTab from './LineTeamsTab';
 interface ErrorStateProps {
     error: Error | unknown;
     onBack: () => void;
