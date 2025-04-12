@@ -169,11 +169,6 @@ const WorkLogContainer: React.FC = () => {
 
     const handleExportPDF = async (workLog: WorkLog) => {
         try {
-            // Set loading state
-            const loadingToast = toast({
-                title: "Đang xuất PDF",
-                description: "Đang xử lý...",
-            });
 
             const res = await fetch("/api/export-worklog-pdf", {
                 method: "POST",
@@ -184,7 +179,6 @@ const WorkLogContainer: React.FC = () => {
             });
 
             // Remove loading toast
-            toast.dismiss(loadingToast);
 
             if (!res.ok) {
                 const errorData = await res.json().catch(() => null);
