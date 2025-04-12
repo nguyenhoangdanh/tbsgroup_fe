@@ -1,196 +1,203 @@
+// schemas/timesheet.ts
+
 import { z } from "zod";
 
-// Define the reason type
-export const reasonSchema = z.object({
-  VT: z.boolean().optional().default(false),
-  CN: z.boolean().optional().default(false),
-  CL: z.boolean().optional().default(false),
-  MM: z.boolean().optional().default(false),
-});
+// Define time slots
+export const TIME_SLOTS = [
+  { id: "slot_8_00", label: "8:00 - 8:30" },
+  { id: "slot_8_30", label: "8:30 - 9:00" },
+  { id: "slot_9_00", label: "9:00 - 9:30" },
+  { id: "slot_9_30", label: "9:30 - 10:00" },
+  { id: "slot_10_00", label: "10:00 - 10:30" },
+  { id: "slot_10_30", label: "10:30 - 11:00" },
+  { id: "slot_11_00", label: "11:00 - 11:30" },
+  { id: "slot_11_30", label: "11:30 - 12:00" },
+  { id: "slot_13_00", label: "13:00 - 13:30" },
+  { id: "slot_13_30", label: "13:30 - 14:00" },
+  { id: "slot_14_00", label: "14:00 - 14:30" },
+  { id: "slot_14_30", label: "14:30 - 15:00" },
+  { id: "slot_15_00", label: "15:00 - 15:30" },
+  { id: "slot_15_30", label: "15:30 - 16:00" },
+  { id: "slot_16_00", label: "16:00 - 16:30" },
+  { id: "slot_16_30", label: "16:30 - 17:00" },
+];
 
-// Define the entry schema
-export const timeSheetEntrySchema = z.object({
-  id: z.string(),
-  taskCode: z.string().optional(),
-  taskId: z.string().optional(),
-  taskName: z.string().optional(),
-  target: z.string().optional(),
-  note: z.string().optional(),
-  slots: z.record(z.string(), z.boolean().optional()).optional(),
-  reasons: reasonSchema.optional(),
-  total: z.number().optional(),
-});
+// Define reason options with description property
+export const REASON_OPTIONS = [
+  { value: "VT", label: "VT", description: "Vật tư" },
+  { value: "CN", label: "CN", description: "Công nghệ" },
+  { value: "CL", label: "CL", description: "Chất lượng" },
+  { value: "MM", label: "MM", description: "Máy móc" },
+];
 
-// Define the main timesheet schema
-export const timeSheetSchema = z.object({
-  id: z.string().optional(),
-  employeeName: z.string().min(1, "Vui lòng nhập họ tên"),
-  employeeId: z.string().min(1, "Vui lòng nhập mã số thẻ"),
-  department: z.string().min(1, "Vui lòng nhập đơn vị"),
-  level: z.string().optional(),
-  supervisor: z.string().optional(),
-  teamLeader: z.string().optional(),
-  shiftLeader: z.string().optional(),
-  date: z.string().optional(),
-  entries: z.array(timeSheetEntrySchema),
-  status: z.enum(["draft", "pending", "approved", "rejected"]).optional(),
-  totalHours: z.number().optional(),
-  createdAt: z.string().optional(),
-  updatedAt: z.string().optional(),
-});
-
-// Types derived from the schema
-export type ReasonType = z.infer<typeof reasonSchema>;
-export type TimeSheetEntryType = z.infer<typeof timeSheetEntrySchema>;
-export type TimeSheetType = z.infer<typeof timeSheetSchema>;
-
-// Default values
-export const defaultTimeSheetEntry: TimeSheetEntryType = {
-  id: "",
-  taskCode: "",
-  taskId: "",
-  taskName: "",
-  target: "",
-  note: "",
-  slots: {},
-  reasons: { VT: false, CN: false, CL: false, MM: false },
-  total: 0,
+// Define status colors
+export const getStatusColor = (status: string) => {
+  switch (status) {
+    case "draft":
+      return { bg: "bg-gray-100", text: "text-gray-800" };
+    case "submitted":
+      return { bg: "bg-blue-100", text: "text-blue-800" };
+    case "approved":
+      return { bg: "bg-green-100", text: "text-green-800" };
+    case "rejected":
+      return { bg: "bg-red-100", text: "text-red-800" };
+    default:
+      return { bg: "bg-gray-100", text: "text-gray-800" };
+  }
 };
 
+// Define status labels
+export const getStatusLabel = (status: string) => {
+  switch (status) {
+    case "draft":
+      return "Nháp";
+    case "submitted":
+      return "Đã gửi";
+    case "approved":
+      return "Đã duyệt";
+    case "rejected":
+      return "Từ chối";
+    default:
+      return "Không xác định";
+  }
+};
+
+// Define TypeScript types for better type checking
+
+// Type for reasons
+export type ReasonType = {
+  VT: boolean;
+  CN: boolean;
+  CL: boolean;
+  MM: boolean;
+};
+
+// Type for time slots - a record of slot IDs to boolean values
+export type SlotsType = Record<string, boolean>;
+
+// Type for an entry
+export type TimeSheetEntryType = {
+  id: string;
+  taskCode?: string;
+  taskId?: string;
+  taskName?: string;
+  target?: string;
+  note?: string;
+  slots: SlotsType;
+  reasons: ReasonType;
+  total?: number;
+};
+
+// Main timesheet type
+export type TimeSheetType = {
+  id?: string;
+  employeeName: string;
+  employeeId: string;
+  department: string;
+  level?: string;
+  supervisor?: string;
+  teamLeader?: string;
+  shiftLeader?: string;
+  date?: string;
+  entries: TimeSheetEntryType[];
+  status?: string;
+  totalHours: number;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+// Default values for a new timesheet
 export const defaultTimeSheet: TimeSheetType = {
-  id: undefined,
   employeeName: "",
   employeeId: "",
   department: "",
-  level: "",
-  supervisor: "",
-  teamLeader: "",
-  shiftLeader: "",
-  date: new Date().toISOString().split('T')[0],
   entries: [
     {
-      ...defaultTimeSheetEntry,
-      id: crypto.randomUUID()
-    }
+      id: crypto.randomUUID(),
+      taskCode: "",
+      taskId: "",
+      taskName: "",
+      target: "",
+      note: "",
+      slots: {},
+      reasons: { VT: false, CN: false, CL: false, MM: false },
+      total: 0,
+    },
   ],
   status: "draft",
   totalHours: 0,
-  createdAt: undefined,
-  updatedAt: undefined
 };
 
-// Constants for time slots
-export const TIME_SLOTS = [
-  { id: 1, label: "07:30-08:30", start: { hours: 7, minutes: 30 }, end: { hours: 8, minutes: 30 } },
-  { id: 2, label: "08:30-09:30", start: { hours: 8, minutes: 30 }, end: { hours: 9, minutes: 30 } },
-  { id: 3, label: "09:30-10:30", start: { hours: 9, minutes: 30 }, end: { hours: 10, minutes: 30 } },
-  { id: 4, label: "10:30-11:30", start: { hours: 10, minutes: 30 }, end: { hours: 11, minutes: 30 } },
-  { id: 5, label: "13:30-14:30", start: { hours: 13, minutes: 30 }, end: { hours: 14, minutes: 30 } },
-  { id: 6, label: "14:30-15:30", start: { hours: 14, minutes: 30 }, end: { hours: 15, minutes: 30 } },
-  { id: 7, label: "15:30-16:30", start: { hours: 15, minutes: 30 }, end: { hours: 16, minutes: 30 } },
-  { id: 8, label: "16:30-17:30", start: { hours: 16, minutes: 30 }, end: { hours: 17, minutes: 30 } },
-  { id: 9, label: "17:30-18:00", start: { hours: 17, minutes: 30 }, end: { hours: 18, minutes: 0 } },
-  { id: 10, label: "18:00-19:00", start: { hours: 18, minutes: 0 }, end: { hours: 19, minutes: 0 } },
-  { id: 11, label: "19:00-20:00", start: { hours: 19, minutes: 0 }, end: { hours: 20, minutes: 0 } },
-];
-
-// Define reason options
-export const REASON_OPTIONS = [
-  { value: "VT", label: "Vật tư" },
-  { value: "CN", label: "Công nghệ" },
-  { value: "CL", label: "Chất lượng" },
-  { value: "MM", label: "Máy móc - Thiết bị" },
-];
-
-// Status options
-export const STATUS_OPTIONS = [
-  { value: "draft", label: "Bản nháp" },
-  { value: "pending", label: "Chờ duyệt" },
-  { value: "approved", label: "Đã duyệt" },
-  { value: "rejected", label: "Từ chối" },
-];
-
-// Helper function to calculate total hours from slots
-export const calculateTotalHours = (slots: Record<string, boolean | undefined> = {}): number => {
-  let total = 0;
-  
-  Object.entries(slots).forEach(([slotId, checked]) => {
-    if (checked) {
-      // Each slot represents 1 hour except the 17:30-18:00 slot which is 0.5 hours
-      const timeSlot = TIME_SLOTS.find(slot => slot.id.toString() === slotId);
-      if (timeSlot) {
-        if (timeSlot.label === "17:30-18:00") {
-          total += 0.5;
-        } else {
-          total += 1;
-        }
-      }
-    }
-  });
-  
-  return total;
+// Calculate total hours based on selected slots
+export const calculateTotalHours = (slots: SlotsType): number => {
+  return Object.values(slots).filter(Boolean).length * 0.5;
 };
 
-// Get slots from time range
+// Helper function to get slots from time range
 export const getSlotsFromTimeRange = (
   startHours: number,
   startMinutes: number,
   endHours: number,
   endMinutes: number
-): Record<string, boolean> => {
+): SlotsType => {
+  const slots: SlotsType = {};
+  
+  // Convert start and end times to minutes since midnight
   const startTime = startHours * 60 + startMinutes;
   const endTime = endHours * 60 + endMinutes;
   
-  const slots: Record<string, boolean> = {};
-  
-  TIME_SLOTS.forEach(slot => {
-    const slotStartTime = slot.start.hours * 60 + slot.start.minutes;
-    const slotEndTime = slot.end.hours * 60 + slot.end.minutes;
+  // Iterate through all time slots and check if they fall within the range
+  TIME_SLOTS.forEach((slot) => {
+    // Parse the time from slot label (e.g., "8:00 - 8:30")
+    const [start, end] = slot.label.split(" - ");
+    const [startHour, startMin] = start.split(":").map(Number);
+    const [endHour, endMin] = end.split(":").map(Number);
     
-    // Check if this slot overlaps with the selected time range
-    if (
-      (startTime <= slotStartTime && endTime >= slotEndTime) || // Slot is completely within range
-      (startTime >= slotStartTime && startTime < slotEndTime) || // Range starts within slot
-      (endTime > slotStartTime && endTime <= slotEndTime) // Range ends within slot
-    ) {
-      slots[slot.id.toString()] = true;
+    const slotStartTime = startHour * 60 + startMin;
+    const slotEndTime = endHour * 60 + endMin;
+    
+    // If the slot falls within the selected time range, mark it as true
+    if (slotStartTime >= startTime && slotEndTime <= endTime) {
+      slots[slot.id] = true;
+    } else {
+      slots[slot.id] = false;
     }
   });
   
   return slots;
 };
 
-// Format time for display (e.g., "07:30-08:30")
-export const formatTimeSlot = (slot: typeof TIME_SLOTS[0]): string => {
-  const formatTime = (hours: number, minutes: number) => 
-    `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-  
-  return `${formatTime(slot.start.hours, slot.start.minutes)}-${formatTime(slot.end.hours, slot.end.minutes)}`;
-};
-
-// Get the color for a status
-export const getStatusColor = (status?: string): { bg: string; text: string } => {
-  switch (status) {
-    case 'approved':
-      return { bg: 'bg-green-100 dark:bg-green-800', text: 'text-green-800 dark:text-green-100' };
-    case 'pending':
-      return { bg: 'bg-yellow-100 dark:bg-yellow-800', text: 'text-yellow-800 dark:text-yellow-100' };
-    case 'rejected':
-      return { bg: 'bg-red-100 dark:bg-red-800', text: 'text-red-800 dark:text-red-100' };
-    case 'draft':
-      return { bg: 'bg-gray-100 dark:bg-gray-700', text: 'text-gray-800 dark:text-gray-100' };
-    default:
-      return { bg: 'bg-gray-100 dark:bg-gray-800', text: 'text-gray-800 dark:text-gray-200' };
-  }
-};
-
-// Get a user-friendly status label
-export const getStatusLabel = (status?: string): string => {
-  switch (status) {
-    case 'approved': return 'Đã duyệt';
-    case 'pending': return 'Chờ duyệt';
-    case 'rejected': return 'Từ chối';
-    case 'draft': return 'Bản nháp';
-    default: return 'Không xác định';
-  }
-};
+// Zod schema for validation
+export const timeSheetSchema = z.object({
+  id: z.string().optional(),
+  employeeName: z.string().min(1, "Tên nhân viên là bắt buộc"),
+  employeeId: z.string().min(1, "Mã nhân viên là bắt buộc"),
+  department: z.string().min(1, "Đơn vị là bắt buộc"),
+  level: z.string().optional(),
+  supervisor: z.string().optional(),
+  teamLeader: z.string().optional(),
+  shiftLeader: z.string().optional(),
+  date: z.string().optional(),
+  entries: z.array(
+    z.object({
+      id: z.string(),
+      taskCode: z.string().optional(),
+      taskId: z.string().optional(),
+      taskName: z.string().optional(),
+      target: z.string().optional(),
+      note: z.string().optional(),
+      slots: z.record(z.string(), z.boolean()).default({}),
+      reasons: z.object({
+        VT: z.boolean().default(false),
+        CN: z.boolean().default(false),
+        CL: z.boolean().default(false),
+        MM: z.boolean().default(false),
+      }),
+      total: z.number().optional(),
+    })
+  ),
+  status: z.string().optional().default("draft"),
+  totalHours: z.number().default(0),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+});

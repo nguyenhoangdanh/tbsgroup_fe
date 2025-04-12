@@ -32,7 +32,7 @@ export const PermissionGuard: React.FC<PermissionGuardProps> = React.memo(({
     fallback = null,
     renderNull = true,
     loadingMessage,
-    loadingDelay = 30000,
+    loadingDelay = 1500,
     useDefaultAccessDenied = false,
 
 }) => {

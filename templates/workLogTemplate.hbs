@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8" />
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 0;
+        }
+
+        body {
+            font-family: 'Times New Roman', DejaVu Sans, sans-serif;
+            font-size: 10px;
+            margin: 5mm;
+            padding: 0;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 5px;
+        }
+
+        .logo-container {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logo {
+            max-width: 80px;
+            max-height: 30px;
+        }
+
+        .company-info {
+            text-align: left;
+            font-size: 8px;
+            margin-top: 2px;
+        }
+
+        .ms-code {
+            text-align: right;
+            font-weight: bold;
+        }
+
+        .date-info {
+            display: flex;
+            justify-content: flex-end;
+            align-items: flex-end;
+            font-style: italic;
+            font-size: 9px;
+        }
+
+        .main-container {
+            border: 1px solid black;
+        }
+
+        .document-title {
+            text-align: center;
+            font-weight: bold;
+            font-size: 12px;
+            border-bottom: 1px solid black;
+            padding: 5px;
+        }
+
+        .info-section {
+            display: flex;
+            border-bottom: 1px solid black;
+        }
+
+        .info-column {
+            padding: 5px;
+        }
+
+        .info-column-left {
+            width: 50%;
+            border-right: 1px solid black;
+        }
+
+        .info-column-right {
+            width: 50%;
+            display: flex;
+        }
+
+        .info-box {
+            padding: 5px;
+        }
+
+        .info-box-1 {
+            flex: 1;
+            border-right: 1px solid black;
+        }
+
+        .info-box-2 {
+            flex: 1;
+        }
+
+        .employee-info {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .label-dotted {
+            border-bottom: 1px dotted black;
+            flex: 1;
+            margin: 0 5px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        table,
+        th,
+        td {
+            border: 1px solid #000;
+        }
+
+        th,
+        td {
+            padding: 2px;
+            text-align: center;
+            font-size: 9px;
+        }
+
+        th {
+            font-weight: bold;
+        }
+
+        .table-header {
+            background-color: #f0f0f0;
+        }
+
+        .note {
+            font-size: 9px;
+            font-style: italic;
+            margin-top: 3px;
+        }
+
+        .time-column {
+            width: 40px;
+        }
+
+        .narrow-column {
+            width: 30px;
+        }
+
+        .wide-column {
+            width: 100px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <div class="logo-container">
+            <img src="{{logo}}" alt="TBS Logo" class="logo" />
+            <div class="company-info">
+                HANDBAG FACTORY
+                <br>
+                XN: THOẠI SƠN
+            </div>
+        </div>
+        <div class="ms-code">
+            MS: {{msCode}}
+            <div class="date-info">
+                TS, ngày {{date.day}}/{{date.month}}/{{date.year}}
+            </div>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <div class="document-title">
+            PHIẾU THEO DÕI CÔNG ĐOẠN - GIAO CHỈ TIÊU CÁ NHÂN
+        </div>
+
+        <div class="info-section">
+            <div class="info-column info-column-left">
+                <div class="employee-info">
+                    <span>HỌ TÊN:</span>
+                    <span class="label-dotted">{{fullName}}</span>
+                </div>
+                <div class="employee-info">
+                    <span>MÃ SỐ THẺ:</span>
+                    <span class="label-dotted">{{staffCode}}</span>
+                </div>
+            </div>
+            <div class="info-column info-column-right">
+                <div class="info-box info-box-1">
+                    <div class="employee-info">
+                        <span>ĐƠN VỊ:</span>
+                        <span class="label-dotted">{{unit}}</span>
+                    </div>
+                    <div class="employee-info">
+                        <span>T/GIAN LV:</span>
+                        <span class="label-dotted">{{workTime}}</span>
+                    </div>
+                </div>
+                <div class="info-box info-box-2">
+                    <table style="border: none; height: 100%;">
+                        <tr>
+                            <td
+                                style="border: none; width: 33%; text-align: center; height: 60px; vertical-align: top;">
+                                CN KÝ TÊN</td>
+                            <td
+                                style="border: none; width: 33%; text-align: center; height: 60px; vertical-align: top;">
+                                NHÓM TRƯỞNG KÝ TÊN</td>
+                            <td
+                                style="border: none; width: 33%; text-align: center; height: 60px; vertical-align: top;">
+                                CHUYỂN TRƯỞNG KÝ TÊN</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th rowspan="2" class="narrow-column">STT</th>
+                    <th rowspan="2">MÃ TÚI</th>
+                    <th rowspan="2">MÃ C.ĐOẠN</th>
+                    <th rowspan="2" class="wide-column">TÊN C.ĐOẠN SẢN XUẤT</th>
+                    <th rowspan="2">CHỈ TIÊU GIỜ</th>
+                    <th rowspan="2">Đ.GIÁ</th>
+                    <th colspan="12">KẾT QUẢ THỰC HIỆN TRONG NGÀY</th>
+                    <th rowspan="2">TỔNG CỘNG</th>
+                    <th colspan="4">NGUYÊN NHÂN</th>
+                </tr>
+                <tr>
+                    <th class="time-column">07:30-<br>08:30</th>
+                    <th class="time-column">08:30-<br>09:30</th>
+                    <th class="time-column">09:30-<br>10:30</th>
+                    <th class="time-column">10:30-<br>11:30</th>
+                    <th class="time-column">11:30-<br>12:30</th>
+                    <th class="time-column">13:30-<br>14:30</th>
+                    <th class="time-column">14:30-<br>15:30</th>
+                    <th class="time-column">15:30-<br>16:30</th>
+                    <th class="time-column">16:30-<br>17:00</th>
+                    <th class="time-column">17:00-<br>18:00</th>
+                    <th class="time-column">18:00-<br>19:00</th>
+                    <th class="time-column">19:00-<br>20:00</th>
+                    <th class="narrow-column">VT</th>
+                    <th class="narrow-column">CN</th>
+                    <th class="narrow-column">CL</th>
+                    <th class="narrow-column">MM</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#each workLogs}}
+                <tr>
+                    <td>{{math @index "+" 1}}</td>
+                    <td>{{bagCode}}</td>
+                    <td>{{stepCode}}</td>
+                    <td>{{stepName}}</td>
+                    <td>{{targetPerHour}}</td>
+                    <td>{{price}}</td>
+                    {{#each hourlyLogs}}
+                    <td>{{#if this}}{{this}}{{/if}}</td>
+                    {{/each}}
+                    <td>{{total}}</td>
+                    <td>{{reason.VT}}</td>
+                    <td>{{reason.CN}}</td>
+                    <td>{{reason.CL}}</td>
+                    <td>{{reason.MM}}</td>
+                </tr>
+                {{/each}}
+                {{#unless workLogs.length}}
+                <tr>
+                    <td>1</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                {{/unless}}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="note">
+        GHI CHÚ: VT = VẬT TƯ &nbsp;&nbsp;&nbsp;&nbsp; CN = CÔNG NGHỆ &nbsp;&nbsp;&nbsp;&nbsp; CL = CHẤT LƯỢNG
+        &nbsp;&nbsp;&nbsp;&nbsp; MM = MÁY MÓC - THIẾT BỊ
+    </div>
+</body>
+
+</html>

@@ -84,9 +84,9 @@ const GlobalDialog = memo(() => {
 
                 if (isFormContent) {
                     return (
-                        <div className="dialog-content-container">
+                        <div className="dialog-content-container overflow-visible" style={{ maxHeight: 'none' }}>
                             <div className="dialog-scrollable-wrapper">
-                                <div className="fixed-form-wrapper">
+                                <div className="fixed-form-wrapper" style={{ paddingBottom: '100px' }}>
                                     {renderedContent}
                                 </div>
                             </div>
@@ -255,19 +255,19 @@ const GlobalDialog = memo(() => {
 
     // Get dialog width class based on size preference and device
     const getDialogSizeClass = () => {
-        if (dialog.fullWidth) return "w-[95vw] md:w-full max-h-[90vh]";
+        if (dialog.fullWidth) return "w-[95vw] md:w-full max-h-[98vh]"; // Tăng từ 95vh lên 98vh
 
         // Enhanced responsive sizing with better tablet support
         switch (dialog.maxWidth) {
-            case 'xs': return "w-[95vw] sm:w-[85vw] md:w-[35%] lg:w-[20%] max-h-[90vh]";
-            case 'sm': return "w-[95vw] sm:w-[85vw] md:w-[45%] lg:w-[25%] max-h-[90vh]";
-            case 'md': return "w-[95vw] sm:w-[85vw] dialog-md-width max-h-[90vh]"; // Default size
-            case 'lg': return "w-[95vw] sm:w-[90vw] md:w-[65%] lg:w-[50%] max-h-[90vh]";
-            case 'xl': return "w-[95vw] sm:w-[90vw] md:w-[75%] lg:w-[60%] max-h-[90vh]";
-            case '2xl': return "w-[95vw] sm:w-[90vw] md:w-[85%] lg:w-[75%] max-h-[90vh]";
-            case '3xl': return "w-[95vw] sm:w-[90vw] md:w-[90%] lg:w-[85%] max-h-[90vh]";
-            case 'full': return "w-[95vw] sm:w-[95vw] md:w-[95%] max-h-[90vh]";
-            default: return "w-[95vw] sm:w-[85vw] dialog-md-width max-h-[90vh]"; // Default
+            case 'xs': return "w-[95vw] sm:w-[85vw] md:w-[35%] lg:w-[20%] max-h-[98vh]";
+            case 'sm': return "w-[95vw] sm:w-[85vw] md:w-[45%] lg:w-[25%] max-h-[98vh]";
+            case 'md': return "w-[95vw] sm:w-[85vw] dialog-md-width max-h-[98vh]"; // Default size
+            case 'lg': return "w-[95vw] sm:w-[90vw] md:w-[65%] lg:w-[50%] max-h-[98vh]";
+            case 'xl': return "w-[95vw] sm:w-[90vw] md:w-[75%] lg:w-[60%] max-h-[98vh]";
+            case '2xl': return "w-[95vw] sm:w-[90vw] md:w-[85%] lg:w-[75%] max-h-[98vh]";
+            case '3xl': return "w-[95vw] sm:w-[90vw] md:w-[90%] lg:w-[85%] max-h-[98vh]";
+            case 'full': return "w-[95vw] sm:w-[95vw] md:w-[95%] max-h-[98vh]";
+            default: return "w-[95vw] sm:w-[85vw] dialog-md-width max-h-[98vh]"; // Default
         }
     };
 
@@ -278,12 +278,15 @@ const GlobalDialog = memo(() => {
         >
             <DialogContent
                 ref={contentRef}
-                className={`${getDialogSizeClass()} overflow-hidden dialog-animation scroll-container`}
+                className={`${getDialogSizeClass()} dialog-animation`}
+                style={{ overflow: 'visible' }} // Không có overflow ở đây
                 onInteractOutside={isSubmitting || dialog.preventOutsideClick ? (e) => e.preventDefault() : undefined}
                 onEscapeKeyDown={isSubmitting || dialog.preventOutsideClick ? (e) => e.preventDefault() : undefined}
             >
                 {dialogTitle}
-                {dialogContent}
+                <div className="dialog-content" style={{ overflow: 'auto', maxHeight: '85vh' }}>
+                    {dialogContent}
+                </div>
             </DialogContent>
         </Dialog>
     );
