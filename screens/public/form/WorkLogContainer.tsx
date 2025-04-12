@@ -169,6 +169,12 @@ const WorkLogContainer: React.FC = () => {
 
     const handleExportPDF = async (workLog: WorkLog) => {
         try {
+            // Set loading state
+            const loadingToast = toast({
+                title: "Đang xuất PDF",
+                description: "Đang xử lý...",
+            });
+
             const res = await fetch("/api/export-worklog-pdf", {
                 method: "POST",
                 body: JSON.stringify(workLog),
@@ -177,21 +183,37 @@ const WorkLogContainer: React.FC = () => {
                 },
             });
 
+            // Remove loading toast
+            toast.dismiss(loadingToast);
+
             if (!res.ok) {
-                throw new Error("Xuất PDF thất bại");
+                const errorData = await res.json().catch(() => null);
+                console.error("PDF export error:", errorData);
+                throw new Error(errorData?.details || "Xuất PDF thất bại");
             }
 
             const blob = await res.blob();
             const url = URL.createObjectURL(blob);
+
+            // Open PDF in new tab instead of downloading
+            window.open(url, '_blank');
+
+            // Also provide download option
             const link = document.createElement("a");
             link.href = url;
-            link.download = "baocao-sanluong.pdf";
+            link.download = `baocao-sanluong-${workLog.employeeName.replace(/\s+/g, '-')}.pdf`;
             link.click();
+
+            // Success notification
+            toast({
+                title: "Xuất PDF thành công",
+                description: "PDF đã được tạo thành công",
+            });
         } catch (error) {
             console.error("Lỗi xuất PDF:", error);
             toast({
-                title: "Lỗi",
-                description: "Không thể xuất PDF",
+                title: "Lỗi xuất PDF",
+                description: error instanceof Error ? error.message : "Không thể xuất PDF",
                 variant: "destructive"
             });
         }
