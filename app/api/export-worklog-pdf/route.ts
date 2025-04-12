@@ -3,7 +3,7 @@ import handlebars from "handlebars";
 import fs from "fs";
 import path from "path";
 import { NextRequest, NextResponse } from "next/server";
-import { WorkLog } from "@/screens/public/demo/workLogService";
+import { WorkLog } from "@/screens/public/form/workLogService";
 
 // Mapping của các time slots cho từng loại working time
 const TIME_SLOTS = {

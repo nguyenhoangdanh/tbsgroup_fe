@@ -2,7 +2,7 @@
 
 import React, { Suspense } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
-import WorkLogContainer from '@/screens/public/demo/WorkLogContainer';
+import WorkLogContainer from '@/screens/public/form/WorkLogContainer';
 
 // Loading component
 const Loading = () => (
