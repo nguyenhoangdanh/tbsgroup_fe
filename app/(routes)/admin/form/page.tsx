@@ -3,6 +3,7 @@
 import React, { Suspense } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import WorkLogContainer from '@/screens/public/form/WorkLogContainer';
+import TeamLeaderContainer from '@/screens/public/form/TeamLeaderContainer';
 
 // Loading component
 const Loading = () => (
@@ -41,7 +42,8 @@ const TimeSheetPage = () => {
     return (
         <Suspense fallback={<Loading />}>
             {/* <TimeSheetContainer /> */}
-            <WorkLogContainer />
+            {/* <WorkLogContainer /> */}
+            <TeamLeaderContainer />
         </Suspense>
     );
 };

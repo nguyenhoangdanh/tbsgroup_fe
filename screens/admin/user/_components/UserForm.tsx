@@ -17,6 +17,10 @@ interface UserFormProps {
     roles: { value: string; label: string }[];
 }
 
+/**
+ * User form component for creating and editing users
+ * Optimized with memoization to prevent unnecessary renders
+ */
 const UserForm: React.FC<UserFormProps> = memo(({
     onSubmit,
     refetchData,
@@ -26,16 +30,16 @@ const UserForm: React.FC<UserFormProps> = memo(({
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { hideDialog, dialog } = useDialog();
 
-    // Determine if the form is in edit mode (dialog.data exists)
+    // Check if in edit mode
     const isEditMode = !!dialog.data?.id;
 
-    // Check if readonly is set by dialog or props
+    // Determine if form should be read-only
     const effectiveReadOnly = isReadOnly || dialog.type === 'view';
 
-
+    // Choose the appropriate schema based on edit mode
     const userTypeSchema = dialog.data?.id ? userSchema.omit({ password: true }) : userSchema;
 
-    // Initialize form with values from dialog if available, otherwise defaults
+    // Initialize form with values from dialog if available
     const form = useForm<TUserSchema>({
         resolver: zodResolver(userTypeSchema),
         defaultValues: dialog.data ? {
@@ -49,17 +53,17 @@ const UserForm: React.FC<UserFormProps> = memo(({
         } : defaultUserValues,
     });
 
-
+    // Watch employeeId to auto-set username
     const employeeId = form.watch("employeeId");
 
+    // Update username when employeeId changes (only in create mode)
     useEffect(() => {
-        // Chỉ cập nhật username nếu không trong chế độ chỉnh sửa và employeeId không rỗng
         if ((!isEditMode || !isReadOnly) && employeeId) {
             form.setValue("username", employeeId);
         }
     }, [employeeId, form, isEditMode, isReadOnly]);
 
-    // Form submission handler with useCallback
+    // Handle form submission with loading state
     const handleSubmit = useCallback(async (values: TUserSchema) => {
         if (effectiveReadOnly || isSubmitting) return;
 
@@ -69,7 +73,7 @@ const UserForm: React.FC<UserFormProps> = memo(({
             if (onSubmit) {
                 const result = await onSubmit(values);
 
-                // If result is true, close the dialog
+                // Close dialog on success
                 if (result === true) {
                     hideDialog();
                 }
@@ -86,30 +90,33 @@ const UserForm: React.FC<UserFormProps> = memo(({
         }
     }, [effectiveReadOnly, isSubmitting, onSubmit, hideDialog, refetchData]);
 
-    // Status options for user
+    // Status options
     const statusOptions = [
         { value: "ACTIVE", label: "Hoạt động" },
         { value: "INACTIVE", label: "Không hoạt động" },
         { value: "PENDING_ACTIVATION", label: "Chờ duyệt" }
     ];
 
-    console.log("UserForm rendered with values:", form.getValues())
+    console.log("UserForm rendered errors", form.formState.errors);
+
 
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="hidden">
-                        <FieldInput
-                            control={form.control}
-                            name="username"
-                            label="Tên đăng nhập"
-                            placeholder="Nhập tên đăng nhập"
-                            disabled={isSubmitting || effectiveReadOnly || isEditMode}
-                            required
-                        />
-                    </div>
+                {/* Username field - hidden because it's auto-filled from employeeId */}
+                <div className="hidden">
+                    <FieldInput
+                        control={form.control}
+                        name="username"
+                        label="Tên đăng nhập"
+                        placeholder="Nhập tên đăng nhập"
+                        disabled={isSubmitting || effectiveReadOnly || isEditMode}
+                        required
+                    />
+                </div>
 
+                {/* User name */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FieldInput
                         control={form.control}
                         name="fullName"
@@ -120,6 +127,7 @@ const UserForm: React.FC<UserFormProps> = memo(({
                     />
                 </div>
 
+                {/* Employee ID and ID card number */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FieldInput
                         control={form.control}
@@ -138,6 +146,7 @@ const UserForm: React.FC<UserFormProps> = memo(({
                     />
                 </div>
 
+                {/* Role and status */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FieldSelect
                         control={form.control}
@@ -158,18 +167,7 @@ const UserForm: React.FC<UserFormProps> = memo(({
                     />
                 </div>
 
-                {/* {!isEditMode && (
-                    <FieldInput
-                        control={form.control}
-                        name="password"
-                        label="Mật khẩu"
-                        type="password"
-                        placeholder="Nhập mật khẩu"
-                        disabled={isSubmitting || effectiveReadOnly}
-                        required
-                    />
-                )} */}
-
+                {/* Form action buttons */}
                 <FormActions
                     isSubmitting={isSubmitting}
                     isReadOnly={effectiveReadOnly}

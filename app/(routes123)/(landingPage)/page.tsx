@@ -1,5 +1,4 @@
 "use client";
-import CompanyImageSlider from "@/components/common/layouts/client/CompanyImageSlider";
 import React from "react";
 
 export default function Home() {

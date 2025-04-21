@@ -2,8 +2,8 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useSecurityContext } from '@/context/AuthProvider';
 import { throttle } from 'lodash';
+import { useSecurityContext } from '@/context/security/SecurityContext';
 export default function ActivityMonitor() {
     const { updateActivity } = useSecurityContext();
 

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { AlertCircle, ShieldCheck, X } from 'lucide-react';
-import { useAuthContext } from '@/context/AuthProvider';
+import { useAuthContext } from '@/context/auth/AuthProvider';
 
 type SecurityMessage = {
     id: string;

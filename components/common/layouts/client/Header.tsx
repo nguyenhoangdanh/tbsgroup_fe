@@ -218,26 +218,29 @@ const Header: React.FC<IHeaderProps> = ({ children }) => {
                                 </div>
                             ))} */}
                             {(user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN') && (
-                                <Link
-                                    href="/admin/users"
-                                    className={`text-sm lg:text-base font-medium hover:text-primary transition-colors ${pathname?.startsWith('/admin')
-                                        ? 'text-primary font-semibold border-b-2 border-primary'
-                                        : ''
-                                        }`}
-                                >
-                                    Quản trị
-                                </Link>
+                                <div className="flex gap-3">
+                                    <Link
+                                        href="/admin/users/all"
+                                        className={`text-sm lg:text-base font-medium hover:text-primary transition-colors ${pathname?.startsWith('/admin')
+                                            ? 'text-primary font-semibold border-b-2 border-primary'
+                                            : ''
+                                            }`}
+                                    >
+                                        Quản trị
+                                    </Link>
+                                    <Link
+                                        href="/admin/form"
+                                        className={`text-sm lg:text-base font-medium hover:text-primary transition-colors ${pathname?.startsWith('/admin')
+                                            ? 'text-primary font-semibold border-b-2 border-primary'
+                                            : ''
+                                            }`}
+                                    >
+                                        Phiếu công đoạn
+                                    </Link>
+                                </div>
                             )}
 
-                            <Link
-                                href="/admin/form"
-                                className={`text-sm lg:text-base font-medium hover:text-primary transition-colors ${pathname?.startsWith('/admin')
-                                    ? 'text-primary font-semibold border-b-2 border-primary'
-                                    : ''
-                                    }`}
-                            >
-                                Digital Form
-                            </Link>
+
                         </nav>
 
                         <div className="flex items-center gap-3">
@@ -317,16 +320,28 @@ const Header: React.FC<IHeaderProps> = ({ children }) => {
                         </div>
                     ))} */}
                     {(user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN') && (
-                        <Link
-                            href="/admin/users"
-                            className={`py-3 text-base font-medium border-b border-gray-100 dark:border-gray-700 block ${pathname?.startsWith('/admin')
-                                ? 'text-primary font-semibold'
-                                : ''
-                                }`}
-                            onClick={() => setIsMenuOpen(false)}
-                        >
-                            Quản trị
-                        </Link>
+                        <div className="">
+                            <Link
+                                href="/admin/users/all"
+                                className={`py-3 text-base font-medium border-b border-gray-100 dark:border-gray-700 block ${pathname?.startsWith('/admin')
+                                    ? 'text-primary font-semibold'
+                                    : ''
+                                    }`}
+                                onClick={() => setIsMenuOpen(false)}
+                            >
+                                Quản trị
+                            </Link>
+                            <Link
+                                href="/admin/users"
+                                className={`py-3 text-base font-medium border-b border-gray-100 dark:border-gray-700 block ${pathname?.startsWith('/admin')
+                                    ? 'text-primary font-semibold'
+                                    : ''
+                                    }`}
+                                onClick={() => setIsMenuOpen(false)}
+                            >
+                                Quản trị
+                            </Link>
+                        </div>
                     )}
                 </nav>
             </div>

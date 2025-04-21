@@ -6,7 +6,7 @@ import SagaProviders from "@/context/SagaProvider";
 import QueryProvider from "@/context/QueryProvider";
 import { beVietnamPro } from "@/lib/fonts";
 import RootLayoutWrapper from "@/components/common/layouts/admin/RootLayoutWrapper";
-import { AuthSecurityProvider } from "@/context/AuthProvider";
+import { AuthSecurityProvider } from "@/context/auth/AuthProvider";
 import ActivityMonitor from "@/components/security/ActivityMonitor";
 import Script from "next/script";
 import SecurityBanner from "@/components/security/SecurityBanner";
