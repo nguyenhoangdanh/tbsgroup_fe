@@ -1,9 +1,10 @@
 // "use client";
+
+// import { useId, useState, useEffect, useRef, useCallback, memo } from "react";
 // import { Controller, FieldValues, Control, Path } from "react-hook-form";
 // import { Input } from "@/components/ui/input";
 // import { Label } from "@/components/ui/label";
 // import clsx from "clsx";
-// import { useState, useCallback, memo, useRef, useEffect } from "react";
 // import { Eye, EyeOff } from "lucide-react";
 
 // interface FieldInputProps<T extends FieldValues> {
@@ -23,7 +24,7 @@
 //     value?: string | number;
 // }
 
-// export const FieldInput = <T extends FieldValues>({
+// const FieldInputComponent = <T extends FieldValues>({
 //     name,
 //     label,
 //     control,
@@ -33,12 +34,13 @@
 //     className,
 //     disabled = false,
 //     required = false,
-//     min = undefined,
-//     max = undefined,
-//     step = undefined,
+//     min,
+//     max,
+//     step,
 //     onChange,
 //     value: externalValue,
 // }: FieldInputProps<T>) => {
+//     const id = useId();
 //     const [showPassword, setShowPassword] = useState(false);
 //     const isPassword = type === "password";
 
@@ -76,6 +78,11 @@
 //         };
 //     }, []);
 
+//     // Toggle password visibility
+//     const togglePasswordVisibility = useCallback(() => {
+//         setShowPassword((prev) => !prev);
+//     }, []);
+
 //     return (
 //         <Controller
 //             control={control}
@@ -95,14 +102,14 @@
 
 //                 return (
 //                     <div className={clsx("flex flex-col gap-1", className)}>
-//                         <Label htmlFor={name} className="text-sm font-medium">
+//                         <Label htmlFor={`${id}-${name}`} className="text-sm font-medium">
 //                             {label}
 //                             {required && <span className="text-red-500">*</span>}
 //                         </Label>
 //                         <div className="relative">
 //                             <Input
 //                                 {...field}
-//                                 id={name}
+//                                 id={`${id}-${name}`}
 //                                 type={isPassword && !showPassword ? "password" : type}
 //                                 placeholder={placeholder}
 //                                 autoComplete={autoComplete}
@@ -125,7 +132,7 @@
 //                             {isPassword && (
 //                                 <button
 //                                     type="button"
-//                                     onClick={() => setShowPassword(!showPassword)}
+//                                     onClick={togglePasswordVisibility}
 //                                     className="absolute inset-y-0 right-3 flex items-center text-gray-500 hover:text-gray-700"
 //                                 >
 //                                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
@@ -143,16 +150,9 @@
 // };
 
 // // Memoize component to prevent unnecessary re-renders
-// export default memo(FieldInput);
+// export const FieldInput = memo(FieldInputComponent) as typeof FieldInputComponent;
 
-
-
-
-
-
-
-
-
+// export default FieldInput;
 
 
 
