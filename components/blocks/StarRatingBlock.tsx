@@ -18,7 +18,7 @@ import {
     FormLabel,
     FormMessage,
 } from "@/components/ui/form";
-import { useBuilder } from "@/context/builder-provider";
+import { useBuilder } from "@/contexts/builder-provider";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 

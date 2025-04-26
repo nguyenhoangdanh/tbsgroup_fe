@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import UnifiedFormField from '@/components/common/Form/custom/UnifiedFormField';
 import { PermissionType } from '@/common/enum';
 import { PermissionDTO } from '@/common/types/permission';
-import { useDialog } from '@/context/DialogProvider';
+import { useDialog } from '@/contexts/DialogProvider';
 import { usePermissionContext } from '@/hooks/permission/PermissionContext';
 
 interface PermissionFormProps {

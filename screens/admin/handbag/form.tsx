@@ -9,7 +9,7 @@ import { FieldInput } from "@/components/common/Form/FieldInput";
 import { FieldTextarea } from "@/components/common/Form/FieldTextarea";
 import { FieldCheckbox } from "@/components/common/Form/FieldCheckbox";
 import FormActions from "@/components/common/Form/FormAction";
-import { useDialog } from "@/context/DialogProvider";
+import { useDialog } from "@/contexts/DialogProvider";
 import useAuthManager from "@/hooks/useAuthManager";
 
 // Định nghĩa schema validation cho túi xách

@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Eye, SquarePen, Trash2 } from "lucide-react";
 import React from "react";
 import { toast } from "@/hooks/use-toast";
-import { DialogType, useDialog, DialogChildrenProps } from "@/context/DialogProvider";
+import { DialogType, useDialog, DialogChildrenProps } from "@/contexts/DialogProvider";
 import { BaseData, TActions } from "../data-table";
 import { ViewActionDialog } from "./popup-view";
 import { EditActionDialog } from "./popup-edit";

@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form } from "@/components/ui/form";
 import { TUserSchema, userSchema, defaultUserValues } from "@/schemas/user";
-import { useDialog } from "@/context/DialogProvider";
+import { useDialog } from "@/contexts/DialogProvider";
 import { FieldInput } from "@/components/common/Form/FieldInput";
 import FormActions from "@/components/common/Form/FormAction";
 import { FieldSelect } from "@/components/common/Form/FieldSelect";

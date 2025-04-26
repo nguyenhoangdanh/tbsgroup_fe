@@ -1,7 +1,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
-import { useDialog } from "@/context/DialogProvider";
+import { useDialog } from "@/contexts/DialogProvider";
 
 interface FormActionsProps {
     isSubmitting: boolean;

@@ -19,7 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { DialogType, useDialog } from "@/context/DialogProvider";
+import { DialogType, useDialog } from "@/contexts/DialogProvider";
 
 // Type imports
 import {

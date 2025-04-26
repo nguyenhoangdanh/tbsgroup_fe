@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { FactoryWithDetails, FactoryManager } from '@/common/interface/factory';
 import { Badge } from '@/components/ui/badge';
-import { DialogType, useDialog } from '@/context/DialogProvider';
+import { DialogType, useDialog } from '@/contexts/DialogProvider';
 import { toast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { Separator } from '@/components/ui/separator';

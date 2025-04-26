@@ -19,7 +19,7 @@ import { z } from "zod";
 import { ChevronDown, TextCursorInput } from "lucide-react";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
-import { useBuilder } from "@/context/builder-provider";
+import { useBuilder } from "@/contexts/builder-provider";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Switch } from "../ui/switch";

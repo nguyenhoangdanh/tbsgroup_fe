@@ -22,7 +22,7 @@ import { Label } from "../ui/label";
 import { Textarea } from "../ui/textarea";
 import { Switch } from "../ui/switch";
 import { useEffect, useState } from "react";
-import { useBuilder } from "@/context/builder-provider";
+import { useBuilder } from "@/contexts/builder-provider";
 import { useForm } from "react-hook-form";
 
 const blockCategory: FormCategoryType = "Field";

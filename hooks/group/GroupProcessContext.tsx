@@ -11,7 +11,7 @@ import React, {
 import { BasePaginationParams } from "@/hooks/base/useBaseQueries";
 import { useGroupQueries } from "@/hooks/group/useGroupQueries";
 import { useGroupMutations } from "@/hooks/group/useGroupMutations";
-import { useDialog, DialogType } from "@/context/DialogProvider";
+import { useDialog, DialogType } from "@/contexts/DialogProvider";
 import { Group } from "@/common/interface/group";
 
 // Define type for filter conditions

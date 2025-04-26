@@ -4,7 +4,7 @@ import { DataTable } from "@/components/common/table/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Factory } from "@/common/interface/factory";
 import FactoryForm from "./form";
-import { DialogType, useDialog } from "@/context/DialogProvider";
+import { DialogType, useDialog } from "@/contexts/DialogProvider";
 import { useFactoryContext } from "@/hooks/factory/FactoryContext";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Building2, Factory as FactoryIcon, Building, Warehouse, Users, Workflow, Eye, GroupIcon } from "lucide-react";

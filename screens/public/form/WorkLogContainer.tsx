@@ -4,7 +4,7 @@ import React, { useState, useCallback, useMemo } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/common/table/data-table";
 import { Badge } from "@/components/ui/badge";
-import { DialogChildrenProps, DialogType, useDialog } from "@/context/DialogProvider";
+import { DialogChildrenProps, DialogType, useDialog } from "@/contexts/DialogProvider";
 import { Calendar, Download, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";

@@ -5,7 +5,7 @@ import ChildPropertiesComponentWrapper from "@/components/ChildPropertiesCompone
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { allBlockLayouts } from "@/constant";
-import { useBuilder } from "@/context/builder-provider";
+import { useBuilder } from "@/contexts/builder-provider";
 import { FormBlocks } from "@/lib/form-blocks";
 import { generateUniqueId } from "@/lib/helper";
 import { cn } from "@/lib/utils";

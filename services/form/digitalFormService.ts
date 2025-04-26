@@ -67,13 +67,10 @@ export const DigitalFormService = {
    */
   async listForms(params: DigitalFormCondition & PaginationParams = {}): Promise<ListApiResponse<DigitalForm>> {
     try {
-      console.log('Request Params:', params);
-      console.log('Base URL:', process.env.NEXT_PUBLIC_API_BASE_URL);
       
       const queryParams = new URLSearchParams();
       
       Object.entries(params).forEach(([key, value]) => {
-        console.log(`Param ${key}:`, value);
         if (value !== undefined && value !== null && value !== '') {
           queryParams.append(key, String(value));
         }

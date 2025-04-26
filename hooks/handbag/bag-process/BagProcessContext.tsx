@@ -12,7 +12,7 @@ import { BagProcess } from "@/common/interface/handbag";
 import { BasePaginationParams } from "@/hooks/base/useBaseQueries";
 import { useBagProcessQueries } from "@/hooks/handbag/bag-process/useBagProcessQueries";
 import { useBagProcessMutations } from "@/hooks/handbag/bag-process/useBagProcessMutations";
-import { useDialog, DialogType } from "@/context/DialogProvider";
+import { useDialog, DialogType } from "@/contexts/DialogProvider";
 
 // Define type for filter conditions
 export interface BagProcessCondDTO {

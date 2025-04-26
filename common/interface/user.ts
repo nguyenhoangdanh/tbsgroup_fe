@@ -23,6 +23,11 @@ export interface UserType {
   createdAt: string;
   updatedAt?: string;
   lastLogin?: string;
+
+  factoryId: string | null;
+  lineId: string | null;
+  teamId: string | null;
+  groupId: string | null;
 }
 export interface UserItemType extends UserType {}
 

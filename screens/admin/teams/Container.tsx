@@ -11,7 +11,7 @@ import { TeamProvider, useTeam } from '@/hooks/teams/TeamContext';
 import { Team, TeamCondDTO } from '@/common/interface/team';
 import { toast } from '@/hooks/use-toast';
 import { ColumnDef } from "@tanstack/react-table";
-import { DialogType, useDialog } from "@/context/DialogProvider";
+import { DialogType, useDialog } from "@/contexts/DialogProvider";
 import { ErrorBoundary } from 'react-error-boundary';
 import { Badge } from '@/components/ui/badge';
 import { TeamForm } from './TeamForm'; // Import TeamForm từ file riêng

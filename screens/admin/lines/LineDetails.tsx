@@ -15,7 +15,7 @@ import {
     Trash2
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { DialogType, useDialog } from '@/context/DialogProvider';
+import { DialogType, useDialog } from '@/contexts/DialogProvider';
 import { toast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { Factory } from '@/common/interface/factory';

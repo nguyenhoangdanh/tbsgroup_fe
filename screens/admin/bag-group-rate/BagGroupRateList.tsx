@@ -6,7 +6,7 @@ import { BarChart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useBagGroupRateContext } from "@/hooks/group/bag-group-rate/BagGroupRateContext";
-import { DialogType, useDialog } from "@/context/DialogProvider";
+import { DialogType, useDialog } from "@/contexts/DialogProvider";
 import { formatDate } from "@/lib/utils";
 import { BagGroupRate } from "@/common/interface/bag-group-rate";
 import MultiGroupBatchWrapper from "./MultiGroupBatchWrapper";

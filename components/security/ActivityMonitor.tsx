@@ -3,7 +3,7 @@
 
 import { useEffect } from 'react';
 import { throttle } from 'lodash';
-import { useSecurityContext } from '@/context/security/SecurityContext';
+import { useSecurityContext } from '@/contexts/security/SecurityContext';
 export default function ActivityMonitor() {
     const { updateActivity } = useSecurityContext();
 

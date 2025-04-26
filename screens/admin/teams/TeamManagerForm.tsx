@@ -8,7 +8,7 @@ import { useTeam } from '@/hooks/teams/TeamContext';
 import { toast } from '@/hooks/use-toast';
 import { TeamLeader, TeamLeaderDTO } from '@/common/interface/team';
 import UnifiedFormField from '@/components/common/Form/custom/UnifiedFormField';
-import { useDialog } from '@/context/DialogProvider';
+import { useDialog } from '@/contexts/DialogProvider';
 import { UserType } from '@/common/interface/user';
 
 // Schema validation for manager

@@ -7,7 +7,7 @@ import { z } from "zod";
 import { FieldInput } from "@/components/common/Form/FieldInput";
 import { FieldTextarea } from "@/components/common/Form/FieldTextarea";
 import { FieldCombobox } from "@/components/common/Form/FieldCombobox";
-import { useDialog } from "@/context/DialogProvider";
+import { useDialog } from "@/contexts/DialogProvider";
 import { Plus, Trash2, Loader2, Save } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useBagGroupRateContext } from "@/hooks/group/bag-group-rate/BagGroupRateContext";

@@ -1,7 +1,7 @@
 // Complete types.ts with proper typing and no 'any' types
 
 import { ColumnDef, Row, Table as TableInstance, RowSelectionState } from "@tanstack/react-table";
-import { DialogChildrenProps } from "@/context/DialogProvider";
+import { DialogChildrenProps } from "@/contexts/DialogProvider";
 
 export type TActions = "create" | "edit" | "delete" | "read-only";
 

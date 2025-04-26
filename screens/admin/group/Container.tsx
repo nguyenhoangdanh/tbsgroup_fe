@@ -6,7 +6,7 @@ import { DataTable } from "@/components/common/table/data-table";
 import { useGroup } from "@/hooks/group/GroupProcessContext";
 import { Group } from "@/common/interface/group";
 import GroupForm from "./form";
-import { DialogType, useDialog } from "@/context/DialogProvider";
+import { DialogType, useDialog } from "@/contexts/DialogProvider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useTheme } from "next-themes";
 import { DashboardCardComponent } from "@/components/common/layouts/admin/DashboardCard";

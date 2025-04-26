@@ -10,7 +10,7 @@ import { useLine } from '@/hooks/line/LineContext';
 import { toast } from '@/hooks/use-toast';
 import { LineManager, LineManagerDTO } from '@/common/interface/line';
 import UnifiedFormField from '@/components/common/Form/custom/UnifiedFormField';
-import { useDialog } from '@/context/DialogProvider';
+import { useDialog } from '@/contexts/DialogProvider';
 import { UserType } from '@/common/interface/user';
 
 // Schema validation for manager

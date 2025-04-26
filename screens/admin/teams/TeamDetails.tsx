@@ -34,7 +34,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { TeamManagersTable } from './TeamLeadersTable';
 import { useUserQueries } from '@/hooks/users';
 import { ErrorBoundary } from 'react-error-boundary';
-import { DialogType, useDialog } from '@/context/DialogProvider';
+import { DialogType, useDialog } from '@/contexts/DialogProvider';
 import TeamManagerForm from './TeamManagerForm';
 import { toast } from '@/hooks/use-toast';
 import { TeamForm } from './TeamForm';

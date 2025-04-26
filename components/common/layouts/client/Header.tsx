@@ -229,7 +229,7 @@ const Header: React.FC<IHeaderProps> = ({ children }) => {
                                         Quản trị
                                     </Link>
                                     <Link
-                                        href="/admin/form"
+                                        href="/digital-forms"
                                         className={`text-sm lg:text-base font-medium hover:text-primary transition-colors ${pathname?.startsWith('/admin')
                                             ? 'text-primary font-semibold border-b-2 border-primary'
                                             : ''

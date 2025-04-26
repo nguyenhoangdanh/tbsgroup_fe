@@ -8,7 +8,7 @@ import { RoleType } from "@/apis/roles/role.api";
 import { TRoleSchema } from "@/schemas/role";
 import { useRoleContext } from "@/hooks/roles/roleContext";
 import RoleForm from "./form";
-import { DialogType, useDialog } from "@/context/DialogProvider";
+import { DialogType, useDialog } from "@/contexts/DialogProvider";
 
 const RoleManagementScreen = () => {
     // Context và queries - sử dụng useSelector pattern để tránh re-render không cần thiết

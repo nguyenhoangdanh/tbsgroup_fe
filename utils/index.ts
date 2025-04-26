@@ -192,3 +192,4 @@ export function removeVietnameseAccents(str: string): string {
     .replace(/đ/g, 'd')
     .replace(/Đ/g, 'D');
 }
+

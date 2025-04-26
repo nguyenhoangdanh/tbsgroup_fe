@@ -11,7 +11,7 @@ import { useLine } from '@/hooks/line/LineContext';
 import { toast } from '@/hooks/use-toast';
 import { Factory } from '@/common/interface/factory';
 import { Line, LineCreateDTO, LineUpdateDTO } from '@/common/interface/line';
-import { useDialog } from '@/context/DialogProvider';
+import { useDialog } from '@/contexts/DialogProvider';
 
 // Validation schema for line
 const lineSchema = z.object({

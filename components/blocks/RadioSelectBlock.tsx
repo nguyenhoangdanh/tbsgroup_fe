@@ -4,7 +4,7 @@ import { ChevronDown, CircleIcon, Radio, X } from "lucide-react";
 import { Label } from "../ui/label";
 import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 import { generateUniqueId } from "@/lib/helper";
-import { useBuilder } from "@/context/builder-provider";
+import { useBuilder } from "@/contexts/builder-provider";
 import * as z from "zod";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";

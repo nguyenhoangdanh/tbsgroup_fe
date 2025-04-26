@@ -25,7 +25,7 @@ import {
 } from "@/@types/form-block.type";
 import { fontSizeClass, fontWeightClass } from "@/constant";
 import { z } from "zod";
-import { useBuilder } from "@/context/builder-provider";
+import { useBuilder } from "@/contexts/builder-provider";
 import { Textarea } from "../ui/textarea";
 
 const blockCategory: FormCategoryType = "Field";

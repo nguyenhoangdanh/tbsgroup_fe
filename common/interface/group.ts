@@ -1,3 +1,5 @@
+import { UserType } from "./user";
+
 // Group leader interface
 export interface GroupLeader {
     userId: string;
@@ -26,6 +28,7 @@ export interface GroupLeader {
     leaders?: GroupLeader[];
     createdAt: string;
     updatedAt: string;
+    users?: UserType[];
   }
   
   // Additional types can be added as needed

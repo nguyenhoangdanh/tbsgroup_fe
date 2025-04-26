@@ -5,7 +5,7 @@ import { DataTable } from "@/components/common/table/data-table";
 import { Badge } from "@/components/ui/badge";
 import { BagColor } from "@/common/interface/handbag";
 import BagColorForm from "./form";
-import { DialogType, useDialog } from "@/context/DialogProvider";
+import { DialogType, useDialog } from "@/contexts/DialogProvider";
 import { useHandBagQueries } from "@/hooks/handbag/useHandBagQueries";
 import { useHandBagMutations } from "@/hooks/handbag/useHandBagMutations";
 import { Checkbox } from "@/components/ui/checkbox";

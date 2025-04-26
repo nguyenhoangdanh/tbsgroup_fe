@@ -61,10 +61,10 @@ export const logoutMutationFn = async () =>
   });
 
 // User profile API endpoints
-export const getUserProfileQueryFn = async () => { return await fetchWithAuth('/profile') };
+export const getUserProfileQueryFn = async () => { return await fetchWithAuth('/users/profile') };
 
 export const updateStatusMutationFn = async (data: { status: string }) =>
-  fetchWithAuth('/profile', {
+  fetchWithAuth('/users/profile', {
     method: 'PATCH',
     body: JSON.stringify(data),
   });

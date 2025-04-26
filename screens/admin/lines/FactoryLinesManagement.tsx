@@ -3,7 +3,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { useLine } from "@/hooks/line/LineContext";
 import { useFactoryQueries } from "@/hooks/factory/useFactoryQueries";
-import { DialogType, useDialog } from "@/context/DialogProvider";
+import { DialogType, useDialog } from "@/contexts/DialogProvider";
 import { toast } from "@/hooks/use-toast";
 import LinesList, { LoadingSpinner, ErrorAlert } from './LinesList';
 import LineForm from './LineForm';

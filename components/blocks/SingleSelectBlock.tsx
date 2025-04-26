@@ -19,7 +19,7 @@ import { z } from "zod";
 import { ChevronDown, PanelBottomClose, TextCursorInput } from "lucide-react";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
-import { useBuilder } from "@/context/builder-provider";
+import { useBuilder } from "@/contexts/builder-provider";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Switch } from "../ui/switch";
@@ -134,9 +134,8 @@ function TextFieldFormComponent({
   return (
     <div className="flex flex-col gap-2 w-full">
       <Label
-        className={`text-base !font-normal mb-2 ${
-          isError || isSubmitError ? "text-red-500" : ""
-        }`}
+        className={`text-base !font-normal mb-2 ${isError || isSubmitError ? "text-red-500" : ""
+          }`}
       >
         {label}
         {required && <span className="text-red-500">*</span>}

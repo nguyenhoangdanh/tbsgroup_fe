@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form } from "@/components/ui/form";
 import FormActions from "@/components/common/Form/FormAction";
-import { useDialog } from "@/context/DialogProvider";
+import { useDialog } from "@/contexts/DialogProvider";
 import { useFactoryMutations } from "@/hooks/factory/useFactoryMutations";
 import { toast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";

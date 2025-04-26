@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form } from "@/components/ui/form";
 import { TRoleSchema, roleSchema, defaultRoleValues } from "@/schemas/role";
-import { useDialog } from "@/context/DialogProvider";
+import { useDialog } from "@/contexts/DialogProvider";
 import { FieldInput } from "@/components/common/Form/FieldInput";
 import { FieldTextarea } from "@/components/common/Form/FieldTextarea";
 import { FieldCheckbox } from "@/components/common/Form/FieldCheckbox";

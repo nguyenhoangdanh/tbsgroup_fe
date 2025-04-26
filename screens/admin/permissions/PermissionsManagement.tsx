@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import { usePermissionUI } from '@/hooks/permission/usePermissionUI';
-import { DialogType, useDialog } from '@/context/DialogProvider';
+import { DialogType, useDialog } from '@/contexts/DialogProvider';
 import { ColumnDef } from '@tanstack/react-table';
 import { DataTable } from '@/components/common/table/data-table';
 import { PermissionForm } from './PermissionForm';

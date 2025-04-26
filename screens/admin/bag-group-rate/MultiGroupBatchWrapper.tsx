@@ -1,5 +1,5 @@
 import React from "react";
-import { DialogChildrenProps } from "@/context/DialogProvider";
+import { DialogChildrenProps } from "@/contexts/DialogProvider";
 import { useBagGroupRateContext } from "@/hooks/group/bag-group-rate/BagGroupRateContext";
 import { toast } from "@/hooks/use-toast";
 import { BagGroupRateContextBridge } from "./BagGroupRateContextBridge";

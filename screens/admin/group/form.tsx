@@ -8,7 +8,7 @@ import { Form } from "@/components/ui/form";
 import { FieldInput } from "@/components/common/Form/FieldInput";
 import { FieldTextarea } from "@/components/common/Form/FieldTextarea";
 import FormActions from "@/components/common/Form/FormAction";
-import { useDialog } from "@/context/DialogProvider";
+import { useDialog } from "@/contexts/DialogProvider";
 import { FieldCombobox } from "@/components/common/Form/FieldCombobox";
 import { useTeamQueries } from "@/hooks/teams/useTeamQueries";
 import { useTeam } from "@/hooks/teams/TeamContext";

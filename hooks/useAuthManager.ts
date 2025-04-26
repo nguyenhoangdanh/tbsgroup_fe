@@ -66,6 +66,10 @@ export type AuthUser = {
   employeeId: string;
   cardId: string;
   status: string;
+  factoryId: string | null;
+  lineId: string | null;
+  teamId: string | null;
+  groupId: string | null;
 };
 
 // Định nghĩa kiểu dữ liệu trả về từ API

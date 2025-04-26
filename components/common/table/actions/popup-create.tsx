@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import React from "react";
 import { toast } from "@/hooks/use-toast";
-import { DialogType, useDialog, DialogChildrenProps } from "@/context/DialogProvider";
+import { DialogType, useDialog, DialogChildrenProps } from "@/contexts/DialogProvider";
 import { on } from "events";
 
 interface CreateActionDialogProps<T = any> {

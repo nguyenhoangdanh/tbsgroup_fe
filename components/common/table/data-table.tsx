@@ -38,7 +38,7 @@ import { jsPDF } from "jspdf"
 import autoTable from 'jspdf-autotable'
 import ButtonGroupAction from "./actions/button-group-actions";
 import { useTheme } from "next-themes";
-import { DialogChildrenProps, DialogType, useDialog } from "@/context/DialogProvider";
+import { DialogChildrenProps, DialogType, useDialog } from "@/contexts/DialogProvider";
 import { extractPlainValue, removeVietnameseAccents } from "@/utils";
 import { toast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";

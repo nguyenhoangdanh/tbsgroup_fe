@@ -1,16 +1,16 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
-import { ThemeProvider } from "@/context/ThemeProvider";
-import SagaProviders from "@/context/SagaProvider";
-import QueryProvider from "@/context/QueryProvider";
+import { ThemeProvider } from "@/contexts/ThemeProvider";
+import SagaProviders from "@/contexts/SagaProvider";
+import QueryProvider from "@/contexts/QueryProvider";
 import { beVietnamPro } from "@/lib/fonts";
 import RootLayoutWrapper from "@/components/common/layouts/admin/RootLayoutWrapper";
-import { AuthSecurityProvider } from "@/context/auth/AuthProvider";
+import { AuthSecurityProvider } from "@/contexts/auth/AuthProvider";
 import ActivityMonitor from "@/components/security/ActivityMonitor";
 import Script from "next/script";
 import SecurityBanner from "@/components/security/SecurityBanner";
-import ClientProviders from "@/context/ClientProviders";
+import ClientProviders from "@/contexts/ClientProviders";
 import { LoadingProvider } from "@/components/common/loading/LoadingProvider";
 export const metadata: Metadata = {
   title: "Thoai Son Handbag Factory",

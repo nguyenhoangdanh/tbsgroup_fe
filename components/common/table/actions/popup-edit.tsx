@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { SquarePen } from "lucide-react";
 import React from "react";
 import { toast } from "@/hooks/use-toast";
-import { DialogType, useDialog, DialogChildrenProps } from "@/context/DialogProvider";
+import { DialogType, useDialog, DialogChildrenProps } from "@/contexts/DialogProvider";
 import { BaseData } from "../data-table";
 
 interface EditActionDialogProps<T extends BaseData = BaseData> {

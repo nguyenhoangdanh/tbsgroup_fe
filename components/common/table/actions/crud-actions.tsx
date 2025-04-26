@@ -6,7 +6,7 @@ import { BaseData, TActions } from "../data-table";
 import { CreateActionDialog } from "./popup-create";
 import { EditActionDialog } from "./popup-edit";
 import { ViewActionDialog } from "./popup-view";
-import { DialogChildrenProps } from "@/context/DialogProvider";
+import { DialogChildrenProps } from "@/contexts/DialogProvider";
 
 interface CrudActionsProps<T extends BaseData = BaseData> {
     name: string;

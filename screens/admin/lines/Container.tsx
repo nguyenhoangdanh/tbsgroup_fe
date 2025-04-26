@@ -6,7 +6,7 @@ import LinesList, { PageHeader } from './LinesList';
 import { useFactoryQueries } from "@/hooks/factory/useFactoryQueries";
 import { LineProvider, useFactoryLines, useLine } from '@/hooks/line/LineContext';
 import { ErrorBoundary } from 'react-error-boundary';
-import { DialogType, useDialog } from '@/context/DialogProvider';
+import { DialogType, useDialog } from '@/contexts/DialogProvider';
 import LineForm from './LineForm';
 import { toast } from '@/hooks/use-toast';
 import { LineWithDetails } from '@/common/interface/line';

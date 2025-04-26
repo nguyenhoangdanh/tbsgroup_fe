@@ -3,7 +3,7 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { DataTable } from "@/components/common/table/data-table";
 import { useUserContext } from "@/hooks/users/userContext";
-import { DialogType, useDialog } from "@/context/DialogProvider";
+import { DialogType, useDialog } from "@/contexts/DialogProvider";
 import { useRoleContext } from "@/hooks/roles/roleContext";
 import { UserTableColumns } from "./_components/UserTableColumns";
 import UserForm from "./_components/UserForm";

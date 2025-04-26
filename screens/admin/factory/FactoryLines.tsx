@@ -6,7 +6,7 @@ import { DataTable } from '@/components/common/table/data-table';
 import { ColumnDef } from '@tanstack/react-table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { DialogType, useDialog } from '@/context/DialogProvider';
+import { DialogType, useDialog } from '@/contexts/DialogProvider';
 import { toast } from '@/hooks/use-toast';
 import { ArrowLeft, Plus, Pencil, Trash2, Settings } from 'lucide-react';
 import { useFactoryQueries } from '@/hooks/factory/useFactoryQueries';

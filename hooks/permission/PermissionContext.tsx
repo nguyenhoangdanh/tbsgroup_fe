@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react';
 import { usePermissionQueries } from '@/hooks/permission/usePermissionQueries';
 import { usePermissionMutations } from '@/hooks/permission/usePermissionMutations';
-import { useAuthContext } from '@/context/auth/AuthProvider';
+import { useAuthContext } from '@/contexts/auth/AuthProvider';
 import { QueryObserverResult, RefetchOptions } from '@tanstack/react-query';
 import { AssignPermissionsDTO, CreatePermissionDTO, PermissionDTO, UpdatePermissionDTO } from '@/common/types/permission';
 

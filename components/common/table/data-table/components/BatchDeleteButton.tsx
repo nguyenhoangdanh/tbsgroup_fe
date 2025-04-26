@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Trash } from "lucide-react";
-import { DialogType } from "@/context/DialogProvider";
+import { DialogType } from "@/contexts/DialogProvider";
 import { toast } from "@/hooks/use-toast";
 
 interface BatchDeleteButtonProps {

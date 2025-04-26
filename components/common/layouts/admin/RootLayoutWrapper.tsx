@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { DialogProvider } from '@/context/DialogProvider';
+import { DialogProvider } from '@/contexts/DialogProvider';
 import GlobalDialog from '../../table/actions/GlobalDialog';
 
 interface RootLayoutWrapperProps {

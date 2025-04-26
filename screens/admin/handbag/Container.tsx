@@ -4,7 +4,7 @@ import removeAccents, { DataTable } from "@/components/common/table/data-table";
 import { Badge } from "@/components/ui/badge";
 import { HandBag } from "@/common/interface/handbag";
 import HandBagForm from "./form";
-import { DialogType, useDialog } from "@/context/DialogProvider";
+import { DialogType, useDialog } from "@/contexts/DialogProvider";
 import { useHandBagContext } from "@/hooks/handbag/HandBagContext";
 import { Checkbox } from "@/components/ui/checkbox";
 import { AlertCircle, CheckCircle2, DollarSign, Package, ShoppingBag } from "lucide-react";

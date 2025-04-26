@@ -8,7 +8,7 @@ import { useTeam } from '@/hooks/teams/TeamContext';
 import { toast } from '@/hooks/use-toast';
 import UnifiedFormField from '@/components/common/Form/custom/UnifiedFormField';
 import { TeamCreateDTO, TeamUpdateDTO } from '@/common/interface/team';
-import { useDialog } from '@/context/DialogProvider';
+import { useDialog } from '@/contexts/DialogProvider';
 
 // Schema validation for team
 const createTeamSchema = z.object({

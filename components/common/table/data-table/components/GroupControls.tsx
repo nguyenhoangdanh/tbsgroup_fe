@@ -9,7 +9,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ChevronDown, ChevronDownIcon, ChevronRightIcon, EditIcon, FolderIcon } from "lucide-react";
-import { DialogType } from "@/context/DialogProvider";
+import { DialogType } from "@/contexts/DialogProvider";
 import { BaseData, GroupControlsProps, GroupedData } from '../types';
 
 function GroupControls<TData extends BaseData>({

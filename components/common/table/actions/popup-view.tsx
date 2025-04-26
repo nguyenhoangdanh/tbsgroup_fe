@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Eye } from "lucide-react";
 import React from "react";
-import { DialogType, useDialog, DialogChildrenProps } from "@/context/DialogProvider";
+import { DialogType, useDialog, DialogChildrenProps } from "@/contexts/DialogProvider";
 import { BaseData } from "../data-table";
 
 interface ViewActionDialogProps<T extends BaseData = BaseData> {
