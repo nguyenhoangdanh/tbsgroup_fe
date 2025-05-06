@@ -1045,6 +1045,47 @@ export const useDigitalFormMutations = () => {
     },
   });
 
+   /**
+   * Export single form data mutation
+   */
+   const exportFormMutation = useMutation({
+    mutationFn: ({ formId, format }: { formId: string; format: 'excel' | 'pdf' }) =>
+      DigitalFormService.exportForm(formId, format),
+
+    onMutate: () => {
+      // Show a loading toast
+      toast({
+        title: 'Đang xuất biểu mẫu...',
+        description: 'Quá trình này có thể mất vài giây.',
+        duration: 5000,
+      });
+    },
+
+    onSuccess: (result) => {
+      // Show success toast
+      toast({
+        title: 'Biểu mẫu đã được xuất thành công',
+        description: 'File sẽ được tải xuống sau ít giây.',
+        duration: 2000,
+      });
+
+      // Trigger download if fileUrl is available
+      if (result?.data?.fileUrl) {
+        window.open(result.data.fileUrl, '_blank');
+      }
+    },
+
+    onError: (error) => {
+      toast({
+        title: 'Không thể xuất biểu mẫu',
+        description: error instanceof Error ? error.message : 'Đã xảy ra lỗi',
+        variant: 'destructive',
+        duration: 3000,
+      });
+    },
+  });
+
+
   const updateShiftTypeMutation = useMutation({
     mutationFn: ({ formId, entryId, data }: { formId: string; entryId: string; data: TShiftTypeFormEntry }) =>
       DigitalFormService.updateShiftTypeFormEntry(formId, entryId, data),
@@ -1122,5 +1163,6 @@ export const useDigitalFormMutations = () => {
     approveFormMutation,
     rejectFormMutation,
     exportReportMutation,
+    exportFormMutation,
   };
 }

@@ -60,7 +60,6 @@ export default function DigitalFormPage() {
 function DigitalFormContent() {
     const {
         formData,
-        loading,
         error,
         currentTimeSlot,
         stats,
@@ -141,17 +140,6 @@ function DigitalFormContent() {
 
         await updateAttendanceStatus(worker.id, newStatus);
     };
-
-    if (loading) {
-        return (
-            <div className="p-4">
-                <Skeleton className="h-12 w-full mb-4" />
-                <Skeleton className="h-4 w-3/4 mb-2" />
-                <Skeleton className="h-32 w-full mb-4" />
-                <Skeleton className="h-32 w-full mb-4" />
-            </div>
-        );
-    }
 
     if (error) {
         return (

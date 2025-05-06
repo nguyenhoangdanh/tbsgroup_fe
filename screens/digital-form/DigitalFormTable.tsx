@@ -117,7 +117,7 @@ export function DigitalFormTable() {
         },
         {
             // When this query succeeds, update our pagination state
-            onSuccess: (data) => {
+            onSuccess: (data: any) => {
                 if (data.total !== totalItems) {
                     setTotalItems(data.total);
                 }

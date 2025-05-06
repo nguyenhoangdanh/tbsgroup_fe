@@ -34,7 +34,7 @@ interface DigitalFormContainerProps {
 export default function DigitalFormContainer({ formId }: DigitalFormContainerProps) {
     const router = useRouter();
     const { toast } = useToast();
-    const { formData, loading, error, currentTimeSlot, stats, submitFormData, refreshData } = useForm();
+    const { formData, error, currentTimeSlot, stats, submitFormData, refreshData } = useForm();
     const [filteredWorkers, setFilteredWorkers] = useState<Worker[]>([]);
     const [filters, setFilters] = useState({
         search: "",
@@ -209,15 +209,6 @@ export default function DigitalFormContainer({ formId }: DigitalFormContainerPro
         return formData.status === RecordStatus.DRAFT;
     }, [formData]);
 
-    // Show loading state if data is still loading
-    if (loading && !formData) {
-        return (
-            <div className="flex flex-col items-center justify-center min-h-screen p-4">
-                <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
-                <p>Đang tải dữ liệu...</p>
-            </div>
-        );
-    }
 
     // Show error state
     if (error) {

@@ -282,8 +282,11 @@ export function createMemoizedCalculator<T, R>(calculator: (input: T) => R, cach
     // Add to cache and maintain size limit
     cache.set(key, result);
     if (cache.size > cacheSize) {
+      // Get the first key safely
       const firstKey = cache.keys().next().value;
-      cache.delete(firstKey);
+      if (firstKey !== undefined) {
+        cache.delete(firstKey);
+      }
     }
     
     return result;
