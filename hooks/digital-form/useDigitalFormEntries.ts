@@ -75,13 +75,22 @@ export const useDigitalFormEntries = (
     );
 
     // Convert dates to string format if they are Date objects
-    const checkInTime = entry.checkInTime 
-      ? (entry.checkInTime instanceof Date ? entry.checkInTime.toISOString() : entry.checkInTime) 
-      : null;
+    // const checkInTime = entry.checkInTime
+    //   ? (entry.checkInTime instanceof Date ? entry.checkInTime.toISOString() : entry.checkInTime)
+    //   : null;
 
-    const checkOutTime = entry.checkOutTime 
-      ? (entry.checkOutTime instanceof Date ? entry.checkOutTime.toISOString() : entry.checkOutTime) 
-      : null;
+    // const checkOutTime = entry.checkOutTime
+    //   ? (entry.checkOutTime instanceof Date ? entry.checkOutTime.toISOString() : entry.checkOutTime)
+    //   : null;
+    
+    const checkInTime = entry.checkInTime 
+    ? (typeof entry.checkInTime === 'object' ? (entry.checkInTime as Date).toISOString() : entry.checkInTime) 
+    : null;
+
+  const checkOutTime = entry.checkOutTime 
+    ? (typeof entry.checkOutTime === 'object' ? (entry.checkOutTime as Date).toISOString() : entry.checkOutTime) 
+    : null;
+
 
     // Create entry object with calculated values
     const formattedEntry: DigitalFormEntry = {
