@@ -225,17 +225,6 @@ export function UpdateProductionForm({
                                 </FormItem>
                             )}
                         />
-
-                        {/* <Button type="submit" disabled={isSubmittingProduction || disabled} className="w-full">
-                            {isSubmittingProduction ? (
-                                <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    Đang cập nhật...
-                                </>
-                            ) : (
-                                "Cập nhật sản lượng"
-                            )}
-                        </Button> */}
                         <SubmitButton
                             name="Cập nhật sản lượng"
                             isLoading={isSubmittingProduction}
@@ -297,16 +286,11 @@ export function UpdateProductionForm({
                             )}
                         />
 
-                        <Button type="submit" disabled={isSubmittingAttendance || disabled} className="w-full">
-                            {isSubmittingAttendance ? (
-                                <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    Đang cập nhật...
-                                </>
-                            ) : (
-                                "Cập nhật trạng thái"
-                            )}
-                        </Button>
+                        <SubmitButton
+                            name="Cập nhật trạng thái"
+                            isLoading={isSubmittingAttendance}
+                            className="w-full"
+                        />
                     </form>
                 </Form>
             </TabsContent>
@@ -345,17 +329,11 @@ export function UpdateProductionForm({
                                 </FormItem>
                             )}
                         />
-
-                        <Button type="submit" disabled={isSubmittingShiftType || disabled} className="w-full">
-                            {isSubmittingShiftType ? (
-                                <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    Đang cập nhật...
-                                </>
-                            ) : (
-                                "Cập nhật ca làm việc"
-                            )}
-                        </Button>
+                        <SubmitButton
+                            name="Cập nhật ca làm việc"
+                            isLoading={isSubmittingShiftType}
+                            className="w-full"
+                        />
                     </form>
                 </Form>
             </TabsContent>

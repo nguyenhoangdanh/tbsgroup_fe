@@ -1,16 +1,33 @@
-"use client"
+'use client';
 
-import { useState, useEffect, useMemo, useCallback } from "react";
-import { useRouter } from "next/navigation";
-import type { Worker } from "@/common/types/worker";
-import { AttendanceStatus, RecordStatus } from "@/common/types/digital-form";
-import { useForm } from "@/contexts/form-context";
-import { Button } from "@/components/ui/button";
-import { Loader2, RefreshCw, Save, CheckCircle, Clock, AlertCircle, Filter, Users, ArrowUp, ArrowDown, ArrowLeft } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
-import { formatDate } from "@/utils";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import type { Worker } from '@/common/types/worker';
+import { AttendanceStatus, RecordStatus } from '@/common/types/digital-form';
+import { useForm } from '@/contexts/form-context';
+import { Button } from '@/components/ui/button';
+import {
+    Loader2,
+    RefreshCw,
+    Save,
+    CheckCircle,
+    Clock,
+    AlertCircle,
+    Filter,
+    Users,
+    ArrowUp,
+    ArrowDown,
+    ArrowLeft,
+} from 'lucide-react';
+import { formatDate } from '@/utils';
+import { Badge } from '@/components/ui/badge';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -20,11 +37,11 @@ import {
     AlertDialogFooter,
     AlertDialogHeader,
     AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { useToast } from "@/hooks/use-toast";
-import { WorkerFilter } from "./_components/worker-filter";
-import { WorkerCard } from "./_components/woker-card";
-import OutputDialog from "./OutputDialog";
+} from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
+import { WorkerFilter } from './_components/worker-filter';
+import { WorkerCard } from './_components/woker-card';
+import OutputDialog from './OutputDialog';
 
 interface DigitalFormContainerProps {
     formId?: string;
@@ -33,13 +50,22 @@ interface DigitalFormContainerProps {
 export default function DigitalFormContainer({ formId }: DigitalFormContainerProps) {
     const router = useRouter();
     const { toast } = useToast();
-    const { formData, error, currentTimeSlot, stats, submitFormData, refreshData, updateHourlyData, updateAttendanceStatus } = useForm();
+    const {
+        formData,
+        error,
+        currentTimeSlot,
+        stats,
+        submitFormData,
+        refreshData,
+        updateHourlyData,
+        updateAttendanceStatus,
+    } = useForm();
 
     const [filteredWorkers, setFilteredWorkers] = useState<Worker[]>([]);
     const [filters, setFilters] = useState({
-        search: "",
-        status: "ALL" as AttendanceStatus | "ALL",
-        sortBy: "name" as "name" | "employeeId" | "totalOutput",
+        search: '',
+        status: 'ALL' as AttendanceStatus | 'ALL',
+        sortBy: 'name' as 'name' | 'employeeId' | 'totalOutput',
     });
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -60,22 +86,22 @@ export default function DigitalFormContainer({ formId }: DigitalFormContainerPro
             if (filters.search) {
                 const searchLower = filters.search.toLowerCase();
                 workers = workers.filter(
-                    (worker) =>
+                    worker =>
                         worker.name.toLowerCase().includes(searchLower) ||
-                        worker.employeeId.toLowerCase().includes(searchLower)
+                        worker.employeeId.toLowerCase().includes(searchLower),
                 );
             }
 
             // Apply status filter
-            if (filters.status !== "ALL") {
-                workers = workers.filter((worker) => worker.attendanceStatus === filters.status);
+            if (filters.status !== 'ALL') {
+                workers = workers.filter(worker => worker.attendanceStatus === filters.status);
             }
 
             // Apply sorting
             workers.sort((a, b) => {
-                if (filters.sortBy === "name") {
+                if (filters.sortBy === 'name') {
                     return a.name.localeCompare(b.name);
-                } else if (filters.sortBy === "employeeId") {
+                } else if (filters.sortBy === 'employeeId') {
                     return a.employeeId.localeCompare(b.employeeId);
                 } else {
                     return b.totalOutput - a.totalOutput;
@@ -87,13 +113,16 @@ export default function DigitalFormContainer({ formId }: DigitalFormContainerPro
     }, [formData, filters]);
 
     // Handle filter changes from filter component
-    const handleFilterChange = useCallback((newFilters: {
-        search: string;
-        status: AttendanceStatus | "ALL";
-        sortBy: "name" | "employeeId" | "totalOutput";
-    }) => {
-        setFilters(newFilters);
-    }, []);
+    const handleFilterChange = useCallback(
+        (newFilters: {
+            search: string;
+            status: AttendanceStatus | 'ALL';
+            sortBy: 'name' | 'employeeId' | 'totalOutput';
+        }) => {
+            setFilters(newFilters);
+        },
+        [],
+    );
 
     // Handle refresh action
     const handleRefresh = useCallback(async () => {
@@ -101,14 +130,14 @@ export default function DigitalFormContainer({ formId }: DigitalFormContainerPro
             setIsRefreshing(true);
             await refreshData();
             toast({
-                title: "Đã làm mới dữ liệu",
-                description: "Dữ liệu biểu mẫu đã được cập nhật thành công",
+                title: 'Đã làm mới dữ liệu',
+                description: 'Dữ liệu biểu mẫu đã được cập nhật thành công',
             });
         } catch (err) {
             toast({
-                title: "Lỗi làm mới dữ liệu",
-                description: "Không thể làm mới dữ liệu. Vui lòng thử lại sau.",
-                variant: "destructive",
+                title: 'Lỗi làm mới dữ liệu',
+                description: 'Không thể làm mới dữ liệu. Vui lòng thử lại sau.',
+                variant: 'destructive',
             });
         } finally {
             setIsRefreshing(false);
@@ -123,16 +152,16 @@ export default function DigitalFormContainer({ formId }: DigitalFormContainerPro
 
             if (success) {
                 toast({
-                    title: "Gửi thành công",
-                    description: "Biểu mẫu đã được gửi thành công",
+                    title: 'Gửi thành công',
+                    description: 'Biểu mẫu đã được gửi thành công',
                 });
                 setShowSubmitDialog(false);
             }
         } catch (err) {
             toast({
-                title: "Lỗi gửi biểu mẫu",
-                description: "Không thể gửi biểu mẫu. Vui lòng thử lại.",
-                variant: "destructive",
+                title: 'Lỗi gửi biểu mẫu',
+                description: 'Không thể gửi biểu mẫu. Vui lòng thử lại.',
+                variant: 'destructive',
             });
         } finally {
             setIsSubmitting(false);
@@ -141,7 +170,7 @@ export default function DigitalFormContainer({ formId }: DigitalFormContainerPro
 
     // Navigate back to the list page
     const handleBackToList = useCallback(() => {
-        router.push("/digital-forms");
+        router.push('/digital-forms');
     }, [router]);
 
     // Handle opening the output dialog
@@ -168,16 +197,24 @@ export default function DigitalFormContainer({ formId }: DigitalFormContainerPro
                 late: 0,
                 earlyLeave: 0,
                 leaveApproved: 0,
-                presentPercentage: 0
+                presentPercentage: 0,
             };
         }
 
         const totalWorkers = formData.workers.length;
-        const present = formData.workers.filter(w => w.attendanceStatus === AttendanceStatus.PRESENT).length;
-        const absent = formData.workers.filter(w => w.attendanceStatus === AttendanceStatus.ABSENT).length;
+        const present = formData.workers.filter(
+            w => w.attendanceStatus === AttendanceStatus.PRESENT,
+        ).length;
+        const absent = formData.workers.filter(
+            w => w.attendanceStatus === AttendanceStatus.ABSENT,
+        ).length;
         const late = formData.workers.filter(w => w.attendanceStatus === AttendanceStatus.LATE).length;
-        const earlyLeave = formData.workers.filter(w => w.attendanceStatus === AttendanceStatus.EARLY_LEAVE).length;
-        const leaveApproved = formData.workers.filter(w => w.attendanceStatus === AttendanceStatus.LEAVE_APPROVED).length;
+        const earlyLeave = formData.workers.filter(
+            w => w.attendanceStatus === AttendanceStatus.EARLY_LEAVE,
+        ).length;
+        const leaveApproved = formData.workers.filter(
+            w => w.attendanceStatus === AttendanceStatus.LEAVE_APPROVED,
+        ).length;
         const presentPercentage = totalWorkers > 0 ? Math.round((present / totalWorkers) * 100) : 0;
 
         return {
@@ -186,25 +223,26 @@ export default function DigitalFormContainer({ formId }: DigitalFormContainerPro
             late,
             earlyLeave,
             leaveApproved,
-            presentPercentage
+            presentPercentage,
         };
     }, [formData]);
 
     // Calculate overall completion percentage
     const completionStats = useMemo(() => {
-        if (!formData || formData.workers.length === 0) return {
-            totalSlots: 0,
-            filledSlots: 0,
-            percentage: 0,
-            totalOutput: 0,
-            averageOutput: 0
-        };
+        if (!formData || formData.workers.length === 0)
+            return {
+                totalSlots: 0,
+                filledSlots: 0,
+                percentage: 0,
+                totalOutput: 0,
+                averageOutput: 0,
+            };
 
         let totalSlots = 0;
         let filledSlots = 0;
         let totalOutput = 0;
 
-        formData.workers.forEach((worker) => {
+        formData.workers.forEach(worker => {
             // Skip counting slots for absent workers
             if (worker.attendanceStatus === AttendanceStatus.ABSENT) {
                 return;
@@ -215,8 +253,14 @@ export default function DigitalFormContainer({ formId }: DigitalFormContainerPro
 
             // Regular shift slots (standard for all shift types)
             const regularTimeSlots = [
-                '07:30-08:30', '08:30-09:30', '09:30-10:30', '10:30-11:30',
-                '12:30-13:30', '13:30-14:30', '14:30-15:30', '15:30-16:30'
+                '07:30-08:30',
+                '08:30-09:30',
+                '09:30-10:30',
+                '10:30-11:30',
+                '12:30-13:30',
+                '13:30-14:30',
+                '14:30-15:30',
+                '15:30-16:30',
             ];
 
             // Extended shift adds these time slots
@@ -244,7 +288,7 @@ export default function DigitalFormContainer({ formId }: DigitalFormContainerPro
             const now = new Date();
             const currentHour = now.getHours();
             const currentMinutes = now.getMinutes();
-            const currentTimeString = `${currentHour.toString().padStart(2, "0")}:${currentMinutes.toString().padStart(2, "0")}`;
+            const currentTimeString = `${currentHour.toString().padStart(2, '0')}:${currentMinutes.toString().padStart(2, '0')}`;
 
             availableSlots.forEach(slot => {
                 const [slotStartTime, slotEndTime] = slot.split('-');
@@ -255,10 +299,7 @@ export default function DigitalFormContainer({ formId }: DigitalFormContainerPro
                     totalSlots++;
 
                     // Check if the slot has data
-                    if (
-                        (slot in workerHourlyData) &&
-                        (workerHourlyData[slot] > 0)
-                    ) {
+                    if (slot in workerHourlyData && workerHourlyData[slot] > 0) {
                         workerFilledSlots++;
                     }
                 }
@@ -270,14 +311,15 @@ export default function DigitalFormContainer({ formId }: DigitalFormContainerPro
 
         // Prevent division by zero
         const percentage = totalSlots > 0 ? Math.round((filledSlots / totalSlots) * 100) : 0;
-        const averageOutput = formData.workers.length > 0 ? Math.round(totalOutput / formData.workers.length) : 0;
+        const averageOutput =
+            formData.workers.length > 0 ? Math.round(totalOutput / formData.workers.length) : 0;
 
         return {
             totalSlots,
             filledSlots,
             percentage,
             totalOutput,
-            averageOutput
+            averageOutput,
         };
     }, [formData]);
 
@@ -335,8 +377,8 @@ export default function DigitalFormContainer({ formId }: DigitalFormContainerPro
                                     <CardDescription>Mã: {formData.formCode}</CardDescription>
                                 </div>
                                 <Button variant="ghost" size="sm" onClick={handleRefresh} disabled={isRefreshing}>
-                                    <RefreshCw className={`h-4 w-4 mr-1 ${isRefreshing ? "animate-spin" : ""}`} />
-                                    {isRefreshing ? "Đang làm mới..." : "Làm mới"}
+                                    <RefreshCw className={`h-4 w-4 mr-1 ${isRefreshing ? 'animate-spin' : ''}`} />
+                                    {isRefreshing ? 'Đang làm mới...' : 'Làm mới'}
                                 </Button>
                             </div>
                             <div className="flex justify-between items-center text-sm mt-2">
@@ -345,22 +387,21 @@ export default function DigitalFormContainer({ formId }: DigitalFormContainerPro
                                     variant="outline"
                                     className={
                                         formData.status === RecordStatus.DRAFT
-                                            ? "bg-gray-100"
+                                            ? 'bg-gray-100'
                                             : formData.status === RecordStatus.PENDING
-                                                ? "bg-amber-100 text-amber-700"
+                                                ? 'bg-amber-100 text-amber-700'
                                                 : formData.status === RecordStatus.CONFIRMED
-                                                    ? "bg-green-100 text-green-700"
-                                                    : "bg-red-100 text-red-700"
+                                                    ? 'bg-green-100 text-green-700'
+                                                    : 'bg-red-100 text-red-700'
                                     }
                                 >
                                     {formData.status === RecordStatus.DRAFT
-                                        ? "Nháp"
+                                        ? 'Nháp'
                                         : formData.status === RecordStatus.PENDING
-                                            ? "Chờ duyệt"
+                                            ? 'Chờ duyệt'
                                             : formData.status === RecordStatus.CONFIRMED
-                                                ? "Đã duyệt"
-                                                : "Từ chối"
-                                    }
+                                                ? 'Đã duyệt'
+                                                : 'Từ chối'}
                                 </Badge>
                             </div>
                         </CardHeader>
@@ -431,12 +472,8 @@ export default function DigitalFormContainer({ formId }: DigitalFormContainerPro
 
                     <div className="space-y-4 mb-20">
                         {filteredWorkers.length > 0 ? (
-                            filteredWorkers.map((worker) => (
-                                <WorkerCard
-                                    key={worker.id}
-                                    worker={worker}
-                                    currentTimeSlot={currentTimeSlot}
-                                />
+                            filteredWorkers.map(worker => (
+                                <WorkerCard key={worker.id} worker={worker} currentTimeSlot={currentTimeSlot} />
                             ))
                         ) : (
                             <div className="text-center py-8">
@@ -475,7 +512,8 @@ export default function DigitalFormContainer({ formId }: DigitalFormContainerPro
                             <AlertDialogHeader>
                                 <AlertDialogTitle>Xác nhận gửi báo cáo</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                    Bạn có chắc chắn muốn gửi biểu mẫu này? Sau khi gửi, biểu mẫu sẽ chuyển sang trạng thái chờ duyệt và không thể chỉnh sửa.
+                                    Bạn có chắc chắn muốn gửi biểu mẫu này? Sau khi gửi, biểu mẫu sẽ chuyển sang trạng
+                                    thái chờ duyệt và không thể chỉnh sửa.
                                 </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
@@ -487,7 +525,7 @@ export default function DigitalFormContainer({ formId }: DigitalFormContainerPro
                                             Đang gửi...
                                         </>
                                     ) : (
-                                        "Xác nhận gửi"
+                                        'Xác nhận gửi'
                                     )}
                                 </AlertDialogAction>
                             </AlertDialogFooter>
