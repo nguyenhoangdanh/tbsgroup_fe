@@ -221,7 +221,7 @@ export const fetchWithAuth = async (url: string, options?: RequestInit) => {
       const errorData = await error.json();
       if (error instanceof Error && 'status' in error && error.status === 401) {
         try {
-          await fetcher('/auth/refresh', { method: 'GET' }); // Gọi refresh token
+          await fetcher('/auth/refresh', { method: 'POST' }); // Gọi refresh token
           return await fetcher(url, options); // Gọi lại request gốc
         } catch (refreshError) {
           window.location.href = '/'; // Redirect về login nếu refresh token thất bại
