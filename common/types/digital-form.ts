@@ -1,5 +1,7 @@
 // common/types/digital-form.ts
 import { z } from 'zod';
+import { UserItemType } from '../interface/user';
+import { BagColor, BagProcess, HandBag } from '../interface/handbag';
 
 export enum RecordStatus {
   DRAFT = 'DRAFT',
@@ -100,6 +102,7 @@ export interface DigitalFormEntry {
   checkInTime?: string | null;
   checkOutTime?: string | null;
   attendanceNote?: string | null;
+  shiftType: ShiftType;
   
   // Quality data
   qualityScore: number;
@@ -111,6 +114,11 @@ export interface DigitalFormEntry {
   // Audit
   createdAt: string;
   updatedAt: string;
+
+  user?: UserItemType;
+  handBag?: HandBag;
+  process?: BagProcess;
+  bagColor?: BagColor;
 }
 
 // Factory level report

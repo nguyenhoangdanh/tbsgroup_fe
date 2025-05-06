@@ -2,13 +2,13 @@
 "use client"
 import React, { createContext, useContext, ReactNode, useEffect, useState } from 'react';
 import { FormData } from '@/common/types/worker';
-import { AttendanceStatus, ProductionIssueType } from '@/common/types/digital-form';
-import { useRouter, useParams } from 'next/navigation';
+import { AttendanceStatus, ProductionIssueType, ShiftType } from '@/common/types/digital-form';
+// import { useRouter, useParams } from 'next/navigation';
 import useOptimizedDigitalForm from '@/hooks/digital-form/useOptimizedDigitalForm';
 
 interface FormContextProps {
     formData: FormData | null;
-    loading: boolean;
+    // loading: boolean;
     error: string | null;
     currentTimeSlot: string | null;
     stats: any;
@@ -16,6 +16,7 @@ interface FormContextProps {
     submitFormData: () => Promise<boolean>;
     updateHourlyData: (workerId: string, timeSlot: string, quantity: number) => Promise<boolean>;
     updateAttendanceStatus: (workerId: string, status: AttendanceStatus) => Promise<boolean>;
+    updateShiftType: (workerId: string, shiftType: ShiftType) => Promise<boolean>;
     addIssue: (workerId: string, issueData: {
         type: ProductionIssueType;
         hour: number;
@@ -32,7 +33,7 @@ export function FormProvider({ children, initialFormId }: { children: ReactNode,
 
     const {
         formData,
-        loading,
+        // loading,
         error,
         currentTimeSlot,
         stats,
@@ -40,6 +41,7 @@ export function FormProvider({ children, initialFormId }: { children: ReactNode,
         submitFormData,
         updateHourlyData,
         updateAttendanceStatus,
+        updateShiftType,
         addIssue,
         removeIssue
     } = useOptimizedDigitalForm(formId);
@@ -53,7 +55,7 @@ export function FormProvider({ children, initialFormId }: { children: ReactNode,
 
     const contextValue: FormContextProps = {
         formData,
-        loading,
+        // loading,
         error,
         currentTimeSlot,
         stats,
@@ -61,6 +63,7 @@ export function FormProvider({ children, initialFormId }: { children: ReactNode,
         submitFormData,
         updateHourlyData,
         updateAttendanceStatus,
+        updateShiftType,
         addIssue,
         removeIssue
     };

@@ -1,18 +1,16 @@
-// components/digital-form-container.tsx
 "use client"
 
-import { useState, useEffect, useMemo, useCallback } from "react"
-import { useRouter } from "next/navigation"
-import type { Worker } from "@/common/types/worker"
-import { AttendanceStatus, RecordStatus } from "@/common/types/digital-form"
-import { useForm } from "@/contexts/form-context"
-import { Button } from "@/components/ui/button"
-import { Loader2, RefreshCw, Save, CheckCircle, Clock, AlertCircle, Filter, Users, ArrowUp, ArrowDown, ArrowLeft } from "lucide-react"
-import { Progress } from "@/components/ui/progress"
-import { TIME_SLOTS } from "@/common/constants/time-slots"
-import { formatDate } from "@/utils"
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import type { Worker } from "@/common/types/worker";
+import { AttendanceStatus, RecordStatus } from "@/common/types/digital-form";
+import { useForm } from "@/contexts/form-context";
+import { Button } from "@/components/ui/button";
+import { Loader2, RefreshCw, Save, CheckCircle, Clock, AlertCircle, Filter, Users, ArrowUp, ArrowDown, ArrowLeft } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { formatDate } from "@/utils";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -22,10 +20,11 @@ import {
     AlertDialogFooter,
     AlertDialogHeader,
     AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
-import { useToast } from "@/hooks/use-toast"
-import { WorkerFilter } from "./_components/worker-filter"
-import { WorkerCard } from "./_components/woker-card"
+} from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
+import { WorkerFilter } from "./_components/worker-filter";
+import { WorkerCard } from "./_components/woker-card";
+import OutputDialog from "./OutputDialog";
 
 interface DigitalFormContainerProps {
     formId?: string;
@@ -34,7 +33,8 @@ interface DigitalFormContainerProps {
 export default function DigitalFormContainer({ formId }: DigitalFormContainerProps) {
     const router = useRouter();
     const { toast } = useToast();
-    const { formData, loading, error, currentTimeSlot, stats, submitFormData, refreshData } = useForm();
+    const { formData, error, currentTimeSlot, stats, submitFormData, refreshData, updateHourlyData, updateAttendanceStatus } = useForm();
+
     const [filteredWorkers, setFilteredWorkers] = useState<Worker[]>([]);
     const [filters, setFilters] = useState({
         search: "",
@@ -45,6 +45,11 @@ export default function DigitalFormContainer({ formId }: DigitalFormContainerPro
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [expandedStats, setExpandedStats] = useState(false);
     const [showSubmitDialog, setShowSubmitDialog] = useState(false);
+
+    // Output dialog state
+    const [isOutputDialogOpen, setIsOutputDialogOpen] = useState(false);
+    const [selectedWorker, setSelectedWorker] = useState<Worker | null>(null);
+    const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null);
 
     // Filter and sort workers when formData or filters change
     useEffect(() => {
@@ -139,6 +144,21 @@ export default function DigitalFormContainer({ formId }: DigitalFormContainerPro
         router.push("/digital-forms");
     }, [router]);
 
+    // Handle opening the output dialog
+    const handleOpenOutputDialog = (worker: Worker, timeSlot: string) => {
+        setSelectedWorker(worker);
+        setSelectedTimeSlot(timeSlot);
+        setIsOutputDialogOpen(true);
+    };
+
+    // Update output quantity
+    const handleUpdateOutput = async (quantity: number) => {
+        if (!selectedWorker || !selectedTimeSlot) return;
+
+        await updateHourlyData(selectedWorker.id, selectedTimeSlot, quantity);
+        setIsOutputDialogOpen(false);
+    };
+
     // Calculate attendance statistics
     const attendanceStats = useMemo(() => {
         if (!formData || !formData.workers || formData.workers.length === 0) {
@@ -180,16 +200,76 @@ export default function DigitalFormContainer({ formId }: DigitalFormContainerPro
             averageOutput: 0
         };
 
-        const totalSlots = formData.workers.length * TIME_SLOTS.length;
+        let totalSlots = 0;
         let filledSlots = 0;
         let totalOutput = 0;
 
         formData.workers.forEach((worker) => {
-            filledSlots += Object.keys(worker.hourlyData || {}).length;
+            // Skip counting slots for absent workers
+            if (worker.attendanceStatus === AttendanceStatus.ABSENT) {
+                return;
+            }
+
+            // Determine available time slots based on shift type
+            let availableSlots: string[] = [];
+
+            // Regular shift slots (standard for all shift types)
+            const regularTimeSlots = [
+                '07:30-08:30', '08:30-09:30', '09:30-10:30', '10:30-11:30',
+                '12:30-13:30', '13:30-14:30', '14:30-15:30', '15:30-16:30'
+            ];
+
+            // Extended shift adds these time slots
+            const extendedTimeSlots = ['16:30-17:30', '17:30-18:00'];
+
+            // Overtime shift adds these time slots
+            const overtimeTimeSlots = ['18:00-19:00', '19:00-20:00'];
+
+            // Add slots based on worker's shift type
+            availableSlots = [...regularTimeSlots];
+
+            if (worker.shiftType === 'EXTENDED' || worker.shiftType === 'OVERTIME') {
+                availableSlots = [...availableSlots, ...extendedTimeSlots];
+            }
+
+            if (worker.shiftType === 'OVERTIME') {
+                availableSlots = [...availableSlots, ...overtimeTimeSlots];
+            }
+
+            // Count filled slots from hourly data
+            const workerHourlyData = worker.hourlyData || {};
+            let workerFilledSlots = 0;
+
+            // Only count slots that have already started based on the current time
+            const now = new Date();
+            const currentHour = now.getHours();
+            const currentMinutes = now.getMinutes();
+            const currentTimeString = `${currentHour.toString().padStart(2, "0")}:${currentMinutes.toString().padStart(2, "0")}`;
+
+            availableSlots.forEach(slot => {
+                const [slotStartTime, slotEndTime] = slot.split('-');
+
+                // Check if this slot has already started
+                if (slotStartTime <= currentTimeString) {
+                    // Add this slot to the total count of slots
+                    totalSlots++;
+
+                    // Check if the slot has data
+                    if (
+                        (slot in workerHourlyData) &&
+                        (workerHourlyData[slot] > 0)
+                    ) {
+                        workerFilledSlots++;
+                    }
+                }
+            });
+
+            filledSlots += workerFilledSlots;
             totalOutput += worker.totalOutput || 0;
         });
 
-        const percentage = Math.round((filledSlots / totalSlots) * 100);
+        // Prevent division by zero
+        const percentage = totalSlots > 0 ? Math.round((filledSlots / totalSlots) * 100) : 0;
         const averageOutput = formData.workers.length > 0 ? Math.round(totalOutput / formData.workers.length) : 0;
 
         return {
@@ -210,14 +290,14 @@ export default function DigitalFormContainer({ formId }: DigitalFormContainerPro
     }, [formData]);
 
     // Show loading state if data is still loading
-    if (loading && !formData) {
-        return (
-            <div className="flex flex-col items-center justify-center min-h-screen p-4">
-                <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
-                <p>Đang tải dữ liệu...</p>
-            </div>
-        );
-    }
+    // if (loading && !formData) {
+    //     return (
+    //         <div className="flex flex-col items-center justify-center min-h-screen p-4">
+    //             <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+    //             <p>Đang tải dữ liệu...</p>
+    //         </div>
+    //     );
+    // }
 
     // Show error state
     if (error) {
@@ -235,7 +315,7 @@ export default function DigitalFormContainer({ formId }: DigitalFormContainerPro
     }
 
     return (
-        <main className="container max-w-md mx-auto p-4 pb-24">
+        <main className="container mx-auto p-4 pb-24">
             {formData && (
                 <>
                     {formId && (
@@ -291,7 +371,13 @@ export default function DigitalFormContainer({ formId }: DigitalFormContainerPro
                                     <p className="text-sm font-medium">Tiến độ nhập liệu</p>
                                     <span className="text-sm">{completionStats.percentage}%</span>
                                 </div>
-                                <Progress value={completionStats.percentage} className="h-2" />
+                                {/* <Progress value={completionStats.percentage} max={100} className="h-2" /> */}
+                                <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
+                                    <div
+                                        className="h-full bg-primary transition-all rounded-xl"
+                                        style={{ width: `${completionStats.percentage}%` }}
+                                    ></div>
+                                </div>
                             </div>
 
                             <div className="grid grid-cols-2 gap-3 text-sm mt-4">
@@ -361,7 +447,8 @@ export default function DigitalFormContainer({ formId }: DigitalFormContainerPro
 
                     {/* Only show submit button for DRAFT forms */}
                     {canSubmitForm && (
-                        <div className="fixed bottom-0 left-0 right-0 bg-background border-t p-4 flex justify-center">
+                        // <div className="fixed bottom-0 left-0 right-0 bg-background border-t p-4 flex justify-center">
+                        <div className="bottom-0 left-0 right-0 bg-background border-t p-4 flex justify-center">
                             <Button
                                 onClick={() => setShowSubmitDialog(true)}
                                 disabled={isSubmitting || !canSubmitForm}
@@ -406,6 +493,15 @@ export default function DigitalFormContainer({ formId }: DigitalFormContainerPro
                             </AlertDialogFooter>
                         </AlertDialogContent>
                     </AlertDialog>
+
+                    {/* Output Update Dialog */}
+                    <OutputDialog
+                        open={isOutputDialogOpen}
+                        onOpenChange={setIsOutputDialogOpen}
+                        worker={selectedWorker}
+                        timeSlot={selectedTimeSlot}
+                        onUpdate={handleUpdateOutput}
+                    />
                 </>
             )}
         </main>

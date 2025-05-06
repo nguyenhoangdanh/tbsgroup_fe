@@ -39,8 +39,10 @@ export const useDigitalFormFilters = (initialValues?: Partial<TDigitalFormCond>)
     groupId: initialValues?.groupId || undefined,
     createdById: initialValues?.createdById || undefined,
     status: initialValues?.status || undefined,
-    dateFrom: initialValues?.dateFrom || formatDateForAPI(today),
-    dateTo: initialValues?.dateTo || formatDateForAPI(today),
+    // dateFrom: initialValues?.dateFrom || formatDateForAPI(today),
+    // dateTo: initialValues?.dateTo || formatDateForAPI(today),
+    dateFrom: initialValues?.dateFrom || undefined,
+    dateTo: initialValues?.dateTo || undefined,
     shiftType: initialValues?.shiftType || undefined,
     search: initialValues?.search || '',
   };

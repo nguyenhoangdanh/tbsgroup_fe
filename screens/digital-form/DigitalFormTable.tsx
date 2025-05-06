@@ -132,7 +132,7 @@ export function DigitalFormTable() {
 
     // Callback to handle form edit
     const handleEditForm = useCallback((form: DigitalForm) => {
-        router.push(`/digital-forms/${form.id}/edit`);
+        router.push(`/digital-forms/${form.id}`);
     }, [router]);
 
     // Callback to handle form deletion

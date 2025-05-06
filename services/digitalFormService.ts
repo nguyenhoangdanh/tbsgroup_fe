@@ -21,7 +21,8 @@ import {
   TDigitalFormEntry,
   TUpdateFormEntry,
   TDigitalFormCond,
-  TPaginationParams
+  TPaginationParams,
+  TShiftTypeFormEntry
 } from '@/schemas/digital-form.schema';
 
 // API response types
@@ -55,6 +56,7 @@ export const DigitalFormService = {
   async listForms(params: TDigitalFormCond & TPaginationParams): Promise<ListApiResponse<DigitalForm>> {
     try {
       const queryParams = new URLSearchParams();
+
       
       // Ensure we only add parameters that exist and have values
       Object.entries(params).forEach(([key, value]) => {
@@ -62,7 +64,7 @@ export const DigitalFormService = {
           queryParams.append(key, String(value));
         }
       });
-      
+
       const fullUrl = `/digital-forms?${queryParams.toString()}`;
       
       const response = await fetchWithAuth(fullUrl);
@@ -232,6 +234,28 @@ export const DigitalFormService = {
       throw error; // Rethrow to allow mutation handling
     }
   },
+
+    /**
+   * Update an shift type in a entry
+   */
+    async updateShiftTypeFormEntry(formId: string, entryId: string, data: TShiftTypeFormEntry): Promise<ApiResponse<void>> {
+      try {
+        const response = await fetchWithAuth(`/digital-forms/${formId}/entries/${entryId}/shift-type`, {
+          method: 'PATCH',
+          body: JSON.stringify(data),
+        });
+        
+        if (!response.success) {
+          throw new Error(response.error || `Failed to update entry ${entryId} in form ${formId}`);
+        }
+        
+        return response;
+      } catch (error) {
+        console.error(`Error updating entry ${entryId} in form ${formId}:`, error);
+        throw error; // Rethrow to allow mutation handling
+      }
+    },
+  
 
   /**
    * Update hourly data for a form entry

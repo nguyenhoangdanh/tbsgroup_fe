@@ -190,7 +190,7 @@ import { Eye, EyeOff } from "lucide-react";
 
 interface FieldInputProps<T extends FieldValues> {
     name: Path<T>;
-    label: string;
+    label?: string;
     control: Control<T>;
     type?: string;
     placeholder?: string;

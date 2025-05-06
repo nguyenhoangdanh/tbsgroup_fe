@@ -146,6 +146,40 @@ export type TExportReportParams = z.infer<typeof exportReportParamsSchema>;
 
 
 
+// Validation schema for production updates
+export const productionSchema = z.object({
+  timeSlot: z.string({
+      required_error: "Vui lòng chọn khung giờ",
+  }),
+  quantity: z.coerce
+      .number({
+          required_error: "Vui lòng nhập số lượng",
+          invalid_type_error: "Vui lòng nhập số",
+      })
+      .min(0, "Số lượng không được âm")
+      .int("Vui lòng nhập số nguyên"),
+});
+
+// Validation schema for attendance status
+export const attendanceSchema = z.object({
+  status: z.nativeEnum(AttendanceStatus, {
+      required_error: "Vui lòng chọn trạng thái",
+  }),
+  attendanceNote: z.string().optional(),
+});
+
+export const shiftTypeSchema = z.object({
+  shiftType: z.nativeEnum(ShiftType, {
+      required_error: "Vui lòng chọn ca làm việc"
+  })
+})
+
+
+export type TProductionFormEntry = z.infer<typeof productionSchema>
+export type TAttendanceFormEntry = z.infer<typeof attendanceSchema>
+export type TShiftTypeFormEntry = z.infer<typeof shiftTypeSchema>
+
+
 
 // // schemas/digital-form.schema.ts
 // import { AttendanceStatus, ProductionIssueType, ShiftType } from '@/common/types/digital-form';

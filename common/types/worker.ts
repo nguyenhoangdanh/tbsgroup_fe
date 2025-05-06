@@ -1,4 +1,6 @@
-import { RecordStatus } from "./digital-form"
+import { BagColor, BagProcess, HandBag } from "../interface/handbag"
+import { UserItemType } from "../interface/user"
+import { RecordStatus, ShiftType } from "./digital-form"
 
 export enum AttendanceStatus {
     PRESENT = "PRESENT",
@@ -42,10 +44,16 @@ export enum AttendanceStatus {
     colorId: string
     colorName: string
     attendanceStatus: AttendanceStatus
+    attendanceNote: string
+    shiftType: ShiftType
     hourlyData: Record<string, number>
     totalOutput: number
     issues: ProductionIssue[]
     qualityScore: number
+    user?: UserItemType;
+    handBag?: HandBag;
+    process?: BagProcess;
+    bagColor?: BagColor;
   }
   
   export interface FormData {

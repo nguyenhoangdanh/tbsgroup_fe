@@ -7,6 +7,7 @@ import {
   TDigitalFormSubmit,
   TDigitalFormEntry,
   TUpdateFormEntry,
+  TShiftTypeFormEntry,
 } from '@/schemas/digital-form.schema';
 import { toast } from '@/hooks/use-toast';
 import { DigitalForm, DigitalFormEntry } from '@/common/types/digital-form';
@@ -1044,6 +1045,70 @@ export const useDigitalFormMutations = () => {
     },
   });
 
+  const updateShiftTypeMutation = useMutation({
+    mutationFn: ({ formId, entryId, data }: { formId: string; entryId: string; data: TShiftTypeFormEntry }) =>
+      DigitalFormService.updateShiftTypeFormEntry(formId, entryId, data),
+
+    onMutate: async ({ formId, entryId, data }) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['digital-form-with-entries', formId] });
+
+      // Get current data
+      const previousFormWithEntries = queryClient.getQueryData(['digital-form-with-entries', formId]);
+
+      // Update form with entries cache if it exists
+      if (previousFormWithEntries) {
+        queryClient.setQueryData(['digital-form-with-entries', formId], (old: any) => {
+          if (!old || !old.entries) return old;
+          
+          return {
+            ...old,
+            entries: old.entries.map((entry: DigitalFormEntry) => {
+              if (entry.id !== entryId) return entry;
+              
+              // Update the shift type in the optimistic update
+              return {
+                ...entry,
+                shiftType: data.shiftType,
+                updatedAt: new Date().toISOString()
+              };
+            }),
+          };
+        });
+      }
+
+      return { previousFormWithEntries };
+    },
+
+    onSuccess: (_, variables) => {
+      // Show success toast
+      toast({
+        title: 'Đã cập nhật dữ liệu thành công',
+        duration: 2000,
+      });
+
+      // Mark queries as stale without auto-refetching
+      queryClient.invalidateQueries({
+        queryKey: ['digital-form-with-entries', variables.formId],
+      });
+    },
+
+    onError: (error, variables, context) => {
+      toast({
+        title: 'Không thể cập nhật dữ liệu',
+        description: error instanceof Error ? error.message : 'Đã xảy ra lỗi',
+        variant: 'destructive',
+        duration: 2000,
+      });
+
+      // Restore form with entries data
+      if (context?.previousFormWithEntries) {
+        queryClient.setQueryData(['digital-form-with-entries', variables.formId], context.previousFormWithEntries);
+      }
+    },
+  });
+
+
   return {
     createFormMutation,
     updateFormMutation,
@@ -1051,6 +1116,7 @@ export const useDigitalFormMutations = () => {
     addFormEntryMutation,
     updateFormEntryMutation, // Added the missing mutation
     updateHourlyDataMutation, // Added specific mutation for hourly data
+    updateShiftTypeMutation,
     deleteFormEntryMutation,
     submitFormMutation,
     approveFormMutation,

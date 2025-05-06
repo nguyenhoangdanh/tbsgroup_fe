@@ -15,6 +15,7 @@ import { UpdateProductionForm } from "./update-production-form"
 import { useForm } from "@/contexts/form-context"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Progress } from "@/components/ui/progress"
+import { ShiftTypeBadge } from "./shift-type-badge"
 
 interface WorkerCardProps {
     worker: Worker
@@ -26,9 +27,9 @@ interface WorkerCardProps {
  * Includes performance enhancements for high-scale applications
  */
 function WorkerCardComponent({ worker, currentTimeSlot }: WorkerCardProps) {
-    const [expanded, setExpanded] = useState(false)
+    // const [expanded, setExpanded] = useState(false)
     const [dialogOpen, setDialogOpen] = useState(false)
-    const { updateHourlyData, updateAttendanceStatus } = useForm()
+    const { updateHourlyData, updateAttendanceStatus, updateShiftType } = useForm()
 
     // Determine time slot statuses more efficiently
     const getTimeSlotStatus = useCallback((slot: TimeSlot) => {
@@ -65,7 +66,7 @@ function WorkerCardComponent({ worker, currentTimeSlot }: WorkerCardProps) {
         timeSlotStatuses.filter(item => item.status === "completed").length
         , [timeSlotStatuses])
 
-    const totalSlots = TIME_SLOTS.length
+    const totalSlots = Object.entries(worker.hourlyData).length
     const completionPercentage = useMemo(() =>
         Math.round((completedSlots / totalSlots) * 100)
         , [completedSlots, totalSlots])
@@ -80,11 +81,14 @@ function WorkerCardComponent({ worker, currentTimeSlot }: WorkerCardProps) {
                     <div>
                         <CardTitle className="text-base flex items-center gap-1">
                             <UserCircle className="h-4 w-4 text-muted-foreground" />
-                            {worker.name}
+                            {worker.user?.fullName}
                         </CardTitle>
-                        <p className="text-sm text-muted-foreground">Mã: {worker.employeeId}</p>
+                        <p className="text-sm text-muted-foreground">Mã: {worker.user?.employeeId}</p>
                     </div>
-                    <WorkerStatusBadge status={worker.attendanceStatus} />
+                    <div className="flex flex-row gap-1">
+                        <ShiftTypeBadge type={worker.shiftType} />
+                        <WorkerStatusBadge status={worker.attendanceStatus} />
+                    </div>
                 </div>
             </CardHeader>
 
@@ -100,7 +104,8 @@ function WorkerCardComponent({ worker, currentTimeSlot }: WorkerCardProps) {
 
                 <div className="flex flex-wrap gap-1 mb-3">
                     <TooltipProvider>
-                        {TIME_SLOTS.slice(0, expanded ? undefined : 6).map((slot) => (
+                        {/* {TIME_SLOTS.slice(0, expanded ? undefined : 6).map((slot) => ( */}
+                        {TIME_SLOTS.slice(0, Object.entries(worker.hourlyData)?.length).map((slot) => (
                             <Tooltip key={slot.id}>
                                 <TooltipTrigger asChild>
                                     <div>
@@ -113,11 +118,11 @@ function WorkerCardComponent({ worker, currentTimeSlot }: WorkerCardProps) {
                                 </TooltipContent>
                             </Tooltip>
                         ))}
-                        {!expanded && totalSlots > 6 && (
+                        {/* {!expanded && totalSlots > 6 && (
                             <Badge variant="outline" className="bg-gray-100">
                                 +{totalSlots - 6}
                             </Badge>
-                        )}
+                        )} */}
                     </TooltipProvider>
                 </div>
 
@@ -125,19 +130,19 @@ function WorkerCardComponent({ worker, currentTimeSlot }: WorkerCardProps) {
                     <div className="flex items-center gap-1">
                         <Package className="h-3.5 w-3.5 text-muted-foreground" />
                         <span className="truncate" title={worker.bagName}>
-                            {worker.bagName.length > 15 ? `${worker.bagName.substring(0, 15)}...` : worker.bagName}
+                            {worker.bagName.length > 15 ? `${worker.bagName.substring(0, 30)}...` : worker.bagName}
                         </span>
                     </div>
                     <div className="flex items-center gap-1">
                         <Briefcase className="h-3.5 w-3.5 text-muted-foreground" />
                         <span className="truncate" title={worker.processName}>
-                            {worker.processName.length > 15 ? `${worker.processName.substring(0, 15)}...` : worker.processName}
+                            {worker.processName.length > 15 ? `${worker.processName.substring(0, 30)}...` : worker.processName}
                         </span>
                     </div>
                     <div className="flex items-center gap-1">
                         <Palette className="h-3.5 w-3.5 text-muted-foreground" />
                         <span className="truncate" title={worker.colorName}>
-                            {worker.colorName.length > 15 ? `${worker.colorName.substring(0, 15)}...` : worker.colorName}
+                            {worker.colorName.length > 15 ? `${worker.colorName.substring(0, 30)}...` : worker.colorName}
                         </span>
                     </div>
                     <div className="font-medium">
@@ -154,7 +159,7 @@ function WorkerCardComponent({ worker, currentTimeSlot }: WorkerCardProps) {
             </CardContent>
 
             <CardFooter className="flex justify-between pt-2">
-                <Button variant="ghost" size="sm" onClick={() => setExpanded(!expanded)} className="text-xs">
+                {/* <Button variant="ghost" size="sm" onClick={() => setExpanded(!expanded)} className="text-xs">
                     {expanded ? (
                         <>
                             <ChevronUp className="h-4 w-4 mr-1" /> Thu gọn
@@ -164,7 +169,7 @@ function WorkerCardComponent({ worker, currentTimeSlot }: WorkerCardProps) {
                             <ChevronDown className="h-4 w-4 mr-1" /> Mở rộng
                         </>
                     )}
-                </Button>
+                </Button> */}
 
                 <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                     <DialogTrigger asChild>
@@ -180,6 +185,7 @@ function WorkerCardComponent({ worker, currentTimeSlot }: WorkerCardProps) {
                             worker={worker}
                             onUpdateHourlyData={updateHourlyData}
                             onUpdateAttendanceStatus={updateAttendanceStatus}
+                            onUpdateShiftType={updateShiftType}
                             currentTimeSlot={currentTimeSlot}
                             onSuccess={() => setDialogOpen(false)}
                         />

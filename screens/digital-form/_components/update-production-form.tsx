@@ -14,52 +14,39 @@ import { Loader2 } from "lucide-react"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Worker, AttendanceStatus } from "@/common/types/worker"
 import { TIME_SLOTS } from "@/common/constants/time-slots"
+import { ShiftType } from "@/common/types/digital-form"
+import { attendanceSchema, productionSchema, shiftTypeSchema, TAttendanceFormEntry, TProductionFormEntry, TShiftTypeFormEntry } from "@/schemas/digital-form.schema"
+import SubmitButton from "@/components/SubmitButton"
 
 interface UpdateProductionFormProps {
     worker: Worker;
     onUpdateHourlyData: (workerId: string, timeSlot: string, quantity: number) => Promise<boolean>;
-    onUpdateAttendanceStatus: (workerId: string, status: AttendanceStatus) => Promise<boolean>;
+    onUpdateAttendanceStatus: (workerId: string, status: AttendanceStatus, attendanceNote?: string) => Promise<boolean>;
+    onUpdateShiftType: (workerId: string, shiftType: ShiftType) => Promise<boolean>;
     currentTimeSlot: string | null;
     onSuccess?: () => void;
     disabled?: boolean;
 }
 
-// Validation schema for production updates
-const productionSchema = z.object({
-    timeSlot: z.string({
-        required_error: "Vui lòng chọn khung giờ",
-    }),
-    quantity: z.coerce
-        .number({
-            required_error: "Vui lòng nhập số lượng",
-            invalid_type_error: "Vui lòng nhập số",
-        })
-        .min(0, "Số lượng không được âm")
-        .int("Vui lòng nhập số nguyên"),
-});
 
-// Validation schema for attendance status
-const attendanceSchema = z.object({
-    status: z.nativeEnum(AttendanceStatus, {
-        required_error: "Vui lòng chọn trạng thái",
-    }),
-});
 
 export function UpdateProductionForm({
     worker,
     onUpdateHourlyData,
     onUpdateAttendanceStatus,
+    onUpdateShiftType,
     currentTimeSlot,
     onSuccess,
     disabled = false
 }: UpdateProductionFormProps) {
     // State for active tab and loading states
-    const [activeTab, setActiveTab] = useState<"production" | "attendance">("production");
-    const [isSubmittingProduction, setIsSubmittingProduction] = useState(false);
-    const [isSubmittingAttendance, setIsSubmittingAttendance] = useState(false);
+    const [activeTab, setActiveTab] = useState<"production" | "attendance" | "shiftType">("production");
+    const [isSubmittingProduction, setIsSubmittingProduction] = useState<boolean>(false);
+    const [isSubmittingAttendance, setIsSubmittingAttendance] = useState<boolean>(false);
+    const [isSubmittingShiftType, setIsSubmittingShiftType] = useState<boolean>(false);
 
     // Initialize production form with defaults
-    const productionForm = useHookForm<z.infer<typeof productionSchema>>({
+    const productionForm = useHookForm<TProductionFormEntry>({
         resolver: zodResolver(productionSchema),
         defaultValues: {
             timeSlot: currentTimeSlot || TIME_SLOTS[0].label,
@@ -68,12 +55,20 @@ export function UpdateProductionForm({
     });
 
     // Initialize attendance form with current status
-    const attendanceForm = useHookForm<z.infer<typeof attendanceSchema>>({
+    const attendanceForm = useHookForm<TAttendanceFormEntry>({
         resolver: zodResolver(attendanceSchema),
         defaultValues: {
             status: worker.attendanceStatus,
+            attendanceNote: worker.attendanceNote,
         },
     });
+
+    const shiftTypeForm = useHookForm<TShiftTypeFormEntry>({
+        resolver: zodResolver(shiftTypeSchema),
+        defaultValues: {
+            shiftType: worker.shiftType,
+        }
+    })
 
     // Handler for production update
     const onSubmitProduction = useCallback(async (values: z.infer<typeof productionSchema>) => {
@@ -108,7 +103,7 @@ export function UpdateProductionForm({
         if (isSubmittingAttendance || disabled) return;
 
         // Skip if status hasn't changed
-        if (values.status === worker.attendanceStatus) {
+        if (values.status === worker.attendanceStatus && values.attendanceNote === worker.attendanceNote) {
             if (onSuccess) onSuccess();
             return;
         }
@@ -116,7 +111,7 @@ export function UpdateProductionForm({
         try {
             setIsSubmittingAttendance(true);
 
-            const success = await onUpdateAttendanceStatus(worker.id, values.status);
+            const success = await onUpdateAttendanceStatus(worker.id, values.status, values.attendanceNote);
 
             if (success && onSuccess) {
                 onSuccess();
@@ -128,15 +123,43 @@ export function UpdateProductionForm({
         }
     }, [isSubmittingAttendance, disabled, onUpdateAttendanceStatus, worker.id, worker.attendanceStatus, onSuccess]);
 
+    // Handler for attendance status update
+    const onSubmitShiftType = useCallback(async (values: z.infer<typeof shiftTypeSchema>) => {
+        if (isSubmittingShiftType || disabled) return;
+
+        // Skip if status hasn't changed
+        if (values.shiftType === worker.shiftType) {
+            if (onSuccess) onSuccess();
+            return;
+        }
+
+        try {
+            setIsSubmittingShiftType(true);
+
+            const success = await onUpdateShiftType(worker.id, values.shiftType);
+
+            if (success && onSuccess) {
+                onSuccess();
+            }
+        } catch (error) {
+            console.error("Error updating shift type:", error);
+        } finally {
+            setIsSubmittingShiftType(false);
+        }
+    }, [isSubmittingShiftType, disabled, onUpdateAttendanceStatus, worker.id, worker.shiftType, onSuccess]);
+
     // Get the selected time slot's current value
     const selectedTimeSlot = productionForm.watch("timeSlot");
+    // const selectedStatus = attendanceForm.watch("status");
     const currentValue = worker.hourlyData[selectedTimeSlot] || 0;
 
     return (
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "production" | "attendance")}>
-            <TabsList className="grid grid-cols-2 mb-4">
+            {/* <TabsList className="grid grid-cols-2 mb-4"> */}
+            <TabsList className="flex items-center justify-between">
                 <TabsTrigger value="production">Sản lượng</TabsTrigger>
                 <TabsTrigger value="attendance">Trạng thái</TabsTrigger>
+                <TabsTrigger value="shiftType">Ca làm việc</TabsTrigger>
             </TabsList>
 
             <TabsContent value="production">
@@ -203,7 +226,7 @@ export function UpdateProductionForm({
                             )}
                         />
 
-                        <Button type="submit" disabled={isSubmittingProduction || disabled} className="w-full">
+                        {/* <Button type="submit" disabled={isSubmittingProduction || disabled} className="w-full">
                             {isSubmittingProduction ? (
                                 <>
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -212,7 +235,12 @@ export function UpdateProductionForm({
                             ) : (
                                 "Cập nhật sản lượng"
                             )}
-                        </Button>
+                        </Button> */}
+                        <SubmitButton
+                            name="Cập nhật sản lượng"
+                            isLoading={isSubmittingProduction}
+                            className="w-full"
+                        />
                     </form>
                 </Form>
             </TabsContent>
@@ -240,10 +268,19 @@ export function UpdateProductionForm({
                                             <div className="flex items-center space-x-2">
                                                 <RadioGroupItem value={AttendanceStatus.ABSENT} id="absent" />
                                                 <label htmlFor="absent" className="text-sm">Vắng mặt</label>
+                                                {/* <FieldInput
+                                                    control={attendanceForm.control}
+                                                    name="attendanceNote"
+                                                /> */}
                                             </div>
                                             <div className="flex items-center space-x-2">
                                                 <RadioGroupItem value={AttendanceStatus.LATE} id="late" />
                                                 <label htmlFor="late" className="text-sm">Đi muộn</label>
+                                                {/* <FieldInput
+                                                    control={attendanceForm.control}
+                                                    name="attendanceNote"
+                                                    placeholder="Ghi chu"
+                                                /> */}
                                             </div>
                                             <div className="flex items-center space-x-2">
                                                 <RadioGroupItem value={AttendanceStatus.EARLY_LEAVE} id="early-leave" />
@@ -268,6 +305,55 @@ export function UpdateProductionForm({
                                 </>
                             ) : (
                                 "Cập nhật trạng thái"
+                            )}
+                        </Button>
+                    </form>
+                </Form>
+            </TabsContent>
+
+            <TabsContent value="shiftType">
+                <Form {...shiftTypeForm}>
+                    <form onSubmit={shiftTypeForm.handleSubmit(onSubmitShiftType)} className="space-y-4">
+                        <FormField
+                            control={shiftTypeForm.control}
+                            name="shiftType"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Ca làm việc</FormLabel>
+                                    <FormControl>
+                                        <RadioGroup
+                                            onValueChange={(value) => field.onChange(value as AttendanceStatus)}
+                                            value={field.value}
+                                            className="space-y-2"
+                                            disabled={disabled}
+                                        >
+                                            <div className="flex items-center space-x-2">
+                                                <RadioGroupItem value={ShiftType.REGULAR} id="regular" />
+                                                <label htmlFor="regular" className="text-sm">Ca thường</label>
+                                            </div>
+                                            <div className="flex items-center space-x-2">
+                                                <RadioGroupItem value={ShiftType.EXTENDED} id="extended" />
+                                                <label htmlFor="extended" className="text-sm">Giãn ca</label>
+                                            </div>
+                                            <div className="flex items-center space-x-2">
+                                                <RadioGroupItem value={ShiftType.OVERTIME} id="overtime" />
+                                                <label htmlFor="overtime" className="text-sm">Tăng ca</label>
+                                            </div>
+                                        </RadioGroup>
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        <Button type="submit" disabled={isSubmittingShiftType || disabled} className="w-full">
+                            {isSubmittingShiftType ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Đang cập nhật...
+                                </>
+                            ) : (
+                                "Cập nhật ca làm việc"
                             )}
                         </Button>
                     </form>
