@@ -22,7 +22,8 @@ import {HourlyOutputChart} from './charts/HourlyOutputChart';
 import {DailyOutputChart} from './charts/DailyOutputChart';
 import {AttendanceStats} from './stats/AttendanceStats';
 import {ProductionIssuesChart} from './charts/ProductionIssuesChart';
-import { ReportService } from '@/services/reportService';
+import {ReportService} from '@/services/reportService';
+import {PerformanceOutputChart} from './charts/PerformanceOutputChart';
 
 interface FactoryReportProps {
   factoryId: string;
@@ -69,10 +70,12 @@ export function FactoryReport({
         const response = await ReportService.getFactories();
 
         if (response.success) {
-          setFactories(response.data.map(factory => ({
-            id: factory.id,
-            name: factory.name
-          })));
+          setFactories(
+            response.data.map(factory => ({
+              id: factory.id,
+              name: factory.name,
+            })),
+          );
         } else {
           setError('Không thể tải danh sách nhà máy');
         }
@@ -95,18 +98,13 @@ export function FactoryReport({
         const dateFromStr = dateFrom.toISOString().split('T')[0];
         const dateToStr = dateTo.toISOString().split('T')[0];
 
-        const response = await ReportService.getFactoryReport(
-          factoryId,
-          dateFromStr,
-          dateToStr,
-          {
-            includeLines,
-            includeTeams,
-            includeGroups,
-            groupByBag,
-            groupByProcess
-          }
-        );
+        const response = await ReportService.getFactoryReport(factoryId, dateFromStr, dateToStr, {
+          includeLines,
+          includeTeams,
+          includeGroups,
+          groupByBag,
+          groupByProcess,
+        });
 
         if (response.success) {
           setReport(response.data);
@@ -132,6 +130,16 @@ export function FactoryReport({
     groupByProcess,
   ]);
 
+  const hourlyData = [
+    {hour: '07:30-8:30', totalOutput: 85, plannedOutput: 100},
+    {hour: '08:30-9:30', totalOutput: 92, plannedOutput: 100},
+    {hour: '09:30:10:30', totalOutput: 98, plannedOutput: 100},
+    {hour: '10:30:11:30', totalOutput: 105, plannedOutput: 100},
+    {hour: '12:30:13:30', totalOutput: 88, plannedOutput: 100},
+    {hour: '13:30:14:30', totalOutput: 78, plannedOutput: 100},
+    {hour: '14:30:15:30', totalOutput: 102, plannedOutput: 100},
+    {hour: '15:30:16:30', totalOutput: 95, plannedOutput: 100},
+  ];
 
   return (
     <div className="space-y-4">
@@ -227,6 +235,10 @@ export function FactoryReport({
       ) : (
         <div className="space-y-6">
           <FactoryProductionSummary report={report} />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {report.hourlyBreakdown && <PerformanceOutputChart data={hourlyData} />}
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {report.hourlyBreakdown && <HourlyOutputChart data={report.hourlyBreakdown} />}

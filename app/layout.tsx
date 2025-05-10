@@ -1,20 +1,19 @@
-import type { Metadata } from "next";
-import "./globals.css";
-import { Toaster } from "@/components/ui/toaster";
-import { ThemeProvider } from "@/contexts/ThemeProvider";
-import SagaProviders from "@/contexts/SagaProvider";
-import QueryProvider from "@/contexts/QueryProvider";
-import { beVietnamPro } from "@/lib/fonts";
-import RootLayoutWrapper from "@/components/common/layouts/admin/RootLayoutWrapper";
-import { AuthSecurityProvider } from "@/contexts/auth/AuthProvider";
-import ActivityMonitor from "@/components/security/ActivityMonitor";
-import Script from "next/script";
-import SecurityBanner from "@/components/security/SecurityBanner";
-import ClientProviders from "@/contexts/ClientProviders";
-import { LoadingProvider } from "@/components/common/loading/LoadingProvider";
+import type {Metadata} from 'next';
+import './globals.css';
+import {Toaster} from '@/components/ui/toaster';
+import {ThemeProvider} from '@/contexts/ThemeProvider';
+import SagaProviders from '@/contexts/SagaProvider';
+import QueryProvider from '@/contexts/QueryProvider';
+import {beVietnamPro} from '@/lib/fonts';
+import RootLayoutWrapper from '@/components/common/layouts/admin/RootLayoutWrapper';
+import {AuthSecurityProvider} from '@/contexts/auth/AuthProvider';
+import ActivityMonitor from '@/components/security/ActivityMonitor';
+import Script from 'next/script';
+import ClientProviders from '@/contexts/ClientProviders';
+import {LoadingProvider} from '@/components/common/loading/LoadingProvider';
 export const metadata: Metadata = {
-  title: "Thoai Son Handbag Factory",
-  description: "TBS Group - Thoai Son Handbag Factory"
+  title: 'Thoai Son Handbag Factory',
+  description: 'TBS Group - Thoai Son Handbag Factory',
 };
 
 export default function RootLayout({
@@ -133,7 +132,7 @@ export default function RootLayout({
               } catch (e) {
                 console.error('Failed to set CSRF token:', e);
               }
-            `
+            `,
           }}
         />
         <ThemeProvider
@@ -150,9 +149,7 @@ export default function RootLayout({
                   <ClientProviders>
                     {/* <SecurityBanner /> */}
                     <Toaster />
-                    <LoadingProvider>
-                      {children}
-                    </LoadingProvider>
+                    <LoadingProvider>{children}</LoadingProvider>
                   </ClientProviders>
                 </RootLayoutWrapper>
               </AuthSecurityProvider>
@@ -160,6 +157,6 @@ export default function RootLayout({
           </SagaProviders>
         </ThemeProvider>
       </body>
-    </html >
+    </html>
   );
 }
