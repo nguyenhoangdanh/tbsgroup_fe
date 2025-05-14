@@ -1,10 +1,10 @@
 // schemas/digital-form.schema.ts
-import { z } from 'zod';
-import { 
-  ShiftType, 
-  RecordStatus, 
-  AttendanceStatus, 
-  ProductionIssueType 
+import {z} from 'zod';
+import {
+  ShiftType,
+  RecordStatus,
+  AttendanceStatus,
+  ProductionIssueType,
 } from '@/common/types/digital-form';
 
 // Base pagination schema
@@ -97,6 +97,12 @@ export const updateFormEntrySchema = z.object({
   issues: z.array(productionIssueSchema).optional(),
   qualityScore: z.number().int().min(0).max(100).optional(),
   qualityNotes: z.string().optional(),
+  // Allowing changing bag properties
+  handBagId: z.string().uuid().optional(),
+  bagColorId: z.string().uuid().optional(),
+  processId: z.string().uuid().optional(),
+  shiftType: z.nativeEnum(ShiftType).optional(),
+  // The only field we won't allow changing is userId
 });
 
 // Report query parameters schema
@@ -144,42 +150,37 @@ export type TReportQueryParams = z.infer<typeof reportQueryParamsSchema>;
 export type TComparisonReportParams = z.infer<typeof comparisonReportParamsSchema>;
 export type TExportReportParams = z.infer<typeof exportReportParamsSchema>;
 
-
-
 // Validation schema for production updates
 export const productionSchema = z.object({
   timeSlot: z.string({
-      required_error: "Vui lòng chọn khung giờ",
+    required_error: 'Vui lòng chọn khung giờ',
   }),
   quantity: z.coerce
-      .number({
-          required_error: "Vui lòng nhập số lượng",
-          invalid_type_error: "Vui lòng nhập số",
-      })
-      .min(0, "Số lượng không được âm")
-      .int("Vui lòng nhập số nguyên"),
+    .number({
+      required_error: 'Vui lòng nhập số lượng',
+      invalid_type_error: 'Vui lòng nhập số',
+    })
+    .min(0, 'Số lượng không được âm')
+    .int('Vui lòng nhập số nguyên'),
 });
 
 // Validation schema for attendance status
 export const attendanceSchema = z.object({
   status: z.nativeEnum(AttendanceStatus, {
-      required_error: "Vui lòng chọn trạng thái",
+    required_error: 'Vui lòng chọn trạng thái',
   }),
   attendanceNote: z.string().optional(),
 });
 
 export const shiftTypeSchema = z.object({
   shiftType: z.nativeEnum(ShiftType, {
-      required_error: "Vui lòng chọn ca làm việc"
-  })
-})
+    required_error: 'Vui lòng chọn ca làm việc',
+  }),
+});
 
-
-export type TProductionFormEntry = z.infer<typeof productionSchema>
-export type TAttendanceFormEntry = z.infer<typeof attendanceSchema>
-export type TShiftTypeFormEntry = z.infer<typeof shiftTypeSchema>
-
-
+export type TProductionFormEntry = z.infer<typeof productionSchema>;
+export type TAttendanceFormEntry = z.infer<typeof attendanceSchema>;
+export type TShiftTypeFormEntry = z.infer<typeof shiftTypeSchema>;
 
 // // schemas/digital-form.schema.ts
 // import { AttendanceStatus, ProductionIssueType, ShiftType } from '@/common/types/digital-form';
@@ -207,19 +208,19 @@ export type TShiftTypeFormEntry = z.infer<typeof shiftTypeSchema>
 //   handBagId: z.string().uuid(),
 //   bagColorId: z.string().uuid(),
 //   processId: z.string().uuid(),
-  
+
 //   // Hourly data as a record of hour -> output
 //   hourlyData: z.record(z.string(), z.number()).default({}),
-  
+
 //   // Total output calculated from hourly data
 //   totalOutput: z.number().int().default(0),
-  
+
 //   // Attendance information
 //   attendanceStatus: z.nativeEnum(AttendanceStatus).default(AttendanceStatus.PRESENT),
 //   checkInTime: z.string().nullable().optional(),
 //   checkOutTime: z.string().nullable().optional(),
 //   attendanceNote: z.string().nullable().optional(),
-  
+
 //   // Issues tracking
 //   issues: z.array(
 //     z.object({
@@ -229,7 +230,7 @@ export type TShiftTypeFormEntry = z.infer<typeof shiftTypeSchema>
 //       description: z.string().optional(),
 //     })
 //   ).optional(),
-  
+
 //   // Quality information
 //   qualityScore: z.number().int().min(0).max(100).default(100),
 //   qualityNotes: z.string().nullable().optional(),

@@ -1,40 +1,15 @@
 // components/digital-forms/DigitalFormTable.tsx (modified)
 'use client';
 
-import {useState, useCallback} from 'react';
-import {useRouter} from 'next/navigation';
-import {DigitalForm, RecordStatus, ShiftType} from '@/common/types/digital-form';
-import {format} from 'date-fns';
-import {vi} from 'date-fns/locale';
-import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from '@/components/ui/table';
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from '@/components/ui/pagination';
-import {Button} from '@/components/ui/button';
-import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card';
-import {Input} from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {Badge} from '@/components/ui/badge';
-import {Loader2, Search, PlusCircle, Filter, X, Eye, Edit, Trash2, FileText} from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { format } from 'date-fns';
+import { vi } from 'date-fns/locale';
+import { Loader2, Search, PlusCircle, Filter, X, Eye, Edit, Trash2, FileText } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useState, useCallback } from 'react';
+
+import { ReportsPanel } from './ReportsPanel';
+
+import { DigitalForm, RecordStatus, ShiftType } from '@/common/types/digital-form';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -45,14 +20,48 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { DatePickerWithRange } from '@/components/ui/date-range-picker';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import {
   useDigitalFormFilters,
   useDigitalFormPagination,
   useDigitalFormQueries,
 } from '@/hooks/digital-form';
 import useDigitalFormManager from '@/hooks/digital-form/useDigitalFormManager';
-import {DatePickerWithRange} from '@/components/ui/date-range-picker';
-import {ReportsPanel} from './ReportsPanel';
 
 /**
  * Component to display a list of digital forms with filtering, sorting, and pagination
@@ -191,7 +200,7 @@ export function DigitalFormTable() {
   // Format date for display
   const formatDisplayDate = (dateString: string) => {
     try {
-      return format(new Date(dateString), 'dd/MM/yyyy', {locale: vi});
+      return format(new Date(dateString), 'dd/MM/yyyy', { locale: vi });
     } catch (error) {
       return 'Không hợp lệ';
     }

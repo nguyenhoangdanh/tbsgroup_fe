@@ -1,183 +1,140 @@
-"use client"
-import React, { createContext, useContext, useEffect, useMemo } from "react";
-import { useAuthManager, AuthUser } from "@/hooks/useAuthManager";
-import { usePathname, useRouter } from "next/navigation";
-import { toast } from "@/hooks/use-toast";
-import { SecurityProvider, useSecurityContext } from "../security/SecurityContext";
-import { SecurityService } from "@/services/common/security.service";
+'use client';
+import { usePathname, useRouter } from 'next/navigation';
+import React, { createContext, useContext, useEffect, useMemo } from 'react';
+
+import { SecurityProvider, useSecurityContext } from '../security/SecurityContext';
+
+import { toast } from '@/hooks/use-toast';
+import { useAuthManager, AuthUser } from '@/hooks/useAuthManager';
+import { SecurityService } from '@/services/common/security.service';
 
 type AuthError = {
-    message: string;
-    code?: string;
-}
+  message: string;
+  code?: string;
+};
 
 type AuthContextType = {
-    user: AuthUser | null;
-    error: AuthError | null;
-    isLoading: boolean;
-    isAuthenticated: boolean;
-    needsPasswordReset: boolean;
-    login: (credentials: { username: string; password: string }, opts?: { message?: string }) => void;
-    logout: () => void;
-    resetPassword: (params: {
-        resetToken?: string;
-        username?: string;
-        password: string;
-        confirmPassword: string;
-    }) => void;
-    requestPasswordReset: (params: {
-        employeeId: string;
-        cardId: string;
-    }) => void;
-    refetchUser: () => Promise<any>;
+  user: AuthUser | null;
+  error: AuthError | null;
+  isLoading: boolean;
+  isAuthenticated: boolean;
+  needsPasswordReset: boolean;
+  login: (credentials: { username: string; password: string }, opts?: { message?: string }) => void;
+  logout: () => void;
+  resetPassword: (params: {
+    resetToken?: string;
+    username?: string;
+    password: string;
+    confirmPassword: string;
+  }) => void;
+  requestPasswordReset: (params: { employeeId: string; cardId: string }) => void;
+  refetchUser: () => Promise<any>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
-    children,
-}) => {
-    const {
-        user,
-        error,
-        isLoading,
-        isAuthenticated,
-        needsPasswordReset,
-        login,
-        logout,
-        resetPassword,
-        requestPasswordReset,
-        refetchUser
-    } = useAuthManager();
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const {
+    user,
+    error,
+    isLoading,
+    isAuthenticated,
+    needsPasswordReset,
+    login,
+    logout,
+    resetPassword,
+    requestPasswordReset,
+    refetchUser,
+  } = useAuthManager();
 
-    const router = useRouter();
-    const pathname = usePathname();
+  const router = useRouter();
+  const pathname = usePathname();
 
-    // Sử dụng context bảo mật
-    const { lastActivity, securityLevel } = useSecurityContext();
+  // Sử dụng context bảo mật
+  const { lastActivity, securityLevel } = useSecurityContext();
 
-    // Tự động đăng xuất khi phiên hết hạn
-    useEffect(() => {
-        if (!isAuthenticated) return;
+  // Tự động đăng xuất khi phiên hết hạn
+  useEffect(() => {
+    if (!isAuthenticated) return;
 
-        const checkSessionTimeout = setInterval(() => {
-            if (SecurityService.checkSessionTimeout(lastActivity, securityLevel)) {
-                logout();
-                toast({
-                    title: "Phiên đã hết hạn",
-                    description: "Vui lòng đăng nhập lại để tiếp tục",
-                    variant: "destructive",
-                    duration: 4000
-                });
-            }
-        }, 60000); // Kiểm tra mỗi phút
+    const checkSessionTimeout = setInterval(() => {
+      if (SecurityService.checkSessionTimeout(lastActivity, securityLevel)) {
+        logout();
+        toast({
+          title: 'Phiên đã hết hạn',
+          description: 'Vui lòng đăng nhập lại để tiếp tục',
+          variant: 'destructive',
+          duration: 4000,
+        });
+      }
+    }, 60000); // Kiểm tra mỗi phút
 
-        return () => clearInterval(checkSessionTimeout);
-    }, [lastActivity, securityLevel, isAuthenticated, logout]);
+    return () => clearInterval(checkSessionTimeout);
+  }, [lastActivity, securityLevel, isAuthenticated, logout]);
 
-    // Memoize the auth context value
-    const authContextValue = useMemo(() => ({
-        user,
-        error,
-        isLoading,
-        isAuthenticated,
-        needsPasswordReset,
-        login,
-        logout,
-        resetPassword,
-        requestPasswordReset,
-        refetchUser
-    }), [user, error, isLoading, isAuthenticated, needsPasswordReset, login, logout, resetPassword, requestPasswordReset, refetchUser]);
+  // Memoize the auth context value
+  const authContextValue = useMemo(
+    () => ({
+      user,
+      error,
+      isLoading,
+      isAuthenticated,
+      needsPasswordReset,
+      login,
+      logout,
+      resetPassword,
+      requestPasswordReset,
+      refetchUser,
+    }),
+    [
+      user,
+      error,
+      isLoading,
+      isAuthenticated,
+      needsPasswordReset,
+      login,
+      logout,
+      resetPassword,
+      requestPasswordReset,
+      refetchUser,
+    ],
+  );
 
-    // Navigation guard with protected routes management
-    useEffect(() => {
-        // Public routes that don't require authentication
-        const publicRoutes = ['/login', '/reset-password', '/forgot-password', '/'];
+  // Navigation guard with protected routes management
+  useEffect(() => {
+    // Public routes that don't require authentication
+    const publicRoutes = ['/login', '/reset-password', '/forgot-password', '/'];
 
-        if (needsPasswordReset && pathname !== "/reset-password") {
-            router.replace("/reset-password");
-        } else if (!isAuthenticated && !isLoading && !publicRoutes.includes(pathname)) {
-            // Small delay to prevent flickering during navigation
-            const timer = setTimeout(() => {
-                router.replace("/login");
-            }, 100);
-            return () => clearTimeout(timer);
-        }
-    }, [needsPasswordReset, isAuthenticated, isLoading, router, pathname]);
+    if (needsPasswordReset && pathname !== '/reset-password') {
+      router.replace('/reset-password');
+    } else if (!isAuthenticated && !isLoading && !publicRoutes.includes(pathname)) {
+      // Small delay to prevent flickering during navigation
+      const timer = setTimeout(() => {
+        router.replace('/login');
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [needsPasswordReset, isAuthenticated, isLoading, router, pathname]);
 
-    return (
-        <AuthContext.Provider value={authContextValue}>
-            {children}
-        </AuthContext.Provider>
-    );
+  return <AuthContext.Provider value={authContextValue}>{children}</AuthContext.Provider>;
 };
 
 export const useAuthContext = () => {
-    const context = useContext(AuthContext);
-    if (!context) {
-        throw new Error("useAuthContext must be used within a AuthProvider");
-    }
-    return context;
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuthContext must be used within a AuthProvider');
+  }
+  return context;
 };
 
 // Combined provider for easy usage
 export const AuthSecurityProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    return (
-        <SecurityProvider>
-            <AuthProvider>
-                {children}
-            </AuthProvider>
-        </SecurityProvider>
-    );
+  return (
+    <SecurityProvider>
+      <AuthProvider>{children}</AuthProvider>
+    </SecurityProvider>
+  );
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // "use client";
 
@@ -281,7 +238,6 @@ export const AuthSecurityProvider: React.FC<{ children: React.ReactNode }> = ({ 
 //     return context;
 // };
 
-
 // export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 //     children,
 // }) => {
@@ -358,8 +314,6 @@ export const AuthSecurityProvider: React.FC<{ children: React.ReactNode }> = ({ 
 //             return () => clearTimeout(timer);
 //         }
 //     }, [needsPasswordReset, isAuthenticated, isLoading, router, pathname]);
-
-
 
 //     return (
 //         <AuthContext.Provider value={authContextValue}>

@@ -10,6 +10,7 @@ import { toast } from '@/hooks/use-toast';
 import { AttendanceStatus, ProductionIssueType, RecordStatus, ShiftType } from '@/common/types/digital-form';
 import { FormData, Worker } from '@/common/types/worker';
 import { useLoading } from '@/components/common/loading/LoadingProvider';
+import { useMultiBagTimeSlot } from './useMultiBagTimeSlot';
 
 /**
  * Optimized hook for digital form management with better performance
@@ -22,6 +23,9 @@ export const useOptimizedDigitalForm = (formId?: string) => {
   const queries = useDigitalFormQueries();
   const mutations = useDigitalFormMutations();
   const helpers = useDigitalFormHelpers();
+
+  // Get multi-bag time slot functionality
+  const multiBagTimeSlot = formId ? useMultiBagTimeSlot(formId) : null;
   
   // Local state for UI
   // const [loading, setLoading] = useState(true);
@@ -56,7 +60,7 @@ export const useOptimizedDigitalForm = (formId?: string) => {
       stopLoading(loadingKey);
       return;
     }
-    
+
     if (formWithEntries) {
       try {
         // Transform data into UI-friendly format
@@ -119,6 +123,8 @@ export const useOptimizedDigitalForm = (formId?: string) => {
     
     return () => clearInterval(intervalId);
   }, []);
+
+ 
   
   // Refresh data
   const refreshData = useCallback(async () => {
@@ -150,55 +156,21 @@ export const useOptimizedDigitalForm = (formId?: string) => {
       stopLoading(loadingKey);
     }
   }, [formId, queryClient]);
-  
-  // Submit form
-  const submitFormData = useCallback(async () => {
-    if (!formId || !formData) {
-      toast({
-        title: 'Lỗi gửi biểu mẫu',
-        description: 'Không tìm thấy dữ liệu biểu mẫu để gửi.',
-        variant: 'destructive',
-      });
-      return false;
+
+  const addBagForTimeSlot = useCallback(async (
+    workerId: string,
+    bagData: {
+      bagId: string;
+      bagName: string;
+      processId: string;
+      processName: string;
+      colorId: string;
+      colorName: string;
+      timeSlot: string;
+      quantity: number;
     }
-    
-    // Check if form is in DRAFT status
-    if (formData.status !== RecordStatus.DRAFT) {
-      toast({
-        title: 'Không thể gửi biểu mẫu',
-        description: 'Chỉ có thể gửi biểu mẫu ở trạng thái nháp.',
-        variant: 'destructive',
-      });
-      return false;
-    }
-    
-    try {
-      await mutations.submitFormMutation.mutateAsync({ formId });
-      
-      toast({
-        title: 'Gửi biểu mẫu thành công',
-        description: 'Biểu mẫu đã được gửi đi thành công.',
-      });
-      
-      return true;
-    } catch (err) {
-      console.error('Error submitting form:', err);
-      toast({
-        title: 'Lỗi gửi biểu mẫu',
-        description: 'Không thể gửi biểu mẫu. Vui lòng thử lại sau.',
-        variant: 'destructive',
-      });
-      return false;
-    }
-  }, [formId, formData, mutations.submitFormMutation]);
-  
-  // Update hourly data
-  const updateHourlyData = useCallback(async (
-    workerId: string, 
-    timeSlot: string, 
-    quantity: number
   ) => {
-    if (!formId || !formData) {
+    if (!formId || !multiBagTimeSlot) {
       toast({
         title: 'Lỗi cập nhật',
         description: 'Không tìm thấy dữ liệu biểu mẫu.',
@@ -208,68 +180,201 @@ export const useOptimizedDigitalForm = (formId?: string) => {
     }
     
     try {
-      // Find the entry in form data
-      const worker = formData.workers.find((w: Worker) => w.id === workerId);
-      if (!worker) {
-        throw new Error('Không tìm thấy công nhân');
+      const success = await multiBagTimeSlot.addBagForTimeSlot(workerId, bagData);
+      
+      if (success) {
+        // Refresh data after successful update
+        await refreshData();
+        return true;
       }
       
-      // Optimize by using the dedicated hourly data mutation
-      await mutations.updateHourlyDataMutation.mutateAsync({
-        formId,
-        entryId: workerId,
-        timeSlot,
-        quantity
-      });
-      
-      // Optimistic update of local state
-      setFormData(prevData => {
-        if (!prevData) return null;
-        
-        return {
-          ...prevData,
-          workers: prevData.workers.map((worker: Worker) => {
-            if (worker.id === workerId) {
-              // Update hourly data for this specific time slot
-              const newHourlyData = {
-                ...worker.hourlyData,
-                [timeSlot]: quantity
-              };
-              
-              // Recalculate total output
-              const newTotalOutput = Object.values(newHourlyData).reduce(
-                (sum, value) => sum + (value || 0), 
-                0
-              );
-              
-              return {
-                ...worker,
-                hourlyData: newHourlyData,
-                totalOutput: newTotalOutput
-              };
-            }
-            return worker;
-          })
-        };
-      });
-      
-      return true;
-    } catch (err) {
-      console.error('Error updating hourly data:', err);
-      
-      // Revert the optimistic update on error by refreshing data
-      await refreshData();
-      
+      return false;
+    } catch (error) {
+      console.error('Error adding bag for time slot:', error);
       toast({
-        title: 'Lỗi cập nhật',
-        description: 'Không thể cập nhật sản lượng. Vui lòng thử lại.',
+        title: 'Lỗi thêm túi mới',
+        description: error instanceof Error ? error.message : 'Đã xảy ra lỗi không xác định',
         variant: 'destructive',
       });
-      
       return false;
     }
-  }, [formId, formData, mutations.updateHourlyDataMutation, refreshData]);
+  }, [formId, multiBagTimeSlot, refreshData]);
+   
+ const updateBagTimeSlotOutput = useCallback(async (
+  entryId: string,
+  timeSlot: string,
+  quantity: number
+) => {
+  if (!formId || !multiBagTimeSlot) {
+    toast({
+      title: 'Lỗi cập nhật',
+      description: 'Không tìm thấy dữ liệu biểu mẫu.',
+      variant: 'destructive',
+    });
+    return false;
+  }
   
+  try {
+    const success = await multiBagTimeSlot.updateBagTimeSlotOutput(entryId, timeSlot, quantity);
+    
+    if (success) {
+      // Refresh data after successful update
+      await refreshData();
+      return true;
+    }
+    
+    return false;
+  } catch (error) {
+    console.error('Error updating bag time slot output:', error);
+    toast({
+      title: 'Lỗi cập nhật sản lượng',
+      description: error instanceof Error ? error.message : 'Đã xảy ra lỗi không xác định',
+      variant: 'destructive',
+    });
+    return false;
+  }
+}, [formId, multiBagTimeSlot, refreshData]);
+  
+    // Get bags for a specific time slot
+    const getBagsForTimeSlot = useCallback((
+      workerId: string,
+      timeSlot: string
+    ) => {
+      if (!formWithEntries || !multiBagTimeSlot) {
+        return [];
+      }
+      
+      return multiBagTimeSlot.getBagsForTimeSlot(workerId, timeSlot, formWithEntries.entries);
+    }, [formWithEntries, multiBagTimeSlot]);
+  
+    // Get hourly data organized by time slot
+    const getHourlyDataByTimeSlot = useCallback((
+      workerId: string
+    ) => {
+      if (!formWithEntries || !multiBagTimeSlot) {
+        return {};
+      }
+      
+      return multiBagTimeSlot.getHourlyDataByTimeSlot(workerId, formWithEntries.entries);
+    }, [formWithEntries, multiBagTimeSlot]);
+  
+    const submitFormData = useCallback(async () => {
+      if (!formId || !formData) {
+        toast({
+          title: 'Lỗi gửi biểu mẫu',
+          description: 'Không tìm thấy dữ liệu biểu mẫu để gửi.',
+          variant: 'destructive',
+        });
+        return false;
+      }
+      
+      // Check if form is in DRAFT status
+      if (formData.status !== RecordStatus.DRAFT) {
+        toast({
+          title: 'Không thể gửi biểu mẫu',
+          description: 'Chỉ có thể gửi biểu mẫu ở trạng thái nháp.',
+          variant: 'destructive',
+        });
+        return false;
+      }
+      
+      try {
+        await mutations.submitFormMutation.mutateAsync({ formId });
+        
+        toast({
+          title: 'Gửi biểu mẫu thành công',
+          description: 'Biểu mẫu đã được gửi đi thành công.',
+        });
+        
+        return true;
+      } catch (err) {
+        console.error('Error submitting form:', err);
+        toast({
+          title: 'Lỗi gửi biểu mẫu',
+          description: 'Không thể gửi biểu mẫu. Vui lòng thử lại sau.',
+          variant: 'destructive',
+        });
+        return false;
+      }
+    }, [formId, formData, mutations.submitFormMutation]);
+    
+    // Update hourly data
+    const updateHourlyData = useCallback(async (
+      workerId: string, 
+      timeSlot: string, 
+      quantity: number
+    ) => {
+      if (!formId || !formData) {
+        toast({
+          title: 'Lỗi cập nhật',
+          description: 'Không tìm thấy dữ liệu biểu mẫu.',
+          variant: 'destructive',
+        });
+        return false;
+      }
+      
+      try {
+        // Find the entry in form data
+        const worker = formData.workers.find((w: Worker) => w.id === workerId);
+        if (!worker) {
+          throw new Error('Không tìm thấy công nhân');
+        }
+        
+        // Optimize by using the dedicated hourly data mutation
+        await mutations.updateHourlyDataMutation.mutateAsync({
+          formId,
+          entryId: workerId,
+          timeSlot,
+          quantity
+        });
+        
+        // Optimistic update of local state
+        setFormData(prevData => {
+          if (!prevData) return null;
+          
+          return {
+            ...prevData,
+            workers: prevData.workers.map((worker: Worker) => {
+              if (worker.id === workerId) {
+                // Update hourly data for this specific time slot
+                const newHourlyData = {
+                  ...worker.hourlyData,
+                  [timeSlot]: quantity
+                };
+                
+                // Recalculate total output
+                const newTotalOutput = Object.values(newHourlyData).reduce(
+                  (sum, value) => sum + (value || 0), 
+                  0
+                );
+                
+                return {
+                  ...worker,
+                  hourlyData: newHourlyData,
+                  totalOutput: newTotalOutput
+                };
+              }
+              return worker;
+            })
+          };
+        });
+        
+        return true;
+      } catch (err) {
+        console.error('Error updating hourly data:', err);
+        
+        // Revert the optimistic update on error by refreshing data
+        await refreshData();
+        
+        toast({
+          title: 'Lỗi cập nhật',
+          description: 'Không thể cập nhật sản lượng. Vui lòng thử lại.',
+          variant: 'destructive',
+        });
+        
+        return false;
+      }
+    }, [formId, formData, mutations.updateHourlyDataMutation, refreshData]);
   // Update attendance status
   const updateAttendanceStatus = useCallback(async (
     workerId: string,
@@ -306,7 +411,8 @@ export const useOptimizedDigitalForm = (formId?: string) => {
             if (worker.id === workerId) {
               return {
                 ...worker,
-                attendanceStatus: status
+                attendanceStatus: status,
+                attendanceNote: attendanceNote || worker.attendanceNote,
               };
             }
             return worker;
@@ -350,7 +456,7 @@ export const useOptimizedDigitalForm = (formId?: string) => {
     }
     
     try {
-      // Update using the updateFormEntryMutation
+      // Update using the updateShiftTypeMutation
       await mutations.updateShiftTypeMutation.mutateAsync({
         formId,
         entryId: workerId,
@@ -379,25 +485,25 @@ export const useOptimizedDigitalForm = (formId?: string) => {
       
       toast({
         title: 'Cập nhật thành công',
-        description: 'Đã cập nhật trạng thái chuyên cần.',
+        description: 'Đã cập nhật ca làm việc.',
       });
       
       return true;
     } catch (err) {
-      console.error('Error updating attendance status:', err);
+      console.error('Error updating shift type:', err);
       
       // Revert optimistic update
       await refreshData();
       
       toast({
         title: 'Lỗi cập nhật',
-        description: 'Không thể cập nhật trạng thái. Vui lòng thử lại.',
+        description: 'Không thể cập nhật ca làm việc. Vui lòng thử lại.',
         variant: 'destructive',
       });
       
       return false;
     }
-  }, [formId, formData, mutations.updateFormEntryMutation, refreshData]);
+  }, [formId, formData, mutations.updateShiftTypeMutation, refreshData]);
   
   // Add issue to entry
   const addIssue = useCallback(async (
@@ -550,100 +656,100 @@ export const useOptimizedDigitalForm = (formId?: string) => {
     }
   }, [formId, formData, mutations.updateFormEntryMutation, refreshData]);
   
-  // Calculate statistics
-  const stats = useMemo(() => {
-    if (!formData || !formData.workers || formData.workers.length === 0) {
-      return {
-        workerCompletionStats: [],
-        overallCompletionPercentage: 0,
-        totalOutput: 0,
-        averageOutput: 0,
-        attendance: {
-          present: 0,
-          absent: 0,
-          late: 0,
-          earlyLeave: 0,
-          leaveApproved: 0,
-          presentPercentage: 0
-        }
-      };
-    }
-    
-    // Calculate completion percentage for each worker
-    const workerCompletionStats = formData.workers.map((worker: Worker) => {
-      const completedSlots = Object.keys(worker.hourlyData || {}).length;
-      const totalSlots = TIME_SLOTS.length;
-      const completionPercentage = Math.round((completedSlots / totalSlots) * 100);
-      
-      return {
-        workerId: worker.id,
-        workerName: worker.name,
-        completionPercentage,
-        completedSlots,
-        totalSlots
-      };
-    });
-    
-    // Calculate overall completion
-    const totalSlots = formData.workers.length * TIME_SLOTS.length;
-    let filledSlots = 0;
-    
-    formData.workers.forEach((worker: Worker) => {
-      filledSlots += Object.keys(worker.hourlyData || {}).length;
-    });
-    
-    const overallCompletionPercentage = totalSlots > 0 ? Math.round((filledSlots / totalSlots) * 100) : 0;
-    
-    // Total output stats
-    const totalOutput = formData.workers.reduce(
-      (sum: number, worker: Worker) => sum + (worker.totalOutput || 0), 
-      0
-    );
-    
-    const averageOutput = formData.workers.length > 0 
-      ? Math.round(totalOutput / formData.workers.length) 
-      : 0;
-    
-    // Attendance stats
-    const present = formData.workers.filter(
-      (w: Worker) => w.attendanceStatus === AttendanceStatus.PRESENT
-    ).length;
-    
-    const absent = formData.workers.filter(
-      (w: Worker) => w.attendanceStatus === AttendanceStatus.ABSENT
-    ).length;
-    
-    const late = formData.workers.filter(
-      (w: Worker) => w.attendanceStatus === AttendanceStatus.LATE
-    ).length;
-    
-    const earlyLeave = formData.workers.filter(
-      (w: Worker) => w.attendanceStatus === AttendanceStatus.EARLY_LEAVE
-    ).length;
-    
-    const leaveApproved = formData.workers.filter(
-      (w: Worker) => w.attendanceStatus === AttendanceStatus.LEAVE_APPROVED
-    ).length;
-    
-    const presentPercentage = formData.workers.length > 0
-      ? Math.round((present / formData.workers.length) * 100)
-      : 0;
-    
+ // Calculate statistics
+ const stats = useMemo(() => {
+  if (!formData || !formData.workers || formData.workers.length === 0) {
     return {
-      workerCompletionStats,
-      overallCompletionPercentage,
-      totalOutput,
-      averageOutput,
+      workerCompletionStats: [],
+      overallCompletionPercentage: 0,
+      totalOutput: 0,
+      averageOutput: 0,
       attendance: {
-        present,
-        absent,
-        late,
-        earlyLeave,
-        leaveApproved,
-        presentPercentage
+        present: 0,
+        absent: 0,
+        late: 0,
+        earlyLeave: 0,
+        leaveApproved: 0,
+        presentPercentage: 0
       }
     };
-  }, [formData]);
+  }
+  
+  // Calculate completion percentage for each worker
+  const workerCompletionStats = formData.workers.map((worker: Worker) => {
+    const completedSlots = Object.keys(worker.hourlyData || {}).length;
+    const totalSlots = TIME_SLOTS.length;
+    const completionPercentage = Math.round((completedSlots / totalSlots) * 100);
+    
+    return {
+      workerId: worker.id,
+      workerName: worker.name,
+      completionPercentage,
+      completedSlots,
+      totalSlots
+    };
+  });
+  
+  // Calculate overall completion
+  const totalSlots = formData.workers.length * TIME_SLOTS.length;
+  let filledSlots = 0;
+  
+  formData.workers.forEach((worker: Worker) => {
+    filledSlots += Object.keys(worker.hourlyData || {}).length;
+  });
+  
+  const overallCompletionPercentage = totalSlots > 0 ? Math.round((filledSlots / totalSlots) * 100) : 0;
+  
+  // Total output stats
+  const totalOutput = formData.workers.reduce(
+    (sum: number, worker: Worker) => sum + (worker.totalOutput || 0), 
+    0
+  );
+  
+  const averageOutput = formData.workers.length > 0 
+    ? Math.round(totalOutput / formData.workers.length) 
+    : 0;
+  
+  // Attendance stats
+  const present = formData.workers.filter(
+    (w: Worker) => w.attendanceStatus === AttendanceStatus.PRESENT
+  ).length;
+  
+  const absent = formData.workers.filter(
+    (w: Worker) => w.attendanceStatus === AttendanceStatus.ABSENT
+  ).length;
+  
+  const late = formData.workers.filter(
+    (w: Worker) => w.attendanceStatus === AttendanceStatus.LATE
+  ).length;
+  
+  const earlyLeave = formData.workers.filter(
+    (w: Worker) => w.attendanceStatus === AttendanceStatus.EARLY_LEAVE
+  ).length;
+  
+  const leaveApproved = formData.workers.filter(
+    (w: Worker) => w.attendanceStatus === AttendanceStatus.LEAVE_APPROVED
+  ).length;
+  
+  const presentPercentage = formData.workers.length > 0
+    ? Math.round((present / formData.workers.length) * 100)
+    : 0;
+  
+  return {
+    workerCompletionStats,
+    overallCompletionPercentage,
+    totalOutput,
+    averageOutput,
+    attendance: {
+      present,
+      absent,
+      late,
+      earlyLeave,
+      leaveApproved,
+      presentPercentage
+    }
+  };
+}, [formData]);
   
   return {
     // Data
@@ -652,6 +758,12 @@ export const useOptimizedDigitalForm = (formId?: string) => {
     error,
     currentTimeSlot: currentTimeSlotLabel,
     stats,
+
+    // Multi-bag functionality
+    addBagForTimeSlot,
+    updateBagTimeSlotOutput,
+    getBagsForTimeSlot,
+    getHourlyDataByTimeSlot,
     
     // Actions
     refreshData,

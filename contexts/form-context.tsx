@@ -2,9 +2,10 @@
 "use client"
 import React, { createContext, useContext, ReactNode, useEffect, useState } from 'react';
 import { FormData } from '@/common/types/worker';
-import { AttendanceStatus, ProductionIssueType, ShiftType } from '@/common/types/digital-form';
+import { AttendanceStatus, DigitalFormEntry, ProductionIssueType, ShiftType } from '@/common/types/digital-form';
 // import { useRouter, useParams } from 'next/navigation';
 import useOptimizedDigitalForm from '@/hooks/digital-form/useOptimizedDigitalForm';
+import { bagColorCondDTOSchema } from '../../TBS Group/bento-nestjs/daily_performance_be/src/modules/handbag/handbag.dto';
 
 interface FormContextProps {
     formData: FormData | null;
@@ -24,6 +25,45 @@ interface FormContextProps {
         description?: string;
     }) => Promise<boolean>;
     removeIssue: (workerId: string, issueIndex: number) => Promise<boolean>;
+
+    // Multi-bag time slot functionality
+    addBagForTimeSlot: (workerId: string, bagData: {
+        bagId: string;
+        bagName: string;
+        processId: string;
+        processName: string;
+        colorId: string;
+        colorName: string;
+        timeSlot: string;
+        quantity: number;
+    }) => Promise<boolean>;
+
+    updateBagTimeSlotOutput: (entryId: string, timeSlot: string, quantity: number) => Promise<boolean>;
+
+    getBagsForTimeSlot: (workerId: string, timeSlot: string) => Array<{
+        entryId: string;
+        bagId: string;
+        bagName: string;
+        processId: string;
+        processName: string;
+        colorId: string;
+        colorName: string;
+        output: number;
+    }>;
+
+    getHourlyDataByTimeSlot: (workerId: string) => Record<string, {
+        totalOutput: number;
+        bags: Array<{
+            entryId: string;
+            bagId: string;
+            bagName: string;
+            processId: string;
+            processName: string;
+            colorId: string;
+            colorName: string;
+            output: number;
+        }>;
+    }>;
 }
 
 const FormContext = createContext<FormContextProps | undefined>(undefined);
@@ -43,7 +83,11 @@ export function FormProvider({ children, initialFormId }: { children: ReactNode,
         updateAttendanceStatus,
         updateShiftType,
         addIssue,
-        removeIssue
+        removeIssue,
+        addBagForTimeSlot,
+        updateBagTimeSlotOutput,
+        getBagsForTimeSlot,
+        getHourlyDataByTimeSlot,
     } = useOptimizedDigitalForm(formId);
 
     // Cập nhật formId nếu initialFormId thay đổi
@@ -65,7 +109,13 @@ export function FormProvider({ children, initialFormId }: { children: ReactNode,
         updateAttendanceStatus,
         updateShiftType,
         addIssue,
-        removeIssue
+        removeIssue,
+
+        //multi bag time slot
+        addBagForTimeSlot,
+        updateBagTimeSlotOutput,
+        getBagsForTimeSlot,
+        getHourlyDataByTimeSlot
     };
 
     return (

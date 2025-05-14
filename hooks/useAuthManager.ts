@@ -1,10 +1,15 @@
 // hooks/useAuthManager.ts
 
 'use client';
-import {useState, useCallback, useEffect} from 'react';
-import {useRouter, usePathname} from 'next/navigation';
-import {useMutation, useQueryClient, useQuery} from '@tanstack/react-query';
-import {toast} from '@/hooks/use-toast';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
+import * as CryptoJS from 'crypto-js';
+import { useRouter, usePathname } from 'next/navigation';
+import { useState, useCallback, useEffect } from 'react';
+
+import useAppDispatch from './useAppDispatch';
+import useAppSelector from './useAppSelector';
+
+import { fetchRoles } from '@/apis/roles/role.api';
 import {
   loginMutationFn,
   logoutMutationFn,
@@ -14,14 +19,13 @@ import {
   updateStatusMutationFn,
   registerMutationFn,
 } from '@/apis/user/user.api';
-import {UserStatusEnum} from '@/common/enum';
-import {fetchRoles} from '@/apis/roles/role.api';
-import * as CryptoJS from 'crypto-js';
+import { UserStatusEnum } from '@/common/enum';
+import { toast } from '@/hooks/use-toast';
+import { login, logout } from '@/redux/actions/authAction';
 
 // Định nghĩa khóa bí mật cho mã hóa (lý tưởng nên lấy từ biến môi trường)
 const ENCRYPTION_KEY =
-  process.env.NEXT_PUBLIC_ENCRYPTION_KEY ||
-  'default-secure-key-change-in-production';
+  process.env.NEXT_PUBLIC_ENCRYPTION_KEY || 'default-secure-key-change-in-production';
 
 // Hàm mã hóa dữ liệu
 const encryptData = (data: any): string => {
@@ -118,7 +122,9 @@ const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 phút
  */
 export const useAuthManager = () => {
   const router = useRouter();
+  const auth = useAppSelector(state => state.auth);
   const pathname = usePathname();
+  const dispatch = useAppDispatch();
   const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
   const [isLoggedOut, setIsLoggedOut] = useState(false);
@@ -126,8 +132,7 @@ export const useAuthManager = () => {
 
   // Initialize local state for auth token and minimal user info
   const [authToken, setAuthToken] = useState<string | null>(null);
-  const [minimalUserInfo, setMinimalUserInfo] =
-    useState<MinimalUserInfo | null>(null);
+  const [minimalUserInfo, setMinimalUserInfo] = useState<MinimalUserInfo | null>(null);
 
   // Load minimal cached user from localStorage on mount
   useEffect(() => {
@@ -260,7 +265,8 @@ export const useAuthManager = () => {
   const user = isLoggedOut ? null : userQuery.data?.data || null;
 
   // Kiểm tra xem người dùng đã xác thực hay chưa
-  const isAuthenticated = !!user && !!authToken && !isLoggedOut;
+  // const isAuthenticated = !!user && !!authToken && !isLoggedOut;
+  const isAuthenticated = auth.status === 'authenticated' && !isLoggedOut;
 
   // User status check helpers
   const needsPasswordReset = user?.status === UserStatusEnum.PENDING_ACTIVATION;
@@ -270,7 +276,7 @@ export const useAuthManager = () => {
     mutationFn: loginMutationFn,
     onSuccess: () => {
       setIsLoggedOut(false);
-      queryClient.invalidateQueries({queryKey: ['authUser']});
+      queryClient.invalidateQueries({ queryKey: ['authUser'] });
     },
   });
 
@@ -285,7 +291,7 @@ export const useAuthManager = () => {
   });
 
   const registerUserMutation = useMutation({
-    mutationFn: registerMutationFn
+    mutationFn: registerMutationFn,
   });
 
   // Logout mutation
@@ -312,16 +318,16 @@ export const useAuthManager = () => {
    * Handles login process with appropriate error handling
    */
   const handleLogin = useCallback(
-    async (credentials: LoginCredentials, opts?: {message?: string}) => {
+    async (credentials: LoginCredentials, opts?: { message?: string }) => {
       setIsLoading(true);
-      const {message} = opts || {};
+      const { message } = opts || {};
       try {
         // Reset logged out state when attempting to login
         setIsLoggedOut(false);
 
         // Await the login mutation to catch errors
         const response = await loginMutation.mutateAsync(credentials);
-        const {data} = response;
+        const { data } = response;
 
         if (data.token) {
           localStorage.setItem(TOKEN_KEY, data.token);
@@ -367,84 +373,82 @@ export const useAuthManager = () => {
       try {
         const response = await registerUserMutation.mutateAsync(data);
         return response;
-      }
-      catch (error: any) {
+      } catch (error: any) {
         toast({
           title: 'Lỗi',
           description: error.message || 'Đăng ký thất bại',
           variant: 'destructive',
         });
         throw error;
-      }
-      finally {
+      } finally {
         setIsLoading(false);
       }
     },
-    [registerUserMutation]
+    [registerUserMutation],
   );
 
   /**
    * Handles logout with proper error propagation
    */
-  const handleLogout = useCallback(
-    async (silent: boolean = false) => {
-      setIsLoading(true);
-      try {
-        // Call the logout API
-        if (!silent) {
-          // Call the logout API (chỉ khi không phải tự động đăng xuất do timeout)
-          await logoutMutation.mutateAsync();
-        }
+  // const handleLogout = useCallback(
+  //   async (silent: boolean = false) => {
+  //     setIsLoading(true);
+  //     try {
+  //       // Call the logout API
+  //       if (!silent) {
+  //         // Call the logout API (chỉ khi không phải tự động đăng xuất do timeout)
+  //         await logoutMutation.mutateAsync();
+  //       }
 
-        // Xóa tất cả dữ liệu xác thực
-        localStorage.removeItem(TOKEN_KEY);
-        localStorage.removeItem(USER_DATA_KEY);
-        setAuthToken(null);
-        setMinimalUserInfo(null);
-        setIsLoggedOut(true);
+  //       // Xóa tất cả dữ liệu xác thực
+  //       localStorage.removeItem(TOKEN_KEY);
+  //       localStorage.removeItem(USER_DATA_KEY);
+  //       setAuthToken(null);
+  //       setMinimalUserInfo(null);
+  //       setIsLoggedOut(true);
 
-        // Even on success, manually clean up
-        queryClient.setQueryData(['authUser'], null);
-        queryClient.resetQueries();
-        queryClient.clear();
+  //       // Even on success, manually clean up
+  //       queryClient.setQueryData(['authUser'], null);
+  //       queryClient.resetQueries();
+  //       queryClient.clear();
 
-        router.push('/login');
+  //       router.push('/login');
 
-        toast({
-          title: 'Đăng xuất',
-          description: 'Đăng xuất thành công',
-        });
-      } catch (error: any) {
-        // Vẫn thực hiện dọn dẹp khi gặp lỗi
-        localStorage.removeItem(TOKEN_KEY);
-        localStorage.removeItem(USER_DATA_KEY);
-        setAuthToken(null);
-        setMinimalUserInfo(null);
-        setIsLoggedOut(true);
+  //       toast({
+  //         title: 'Đăng xuất',
+  //         description: 'Đăng xuất thành công',
+  //       });
+  //     } catch (error: any) {
+  //       // Vẫn thực hiện dọn dẹp khi gặp lỗi
+  //       localStorage.removeItem(TOKEN_KEY);
+  //       localStorage.removeItem(USER_DATA_KEY);
+  //       setAuthToken(null);
+  //       setMinimalUserInfo(null);
+  //       setIsLoggedOut(true);
 
-        // Still perform cleanup on error
-        queryClient.setQueryData(['authUser'], null);
-        queryClient.resetQueries();
-        queryClient.clear();
+  //       // Still perform cleanup on error
+  //       queryClient.setQueryData(['authUser'], null);
+  //       queryClient.resetQueries();
+  //       queryClient.clear();
 
-        router.push('/login');
+  //       router.push('/login');
 
-        if (!silent) {
-          toast({
-            title: 'Lỗi',
-            description: error.message || 'Đăng xuất thất bại',
-            variant: 'destructive',
-          });
-        }
+  //       if (!silent) {
+  //         toast({
+  //           title: 'Lỗi',
+  //           description: error.message || 'Đăng xuất thất bại',
+  //           variant: 'destructive',
+  //         });
+  //       }
 
-        // Re-throw the error for the component to handle
-        throw error;
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [logoutMutation, queryClient, router],
-  );
+  //       // Re-throw the error for the component to handle
+  //       throw error;
+  //     } finally {
+  //       setIsLoading(false);
+  //     }
+  //   },
+  //   [logoutMutation, queryClient, router],
+  // );
 
   /**
    * Handles password reset with proper error propagation
@@ -461,7 +465,7 @@ export const useAuthManager = () => {
         });
 
         // Refresh user data
-        queryClient.invalidateQueries({queryKey: ['authUser']});
+        queryClient.invalidateQueries({ queryKey: ['authUser'] });
 
         return response;
       } catch (error: any) {
@@ -514,7 +518,7 @@ export const useAuthManager = () => {
         const response = await updateStatusMutation.mutateAsync(params);
 
         // Refresh user data
-        queryClient.invalidateQueries({queryKey: ['authUser']});
+        queryClient.invalidateQueries({ queryKey: ['authUser'] });
 
         return response;
       } catch (error: any) {
@@ -546,21 +550,41 @@ export const useAuthManager = () => {
   //     router.replace('/reset-password');
   //   }
   // }, [user, minimalUserInfo, needsPasswordReset, router, pathname]);
+  const loginWithCredentials = useCallback(
+    (credentials: LoginCredentials) => {
+      return dispatch(login(credentials));
+    },
+    [dispatch],
+  );
+
+  // Logout current user
+  const logoutUser = useCallback(
+    (options?: { reason?: string; allDevices?: boolean }) => {
+      return dispatch(logout(options));
+    },
+    [dispatch],
+  );
 
   return {
-    user,
-    isAuthenticated,
+    // Auth state
+    user: auth.user,
+    status: auth.status,
+    error: auth.error,
+    accessToken: auth.accessToken,
+    isAuthenticated: auth.status === 'authenticated',
+    isLoading: auth.status === 'loading',
+
     needsPasswordReset,
-    isLoading: isLoading || userQuery.isLoading,
-    error: userQuery.error,
+    // error: userQuery.error,
     login: handleLogin,
-    logout: () => handleLogout(false),
+    logout: logoutUser,
     resetPassword: handleResetPassword,
     requestPasswordReset: handleRequestPasswordReset,
     updateStatus: handleUpdateStatus,
     refetchUser: userQuery.refetch,
     allRoles: fetchAllRoles,
     register: handleRegister,
+    loginWithCredentials,
   };
 };
 

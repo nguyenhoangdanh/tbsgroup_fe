@@ -1,5 +1,5 @@
-import {UserItemType} from '../interface/user';
-import {BagColor, BagProcess, HandBag} from '../interface/handbag';
+import { BagColor, BagProcess, HandBag } from '../interface/handbag';
+import { UserItemType } from '../interface/user';
 
 export enum RecordStatus {
   DRAFT = 'DRAFT',
@@ -367,10 +367,10 @@ export function convertEntryToApiModel(
   currentData?: DigitalFormEntry,
 ): Partial<DigitalFormEntry> {
   // Start with current data or empty object
-  const baseData: Partial<DigitalFormEntry> = currentData ? {...currentData} : {};
+  const baseData: Partial<DigitalFormEntry> = currentData ? { ...currentData } : {};
 
   // Update or create hourly data
-  const hourlyData = {...(baseData.hourlyData || {})};
+  const hourlyData = { ...(baseData.hourlyData || {}) };
   hourlyData[timeSlot] = quantity;
 
   // Calculate total output

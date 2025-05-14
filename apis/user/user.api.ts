@@ -1,4 +1,3 @@
-
 import { UserListParams, UserListResponse } from '@/common/interface/user';
 import { fetchWithAuth } from '@/lib/fetcher';
 import { TUserSchema } from '@/schemas/user';
@@ -22,13 +21,13 @@ export type VerifyDataType = {
 };
 
 // Auth API endpoints
-export const loginMutationFn = async (data: LoginType) =>
+export const loginMutationFn = async (data: LoginType): Promise<any> =>
   fetchWithAuth('/auth/login', {
     method: 'POST',
     body: JSON.stringify(data),
   });
 
-export const registerMutationFn = async (data: Omit<TUserSchema, 'id'>) =>
+export const registerMutationFn = async (data: Omit<TUserSchema, 'id'>): Promise<any> =>
   fetchWithAuth('/auth/register', {
     method: 'POST',
     body: JSON.stringify(data),
@@ -61,7 +60,9 @@ export const logoutMutationFn = async () =>
   });
 
 // User profile API endpoints
-export const getUserProfileQueryFn = async () => { return await fetchWithAuth('/users/profile') };
+export const getUserProfileQueryFn = async () => {
+  return await fetchWithAuth('/users/profile');
+};
 
 export const updateStatusMutationFn = async (data: { status: string }) =>
   fetchWithAuth('/users/profile', {
@@ -87,9 +88,12 @@ export const createUserMutationFn = async (data: Omit<TUserSchema, 'id'>) => {
   return response;
 };
 
-export const updateUserMutationFn = async ({ id, data }: { 
-  id: string; 
-  data: Partial<TUserSchema> 
+export const updateUserMutationFn = async ({
+  id,
+  data,
+}: {
+  id: string;
+  data: Partial<TUserSchema>;
 }) => {
   const response = await fetchWithAuth(`/users/${id}`, {
     method: 'PATCH',
@@ -105,9 +109,11 @@ export const deleteUserMutationFn = async (id: string) => {
   return response;
 };
 
-export const getUsersListQueryFn = async (params: UserListParams = {}): Promise<UserListResponse> => {
+export const getUsersListQueryFn = async (
+  params: UserListParams = {},
+): Promise<UserListResponse> => {
   const queryParams = new URLSearchParams();
-  
+
   // Thêm các tham số vào URL nếu chúng tồn tại
   if (params.page) queryParams.append('page', params.page.toString());
   if (params.limit) queryParams.append('limit', params.limit.toString());
@@ -115,8 +121,7 @@ export const getUsersListQueryFn = async (params: UserListParams = {}): Promise<
   if (params.fullName) queryParams.append('fullName', params.fullName);
   if (params.role) queryParams.append('role', params.role);
   if (params.status) queryParams.append('status', params.status);
-  
+
   const response = await fetchWithAuth(`/users/list?${queryParams.toString()}`);
   return response;
 };
-

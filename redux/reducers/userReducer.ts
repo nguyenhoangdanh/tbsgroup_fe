@@ -1,17 +1,13 @@
 // Action types with const assertions for type safety and autocompletion
 
 // import { type IUserInfo } from '@/provider/interfaces/user';
-import {
-  FETCH_USER_FAILURE,
-  FETCH_USER,
-  FETCH_USER_SUCCESS,
-} from '../actions';
+import { FETCH_USER_FAILURE, FETCH_USER, FETCH_USER_SUCCESS } from '../actions';
 // import { IExam } from '@/provider/interfaces/survey';
 
 // TypeScript interfaces for the state and action types
 interface IUserState {
   loading: boolean;
-  data: string | null
+  data: string | null;
   error: string | null;
 }
 
@@ -30,7 +26,10 @@ interface IFetchDataFailureAction {
 }
 
 // Union type for actions
-export type TUserActions = IFetchDataRequestAction | IFetchDataSuccessAction | IFetchDataFailureAction;
+export type TUserActions =
+  | IFetchDataRequestAction
+  | IFetchDataSuccessAction
+  | IFetchDataFailureAction;
 
 const initialState: IUserState = {
   loading: false,

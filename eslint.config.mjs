@@ -1,5 +1,6 @@
 // eslint.config.mjs
 import { FlatCompat } from '@eslint/eslintrc';
+import importPlugin from 'eslint-plugin-import';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -43,6 +44,9 @@ export default [
 
     // Thêm quy tắc tùy chỉnh
     {
+        plugins: {
+            import: importPlugin
+        },
         rules: {
             // Quy tắc React
             'react/react-in-jsx-scope': 'off',
@@ -50,10 +54,8 @@ export default [
             'react-hooks/exhaustive-deps': 'warn',
 
             // Quy tắc TypeScript
-            '@typescript-eslint/no-explicit-any': 'warn',
+            '@typescript-eslint/no-explicit-any': 'off',
             '@typescript-eslint/no-unsafe-argument': 'error',
-            '@typescript-eslint/no-unsafe-assignment': 'warn',
-            '@typescript-eslint/no-unsafe-member-access': 'warn',
             '@typescript-eslint/no-unsafe-return': 'warn',
             '@typescript-eslint/no-empty-object-type': 'error',
             '@typescript-eslint/no-unsafe-function-type': 'error',
@@ -67,7 +69,28 @@ export default [
                 'singleQuote': true,
                 'trailingComma': 'all',
                 'printWidth': 100,
-            }]
+                'bracketSpacing': true,
+                'importOrderSeparation': true,
+                'importOrderSortSpecifiers': true
+            }],
+
+            // Quy tắc import
+            'import/order': ['error', {
+                'groups': [
+                    'builtin',
+                    'external',
+                    'internal',
+                    ['parent', 'sibling'],
+                    'index'
+                ],
+                'newlines-between': 'always',
+                'alphabetize': {
+                    'order': 'asc',
+                    'caseInsensitive': true
+                }
+            }],
+            'import/newline-after-import': ['error', { 'count': 1 }],
+            'import/no-duplicates': 'error'
         },
     },
 

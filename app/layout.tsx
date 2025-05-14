@@ -1,16 +1,19 @@
-import type {Metadata} from 'next';
+import type { Metadata } from 'next';
+
 import './globals.css';
-import {Toaster} from '@/components/ui/toaster';
-import {ThemeProvider} from '@/contexts/ThemeProvider';
-import SagaProviders from '@/contexts/SagaProvider';
-import QueryProvider from '@/contexts/QueryProvider';
-import {beVietnamPro} from '@/lib/fonts';
-import RootLayoutWrapper from '@/components/common/layouts/admin/RootLayoutWrapper';
-import {AuthSecurityProvider} from '@/contexts/auth/AuthProvider';
-import ActivityMonitor from '@/components/security/ActivityMonitor';
 import Script from 'next/script';
+
+import RootLayoutWrapper from '@/components/common/layouts/admin/RootLayoutWrapper';
+import { LoadingProvider } from '@/components/common/loading/LoadingProvider';
+import ActivityMonitor from '@/components/security/ActivityMonitor';
+import { Toaster } from '@/components/ui/toaster';
+import { AuthSecurityProvider } from '@/contexts/auth/AuthProvider';
 import ClientProviders from '@/contexts/ClientProviders';
-import {LoadingProvider} from '@/components/common/loading/LoadingProvider';
+import QueryProvider from '@/contexts/QueryProvider';
+import SagaProviders from '@/contexts/SagaProvider';
+import { ThemeProvider } from '@/contexts/ThemeProvider';
+import { beVietnamPro } from '@/lib/fonts';
+
 export const metadata: Metadata = {
   title: 'Thoai Son Handbag Factory',
   description: 'TBS Group - Thoai Son Handbag Factory',
@@ -144,7 +147,7 @@ export default function RootLayout({
           <SagaProviders>
             <QueryProvider>
               <AuthSecurityProvider>
-                <ActivityMonitor />
+                {/* <ActivityMonitor /> */}
                 <RootLayoutWrapper>
                   <ClientProviders>
                     {/* <SecurityBanner /> */}

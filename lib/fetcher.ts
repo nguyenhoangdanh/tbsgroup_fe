@@ -3,38 +3,33 @@
 /**
  * Hàm gọi API cơ bản với xử lý lỗi nâng cao
  */
-export const fetcher = async (
-  url: string,
-  options?: RequestInit
-) => {
+export const fetcher = async (url: string, options?: RequestInit) => {
   try {
     // Kiểm tra URL cơ sở API đã được định nghĩa chưa
     const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-    
+
     if (!baseUrl) {
-      console.error("API base URL chưa được định nghĩa trong biến môi trường");
-      throw new Error("Lỗi cấu hình API");
+      console.error('API base URL chưa được định nghĩa trong biến môi trường');
+      throw new Error('Lỗi cấu hình API');
     }
 
     // Đảm bảo URL được định dạng đúng
-    const formattedUrl = url.startsWith('/')
-      ? `${baseUrl}${url}`
-      : `${baseUrl}/${url}`;
+    const formattedUrl = url.startsWith('/') ? `${baseUrl}${url}` : `${baseUrl}/${url}`;
 
     // Chuẩn bị CSRF token nếu có
     const csrfToken = getCsrfToken();
-    
+
     // Tạo object headers từ options hoặc object rỗng nếu không có
     const headersObj = options?.headers || {};
-    
+
     // Tạo Headers mới để sử dụng interface tiêu chuẩn
     const headers = new Headers(headersObj as HeadersInit);
-    
+
     // Đặt header Content-Type mặc định nếu chưa được đặt
     if (!headers.has('Content-Type')) {
       headers.set('Content-Type', 'application/json');
     }
-    
+
     // Chỉ thêm CSRF token cho các phương thức không phải GET
     const method = options?.method?.toUpperCase() || 'GET';
     if (method !== 'GET' && csrfToken) {
@@ -49,7 +44,7 @@ export const fetcher = async (
       ...options,
       headers,
       credentials: 'include', // Giữ cookie (tương đương với `withCredentials: true` trong axios)
-      signal: controller.signal
+      signal: controller.signal,
     });
 
     // Xóa timeout
@@ -58,9 +53,9 @@ export const fetcher = async (
     // Xử lý lỗi HTTP
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw { 
-        status: response.status, 
-        ...errorData 
+      throw {
+        status: response.status,
+        ...errorData,
       };
     }
 
@@ -73,16 +68,18 @@ export const fetcher = async (
       throw new Error('Request đã hết thời gian');
     } else if (error.message === 'Failed to fetch' || error instanceof TypeError) {
       console.error('Lỗi mạng - Failed to fetch');
-      
+
       // Kiểm tra nếu có lỗi CORS
-      if (error.message && (
-        error.message.includes('CORS') || 
-        error.message.includes('cross-origin')
-      )) {
+      if (
+        error.message &&
+        (error.message.includes('CORS') || error.message.includes('cross-origin'))
+      ) {
         console.error('Lỗi CORS - Có thể backend chưa được cấu hình đúng');
-        throw new Error('Lỗi CORS: Backend không chấp nhận request từ frontend. Vui lòng kiểm tra cấu hình CORS trên server.');
+        throw new Error(
+          'Lỗi CORS: Backend không chấp nhận request từ frontend. Vui lòng kiểm tra cấu hình CORS trên server.',
+        );
       }
-      
+
       throw new Error('Lỗi kết nối đến máy chủ. Vui lòng kiểm tra kết nối internet của bạn.');
     } else {
       console.error('Lỗi fetch:', error);
@@ -95,30 +92,25 @@ export const fetcher = async (
  * Phương pháp tạm thời để giải quyết vấn đề CORS
  * Chỉ sử dụng trong môi trường phát triển
  */
-export const fetchWithoutCsrf = async (
-  url: string,
-  options?: RequestInit
-) => {
+export const fetchWithoutCsrf = async (url: string, options?: RequestInit) => {
   try {
     // Kiểm tra URL cơ sở API đã được định nghĩa chưa
     const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-    
+
     if (!baseUrl) {
-      console.error("API base URL chưa được định nghĩa trong biến môi trường");
-      throw new Error("Lỗi cấu hình API");
+      console.error('API base URL chưa được định nghĩa trong biến môi trường');
+      throw new Error('Lỗi cấu hình API');
     }
 
     // Đảm bảo URL được định dạng đúng
-    const formattedUrl = url.startsWith('/')
-      ? `${baseUrl}${url}`
-      : `${baseUrl}/${url}`;
+    const formattedUrl = url.startsWith('/') ? `${baseUrl}${url}` : `${baseUrl}/${url}`;
 
-    // Tạo object headers từ options hoặc object rỗng nếu không có  
+    // Tạo object headers từ options hoặc object rỗng nếu không có
     const headersObj = options?.headers || {};
-    
+
     // Tạo Headers mới để sử dụng interface tiêu chuẩn
     const headers = new Headers(headersObj as HeadersInit);
-    
+
     // Đặt header Content-Type mặc định nếu chưa được đặt
     if (!headers.has('Content-Type')) {
       headers.set('Content-Type', 'application/json');
@@ -132,7 +124,7 @@ export const fetchWithoutCsrf = async (
       ...options,
       headers,
       credentials: 'include', // Giữ cookie (tương đương với `withCredentials: true` trong axios)
-      signal: controller.signal
+      signal: controller.signal,
     });
 
     // Xóa timeout
@@ -141,9 +133,9 @@ export const fetchWithoutCsrf = async (
     // Xử lý lỗi HTTP
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw { 
-        status: response.status, 
-        ...errorData 
+      throw {
+        status: response.status,
+        ...errorData,
       };
     }
 
@@ -176,7 +168,7 @@ export const fetchWithAuth = async (url: string, options?: RequestInit) => {
   //       credentials: 'include',
   //     });
   //   }
-    
+
   //   return await fetcher(url, {
   //     ...options,
   //     credentials: 'include',
@@ -203,7 +195,6 @@ export const fetchWithAuth = async (url: string, options?: RequestInit) => {
   // }
 
   try {
-
     // Trong môi trường phát triển, có thể tạm thời sử dụng fetchWithoutCsrf để test
     if (process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_DISABLE_CSRF === 'true') {
       return await fetchWithoutCsrf(url, {
@@ -221,7 +212,7 @@ export const fetchWithAuth = async (url: string, options?: RequestInit) => {
       const errorData = await error.json();
       if (error instanceof Error && 'status' in error && error.status === 401) {
         try {
-          await fetcher('/auth/refresh', { method: 'POST' }); // Gọi refresh token
+          await fetcher('/auth/refresh', {method: 'POST'}); // Gọi refresh token
           return await fetcher(url, options); // Gọi lại request gốc
         } catch (refreshError) {
           window.location.href = '/'; // Redirect về login nếu refresh token thất bại
@@ -240,13 +231,13 @@ export const fetchWithAuth = async (url: string, options?: RequestInit) => {
  */
 function getCsrfToken(): string | null {
   if (typeof document === 'undefined') return null;
-  
+
   // Thử lấy từ meta tag trước
   const metaTag = document.querySelector('meta[name="csrf-token"]');
   if (metaTag && metaTag.getAttribute('content')) {
     return metaTag.getAttribute('content');
   }
-  
+
   // Thử lấy từ cookie
   const cookies = document.cookie.split(';');
   for (const cookie of cookies) {
@@ -255,40 +246,32 @@ function getCsrfToken(): string | null {
       return value;
     }
   }
-  
+
   return null;
 }
 
 // Các hàm tiện ích cho các phương thức HTTP phổ biến
-export const get = (url: string, options?: RequestInit) => 
-  fetchWithAuth(url, { ...options, method: 'GET' });
+export const get = (url: string, options?: RequestInit) =>
+  fetchWithAuth(url, {...options, method: 'GET'});
 
-export const post = (url: string, data: any, options?: RequestInit) => 
-  fetchWithAuth(url, { 
-    ...options, 
-    method: 'POST', 
-    body: JSON.stringify(data) 
+export const post = (url: string, data: any, options?: RequestInit) =>
+  fetchWithAuth(url, {
+    ...options,
+    method: 'POST',
+    body: JSON.stringify(data),
   });
 
-export const put = (url: string, data: any, options?: RequestInit) => 
-  fetchWithAuth(url, { 
-    ...options, 
-    method: 'PUT', 
-    body: JSON.stringify(data) 
+export const put = (url: string, data: any, options?: RequestInit) =>
+  fetchWithAuth(url, {
+    ...options,
+    method: 'PUT',
+    body: JSON.stringify(data),
   });
 
-export const del = (url: string, options?: RequestInit) => 
-  fetchWithAuth(url, { ...options, method: 'DELETE' });
+export const del = (url: string, options?: RequestInit) =>
+  fetchWithAuth(url, {...options, method: 'DELETE'});
 
 export default fetcher;
-
-
-
-
-
-
-
-
 
 // export const fetcher = async (
 //     url: string,
@@ -305,15 +288,15 @@ export default fetcher;
 //         },
 //       }
 //     );
-  
+
 //     if (!response.ok) {
 //       const errorData = await response.json();
 //       throw { status: response.status, ...errorData };
 //     }
-  
+
 //     return response.json();
 //   };
-  
+
 // export const fetchWithAuth = async (url: string, options?: RequestInit) => {
 //     try {
 //       return await fetcher(url, {
@@ -339,5 +322,3 @@ export default fetcher;
 //       throw error; // Ném lại lỗi nếu không phải lỗi từ Response
 //     }
 //   };
-  
-  

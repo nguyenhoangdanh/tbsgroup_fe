@@ -1,32 +1,23 @@
-import { fetchAllHandbagStages } from "@/actions/admin/handbag";
-import { SagaConst } from "@/constant/saga.constant";
+import {fetchAllHandbagStages} from '@/actions/admin/handbag';
 import {
   fetchDataFailure,
   FETCH_USER,
-  SOCKET_CONNECT,
-  socketConnectSuccess,
   DISCONNECT,
   SOCKET_CONNECT_FAILURE,
   PING,
   PING_FAILURE,
   PING_SUCCESS,
   RESET_STATE_SOCKET,
-  FETCH_HANDBAG_SUCCESS,
   FETCH_PO_HANDBAG_FAILURE,
   FETCH_PO_HANDBAG_SUCCESS,
   FETCH_PO_HANDBAG,
-} from "@/redux/actions";
-import { all, call, put, fork, takeEvery } from "redux-saga/effects";
+} from '@/redux/actions';
+import {all, call, put, fork, takeEvery, takeLatest} from 'redux-saga/effects';
 //   import { aboutme } from '@/provider/api/user';
 //   import { getAllSurvey } from '@/provider/api/survey';
 //   import { type IExam } from '@/provider/interfaces/survey';
 //   import { SagaConst } from '@/common';
-import {
-  type ManagerOptions,
-  type SocketOptions,
-  type Socket,
-  io,
-} from "socket.io-client";
+import {type ManagerOptions, type SocketOptions, type Socket, io} from 'socket.io-client';
 
 interface IConnectResponse {
   success: boolean;
@@ -43,7 +34,7 @@ function* getUserInfoSaga(): Generator {
     //     yield put(fetchDataSuccess(response?.data));
     //   }
   } catch (_error) {
-    yield put(fetchDataFailure("Failed to fetch user information"));
+    yield put(fetchDataFailure('Failed to fetch user information'));
   }
 }
 
@@ -58,13 +49,13 @@ function* getAllHandbagStages(): Generator {
     } else {
       yield put({
         type: FETCH_PO_HANDBAG_FAILURE,
-        payload: "Failed to fetch handbag stages",
+        payload: 'Failed to fetch handbag stages',
       });
     }
   } catch (_error) {
     yield put({
       type: FETCH_PO_HANDBAG_FAILURE,
-      payload: "Failed to fetch handbag stages",
+      payload: 'Failed to fetch handbag stages',
     });
   }
 }
@@ -72,38 +63,38 @@ function* getAllHandbagStages(): Generator {
 function* pingConnection(): Generator {
   try {
     if (socket) {
-      socket.on("heartbeat", function () {
+      socket.on('heartbeat', function () {
         // console.log('ping sent successfully!');
         if (socket) {
-          socket.emit("heartbeat");
+          socket.emit('heartbeat');
         }
       });
-      yield put({ type: PING_SUCCESS });
+      yield put({type: PING_SUCCESS});
     } else {
       yield all([
-        put({ type: PING_FAILURE, payload: "Failed to ping connection" }),
+        put({type: PING_FAILURE, payload: 'Failed to ping connection'}),
         put({
           type: SOCKET_CONNECT_FAILURE,
-          payload: "Failed to connect socket",
+          payload: 'Failed to connect socket',
         }),
-        put({ type: RESET_STATE_SOCKET, payload: { isConnected: false } }),
+        put({type: RESET_STATE_SOCKET, payload: {isConnected: false}}),
       ]);
     }
-  } catch (_error) {
-    yield put({ type: PING_FAILURE, payload: "Socket connection error" });
+  } catch (_) {
+    yield put({type: PING_FAILURE, payload: 'Socket connection error'});
   }
 }
 
 function* disconnect() {
   if (socket) {
-    socket.emit("manual-disconnect");
+    socket.emit('manual-disconnect');
     socket.disconnect();
     yield all([
       put({
         type: SOCKET_CONNECT_FAILURE,
-        payload: "Failed to connect socket",
+        payload: 'Failed to connect socket',
       }),
-      put({ type: RESET_STATE_SOCKET, payload: { isConnected: false } }),
+      put({type: RESET_STATE_SOCKET, payload: {isConnected: false}}),
     ]);
   }
 }
@@ -117,38 +108,38 @@ const connect = async (socketProps: {
     query?: Record<string, string>;
   };
 }): Promise<IConnectResponse> => {
-  const { host, options = {} } = socketProps;
+  const {host, options = {}} = socketProps;
 
   if (!socketProps?.host) {
-    return { success: false, error: "Invalid Socket IO Props!" };
+    return {success: false, error: 'Invalid Socket IO Props!'};
   }
 
-  socket = io(host, { ...options });
+  socket = io(host, {...options});
 
-  socket.emit("authenticate");
+  socket.emit('authenticate');
 
   return await new Promise((resolve, reject) => {
     if (!socket) {
-      reject(new Error("Socket initialization failed"));
+      reject(new Error('Socket initialization failed'));
       return;
     }
-    socket.on("authenticated", () => {
+    socket.on('authenticated', () => {
       if (socket) {
-        socket.emit("exam-count-down");
-        resolve({ success: true });
+        socket.emit('exam-count-down');
+        resolve({success: true});
       } else {
-        resolve({ success: false, error: "Socket is null after connect" });
+        resolve({success: false, error: 'Socket is null after connect'});
       }
     });
 
-    socket.on("connect_error", () => {
+    socket.on('connect_error', () => {
       socket = null;
-      resolve({ success: false, error: "Socket connection error" });
+      resolve({success: false, error: 'Socket connection error'});
     });
 
-    socket.on("disconnect", () => {
+    socket.on('disconnect', () => {
       socket = null;
-      resolve({ success: false, error: "Socket disconnected" });
+      resolve({success: false, error: 'Socket disconnected'});
     });
   });
 };
@@ -184,33 +175,11 @@ const connect = async (socketProps: {
 //   }
 // }
 
-// Watcher saga for getUserInfo action
-function* watchGetUserInfo() {
-  yield takeEvery(FETCH_USER, getUserInfoSaga);
-}
-
-// function* watchSocketEstablish() {
-//   yield takeEvery(SOCKET_CONNECT, socketConnection);
-// }
-
-function* watchEmitSaveDraft() {
-  yield takeEvery(DISCONNECT, disconnect);
-}
-
-function* watchPingConnection() {
-  yield takeEvery(PING, pingConnection);
-}
-
-function* watchGetPOHandbag() {
-  yield takeEvery(FETCH_PO_HANDBAG, getAllHandbagStages);
-}
 
 // Include the watcher saga in your root saga
-export default function* sagas() {
-  yield all([
-    fork(watchGetUserInfo),
-    fork(watchEmitSaveDraft),
-    fork(watchPingConnection),
-    fork(watchGetPOHandbag),
-  ]);
+export function* sagas() {
+  yield takeLatest(FETCH_USER, getUserInfoSaga);
+  yield takeLatest(DISCONNECT, disconnect);
+  yield takeLatest(PING, pingConnection)
+  yield takeLatest(FETCH_PO_HANDBAG, getAllHandbagStages);;
 }
