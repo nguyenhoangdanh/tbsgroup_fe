@@ -1,4 +1,3 @@
-// components/security/ActivityMonitor.tsx
 'use client';
 
 import { throttle } from 'lodash';

@@ -1,22 +1,23 @@
-// components/digital-form/ReportsPanel.tsx
 'use client';
 
-import {useState, useEffect, useCallback} from 'react';
-import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card';
-import {Tabs, TabsList, TabsTrigger, TabsContent} from '@/components/ui/tabs';
-import {Button} from '@/components/ui/button';
-import {Calendar} from '@/components/ui/calendar';
-import {Popover, PopoverContent, PopoverTrigger} from '@/components/ui/popover';
-import {Calendar as CalendarIcon, Download, BarChart2, ArrowRight, Loader2} from 'lucide-react';
-import {format} from 'date-fns';
-import {vi} from 'date-fns/locale';
-import {FactoryReport} from './reports/FactoryReport';
-import {LineReport} from './reports/LineReport';
-import {TeamReport} from './reports/TeamReport';
-import {GroupReport} from './reports/GroupReport';
-import {ComparisonReport} from './reports/ComparisonReport';
+import { format } from 'date-fns';
+import { vi } from 'date-fns/locale';
+import { Calendar as CalendarIcon, Download, BarChart2, ArrowRight, Loader2 } from 'lucide-react';
+import { useState, useCallback } from 'react';
+
+import { ComparisonReport } from './reports/ComparisonReport';
+import { FactoryReport } from './reports/FactoryReport';
+import { GroupReport } from './reports/GroupReport';
+import { LineReport } from './reports/LineReport';
+import { TeamReport } from './reports/TeamReport';
+
+import { toast } from 'react-toast-kit';
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { ReportService } from '@/services/reportService';
-import { useToast } from '@/hooks/use-toast';
 
 interface ReportDateRangeProps {
   dateFrom: Date;
@@ -49,7 +50,7 @@ const ReportDateRange = ({
             <Calendar
               mode="single"
               selected={dateFrom}
-              onSelect={date => date && onDateFromChange(date)}
+              onSelect={(date: Date | undefined) => date && onDateFromChange(date)}
               initialFocus
               locale={vi}
             />
@@ -73,7 +74,7 @@ const ReportDateRange = ({
             <Calendar
               mode="single"
               selected={dateTo}
-              onSelect={date => date && onDateToChange(date)}
+              onSelect={(date: Date | undefined) => date && onDateToChange(date)}
               initialFocus
               locale={vi}
             />
@@ -90,7 +91,6 @@ export function ReportsPanel() {
   const [dateTo, setDateTo] = useState<Date>(new Date());
   const [activeReport, setActiveReport] = useState<string>('factory');
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
-  const { toast } = useToast();
 
   // Other state variables...
   const [factoryId, setFactoryId] = useState<string>('');
@@ -170,7 +170,8 @@ export function ReportsPanel() {
             groupByBag,
             groupByProcess,
           };
-        } else { // comparison
+        } else {
+          // comparison
           reportType = 'comparison';
           parameters = {
             ...parameters,
@@ -196,7 +197,7 @@ export function ReportsPanel() {
           document.body.removeChild(a);
 
           toast({
-            title: "Xuất báo cáo thành công",
+            title: 'Xuất báo cáo thành công',
             description: `Báo cáo ${activeReport} đã được xuất dưới dạng ${format.toUpperCase()}`,
           });
         } else {
@@ -205,8 +206,8 @@ export function ReportsPanel() {
       } catch (error) {
         console.error(`Error exporting ${activeReport} report:`, error);
         toast({
-          variant: "destructive",
-          title: "Xuất báo cáo thất bại",
+          variant: 'error',
+          title: 'Xuất báo cáo thất bại',
           description: error instanceof Error ? error.message : String(error),
         });
       } finally {
@@ -214,10 +215,24 @@ export function ReportsPanel() {
       }
     },
     [
-      activeReport, exporting, dateFrom, dateTo, factoryId, lineId, teamId, groupId,
-      entityIds, compareBy, includeLines, includeTeams, includeGroups, includeWorkers,
-      detailedAttendance, groupByBag, groupByProcess, includeHandBags, includeProcesses,
-      includeTimeSeries, toast
+      activeReport,
+      exporting,
+      dateFrom,
+      dateTo,
+      factoryId,
+      lineId,
+      teamId,
+      groupId,
+      entityIds,
+      compareBy,
+      includeGroups,
+      includeWorkers,
+      detailedAttendance,
+      groupByBag,
+      groupByProcess,
+      includeHandBags,
+      includeProcesses,
+      includeTimeSeries,
     ],
   );
 
@@ -258,7 +273,11 @@ export function ReportsPanel() {
               onClick={() => handleExport('pdf')}
               disabled={exporting}
             >
-              {exporting ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Download className="h-4 w-4 mr-1" />}
+              {exporting ? (
+                <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4 mr-1" />
+              )}
               PDF
             </Button>
             <Button
@@ -267,7 +286,11 @@ export function ReportsPanel() {
               onClick={() => handleExport('excel')}
               disabled={exporting}
             >
-              {exporting ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Download className="h-4 w-4 mr-1" />}
+              {exporting ? (
+                <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4 mr-1" />
+              )}
               Excel
             </Button>
             <Button

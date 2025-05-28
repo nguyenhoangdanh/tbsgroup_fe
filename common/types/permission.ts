@@ -1,4 +1,4 @@
-import { PermissionType } from "../enum";
+import { PermissionType } from '../enum';
 
 // Định nghĩa các kiểu dữ liệu dựa trên backend DTO
 export type PermissionDTO = {
@@ -6,7 +6,7 @@ export type PermissionDTO = {
   code: string;
   name: string;
   description?: string;
-    type: PermissionType;
+  type: PermissionType;
   module?: string;
   isActive: boolean;
   createdAt: string;

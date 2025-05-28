@@ -1,101 +1,118 @@
-// eslint.config.mjs
 import { FlatCompat } from '@eslint/eslintrc';
+import js from '@eslint/js';
+import nextPlugin from '@next/eslint-plugin-next';
+import typescriptParser from '@typescript-eslint/parser';
+import typescriptPlugin from '@typescript-eslint/eslint-plugin';
+import reactPlugin from 'eslint-plugin-react';
+import reactHooksPlugin from 'eslint-plugin-react-hooks';
+import prettierConfig from 'eslint-config-prettier';
+import securityPlugin from 'eslint-plugin-security';
 import importPlugin from 'eslint-plugin-import';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-// Lấy đường dẫn hiện tại
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Tạo compat layer để sử dụng cú pháp cũ trong cấu hình mới
 const compat = new FlatCompat({
     baseDirectory: __dirname,
+    recommendedConfig: js.configs.recommended,
 });
 
-// Cấu hình ESLint cho TypeScript và React
 export default [
-    // Sử dụng FlatCompat để chuyển đổi cấu hình cũ sang định dạng mới
-    ...compat.config({
-        extends: [
-            'plugin:@typescript-eslint/recommended',
-            'plugin:react/recommended',
-            'plugin:react-hooks/recommended',
-            'plugin:prettier/recommended',
-        ],
-        parser: '@typescript-eslint/parser',
-        parserOptions: {
-            project: './tsconfig.json',
-            ecmaVersion: 2020,
-            sourceType: 'module',
-            ecmaFeatures: {
-                jsx: true,
+    // Base configuration
+    js.configs.recommended,
+
+    // TypeScript configuration
+    {
+        files: ['**/*.{ts,tsx}'],
+        languageOptions: {
+            parser: typescriptParser,
+            parserOptions: {
+                ecmaVersion: 'latest',
+                sourceType: 'module',
+                ecmaFeatures: {
+                    jsx: true,
+                },
+                project: ['./tsconfig.json'],
             },
         },
-    }),
-
-    // Chỉ sử dụng một số rule an toàn từ Next.js plugin
-    ...compat.config({
-        plugins: ['@next/next'],
-        rules: {
-            '@next/next/no-img-element': 'warn',
-        },
-    }),
-
-    // Thêm quy tắc tùy chỉnh
-    {
         plugins: {
-            import: importPlugin
+            '@typescript-eslint': typescriptPlugin,
+            'react': reactPlugin,
+            'react-hooks': reactHooksPlugin,
+            '@next/next': nextPlugin,
+            'security': securityPlugin,
+            'import': importPlugin,
         },
         rules: {
-            // Quy tắc React
+            ...typescriptPlugin.configs.recommended.rules,
+            ...reactPlugin.configs.recommended.rules,
+            ...reactHooksPlugin.configs.recommended.rules,
+            ...nextPlugin.configs.recommended.rules,
+            ...securityPlugin.configs.recommended.rules,
+
+            // TypeScript specific rules
+            '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+            '@typescript-eslint/no-explicit-any': 'warn',
+            '@typescript-eslint/prefer-const': 'error',
+            '@typescript-eslint/no-var-requires': 'error',
+
+            // React specific rules
             'react/react-in-jsx-scope': 'off',
+            'react/prop-types': 'off',
+            'react/display-name': 'off',
             'react-hooks/rules-of-hooks': 'error',
             'react-hooks/exhaustive-deps': 'warn',
 
-            // Quy tắc TypeScript
-            '@typescript-eslint/no-explicit-any': 'off',
-            '@typescript-eslint/no-unsafe-argument': 'error',
-            '@typescript-eslint/no-unsafe-return': 'warn',
-            '@typescript-eslint/no-empty-object-type': 'error',
-            '@typescript-eslint/no-unsafe-function-type': 'error',
-            '@typescript-eslint/no-wrapper-object-types': 'error',
-            '@typescript-eslint/no-misused-new': 'error',
-            '@typescript-eslint/no-non-null-assertion': 'warn',
+            // Import rules
+            'import/order': [
+                'error',
+                {
+                    groups: ['builtin', 'external', 'internal', 'parent', 'sibling', 'index'],
+                    'newlines-between': 'always',
+                    alphabetize: { order: 'asc', caseInsensitive: true },
+                },
+            ],
+            'import/no-duplicates': 'error',
+            'import/no-unused-modules': 'warn',
 
-            // Cấu hình prettier
-            'prettier/prettier': ['error', {
-                'endOfLine': 'auto',
-                'singleQuote': true,
-                'trailingComma': 'all',
-                'printWidth': 100,
-                'bracketSpacing': true,
-                'importOrderSeparation': true,
-                'importOrderSortSpecifiers': true
-            }],
+            // Security rules
+            'security/detect-object-injection': 'warn',
+            'security/detect-non-literal-regexp': 'warn',
 
-            // Quy tắc import
-            'import/order': ['error', {
-                'groups': [
-                    'builtin',
-                    'external',
-                    'internal',
-                    ['parent', 'sibling'],
-                    'index'
-                ],
-                'newlines-between': 'always',
-                'alphabetize': {
-                    'order': 'asc',
-                    'caseInsensitive': true
-                }
-            }],
-            'import/newline-after-import': ['error', { 'count': 1 }],
-            'import/no-duplicates': 'error'
+            // General rules
+            'no-console': ['warn', { allow: ['warn', 'error'] }],
+            'no-debugger': 'error',
+            'prefer-const': 'error',
+            'no-var': 'error',
+        },
+        settings: {
+            react: {
+                version: 'detect',
+            },
+            'import/resolver': {
+                typescript: {
+                    alwaysTryTypes: true,
+                    project: './tsconfig.json',
+                },
+            },
         },
     },
 
-    // Loại trừ một số thư mục
+    // Prettier configuration (must be last)
+    prettierConfig,
+
+    // Ignore patterns
     {
-        ignores: ['node_modules/**', '.next/**', 'out/**', 'public/**'],
+        ignores: [
+            'node_modules/**',
+            '.next/**',
+            'out/**',
+            'dist/**',
+            '*.config.js',
+            '*.config.mjs',
+            'public/**',
+        ],
     },
 ];

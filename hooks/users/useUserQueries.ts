@@ -8,15 +8,16 @@ import {
   UseInfiniteQueryResult,
   InfiniteData,
 } from '@tanstack/react-query';
-import {
-  getAllUsersQueryFn,
-  getUserProfileQueryFn,
-  getUsersListQueryFn,
-} from '@/apis/user/user.api';
 import { useCallback, useMemo, useState } from 'react';
-import { toast } from '../use-toast';
-import { UserItemType, UserListParams, UserListResponse, UserType } from '@/common/interface/user';
+import { toast } from 'react-toast-kit';
 
+import { 
+  UserProfileType, 
+  UserListParams, 
+  UserListResponse,
+  UserRoleResponse 
+} from '@/common/interface/user';
+import { UserService } from '@/services/user/user.service';
 
 // Cache configurations
 const GC_TIME = 60 * 60 * 1000; // 60 minutes
@@ -26,20 +27,19 @@ const LIST_STALE_TIME = 60 * 1000; // 1 minute
 // Retry configuration
 const DEFAULT_RETRY_OPTIONS = {
   retry: 2,
-  retryDelay: (attemptIndex: number) =>
-    Math.min(1000 * Math.pow(1.5, attemptIndex), 30000),
+  retryDelay: (attemptIndex: number) => Math.min(1000 * Math.pow(1.5, attemptIndex), 30000),
 };
 
 /**
  * Create stable query key to avoid unnecessary re-renders and refetches
  */
-const createStableQueryKey = (params: any) => {
+const createStableQueryKey = (params: Record<string, any>) => {
   const sortedParams: Record<string, any> = {};
 
   Object.keys(params)
     .sort()
     .forEach(key => {
-      if (params[key] !== undefined && params[key] !== null) {
+      if (params[key] !== undefined && params[key] !== null && params[key] !== '') {
         sortedParams[key] = params[key];
       }
     });
@@ -58,24 +58,25 @@ export const useUserQueries = () => {
    * Handle query errors with toast notifications
    */
   const handleQueryError = useCallback((error: any, queryName: string) => {
-    // Ensure we have a proper Error object
-    // Extract message safely
     let errorMessage = 'Lỗi không xác định';
     try {
-      if (typeof error === 'object' && error.message) {
+      if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error?.message) {
         errorMessage = error.message;
-      } else if (typeof error === 'object') {
-        errorMessage = JSON.stringify(error);
+      } else if (typeof error === 'string') {
+        errorMessage = error;
       }
     } catch (e) {
-      errorMessage = 'Không thể hiển thị chi tiết lỗi';
+      errorMessage = `Lỗi không thể đọc thông báo: ${String(e)}`;
     }
-    
-    // Show toast with safe message
+
+    setQueryError(error);
+
     toast({
       title: `Không thể tải dữ liệu ${queryName}`,
       description: errorMessage || 'Vui lòng thử lại sau',
-      variant: 'destructive',
+      variant: 'error',
       duration: 3000,
     });
   }, []);
@@ -88,113 +89,39 @@ export const useUserQueries = () => {
   }, []);
 
   /**
-   * Prefetch users data
+   * Get current user profile
    */
-  const prefetchUsers = useCallback(async () => {
-    try {
-      await queryClient.prefetchQuery({
-        queryKey: ['users'],
-        queryFn: getAllUsersQueryFn,
-        staleTime: STALE_TIME,
-        gcTime: GC_TIME,
-        ...DEFAULT_RETRY_OPTIONS,
-      });
-    } catch (error) {
-      console.error('Failed to prefetch users:', error);
-    }
-  }, [queryClient]);
-
-  /**
-   * Prefetch a specific user
-   */
-  const prefetchUserById = useCallback(
-    async (id: string) => {
-      if (!id) return;
-
-      try {
-        await queryClient.prefetchQuery({
-          queryKey: ['user', id],
-          queryFn: () => fetchUserById(id),
-          staleTime: STALE_TIME,
-          gcTime: GC_TIME,
-          ...DEFAULT_RETRY_OPTIONS,
-        });
-      } catch (error) {
-        console.error(`Failed to prefetch user with ID ${id}:`, error);
-      }
-    },
-    [queryClient],
-  );
-
-  // Hàm để gọi API lấy thông tin người dùng theo ID
-  const fetchUserById = async (id: string) => {
-    try {
-      const response = await fetch(`/api/users/${id}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch user');
-      }
-      return await response.json();
-    } catch (error) {
-      console.error(`Error fetching user with ID ${id}:`, error);
-      throw error;
-    }
-  };
-
-  // API để lấy danh sách users với phân trang và lọc
-  const fetchUsersList = async (params: UserListParams = {}):
-    Promise<UserListResponse> => {
-    const queryParams = new URLSearchParams();
-    
-    // Thêm các tham số vào URL nếu chúng tồn tại
-    if (params.page) queryParams.append('page', params.page.toString());
-    if (params.limit) queryParams.append('limit', params.limit.toString());
-    if (params.username) queryParams.append('username', params.username);
-    if (params.fullName) queryParams.append('fullName', params.fullName);
-    if (params.role) queryParams.append('role', params.role);
-    if (params.status) queryParams.append('status', params.status);
-    
-    try {
-      // Sử dụng hàm fetchWithAuth từ lib/fetcher để gọi API
-      
-      return await getUsersListQueryFn(params);
-    } catch (error) {
-      console.error('Error fetching users list:', error);
-      throw error;
-    }
-  };
-
-  /**
-   * Get all users
-   */
-  const getAllUsers = useQuery<UserType[], Error>({
-    queryKey: ['users'],
-    queryFn: async () => {
-      try {
-        return await getAllUsersQueryFn();
-      } catch (error) {
-        handleQueryError(error, 'danh sách người dùng');
-        throw error;
-      }
-    },
-    staleTime: STALE_TIME,
-    gcTime: GC_TIME,
-    refetchOnWindowFocus: false,
-    ...DEFAULT_RETRY_OPTIONS,
-  });
+  const getCurrentProfile = (): UseQueryResult<UserProfileType, Error> =>
+    useQuery<UserProfileType, Error>({
+      queryKey: ['user-profile'],
+      queryFn: async () => {
+        try {
+          return await UserService.getProfile();
+        } catch (error) {
+          const err = error instanceof Error ? error : new Error(String(error));
+          handleQueryError(err, 'hồ sơ người dùng');
+          throw err;
+        }
+      },
+      staleTime: STALE_TIME,
+      gcTime: GC_TIME,
+      refetchOnWindowFocus: false,
+      ...DEFAULT_RETRY_OPTIONS,
+    });
 
   /**
    * Get user by ID
    */
   const getUserById = (
     id?: string,
-    options?: {enabled?: boolean},
-  ): UseQueryResult<UserItemType, Error> =>
-    useQuery<UserItemType, Error>({
+    options?: { enabled?: boolean },
+  ): UseQueryResult<UserProfileType, Error> =>
+    useQuery<UserProfileType, Error>({
       queryKey: ['user', id],
       queryFn: async () => {
         if (!id) throw new Error('User ID is required');
         try {
-          return await fetchUserById(id);
+          return await UserService.getById(id);
         } catch (error) {
           const err = error instanceof Error ? error : new Error(String(error));
           handleQueryError(err, 'người dùng');
@@ -222,11 +149,11 @@ export const useUserQueries = () => {
       queryKey: ['users-list', stableParams],
       queryFn: async () => {
         try {
-          // return await fetchUsersList(params);
-          return await getAllUsersQueryFn();
+          return await UserService.getList(params);
         } catch (error) {
-          handleQueryError(error, 'danh sách người dùng');
-          throw error;
+          const err = error instanceof Error ? error : new Error(String(error));
+          handleQueryError(err, 'danh sách người dùng');
+          throw err;
         }
       },
       staleTime: LIST_STALE_TIME,
@@ -246,17 +173,14 @@ export const useUserQueries = () => {
     filters: Omit<UserListParams, 'page' | 'limit'> = {},
   ): UseInfiniteQueryResult<InfiniteData<UserListResponse>, Error> => {
     // Create stable query key
-    const stableFilters = useMemo(
-      () => createStableQueryKey(filters),
-      [filters],
-    );
-  
+    const stableFilters = useMemo(() => createStableQueryKey(filters), [filters]);
+
     return useInfiniteQuery<UserListResponse, Error>({
       queryKey: ['users-infinite', limit, stableFilters],
       initialPageParam: 1,
-      queryFn: async ({pageParam}) => {
+      queryFn: async ({ pageParam }) => {
         try {
-          return await fetchUsersList({
+          return await UserService.getList({
             ...filters,
             page: pageParam as number,
             limit,
@@ -267,9 +191,10 @@ export const useUserQueries = () => {
           throw err;
         }
       },
-      getNextPageParam: lastPage => {
-        if (lastPage.meta?.currentPage < lastPage.meta?.totalPages) {
-          return lastPage.meta.currentPage + 1;
+      getNextPageParam: (lastPage) => {
+        const totalPages = Math.ceil(lastPage.total / lastPage.limit);
+        if (lastPage.page < totalPages) {
+          return lastPage.page + 1;
         }
         return undefined;
       },
@@ -281,18 +206,83 @@ export const useUserQueries = () => {
   };
 
   /**
+   * Get user roles
+   */
+  const getUserRoles = (
+    id?: string,
+    options?: { enabled?: boolean },
+  ): UseQueryResult<UserRoleResponse[], Error> =>
+    useQuery<UserRoleResponse[], Error>({
+      queryKey: ['user-roles', id],
+      queryFn: async () => {
+        if (!id) throw new Error('User ID is required');
+        try {
+          return await UserService.getUserRoles(id);
+        } catch (error) {
+          const err = error instanceof Error ? error : new Error(String(error));
+          handleQueryError(err, 'vai trò người dùng');
+          throw err;
+        }
+      },
+      staleTime: STALE_TIME,
+      gcTime: GC_TIME,
+      enabled: !!id && options?.enabled !== false,
+      refetchOnWindowFocus: false,
+      ...DEFAULT_RETRY_OPTIONS,
+    });
+
+  /**
+   * Prefetch users data
+   */
+  const prefetchUsers = useCallback(async (params: UserListParams = {}) => {
+    try {
+      await queryClient.prefetchQuery({
+        queryKey: ['users-list', createStableQueryKey(params)],
+        queryFn: () => UserService.getList(params),
+        staleTime: STALE_TIME,
+        gcTime: GC_TIME,
+        ...DEFAULT_RETRY_OPTIONS,
+      });
+    } catch (error) {
+      console.error('Failed to prefetch users:', error);
+    }
+  }, [queryClient]);
+
+  /**
+   * Prefetch a specific user
+   */
+  const prefetchUserById = useCallback(
+    async (id: string) => {
+      if (!id) return;
+
+      try {
+        await queryClient.prefetchQuery({
+          queryKey: ['user', id],
+          queryFn: () => UserService.getById(id),
+          staleTime: STALE_TIME,
+          gcTime: GC_TIME,
+          ...DEFAULT_RETRY_OPTIONS,
+        });
+      } catch (error) {
+        console.error(`Failed to prefetch user with ID ${id}:`, error);
+      }
+    },
+    [queryClient],
+  );
+
+  /**
    * Invalidate users cache without forcing a refetch
    */
   const invalidateUsersCache = useCallback(
     async (forceRefetch = false) => {
       try {
         await queryClient.invalidateQueries({
-          queryKey: ['users'],
+          queryKey: ['users-list'],
           refetchType: forceRefetch ? 'active' : 'none',
         });
 
         await queryClient.invalidateQueries({
-          queryKey: ['users-list'],
+          queryKey: ['users-infinite'],
           refetchType: forceRefetch ? 'active' : 'none',
         });
       } catch (error) {
@@ -314,6 +304,11 @@ export const useUserQueries = () => {
           queryKey: ['user', id],
           refetchType: forceRefetch ? 'active' : 'none',
         });
+
+        await queryClient.invalidateQueries({
+          queryKey: ['user-roles', id],
+          refetchType: forceRefetch ? 'active' : 'none',
+        });
       } catch (error) {
         console.error(`Failed to invalidate user cache for ID ${id}:`, error);
       }
@@ -321,12 +316,30 @@ export const useUserQueries = () => {
     [queryClient],
   );
 
+  /**
+   * Invalidate current user profile cache
+   */
+  const invalidateProfileCache = useCallback(
+    async (forceRefetch = false) => {
+      try {
+        await queryClient.invalidateQueries({
+          queryKey: ['user-profile'],
+          refetchType: forceRefetch ? 'active' : 'none',
+        });
+      } catch (error) {
+        console.error('Failed to invalidate profile cache:', error);
+      }
+    },
+    [queryClient],
+  );
+
   return {
     // Query hooks
-    getAllUsers,
+    getCurrentProfile,
     getUserById,
     listUsers,
     getUsersInfinite,
+    getUserRoles,
 
     // Prefetch methods
     prefetchUsers,
@@ -335,7 +348,8 @@ export const useUserQueries = () => {
     // Cache invalidation methods
     invalidateUsersCache,
     invalidateUserCache,
-    
+    invalidateProfileCache,
+
     // Error handling
     queryError,
     resetQueryError,

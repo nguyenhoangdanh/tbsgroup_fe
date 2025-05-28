@@ -1,17 +1,19 @@
-import { BagColor, BagProcess, HandBag } from '../interface/handbag';
-import { UserItemType } from '../interface/user';
+// src/types/digital-form.ts
 
+// Base types for digital form module
+
+// Enums
 export enum RecordStatus {
   DRAFT = 'DRAFT',
   PENDING = 'PENDING',
   CONFIRMED = 'CONFIRMED',
-  REJECTED = 'REJECTED',
+  REJECTED = 'REJECTED'
 }
 
 export enum ShiftType {
   REGULAR = 'REGULAR',
   EXTENDED = 'EXTENDED',
-  OVERTIME = 'OVERTIME',
+  OVERTIME = 'OVERTIME'
 }
 
 export enum AttendanceStatus {
@@ -19,18 +21,19 @@ export enum AttendanceStatus {
   ABSENT = 'ABSENT',
   LATE = 'LATE',
   EARLY_LEAVE = 'EARLY_LEAVE',
-  LEAVE_APPROVED = 'LEAVE_APPROVED',
+  LEAVE_APPROVED = 'LEAVE_APPROVED'
 }
 
 export enum ProductionIssueType {
-  ABSENT = 'ABSENT',
-  LATE = 'LATE',
   WAITING_MATERIALS = 'WAITING_MATERIALS',
+  MACHINE_BREAKDOWN = 'MACHINE_BREAKDOWN',
   QUALITY_ISSUES = 'QUALITY_ISSUES',
-  LOST_MATERIALS = 'LOST_MATERIALS',
-  OTHER = 'OTHER',
+  STAFF_SHORTAGE = 'STAFF_SHORTAGE',
+  PROCESS_DELAY = 'PROCESS_DELAY',
+  OTHER = 'OTHER'
 }
 
+// Interface for production issue
 export interface ProductionIssue {
   type: ProductionIssueType;
   hour: number;
@@ -38,347 +41,320 @@ export interface ProductionIssue {
   description?: string;
 }
 
+// Time interval definition for the form
+export interface TimeInterval {
+  start: string; // e.g., "07:30"
+  end: string; // e.g., "08:30"
+  label: string; // e.g., "07:30-08:30"
+}
+
+// Main entity interfaces
 export interface DigitalForm {
   id: string;
   formCode: string;
-  formName?: string;
-  description?: string;
-  date: string; // ISO date string
+  formName: string;
+  description: string | null;
+  date: Date | string;
   shiftType: ShiftType;
-
-  // Organization hierarchy
   factoryId: string;
   factoryName?: string;
+  factoryCode?: string;
   lineId: string;
   lineName?: string;
-  teamId: string;
+  lineCode?: string;
+  teamId: string | null;
   teamName?: string;
-  groupId: string;
+  teamCode?: string;
+  groupId: string | null;
   groupName?: string;
-
-  // Status and audit
+  groupCode?: string;
+  userId: string;
+  userName?: string;
+  userCode?: string;
   status: RecordStatus;
-  createdAt: string;
-  updatedAt: string;
   createdById: string;
   createdByName?: string;
+  createdAt: Date | string;
   updatedById: string;
-  submitTime?: string | null;
-  approvalRequestId?: string | null;
-  approvedAt?: string | null;
-  approvedById?: string | null;
-  approvedByName?: string | null;
-
-  // Export flags
+  updatedAt: Date | string;
+  submitTime: Date | string | null;
+  approvalRequestId: string | null;
+  approvedAt: Date | string | null;
   isExported: boolean;
-  syncStatus?: string | null;
+  syncStatus: string | null;
 }
 
 export interface DigitalFormEntry {
   id: string;
   formId: string;
-
-  // Worker (User)
   userId: string;
   userName?: string;
   userCode?: string;
-
-  // Production item details
   handBagId: string;
   handBagName?: string;
+  handBagCode?: string;
   bagColorId: string;
   bagColorName?: string;
+  bagColorCode?: string;
   processId: string;
   processName?: string;
+  processCode?: string;
   plannedOutput: number;
-  // Production data
   hourlyData: Record<string, number>;
   totalOutput: number;
-
-  // Attendance data
   attendanceStatus: AttendanceStatus;
-  checkInTime?: string | null;
-  checkOutTime?: string | null;
-  attendanceNote?: string | null;
   shiftType: ShiftType;
-
-  // Quality data
-  qualityScore: number;
-  qualityNotes?: string | null;
-
-  // Issues tracking
+  checkInTime: Date | string | null;
+  checkOutTime: Date | string | null;
+  attendanceNote: string | null;
   issues?: ProductionIssue[];
-
-  // Audit
-  createdAt: string;
-  updatedAt: string;
-
-  user?: UserItemType;
-  handBag?: HandBag;
-  process?: BagProcess;
-  bagColor?: BagColor;
-}
-
-// Factory level report
-export interface FactoryProductionReport {
-  factory: {
-    id: string;
-    name: string;
-  };
-  dateRange: {
-    from: string;
-    to: string;
-  };
-  summary: {
-    totalOutput: number;
-    totalWorkers: number;
-    attendanceRate: number;
-    qualityRate: number;
-  };
-  lines?: LineProductionSummary[];
-  byBag?: BagProductionSummary[];
-  byProcess?: ProcessProductionSummary[];
-  hourlyData?: Record<string, number>;
-}
-
-// Line level report
-export interface LineProductionReport {
-  line: {
-    id: string;
-    name: string;
-    factoryId: string;
-    factoryName: string;
-  };
-  dateRange: {
-    from: string;
-    to: string;
-  };
-  summary: {
-    totalOutput: number;
-    totalWorkers: number;
-    attendanceRate: number;
-    qualityRate: number;
-  };
-  teams?: TeamProductionSummary[];
-  byBag?: BagProductionSummary[];
-  byProcess?: ProcessProductionSummary[];
-  hourlyData?: Record<string, number>;
-}
-
-// Team level report
-export interface TeamProductionReport {
-  team: {
-    id: string;
-    name: string;
-    lineId: string;
-    lineName: string;
-  };
-  dateRange: {
-    from: string;
-    to: string;
-  };
-  summary: {
-    totalOutput: number;
-    totalWorkers: number;
-    attendanceRate: number;
-    qualityRate: number;
-  };
-  groups?: GroupProductionSummary[];
-  workers?: WorkerProductionSummary[];
-  byBag?: BagProductionSummary[];
-  byProcess?: ProcessProductionSummary[];
-  hourlyData?: Record<string, number>;
-}
-
-// Group level report
-export interface GroupProductionReport {
-  group: {
-    id: string;
-    name: string;
-    teamId: string;
-    teamName: string;
-  };
-  dateRange: {
-    from: string;
-    to: string;
-  };
-  summary: {
-    totalOutput: number;
-    totalWorkers: number;
-    attendanceRate: number;
-    qualityRate: number;
-  };
-  workers?: WorkerProductionSummary[];
-  attendanceDetails?: AttendanceDetailSummary[];
-  byBag?: BagProductionSummary[];
-  byProcess?: ProcessProductionSummary[];
-  hourlyData?: Record<string, number>;
-}
-
-// Comparison report
-export interface ProductionComparisonReport {
-  lineId: string;
-  lineName: string;
-  dateRange: {
-    from: string;
-    to: string;
-  };
-  compareBy: 'team' | 'group';
-  entities: ProductionComparisonEntity[];
-  byHandBag?: {
-    handBagId: string;
-    handBagName: string;
-    byEntity: {
-      entityId: string;
-      entityName: string;
-      output: number;
-    }[];
-  }[];
-  byProcess?: {
-    processId: string;
-    processName: string;
-    byEntity: {
-      entityId: string;
-      entityName: string;
-      output: number;
-    }[];
-  }[];
-  timeSeries?: {
-    date: string;
-    byEntity: {
-      entityId: string;
-      entityName: string;
-      output: number;
-    }[];
-  }[];
-}
-
-// Helper interfaces for reports
-interface LineProductionSummary {
-  id: string;
-  name: string;
-  totalOutput: number;
-  totalWorkers: number;
-  attendanceRate: number;
-  qualityRate: number;
-}
-
-interface TeamProductionSummary {
-  id: string;
-  name: string;
-  totalOutput: number;
-  totalWorkers: number;
-  attendanceRate: number;
-  qualityRate: number;
-}
-
-interface GroupProductionSummary {
-  id: string;
-  name: string;
-  totalOutput: number;
-  totalWorkers: number;
-  attendanceRate: number;
-  qualityRate: number;
-}
-
-interface WorkerProductionSummary {
-  id: string;
-  name: string;
-  code: string;
-  totalOutput: number;
   qualityScore: number;
-  attendanceStatus: AttendanceStatus;
-  hourlyData?: Record<string, number>;
+  qualityNotes: string | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
 }
 
-interface BagProductionSummary {
-  id: string;
-  name: string;
-  totalOutput: number;
-  qualityRate: number;
+export interface DigitalFormWithEntries {
+  form: DigitalForm;
+  entries: DigitalFormEntry[];
 }
 
-interface ProcessProductionSummary {
-  id: string;
-  name: string;
-  totalOutput: number;
-  qualityRate: number;
-}
-
-interface AttendanceDetailSummary {
-  date: string;
+// Attendance statistics interface
+export interface AttendanceStatsItem {
   present: number;
   absent: number;
   late: number;
   earlyLeave: number;
   leaveApproved: number;
+  percentPresent: number;
+}
+
+// Output statistics interfaces
+export interface OutputByBagItem {
+  handBagId: string;
+  handBagCode: string;
+  handBagName: string;
+  totalOutput: number;
+  percentage: number;
+}
+
+export interface OutputByProcessItem {
+  processId: string;
+  processCode: string;
+  processName: string;
+  totalOutput: number;
+}
+
+export interface HourlyBreakdownItem {
+  hour: string;
+  totalOutput: number;
+  averageOutput: number;
+}
+
+export interface DailyBreakdownItem {
+  date: string;
+  totalOutput: number;
+  averageQuality: number;
   attendanceRate: number;
 }
 
-interface ProductionComparisonEntity {
+export interface ProductionIssueItem {
+  issueType: ProductionIssueType;
+  occurrences: number;
+  totalImpact: number;
+}
+
+// Report interfaces
+export interface ReportDateRange {
+  from: string;
+  to: string;
+}
+
+export interface FactoryProductionReport {
+  factoryId: string;
+  factoryName: string;
+  factoryCode: string;
+  dateRange: ReportDateRange;
+  totalForms: number;
+  totalEntries: number;
+  totalOutput: number;
+  averageQuality: number;
+  outputByBag: OutputByBagItem[];
+  outputByProcess: OutputByProcessItem[];
+  attendanceStats: AttendanceStatsItem;
+  hourlyBreakdown: HourlyBreakdownItem[];
+  dailyBreakdown: DailyBreakdownItem[];
+  productionIssues: ProductionIssueItem[];
+  lineBreakdown: LineBreakdownItem[];
+}
+
+export interface LineBreakdownItem {
+  lineId: string;
+  lineName: string;
+  lineCode: string;
+  totalOutput: number;
+  averageQuality: number;
+  teamCount: number;
+  workerCount: number;
+  efficiency: number;
+}
+
+export interface LineProductionReport {
+  lineId: string;
+  lineName: string;
+  lineCode: string;
+  factoryId: string;
+  factoryName: string;
+  factoryCode: string;
+  dateRange: ReportDateRange;
+  totalForms: number;
+  totalEntries: number;
+  totalOutput: number;
+  averageQuality: number;
+  outputByBag: OutputByBagItem[];
+  outputByProcess: OutputByProcessItem[];
+  attendanceStats: AttendanceStatsItem;
+  hourlyBreakdown: HourlyBreakdownItem[];
+  dailyBreakdown: DailyBreakdownItem[];
+  productionIssues: ProductionIssueItem[];
+  teamBreakdown: TeamBreakdownItem[];
+}
+
+export interface TeamBreakdownItem {
+  teamId: string;
+  teamName: string;
+  teamCode: string;
+  totalOutput: number;
+  averageQuality: number;
+  groupCount: number;
+  workerCount: number;
+  efficiency: number;
+}
+
+export interface TeamProductionReport {
+  teamId: string;
+  teamName: string;
+  teamCode: string;
+  lineId: string;
+  lineName: string;
+  factoryId: string;
+  factoryName: string;
+  factoryCode: string;
+  dateRange: ReportDateRange;
+  totalForms: number;
+  totalEntries: number;
+  totalOutput: number;
+  averageQuality: number;
+  outputByBag: OutputByBagItem[];
+  outputByProcess: OutputByProcessItem[];
+  attendanceStats: AttendanceStatsItem;
+  hourlyBreakdown: HourlyBreakdownItem[];
+  dailyBreakdown: DailyBreakdownItem[];
+  productionIssues: ProductionIssueItem[];
+  groupBreakdown: GroupBreakdownItem[];
+}
+
+export interface GroupBreakdownItem {
+  groupId: string;
+  groupName: string;
+  groupCode: string;
+  totalOutput: number;
+  averageQuality: number;
+  workerCount: number;
+  efficiency: number;
+}
+
+export interface GroupProductionReport {
+  groupId: string;
+  groupName: string;
+  groupCode: string;
+  teamId: string;
+  teamName: string;
+  lineId: string;
+  lineName: string;
+  factoryId: string;
+  factoryName: string;
+  factoryCode: string;
+  dateRange: ReportDateRange;
+  totalForms: number;
+  totalEntries: number;
+  totalOutput: number;
+  averageQuality: number;
+  outputByBag: OutputByBagItem[];
+  outputByProcess: OutputByProcessItem[];
+  attendanceStats: AttendanceStatsItem;
+  hourlyBreakdown: HourlyBreakdownItem[];
+  dailyBreakdown: DailyBreakdownItem[];
+  productionIssues: ProductionIssueItem[];
+  workerBreakdown: WorkerBreakdownItem[];
+}
+
+export interface WorkerBreakdownItem {
+  userId: string;
+  employeeId: string;
+  fullName: string;
+  totalOutput: number;
+  averageQuality: number;
+  attendanceRate: number;
+  efficiency: number;
+}
+
+export interface ComparisonDataItem {
   id: string;
   name: string;
+  code: string;
   totalOutput: number;
-  qualityRate: number;
+  outputPerWorker: number;
+  qualityScore: number;
   attendanceRate: number;
-  averageHourlyOutput: number;
+  issueRate: number;
+  rank: number;
 }
 
-// Adapter function to convert between API model and UI model
-export function convertApiToUiModel(form: DigitalForm, entries: DigitalFormEntry[]): any {
-  return {
-    id: form.id,
-    formCode: form.formCode,
-    formName: form.formName || 'Phiếu theo dõi công đoạn',
-    date: form.date,
-    factoryId: form.factoryId,
-    factoryName: form.factoryName || '',
-    lineId: form.lineId,
-    lineName: form.lineName || '',
-    teamId: form.teamId,
-    teamName: form.teamName || '',
-    groupId: form.groupId,
-    groupName: form.groupName || '',
-    status: form.status,
-    workers: entries.map(entry => ({
-      id: entry.id,
-      name: entry.userName || 'Công nhân',
-      employeeId: entry.userCode || entry.userId.substring(0, 6),
-      bagId: entry.handBagId,
-      bagName: entry.handBagName || 'Chưa xác định',
-      processId: entry.processId,
-      processName: entry.processName || 'Chưa xác định',
-      colorId: entry.bagColorId,
-      colorName: entry.bagColorName || 'Chưa xác định',
-      attendanceStatus: entry.attendanceStatus,
-      hourlyData: entry.hourlyData || {},
-      totalOutput: entry.totalOutput || 0,
-      issues: entry.issues || [],
-      qualityScore: entry.qualityScore || 100,
-    })),
-  };
+export interface ComparisonByBagItem {
+  handBagId: string;
+  handBagCode: string;
+  handBagName: string;
+  dataPoints: {
+    id: string;
+    name: string;
+    output: number;
+    efficiency: number;
+  }[];
 }
 
-// Convert from UI model back to API model for updates
-export function convertEntryToApiModel(
-  workerId: string,
-  timeSlot: string,
-  quantity: number,
-  currentData?: DigitalFormEntry,
-): Partial<DigitalFormEntry> {
-  // Start with current data or empty object
-  const baseData: Partial<DigitalFormEntry> = currentData ? { ...currentData } : {};
+export interface ComparisonByProcessItem {
+  processId: string;
+  processCode: string;
+  processName: string;
+  dataPoints: {
+    id: string;
+    name: string;
+    output: number;
+    efficiency: number;
+  }[];
+}
 
-  // Update or create hourly data
-  const hourlyData = { ...(baseData.hourlyData || {}) };
-  hourlyData[timeSlot] = quantity;
+export interface TimeSeriesDataItem {
+  date: string;
+  dataPoints: {
+    id: string;
+    name: string;
+    output: number;
+  }[];
+}
 
-  // Calculate total output
-  const totalOutput = Object.values(hourlyData).reduce((sum, val) => sum + (val || 0), 0);
-
-  return {
-    ...baseData,
-    hourlyData,
-    totalOutput,
-  };
+export interface ProductionComparisonReport {
+  dateRange: ReportDateRange;
+  factoryId: string;
+  factoryName: string;
+  factoryCode: string;
+  lineId: string;
+  lineName: string;
+  lineCode: string;
+  comparisonType: 'team' | 'group';
+  comparisonData: ComparisonDataItem[];
+  comparisonByBag: ComparisonByBagItem[];
+  comparisonByProcess: ComparisonByProcessItem[];
+  timeSeriesData: TimeSeriesDataItem[];
 }

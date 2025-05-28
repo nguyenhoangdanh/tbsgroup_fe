@@ -1,12 +1,12 @@
-import { fetchWithAuth } from "@/lib/fetcher";
-import { TRoleSchema } from "@/schemas/role";
+import { fetchWithAuth } from '@/lib/fetcher';
+import { TRoleSchema } from '@/schemas/role';
 
 /**
  * Fetch all roles
  * @returns List of all roles
  */
 export const fetchRoles = async () => {
-  const response = await fetchWithAuth("/roles");
+  const response = await fetchWithAuth('/roles');
 
   return response.data;
 };
@@ -62,7 +62,7 @@ export interface RoleListParams {
  */
 export const fetchRolesList = async (params: RoleListParams = {}) => {
   const queryParams = new URLSearchParams();
-  
+
   if (params.page) queryParams.append('page', params.page.toString());
   if (params.limit) queryParams.append('limit', params.limit.toString());
   if (params.sortBy) queryParams.append('sortBy', params.sortBy);
@@ -71,7 +71,7 @@ export const fetchRolesList = async (params: RoleListParams = {}) => {
   if (params.name) queryParams.append('name', params.name);
   if (params.level !== undefined) queryParams.append('level', params.level.toString());
   if (params.isSystem !== undefined) queryParams.append('isSystem', params.isSystem.toString());
-  
+
   const response = await fetchWithAuth(`/roles?${queryParams.toString()}`);
   return response.data;
 };
@@ -81,9 +81,9 @@ export const fetchRolesList = async (params: RoleListParams = {}) => {
  * @param data - Role data
  * @returns Created role response
  */
-export const createRole = async (data: Omit<TRoleSchema, "id" | "createdAt" | "updatedAt">) => {
-  const response = await fetchWithAuth("/roles", {
-    method: "POST",
+export const createRole = async (data: Omit<TRoleSchema, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const response = await fetchWithAuth('/roles', {
+    method: 'POST',
     body: JSON.stringify(data),
   });
   return response.data;
@@ -95,15 +95,15 @@ export const createRole = async (data: Omit<TRoleSchema, "id" | "createdAt" | "u
  * @param data - Updated role data
  * @returns Update response
  */
-export const updateRole = async ({ 
-  id, 
-  data 
-}: { 
-  id: string; 
-  data: Omit<TRoleSchema, "id" | "createdAt" | "updatedAt">
+export const updateRole = async ({
+  id,
+  data,
+}: {
+  id: string;
+  data: Omit<TRoleSchema, 'id' | 'createdAt' | 'updatedAt'>;
 }) => {
   const response = await fetchWithAuth(`/roles/${id}`, {
-    method: "PUT",
+    method: 'PUT',
     body: JSON.stringify(data),
   });
   return response.data;
@@ -116,12 +116,11 @@ export const updateRole = async ({
  */
 export const deleteRole = async (id: string) => {
   const response = await fetchWithAuth(`/roles/${id}`, {
-    method: "DELETE",
+    method: 'DELETE',
   });
   return response.data;
 };
 
-// Type exports
 export type RoleType = Awaited<ReturnType<typeof fetchRoles>>[0];
 export type RoleItemType = Awaited<ReturnType<typeof fetchRoleById>>;
 export type RoleWithRelationsType = Awaited<ReturnType<typeof fetchRoleWithRelations>>;

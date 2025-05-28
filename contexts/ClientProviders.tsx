@@ -1,20 +1,20 @@
-// src/components/ClientProviders.tsx
 'use client';
 
-import { PermissionProvider } from '@/hooks/permission/PermissionContext';
-import { RoleProvider } from '@/hooks/roles/roleContext';
 import { ReactNode } from 'react';
 
+import { RoleProvider } from '@/contexts/RoleProvider';
+import { DialogWrapper } from './DialogWrapper';
+
 interface ClientProvidersProps {
-    children: ReactNode;
+  children: ReactNode;
 }
 
 export default function ClientProviders({ children }: ClientProvidersProps) {
-    return (
-        <RoleProvider>
-            <PermissionProvider>
-                {children}
-            </PermissionProvider>
-        </RoleProvider>
-    );
+  return (
+    <RoleProvider>
+      <DialogWrapper>
+        {children}
+      </DialogWrapper>
+    </RoleProvider>
+  );
 }

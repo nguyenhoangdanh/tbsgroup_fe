@@ -1,11 +1,13 @@
-import { Button } from "@/components/ui/button";
-import { Eye, SquarePen, Trash2 } from "lucide-react";
-import React from "react";
-import { toast } from "@/hooks/use-toast";
-import { DialogType, useDialog, DialogChildrenProps } from "@/contexts/DialogProvider";
-import { BaseData, TActions } from "../data-table";
-import { ViewActionDialog } from "./popup-view";
-import { EditActionDialog } from "./popup-edit";
+import { Eye, SquarePen, Trash2 } from 'lucide-react';
+import React from 'react';
+import { toast } from 'react-toast-kit';
+
+import { BaseData, TActions } from '../data-table';
+import { EditActionDialog } from './popup-edit';
+import { ViewActionDialog } from './popup-view';
+
+import { Button } from '@/components/ui/button';
+import { DialogType, useDialog, DialogChildrenProps } from '@/contexts/DialogProvider';
 
 interface ButtonGroupActionProps<T extends BaseData = BaseData> {
   actions: TActions[];
@@ -31,67 +33,67 @@ const ButtonGroupAction = <T extends BaseData>({
   rowData,
   children,
   editClick,
-  viewClick
+  viewClick,
 }: ButtonGroupActionProps<T>) => {
   const { showDialog, dialog } = useDialog<T>();
 
   const handleDelete = () => {
     showDialog({
       type: DialogType.DELETE,
-      title: `Ban có chắc chắn muốn xóa "${rowData.name ? rowData.name : ""}" không?`,
+      title: `Ban có chắc chắn muốn xóa "${rowData.name ? rowData.name : ''}" không?`,
       data: rowData,
       onSubmit: async () => {
         if (onDelete) {
           try {
             await onDelete(rowData.id);
             toast({
-              title: "Đã xóa dữ liệu",
-              variant: "default"
+              title: 'Đã xóa dữ liệu',
+              variant: 'default',
             });
 
             onRefetchData && onRefetchData();
             return true;
           } catch (error) {
-            console.error("Error executing delete action:", error);
+            console.error('Error executing delete action:', error);
             toast({
-              title: "Lỗi khi thực hiện thao tác xóa",
-              description: error instanceof Error ? error.message : "Lỗi không xác định",
-              variant: "destructive"
+              title: 'Lỗi khi thực hiện thao tác xóa',
+              description: error instanceof Error ? error.message : 'Lỗi không xác định',
+              variant: 'error',
             });
             throw error;
           }
         }
         return false;
-      }
+      },
     });
   };
 
   return (
     <div className="flex gap-1 justify-end md:justify-start md:flex-row flex-col">
-      {actions.includes("read-only") && (
+      {actions.includes('read-only') && (
         <ViewActionDialog
-          name={rowData.name ? rowData.name : ""}
+          name={rowData.name ? rowData.name : ''}
           buttonText=""
           buttonSize="icon"
           buttonIcon={<Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
           data={rowData}
           children={
             typeof viewComponent === 'function'
-              ? (props) => viewComponent({ ...props, data: rowData })
+              ? props => viewComponent({ ...props, data: rowData })
               : viewComponent
           }
         />
       )}
 
-      {actions.includes("edit") && (
+      {actions.includes('edit') && (
         <EditActionDialog
-          name={rowData.name ? rowData.name : ""}
+          name={rowData.name ? rowData.name : ''}
           buttonText=""
           buttonSize="icon"
           buttonIcon={<SquarePen className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
           data={rowData}
           onClick={editClick}
-          onSubmit={async (data) => {
+          onSubmit={async data => {
             if (onEdit && data) {
               onEdit(data as T);
               if (onRefetchData) onRefetchData();
@@ -101,13 +103,13 @@ const ButtonGroupAction = <T extends BaseData>({
           }}
           children={
             typeof editComponent === 'function'
-              ? (props) => editComponent({ ...props, data: rowData })
+              ? props => editComponent({ ...props, data: rowData })
               : editComponent
           }
         />
       )}
 
-      {actions.includes("delete") && (
+      {actions.includes('delete') && (
         <Button
           size="icon"
           className="bg-red-500 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-900 h-7 w-7 md:w-8 md:h-8 p-0"

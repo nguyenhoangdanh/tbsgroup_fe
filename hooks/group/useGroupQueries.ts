@@ -1,33 +1,33 @@
-import { useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { toast } from '@/hooks/use-toast';
-import { useBaseQueries } from '@/hooks/base/useBaseQueries';
-import { Group } from '@/common/interface/group';
+import { useCallback } from 'react';
+
 import { getGroupById, getGroupsList, GroupCondDTO } from '@/apis/group/group.api';
+import { Group } from '@/common/interface/group';
+import { toast } from 'react-toast-kit';
+import { useBaseQueries } from '@/hooks/base/useBaseQueries';
 
 /**
  * Hook for Group queries
  */
 export const useGroupQueries = () => {
   const queryClient = useQueryClient();
-  
+
   /**
    * Handle query errors with toast notifications
    */
   const handleQueryError = useCallback((error: any, queryName: string) => {
-    // Extract message safely
+    //  Extract message safely
     let errorMessage = 'Lỗi không xác định';
     if (error instanceof Error) {
       errorMessage = error.message;
     } else if (typeof error === 'object' && error !== null && 'message' in error) {
       errorMessage = error.message as string;
     }
-    
-    // Show toast with safe message
+
     toast({
       title: `Không thể tải dữ liệu ${queryName}`,
       description: errorMessage || 'Vui lòng thử lại sau',
-      variant: 'destructive',
+      variant: 'error',
       duration: 3000,
     });
   }, []);
@@ -38,7 +38,7 @@ export const useGroupQueries = () => {
     getGroupsList,
     getGroupById,
     undefined,
-    handleQueryError
+    handleQueryError,
   );
 
   /**
@@ -62,7 +62,7 @@ export const useGroupQueries = () => {
         console.error(`Failed to prefetch Group with ID ${id}:`, error);
       }
     },
-    [queryClient]
+    [queryClient],
   );
 
   /**
@@ -81,7 +81,7 @@ export const useGroupQueries = () => {
         console.error(`Failed to invalidate Group cache for ID ${id}:`, error);
       }
     },
-    [queryClient]
+    [queryClient],
   );
 
   /**
@@ -98,7 +98,7 @@ export const useGroupQueries = () => {
         console.error('Failed to invalidate Groups list cache:', error);
       }
     },
-    [queryClient]
+    [queryClient],
   );
 
   return {
@@ -107,6 +107,6 @@ export const useGroupQueries = () => {
     invalidateGroupCache,
     invalidateGroupsCache,
     listGroups: groupQueries.listItems,
-    getGroupById: groupQueries.getById
+    getGroupById: groupQueries.getById,
   };
 };

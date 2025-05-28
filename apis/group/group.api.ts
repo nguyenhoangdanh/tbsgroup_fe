@@ -29,21 +29,21 @@ export interface GroupUpdateDTO {
  * Get a list of groups based on filter conditions and pagination
  */
 export const getGroupsList = async (
-  params: GroupCondDTO & BasePaginationParams
+  params: GroupCondDTO & BasePaginationParams,
 ): Promise<BaseResponseData<Group>> => {
   // Build query params
   const queryParams = new URLSearchParams();
-  
+
   if (params.page) queryParams.append('page', params.page.toString());
   if (params.limit) queryParams.append('limit', params.limit.toString());
   if (params.sortBy) queryParams.append('sortBy', params.sortBy);
   if (params.sortOrder) queryParams.append('sortOrder', params.sortOrder);
-  
+
   if (params.code) queryParams.append('code', params.code);
   if (params.name) queryParams.append('name', params.name);
   if (params.teamId) queryParams.append('teamId', params.teamId);
   if (params.search) queryParams.append('search', params.search);
-  
+
   const response = await fetchWithAuth(`/groups?${queryParams.toString()}`);
   return response;
 };
@@ -59,9 +59,7 @@ export const getGroupById = async (id: string): Promise<Group> => {
 /**
  * Create a new group
  */
-export const createGroup = async (
-  data: GroupCreateDTO
-): Promise<{ id: string }> => {
+export const createGroup = async (data: GroupCreateDTO): Promise<{ id: string }> => {
   const response = await fetchWithAuth('/groups', {
     method: 'POST',
     body: JSON.stringify(data),
@@ -73,15 +71,12 @@ export const createGroup = async (
 /**
  * Update a group
  */
-export const updateGroup = async (
-  id: string,
-  data: GroupUpdateDTO
-): Promise<void> => {
+export const updateGroup = async (id: string, data: GroupUpdateDTO): Promise<void> => {
   const response = await fetchWithAuth(`/groups/${id}`, {
     method: 'PATCH',
     body: JSON.stringify(data),
   });
-  
+
   return response.data;
 };
 
@@ -92,7 +87,7 @@ export const deleteGroup = async (id: string): Promise<void> => {
   const response = await fetchWithAuth(`/groups/${id}`, {
     method: 'DELETE',
   });
-  
+
   return response.data;
 };
 
@@ -118,15 +113,14 @@ export const getGroupsByIds = async (ids: string[]): Promise<Group[]> => {
   if (!ids || ids.length === 0) {
     return [];
   }
-  
+
   const response = await fetchWithAuth('/rpc/groups/list-by-ids', {
     method: 'POST',
     body: JSON.stringify({ ids }),
   });
-  
+
   return response.data;
 };
-
 
 /**
  * Lấy danh sách nhóm trưởng của một nhóm
@@ -139,15 +133,13 @@ export const getGroupLeaders = async (groupId: string): Promise<GroupLeader[]> =
 /**
  * Thêm nhóm trưởng
  */
-export const addGroupLeader = async (
-  leaderData: {
-    groupId: string;
-    userId: string;
-    isPrimary?: boolean;
-    startDate: string;
-    endDate?: string | null;
-  }
-): Promise<void> => {
+export const addGroupLeader = async (leaderData: {
+  groupId: string;
+  userId: string;
+  isPrimary?: boolean;
+  startDate: string;
+  endDate?: string | null;
+}): Promise<void> => {
   const response = await fetchWithAuth('/groups/leaders', {
     method: 'POST',
     body: JSON.stringify(leaderData),
@@ -164,7 +156,7 @@ export const updateGroupLeader = async (
   updateData: {
     isPrimary?: boolean;
     endDate?: string | null;
-  }
+  },
 ): Promise<void> => {
   const response = await fetchWithAuth(`/groups/${groupId}/leaders/${userId}`, {
     method: 'PATCH',
@@ -176,16 +168,12 @@ export const updateGroupLeader = async (
 /**
  * Xóa nhóm trưởng
  */
-export const removeGroupLeader = async (
-  groupId: string, 
-  userId: string
-): Promise<void> => {
+export const removeGroupLeader = async (groupId: string, userId: string): Promise<void> => {
   const response = await fetchWithAuth(`/groups/${groupId}/leaders/${userId}`, {
     method: 'DELETE',
   });
   return response.data;
 };
-
 
 /**
  * Lấy thông tin hiệu suất của một nhóm
@@ -199,20 +187,20 @@ export const getGroupPerformance = async (groupId: string): Promise<GroupPerform
  * Lấy danh sách nhóm với thông tin hiệu suất
  */
 export const listGroupsWithPerformance = async (
-  params: GroupCondDTO & BasePaginationParams
+  params: GroupCondDTO & BasePaginationParams,
 ): Promise<BaseResponseData<Group & { performance: GroupPerformance }>> => {
   const queryParams = new URLSearchParams();
-  
+
   if (params.page) queryParams.append('page', params.page.toString());
   if (params.limit) queryParams.append('limit', params.limit.toString());
   if (params.sortBy) queryParams.append('sortBy', params.sortBy);
   if (params.sortOrder) queryParams.append('sortOrder', params.sortOrder);
-  
+
   if (params.code) queryParams.append('code', params.code);
   if (params.name) queryParams.append('name', params.name);
   if (params.teamId) queryParams.append('teamId', params.teamId);
   if (params.search) queryParams.append('search', params.search);
-  
+
   const response = await fetchWithAuth(`/groups/performance/list?${queryParams.toString()}`);
   return response;
 };

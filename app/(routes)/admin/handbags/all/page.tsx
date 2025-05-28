@@ -1,8 +1,9 @@
-"use client";
+'use client';
 
-import { HandBagProvider } from "@/hooks/handbag/HandBagContext";
-import HandBagManagementScreen from "@/screens/admin/handbag/Container";
-import React from "react";
+import React from 'react';
+
+import { HandBagProvider } from '@/hooks/handbag/HandBagContext';
+import HandBagManagementScreen from '@/screens/admin/handbag/Container';
 
 const HandBagPage = () => {
   return (

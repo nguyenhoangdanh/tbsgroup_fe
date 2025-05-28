@@ -1,9 +1,10 @@
 'use client';
 
-import {useMemo} from 'react';
-import {useRoleQueries} from './roleQueries';
-import {useRoleMutations} from './roleMutations';
-import {useRoleHelpers} from './roleHelpers';
+import { useMemo } from 'react';
+
+import { useRoleHelpers } from './roleHelpers';
+import { useRoleMutations } from './roleMutations';
+import { useRoleQueries } from './roleQueries';
 
 /**
  * Main hook for role management
@@ -14,7 +15,6 @@ export const useRole = () => {
   const queries = useRoleQueries();
   const mutations = useRoleMutations();
   const helpers = useRoleHelpers();
-
   // Memoized exports to prevent unnecessary rerenders
   const combinedHooks = useMemo(
     () => ({
@@ -46,7 +46,7 @@ export const initializeRoleContext = () => {
 /**
  * Export individual hooks for more granular usage
  */
-export {useRoleQueries, useRoleMutations, useRoleHelpers};
+export { useRoleQueries, useRoleMutations, useRoleHelpers };
 
-// Default export for convenience
+//Default export for convenience
 export default useRole;

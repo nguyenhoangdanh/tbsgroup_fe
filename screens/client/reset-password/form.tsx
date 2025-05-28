@@ -1,190 +1,243 @@
+// form.tsx - Updated version with correct type handling
 
 'use client';
-import React from "react";
-import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
+
 import { zodResolver } from '@hookform/resolvers/zod';
-import { defaultResetPasswordValues, resetPasswordSchema, ResetPasswordType } from "@/schemas/auth";
-import { FieldInput } from "@/components/common/Form/FieldInput";
-import { useRouter } from "next/navigation";
-import { toast } from "@/hooks/use-toast";
-import SubmitButton from "@/components/SubmitButton";
-import LazyLoader from "@/components/common/loading/LazyLoader";
-import { ArrowLeft, ChevronLeft, CircleCheckBig } from "lucide-react";
-import { UserStatusEnum } from "@/common/enum";
-import useAuthManager from "@/hooks/useAuthManager";
+import { CircleCheckBig } from 'lucide-react';
+import React from 'react';
+import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
+import { useRouter } from 'next/navigation';
+
+import { UserStatusEnum } from '@/common/enum';
+import { FieldInput } from '@/components/common/Form/FieldInput';
+import { toast } from 'react-toast-kit';
+import SubmitButton from '@/components/SubmitButton';
+import { defaultResetPasswordValues, resetPasswordSchema, ResetPasswordType } from '@/schemas/auth';
+import { useAuthManager } from '@/hooks/auth/useAuthManager';
 
 const ResetPasswordForm = () => {
-    const router = useRouter();
-    const {
-        user,
-        isLoading,
-        login,
-        requestPasswordReset,
-        resetPassword,
-        needsPasswordReset,
-        isAuthenticated,
-    } = useAuthManager();
-    // const [isLoading, setIsLoading] = React.useState<boolean>(false);
-    const [verified, setVerified] = React.useState<boolean>(false);
-    const [resetToken, setResetToken] = React.useState<string | null>(null);
-    const [userName, setUserName] = React.useState<string>("");
+  const router = useRouter();
+  const {
+    user,
+    isLoading,
+    login,
+    resetPasswordData,
+    requestPasswordReset,
+    resetPassword,
+    isAuthenticated,
+    clearResetPasswordData,
+    error
+  } = useAuthManager();
 
-    const methods = useForm<ResetPasswordType>({
-        defaultValues: defaultResetPasswordValues,
-        resolver: zodResolver(resetPasswordSchema),
-        mode: "onChange",
-    });
+  const [verified, setVerified] = React.useState<boolean>(false);
+  const [userName, setUserName] = React.useState<string>('');
 
-    const onSubmit: SubmitHandler<ResetPasswordType> = async (data) => {
+  const methods = useForm<ResetPasswordType>({
+    defaultValues: defaultResetPasswordValues,
+    resolver: zodResolver(resetPasswordSchema),
+    mode: 'onChange',
+  });
 
-        if (data.employeeId && data.cardId && !verified) {
-            try {
-                const result = await requestPasswordReset({
-                    employeeId: data.employeeId,
-                    cardId: data.cardId,
-                });
+  const onSubmit: SubmitHandler<ResetPasswordType> = async (data) => {
+    // Step 1: Request password reset with employee ID and card ID
+    if (data.employeeId && data.cardId && !verified) {
+      try {
+        await requestPasswordReset({
+          employeeId: data.employeeId,
+          cardId: data.cardId,
+        });
+        // The result will be handled in useEffect
+      } catch (error: any) {
+        toast({
+          title: 'Lỗi',
+          description: error.message || 'Không thể yêu cầu đặt lại mật khẩu',
+          variant: 'error',
+        });
+      }
+    }
+    // Step 2: Reset password with new password
+    else if (verified && data.password && data.confirmPassword) {
+      try {
+        // Build reset params based on available data
+        const resetParams = resetPasswordData?.data?.resetToken
+          ? {
+            resetToken: resetPasswordData.data.resetToken,
+            password: data.password,
+            confirmPassword: data.confirmPassword,
+          }
+          : {
+            username: resetPasswordData?.data?.username || userName,
+            password: data.password,
+            confirmPassword: data.confirmPassword,
+          };
+        
+        await resetPassword(resetParams);
 
-                // Xử lý kết quả từ API theo cấu trúc đã cung cấp
-                if (result && result.success) {
-                    setResetToken(result.data.resetToken);
-                    setVerified(true);
-                    setUserName(result.data.username);
+        toast({
+          title: 'Thành công',
+          description: 'Đổi mật khẩu thành công',
+        });
 
-                    // Clear the form fields for password entry
-                    methods.setValue('employeeId', '');
-                    methods.setValue('cardId', '');
-
-                    toast({
-                        title: 'Thành công',
-                        description: result.data.message || 'Vui lòng nhập mật khẩu mới',
-                    });
-                }
-            } catch (error: any) {
-                toast({
-                    title: 'Lỗi',
-                    description: error.message || 'Không thể yêu cầu đặt lại mật khẩu',
-                    variant: 'destructive',
-                });
-                console.error('Lỗi yêu cầu đặt lại mật khẩu:', error);
+        // Auto login after successful password reset
+        setTimeout(async () => {
+          try {
+            if (!isAuthenticated && data.password) {
+              await login({
+                username: resetPasswordData?.data?.username || userName,
+                password: data.password,
+              });
+              router.push('/');
+            } else {
+              router.push('/home');
             }
-        }
-        else if (verified && data.password && data.confirmPassword) {
-            try {
-                const resetParams = resetToken
-                    ? {
-                        resetToken,
-                        password: data.password,
-                        confirmPassword: data.confirmPassword,
-                    }
-                    : {
-                        username: userName,
-                        password: data.password,
-                        confirmPassword: data.confirmPassword,
-                    };
+          } catch (loginError) {
+            console.error('Auto login failed:', loginError);
+            router.push('/login');
+          }
+        }, 1000);
 
-                await resetPassword(resetParams);
+      } catch (resetError: any) {
+        toast({
+          title: 'Lỗi',
+          description: resetError.message || 'Không thể đổi mật khẩu',
+          variant: 'error',
+        });
+      }
+    }
+  };
+  // Handle password reset request response
+  React.useEffect(() => {
+    if (resetPasswordData?.success && resetPasswordData.data) {
+      setVerified(true);
+      setUserName(resetPasswordData.data.username);
 
-                toast({
-                    title: 'Thành công',
-                    description: 'Đổi mật khẩu thành công',
-                });
+      // Clear form fields for password entry
+      methods.setValue('employeeId', '');
+      methods.setValue('cardId', '');
 
-                setTimeout(async () => {
-                    if (!isAuthenticated) {
-                        await login({
-                            username: userName,
-                            password: data.password || '',
-                        }, {
-                            message: 'Đổi mật khẩu thành công',
-                        });
-                    } else {
-                        window.location.href = '/home';
-                    }
-                }, 500);
+      toast({
+        title: 'Thành công',
+        description: resetPasswordData.data.message || 'Vui lòng nhập mật khẩu mới',
+      });
+    } else if (resetPasswordData && !resetPasswordData.success) {
+      // Extract error message from ApiResponse structure
+      const errorMessage = extractErrorMessage(resetPasswordData.error) || 'Không thể xác thực thông tin';
+      toast({
+        title: 'Lỗi',
+        description: errorMessage,
+        variant: 'error',
+      });
+    }
+  }, [resetPasswordData, methods]);
 
+  // Handle user with pending activation
+  React.useEffect(() => {
+    if (user?.status === UserStatusEnum.PENDING_ACTIVATION && isAuthenticated) {
+      setVerified(true);
+      setUserName(user.username || '');
+      methods.setValue('password', '');
+      methods.setValue('confirmPassword', '');
+    }
+  }, [user, isAuthenticated, methods]);
 
-            } catch (resetError: any) {
-                toast({
-                    title: 'Lỗi',
-                    description: resetError.message || 'Không thể đổi mật khẩu',
-                    variant: 'destructive',
-                });
-                console.error('Lỗi đổi mật khẩu:', resetError);
-            }
-        }
+  // Handle errors
+  React.useEffect(() => {
+    if (error) {
+      toast({
+        title: 'Lỗi',
+        description: error,
+        variant: 'error',
+      });
+    }
+  }, [error]);
+
+  // Cleanup on unmount
+  React.useEffect(() => {
+    return () => {
+      clearResetPasswordData();
     };
+  }, [clearResetPasswordData]);
 
+  // Helper function to extract error message
+  const extractErrorMessage = (error: string | { error: string; message: string; statusCode: number } | undefined): string | null => {
+    if (!error) return null;
 
-    React.useEffect(() => {
-        if (user?.status === UserStatusEnum.PENDING_ACTIVATION || (
-            isAuthenticated && user
-        )) {
-            methods.setValue('password', '');
-            methods.setValue('confirmPassword', '');
-            setVerified(true);
-            setUserName(user.username);
-        }
-    }, [user]);
+    if (typeof error === 'string') {
+      return error;
+    }
 
-    return (
-        <FormProvider {...methods}>
-            <form onSubmit={methods.handleSubmit(onSubmit)}>
-                <div className="flex flex-col gap-10 px-8">
-                    {!verified ? (
-                        <p className="text-md text-center">
-                            Vui lòng xác thực thông tin của bạn để đổi mật khẩu
-                        </p>
-                    ) : (
-                        <p className="text-md text-center flex items-center justify-center gap-1">
-                            <CircleCheckBig size={20} color="green" />
-                            <span className="ml-2">
-                                Đã xác thực tài khoản {userName && `(${userName})`}
-                            </span>
-                        </p>
-                    )}
-                    {user?.status === UserStatusEnum.PENDING_ACTIVATION || verified ? (
-                        <div className="flex flex-col gap-5">
-                            <FieldInput
-                                control={methods.control}
-                                name="password"
-                                label="Mật khẩu"
-                                type="password"
-                            />
-                            <FieldInput
-                                control={methods.control}
-                                name="confirmPassword"
-                                label="Xác nhận mật khẩu"
-                                type="password"
-                            />
-                        </div>
-                    ) : (
-                        <div className="flex flex-col gap-5">
-                            <FieldInput
-                                control={methods.control}
-                                name="employeeId"
-                                label="Mã nhân viên"
-                                placeholder="Vui lòng nhập mã số nhân viên của bạn..."
-                            />
-                            <FieldInput
-                                control={methods.control}
-                                name="cardId"
-                                label="CCCD"
-                                placeholder="Vui lòng nhập số CCCD của bạn..."
-                            />
-                        </div>
-                    )}
-                    <SubmitButton
-                        name="Xác nhận"
-                        isLoading={isLoading}
-                        disabled={isLoading || (!verified
-                            ? !methods.watch('employeeId') || !methods.watch('cardId')
-                            : !methods.watch('password') || !methods.watch('confirmPassword')
-                        )}
-                    />
-                </div>
-            </form>
-        </FormProvider >
-    );
+    if (typeof error === 'object' && 'message' in error) {
+      return error.message;
+    }
+
+    return 'An unknown error occurred';
+  };
+
+  return (
+    <FormProvider {...methods}>
+      <form onSubmit={methods.handleSubmit(onSubmit)}>
+        <div className="flex flex-col gap-10 px-8">
+          {!verified ? (
+            <p className="text-md text-center">
+              Vui lòng xác thực thông tin của bạn để đổi mật khẩu
+            </p>
+          ) : (
+            <p className="text-md text-center flex items-center justify-center gap-1">
+              <CircleCheckBig size={20} color="green" />
+              <span className="ml-2">
+                Đã xác thực tài khoản {userName && `(${userName})`}
+              </span>
+            </p>
+          )}
+
+          {verified ? (
+            <div className="flex flex-col gap-5">
+              <FieldInput
+                control={methods.control}
+                name="password"
+                label="Mật khẩu mới"
+                type="password"
+                placeholder="Nhập mật khẩu mới..."
+              />
+              <FieldInput
+                control={methods.control}
+                name="confirmPassword"
+                label="Xác nhận mật khẩu"
+                type="password"
+                placeholder="Nhập lại mật khẩu mới..."
+              />
+            </div>
+          ) : (
+            <div className="flex flex-col gap-5">
+              <FieldInput
+                control={methods.control}
+                name="employeeId"
+                label="Mã nhân viên"
+                placeholder="Vui lòng nhập mã số nhân viên của bạn..."
+              />
+              <FieldInput
+                control={methods.control}
+                name="cardId"
+                label="CCCD"
+                placeholder="Vui lòng nhập số CCCD của bạn..."
+              />
+            </div>
+          )}
+
+          <SubmitButton
+            name={verified ? "Đổi mật khẩu" : "Xác thực"}
+            isLoading={isLoading}
+            disabled={
+              isLoading ||
+              (!verified
+                ? !methods.watch('employeeId') || !methods.watch('cardId')
+                : !methods.watch('password') || !methods.watch('confirmPassword'))
+            }
+          />
+        </div>
+      </form>
+    </FormProvider>
+  );
 };
 
 export default ResetPasswordForm;

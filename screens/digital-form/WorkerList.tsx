@@ -1,14 +1,15 @@
-// components/digital-form/WorkerList.tsx
 'use client';
 
-import {useState} from 'react';
-import {Card, CardContent} from '@/components/ui/card';
-import {Button} from '@/components/ui/button';
-import {Worker} from '@/common/types/worker';
-import {TIME_SLOTS} from '@/common/constants/time-slots';
-import {ChevronUp, ChevronDown} from 'lucide-react';
+import { ChevronUp, ChevronDown } from 'lucide-react';
+import { useState } from 'react';
+
 import AttendanceBadge from './AttendanceBadge';
 import TimeSlotButton from './TimeSlotButton';
+
+import { TIME_SLOTS } from '@/common/constants/time-slots';
+import { Worker } from '@/common/types/worker';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 
 interface WorkerListProps {
   workers: Worker[];
@@ -92,7 +93,7 @@ export default function WorkerList({
                       );
                     })
                   ) : (
-                    // Show limited time slots when collapsed
+                    //  Show limited time slots when collapsed
                     <>
                       {TIME_SLOTS.slice(0, 6).map(slot => {
                         const quantity = worker.hourlyData[slot.label] || 0;

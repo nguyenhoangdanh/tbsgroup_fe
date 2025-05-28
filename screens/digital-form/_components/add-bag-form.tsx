@@ -1,4 +1,3 @@
-// components/enhanced-add-bag-form.tsx
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -59,7 +58,6 @@ interface AddBagFormProps {
 }
 
 export function AddBagForm({
-  workerId,
   timeSlot,
   onAddBag,
   onSuccess,
@@ -70,7 +68,7 @@ export function AddBagForm({
 }: AddBagFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Form initialization with default values
+  //Form initialization with default values
   const form = useHookForm<AddBagFormValues>({
     resolver: zodResolver(addBagSchema),
     defaultValues: {
@@ -82,7 +80,7 @@ export function AddBagForm({
     },
   });
 
-  // Update form values when props change
+  //Update form values when props change
   useEffect(() => {
     if (timeSlot) {
       form.setValue('timeSlot', timeSlot);
@@ -96,7 +94,7 @@ export function AddBagForm({
       // Use provided bags or fetch from API
       if (allBags) return allBags;
 
-      // TODO: Replace with actual API call
+      //TODO: Replace with actual API call
       return [
         { id: 'bag1', name: 'Túi xách thời trang A' },
         { id: 'bag2', name: 'Túi xách thời trang B' },

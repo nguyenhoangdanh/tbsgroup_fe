@@ -12,10 +12,10 @@ import { SubmitDialog } from './_components/SubmitDialog';
 
 import { AttendanceStatus, RecordStatus } from '@/common/types/digital-form';
 import type { Worker } from '@/common/types/worker';
+import { toast } from 'react-toast-kit';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useForm } from '@/contexts/form-context';
-import { useToast } from '@/hooks/use-toast';
 
 interface DigitalFormContainerProps {
   formId?: string;
@@ -23,7 +23,6 @@ interface DigitalFormContainerProps {
 
 export default function DigitalFormContainer({ formId }: DigitalFormContainerProps) {
   const router = useRouter();
-  const { toast } = useToast();
   const {
     formData,
     error,
@@ -49,22 +48,22 @@ export default function DigitalFormContainer({ formId }: DigitalFormContainerPro
   const [showStatsSheet, setShowStatsSheet] = useState(false);
   const [statsTab, setStatsTab] = useState<'summary' | 'production' | 'attendance'>('summary');
 
-  // Group all workers by user ID to avoid duplicate cards
+  //Group all workers by user ID to avoid duplicate cards
   const uniqueWorkers = useMemo(() => {
     if (!formData || !formData.workers) return [];
 
-    // Group entries by user ID
+    //Group entries by user ID
     const userMap = new Map();
 
-    // Select one entry for each user (we'll pass all entries later)
+    //Select one entry for each user (we'll pass all entries later)
     formData.workers.forEach(worker => {
       if (worker.user?.id) {
-        // Only add the first instance of each worker
+        //Only add the first instance of each worker
         if (!userMap.has(worker.user.id)) {
           userMap.set(worker.user.id, worker);
         }
       } else if (worker.id && !userMap.has(worker.id)) {
-        // Fallback to worker ID if no user ID
+        //Fallback to worker ID if no user ID
         userMap.set(worker.id, worker);
       }
     });
@@ -72,12 +71,12 @@ export default function DigitalFormContainer({ formId }: DigitalFormContainerPro
     return Array.from(userMap.values());
   }, [formData]);
 
-  // Filter and sort workers when formData or filters change
+  //Filter and sort workers when formData or filters change
   useEffect(() => {
     if (uniqueWorkers.length > 0) {
       let workers = [...uniqueWorkers];
 
-      // Apply search filter
+      //Apply search filter
       if (filters.search) {
         const searchLower = filters.search.toLowerCase();
         workers = workers.filter(
@@ -95,7 +94,7 @@ export default function DigitalFormContainer({ formId }: DigitalFormContainerPro
       }
 
       // Apply sorting
-      workers.sort((a, b) => {
+      workers.sort((a: Worker, b: Worker) => {
         if (filters.sortBy === 'name') {
           const nameA = a.user?.fullName || a.name || '';
           const nameB = b.user?.fullName || b.name || '';
@@ -118,7 +117,7 @@ export default function DigitalFormContainer({ formId }: DigitalFormContainerPro
               }
             });
 
-            // Sum all outputs
+            //Sum all outputs
             return workerEntries.reduce((sum, entry) => sum + (entry.totalOutput || 0), 0);
           };
 
@@ -130,7 +129,7 @@ export default function DigitalFormContainer({ formId }: DigitalFormContainerPro
     }
   }, [uniqueWorkers, filters, formData]);
 
-  // Handle filter changes
+  //Handle filter changes
   const handleFilterChange = useCallback(
     (newFilters: {
       search: string;
@@ -142,7 +141,7 @@ export default function DigitalFormContainer({ formId }: DigitalFormContainerPro
     [],
   );
 
-  // Handle refresh action
+  //Handle refresh action
   const handleRefresh = useCallback(async () => {
     try {
       setIsRefreshing(true);
@@ -152,17 +151,18 @@ export default function DigitalFormContainer({ formId }: DigitalFormContainerPro
         description: 'Dữ liệu biểu mẫu đã được cập nhật thành công',
       });
     } catch (err) {
+      console.error('Error refreshing data:', err);
       toast({
         title: 'Lỗi làm mới dữ liệu',
         description: 'Không thể làm mới dữ liệu. Vui lòng thử lại sau.',
-        variant: 'destructive',
+        variant: 'error',
       });
     } finally {
       setIsRefreshing(false);
     }
   }, [refreshData, toast]);
 
-  // Handle form submission
+  //Handle form submission
   const handleSubmit = useCallback(async () => {
     setIsSubmitting(true);
     try {
@@ -176,25 +176,26 @@ export default function DigitalFormContainer({ formId }: DigitalFormContainerPro
         setShowSubmitDialog(false);
       }
     } catch (err) {
+      console.error('Error submitting form:', err);
       toast({
         title: 'Lỗi gửi biểu mẫu',
         description: 'Không thể gửi biểu mẫu. Vui lòng thử lại.',
-        variant: 'destructive',
+        variant: 'error',
       });
     } finally {
       setIsSubmitting(false);
     }
   }, [submitFormData, toast]);
 
-  // Navigate back to the list page
+  //Navigate back to the list page
   const handleBackToList = useCallback(() => {
     router.push('/digital-forms');
   }, [router]);
 
-  // Check if form can be submitted
+  //Check if form can be submitted
   const canSubmitForm = formData?.status === RecordStatus.DRAFT;
 
-  // Get worker entries for selected worker
+  //Get worker entries for selected worker
   const getWorkerEntries = useCallback(
     (worker: Worker) => {
       if (!formData || !formData.workers || !worker) return [];
@@ -210,7 +211,7 @@ export default function DigitalFormContainer({ formId }: DigitalFormContainerPro
     [formData],
   );
 
-  // Show error state
+  //Show error state
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4">
@@ -225,13 +226,13 @@ export default function DigitalFormContainer({ formId }: DigitalFormContainerPro
     );
   }
 
-  // Get current worker (the first one in the filtered list)
+  //Get current worker (the first one in the filtered list)
   const currentWorker = filteredWorkers.length > 0 ? filteredWorkers[0] : null;
   const workerEntries = currentWorker ? getWorkerEntries(currentWorker) : [];
 
   return (
     <main className="container mx-auto p-4 pb-24">
-      {formData &&  (
+      {formData && (
         <>
           {formId && (
             <div className="mb-4">
@@ -263,7 +264,11 @@ export default function DigitalFormContainer({ formId }: DigitalFormContainerPro
                 onUpdateShiftType={updateShiftType}
                 onAddBag={(workerId, bagData) => {
                   if (bagData.timeSlot) {
-                    return addBagForTimeSlot(workerId, bagData);
+                    return addBagForTimeSlot(workerId, {
+                      ...bagData,
+                      timeSlot: bagData.timeSlot || currentTimeSlot || '',
+                      quantity: bagData.quantity || 0,
+                    });
                   } else {
                     return addBagForTimeSlot(workerId, {
                       ...bagData,
@@ -325,7 +330,7 @@ export default function DigitalFormContainer({ formId }: DigitalFormContainerPro
             onOpenChange={setShowStatsSheet}
             formData={formData}
             activeTab={statsTab}
-            onTabChange={tab => setStatsTab(tab as any)}
+            onTabChange={(tab: 'summary' | 'production' | 'attendance') => setStatsTab(tab)}
           />
 
           {/* Submit Dialog Component */}

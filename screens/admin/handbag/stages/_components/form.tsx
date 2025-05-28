@@ -1,23 +1,23 @@
-"use client";
-import { createProductionProcess } from "@/actions/admin/handbag";
+'use client';
+import { zodResolver } from '@hookform/resolvers/zod';
+import React from 'react';
+import { SubmitHandler, useForm } from 'react-hook-form';
+import { toast } from 'react-toast-kit';
+
+import { createProductionProcess } from '@/actions/admin/handbag';
+import FormController from '@/components/common/form/FormController';
+import { FormField } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useDispatchType } from '@/lib/dispatch.utils';
 import {
   defautHandbagStageFormValues,
   handbagStageFormSchema,
   THandbagStageForm,
-} from "@/schemas/handbag";
-import SubmitButton from "@/components/SubmitButton";
-import { FormField } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { toast } from "@/hooks/use-toast";
-import { useDispatchType } from "@/lib/dispatch.utils";
-import { zodResolver } from "@hookform/resolvers/zod";
-import React from "react";
-import { SubmitHandler, useForm } from "react-hook-form";
-import FormController from "@/components/common/form/FormController";
+} from '@/schemas/handbag';
 
 interface HandbagStageFormProps {
-  action: "create" | "update";
+  action: 'create' | 'update';
 }
 
 const HandbagStageForm: React.FC<HandbagStageFormProps> = ({ action }) => {
@@ -27,24 +27,22 @@ const HandbagStageForm: React.FC<HandbagStageFormProps> = ({ action }) => {
     resolver: zodResolver(handbagStageFormSchema),
   });
 
-  const onSubmit: SubmitHandler<THandbagStageForm> = async (data) => {
+  const onSubmit: SubmitHandler<THandbagStageForm> = async data => {
     const rs = await createProductionProcess({
       code: data.code,
       name: data.name,
     });
 
     if (rs.success) {
-      dispatch("FETCH_PO_HANDBAG");
-      toast({
-        title: "Thành công",
-        description: "Đã tạo quy trình sản xuất",
-        // description: `Đã tạo quy trình sản xuất ${rs?.productionProcess?.name}`,
+      dispatch('FETCH_PO_HANDBAG');
+      toast.success({
+        title: 'Thành công',
+        description: 'Đã tạo quy trình sản xuất',
       });
     } else {
-      toast({
-        title: "Lỗi",
-        description: rs.message || "Có lỗi xảy ra",
-        variant: "destructive",
+      toast.error({
+        title: 'Lỗi',
+        description: rs.message || 'Có lỗi xảy ra',
       });
     }
   };

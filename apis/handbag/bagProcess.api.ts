@@ -39,22 +39,22 @@ export interface BagProcessUpdateDTO {
  * Get a list of bag processes based on filter conditions and pagination
  */
 export const getBagProcessesList = async (
-  params: BagProcessCondDTO & BasePaginationParams
+  params: BagProcessCondDTO & BasePaginationParams,
 ): Promise<BaseResponseData<BagProcess>> => {
   // Build query params
   const queryParams = new URLSearchParams();
-  
+
   if (params.page) queryParams.append('page', params.page.toString());
   if (params.limit) queryParams.append('limit', params.limit.toString());
   if (params.sortBy) queryParams.append('sortBy', params.sortBy);
   if (params.sortOrder) queryParams.append('sortOrder', params.sortOrder);
-  
+
   if (params.code) queryParams.append('code', params.code);
   if (params.name) queryParams.append('name', params.name);
   if (params.processType) queryParams.append('processType', params.processType);
   if (params.active !== undefined) queryParams.append('active', params.active.toString());
   if (params.search) queryParams.append('search', params.search);
-  
+
   const response = await fetchWithAuth(`/bag-processes?${queryParams.toString()}`);
   return response;
 };
@@ -70,9 +70,7 @@ export const getBagProcessById = async (id: string): Promise<BagProcess> => {
 /**
  * Create a new bag process
  */
-export const createBagProcess = async (
-  data: BagProcessCreateDTO
-): Promise<{ id: string }> => {
+export const createBagProcess = async (data: BagProcessCreateDTO): Promise<{ id: string }> => {
   const response = await fetchWithAuth('/bag-processes', {
     method: 'POST',
     body: JSON.stringify(data),
@@ -84,15 +82,12 @@ export const createBagProcess = async (
 /**
  * Update a bag process
  */
-export const updateBagProcess = async (
-  id: string,
-  data: BagProcessUpdateDTO
-): Promise<void> => {
+export const updateBagProcess = async (id: string, data: BagProcessUpdateDTO): Promise<void> => {
   const response = await fetchWithAuth(`/bag-processes/${id}`, {
     method: 'PATCH',
     body: JSON.stringify(data),
   });
-  
+
   return response.data;
 };
 
@@ -103,7 +98,7 @@ export const deleteBagProcess = async (id: string): Promise<void> => {
   const response = await fetchWithAuth(`/bag-processes/${id}`, {
     method: 'DELETE',
   });
-  
+
   return response.data;
 };
 
@@ -129,11 +124,11 @@ export const getBagProcessesByIds = async (ids: string[]): Promise<BagProcess[]>
   if (!ids || ids.length === 0) {
     return [];
   }
-  
+
   const response = await fetchWithAuth('/rpc/bag-processes/list-by-ids', {
     method: 'POST',
     body: JSON.stringify({ ids }),
   });
-  
+
   return response.data;
 };

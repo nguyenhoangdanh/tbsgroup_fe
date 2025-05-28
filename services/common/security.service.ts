@@ -1,27 +1,29 @@
-// services/security/security.service.ts
-export const SecurityService = {
-  SESSION_TIMEOUTS: {
-    high: 15 * 60 * 1000, // 15 phút
-    medium: 30 * 60 * 1000, // 30 phút
-    low: 60 * 60 * 1000, // 60 phút
-  },
+import { SecurityLevel } from '@/contexts/security/SecurityContext';
 
-  monitorUserActivity: (callback: () => void) => {
-    // const events = ['mousemove', 'keydown', 'click', 'touchstart', 'scroll'];
+export class SecurityService {
+  static checkSessionTimeout(lastActivity: number, securityLevel: SecurityLevel): boolean {
+    const timeoutMap = {
+      [SecurityLevel.LOW]: 2 * 60 * 60 * 1000,      // 2 hours
+      [SecurityLevel.MEDIUM]: 60 * 60 * 1000,       // 1 hour
+      [SecurityLevel.HIGH]: 30 * 60 * 1000,         // 30 minutes
+      [SecurityLevel.STRICT]: 15 * 60 * 1000,       // 15 minutes
+    };
 
-    // events.forEach(event => {
-    //   window.addEventListener(event, callback);
-    // });
+    const timeout = timeoutMap[securityLevel];
+    const inactiveTime = Date.now() - lastActivity;
+    
+    return inactiveTime > timeout;
+  }
 
-    // return () => {
-    //   events.forEach(event => {
-    //     window.removeEventListener(event, callback);
-    //   });
-    // };
-  },
+  static getCSRFToken(): string | null {
+    if (typeof window === 'undefined') return null;
+    return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || null;
+  }
 
-  checkSessionTimeout: (lastActivity: number, securityLevel: 'high' | 'medium' | 'low') => {
-    const timeout = SecurityService.SESSION_TIMEOUTS[securityLevel];
-    return Date.now() - lastActivity > timeout;
-  },
-};
+  static refreshCSRFToken(): string | null {
+    if (typeof window !== 'undefined' && (window as any).__security) {
+      return (window as any).__security.refreshCSRFToken();
+    }
+    return null;
+  }
+}

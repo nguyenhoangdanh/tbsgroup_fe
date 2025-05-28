@@ -1,30 +1,34 @@
-import { useCallback } from 'react';
 import { UseQueryResult, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useBaseQueries, BasePaginationParams, BaseResponseData } from '../base/useBaseQueries';
-import { 
-  getHandBagsList, 
-  getHandBagById, 
-  getBagColorsList, 
+import { useCallback } from 'react';
+
+import { HandBagWithDetails } from './useHandBagDetails';
+import { useBaseQueries, BaseResponseData } from '../base/useBaseQueries';
+
+import {
+  getHandBagsList,
+  getHandBagById,
+  getBagColorsList,
   getBagColorById,
   getBagColorProcessesList,
   getBagColorProcessById,
-  getHandBagFullDetails
+  getHandBagFullDetails,
 } from '@/apis/handbag/handbag.api';
-import { HandBag, HandBagCondDTO, BagColor, BagColorCondDTO, BagColorProcess, BagColorProcessCondDTO } from '@/common/interface/handbag';
-import { toast } from '../use-toast';
-import { HandBagWithDetails } from './useHandBagDetails';
-
-interface HandBagDetailsResponse {
-  success: boolean;
-  data: HandBagWithDetails;
-}
+import {
+  HandBag,
+  HandBagCondDTO,
+  BagColor,
+  BagColorCondDTO,
+  BagColorProcess,
+  BagColorProcessCondDTO,
+} from '@/common/interface/handbag';
+import { toast } from 'react-toast-kit';
 
 /**
  * Hook cho HandBag queries
  */
 export const useHandBagQueries = () => {
   const queryClient = useQueryClient();
-  
+
   /**
    * Handle query errors with toast notifications
    */
@@ -36,12 +40,11 @@ export const useHandBagQueries = () => {
     } else if (typeof error === 'object' && error !== null && 'message' in error) {
       errorMessage = error.message as string;
     }
-    
-    // Show toast with safe message
+
     toast({
       title: `Không thể tải dữ liệu ${queryName}`,
       description: errorMessage || 'Vui lòng thử lại sau',
-      variant: 'destructive',
+      variant: 'error',
       duration: 3000,
     });
   }, []);
@@ -52,7 +55,7 @@ export const useHandBagQueries = () => {
     getHandBagsList,
     getHandBagById,
     undefined,
-    handleQueryError
+    handleQueryError,
   );
 
   // Sử dụng hook cơ sở cho BagColor queries
@@ -61,7 +64,7 @@ export const useHandBagQueries = () => {
     getBagColorsList,
     getBagColorById,
     undefined,
-    handleQueryError
+    handleQueryError,
   );
 
   // Sử dụng hook cơ sở cho BagColorProcess queries
@@ -70,7 +73,7 @@ export const useHandBagQueries = () => {
     getBagColorProcessesList,
     getBagColorProcessById,
     undefined,
-    handleQueryError
+    handleQueryError,
   );
 
   /**
@@ -78,7 +81,7 @@ export const useHandBagQueries = () => {
    */
   const getHandBagWithDetails = (
     id?: string,
-    options?: { enabled?: boolean }
+    options?: { enabled?: boolean },
   ): UseQueryResult<HandBagWithDetails, Error> => {
     return useQuery<HandBagWithDetails, Error>({
       queryKey: ['handBag', id, 'fullDetails'],
@@ -112,7 +115,7 @@ export const useHandBagQueries = () => {
           queryKey: ['handBag', id, 'fullDetails'],
           queryFn: async () => {
             const response = await getHandBagFullDetails(id);
-            // Trả về trực tiếp response (đã là HandBagWithDetails)
+            //  Trả về trực tiếp response (đã là HandBagWithDetails)
             return response;
           },
           staleTime: 5 * 60 * 1000, // 5 minutes
@@ -122,7 +125,7 @@ export const useHandBagQueries = () => {
         console.error(`Failed to prefetch HandBag details with ID ${id}:`, error);
       }
     },
-    [queryClient]
+    [queryClient],
   );
 
   /**
@@ -141,7 +144,7 @@ export const useHandBagQueries = () => {
         console.error(`Failed to invalidate HandBag details cache for ID ${id}:`, error);
       }
     },
-    [queryClient]
+    [queryClient],
   );
 
   /**
@@ -149,17 +152,17 @@ export const useHandBagQueries = () => {
    */
   const getHandBagColors = (
     handBagId?: string,
-    options?: { enabled?: boolean, limit?: number }
+    options?: { enabled?: boolean; limit?: number },
   ): UseQueryResult<BaseResponseData<BagColor>, Error> => {
     return bagColorQueries.listItems(
       {
         handBagId: handBagId || '',
         limit: options?.limit || 100,
-        page: 1
+        page: 1,
       },
       {
         enabled: !!handBagId && options?.enabled !== false,
-      }
+      },
     );
   };
 
@@ -168,17 +171,17 @@ export const useHandBagQueries = () => {
    */
   const getBagColorProcesses = (
     bagColorId?: string,
-    options?: { enabled?: boolean, limit?: number }
+    options?: { enabled?: boolean; limit?: number },
   ): UseQueryResult<BaseResponseData<BagColorProcess>, Error> => {
     return bagColorProcessQueries.listItems(
       {
         bagColorId: bagColorId || '',
         limit: options?.limit || 100,
-        page: 1
+        page: 1,
       },
       {
         enabled: !!bagColorId && options?.enabled !== false,
-      }
+      },
     );
   };
 
@@ -186,27 +189,27 @@ export const useHandBagQueries = () => {
     // Base HandBag queries
     ...handBagQueries,
     listHandBags: handBagQueries.listItems,
-    
-    // Base BagColor queries 
+
+    // Base BagColor queries
     getBagColorById: bagColorQueries.getById,
     listBagColors: bagColorQueries.listItems,
     getBagColorsInfinite: bagColorQueries.getItemsInfinite,
     prefetchBagColorById: bagColorQueries.prefetchById,
     invalidateBagColorCache: bagColorQueries.invalidateItemCache,
     invalidateBagColorsCache: bagColorQueries.invalidateListCache,
-    
+
     // Base BagColorProcess queries
     getBagColorProcessById: bagColorProcessQueries.getById,
     listBagColorProcesses: bagColorProcessQueries.listItems,
     prefetchBagColorProcessById: bagColorProcessQueries.prefetchById,
     invalidateBagColorProcessCache: bagColorProcessQueries.invalidateItemCache,
     invalidateBagColorProcessesCache: bagColorProcessQueries.invalidateListCache,
-    
+
     // Additional specialized queries
     getHandBagWithDetails,
     prefetchHandBagWithDetails,
     invalidateHandBagDetailsCache,
     getHandBagColors,
-    getBagColorProcesses
+    getBagColorProcesses,
   };
 };

@@ -1,20 +1,16 @@
-"use client";
+'use client';
 
 import React from 'react';
-import { DialogProvider } from '@/contexts/DialogProvider';
+
 import GlobalDialog from '../../table/actions/GlobalDialog';
 
-interface RootLayoutWrapperProps {
-    children: React.ReactNode;
-}
-
-const RootLayoutWrapper: React.FC<RootLayoutWrapperProps> = ({ children }) => {
-    return (
-        <DialogProvider>
-            {children}
-            <GlobalDialog />
-        </DialogProvider>
-    );
+const RootLayoutWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  return (
+    <>
+      {children}
+      <GlobalDialog />
+    </>
+  );
 };
 
 export default RootLayoutWrapper;

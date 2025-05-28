@@ -187,14 +187,14 @@ const LinesList: React.FC<LinesListProps> = ({
 
 export default LinesList;
 
-// Loading spinner component
+//Loading spinner component
 export const LoadingSpinner: React.FC = () => (
   <div className="flex items-center justify-center h-64">
     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
   </div>
 );
 
-// Error alert component
+//Error alert component
 export const ErrorAlert: React.FC<{ message?: string }> = ({ message }) => (
   <Card>
     <CardHeader>
@@ -206,7 +206,7 @@ export const ErrorAlert: React.FC<{ message?: string }> = ({ message }) => (
   </Card>
 );
 
-// Page header component
+//Page header component
 export const PageHeader: React.FC<{
   title: string;
   description?: string;

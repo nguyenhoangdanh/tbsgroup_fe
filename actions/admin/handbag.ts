@@ -1,4 +1,4 @@
-"use server";
+'use server';
 type Handbag = {
   code: string;
   name: string;
@@ -23,13 +23,13 @@ export const createProductionProcess = async (productionProcess: any) => {
 
     return {
       success: true,
-      message: "Production process created successfully",
+      message: 'Production process created successfully',
       // productionProcess: newProductionProcess,
     };
   } catch (error) {
     return {
       success: false,
-      message: "Failed to create production process",
+      message: 'Failed to create production process',
     };
   }
 };
@@ -37,32 +37,32 @@ export const createProductionProcess = async (productionProcess: any) => {
 export const updateProductionProcess = async (productionProcess: any) => {
   try {
     // const updatedProductionProcess =
-      // await prisma.handbag_production_process.update({
-      //   where: {
-      //     id: productionProcess.id,
-      //   },
-      //   data: {
-      //     code: productionProcess.code,
-      //     name: productionProcess.name,
-      //     target: productionProcess.target || 0,
-      //   },
-      // });
+    // await prisma.handbag_production_process.update({
+    //   where: {
+    //     id: productionProcess.id,
+    //   },
+    //   data: {
+    //     code: productionProcess.code,
+    //     name: productionProcess.name,
+    //     target: productionProcess.target || 0,
+    //   },
+    // });
 
     return {
       success: true,
-      message: "Production process updated successfully",
+      message: 'Production process updated successfully',
       // productionProcess: updatedProductionProcess,
     };
   } catch (error) {
     return {
       success: false,
-      message: "Failed to update production process",
+      message: 'Failed to update production process',
     };
   }
 };
 
 export const deleteProductionProcess = async (
-  id: number
+  id: number,
 ): Promise<{
   success: boolean;
   message: string;
@@ -76,12 +76,12 @@ export const deleteProductionProcess = async (
 
     return {
       success: true,
-      message: "Production process deleted successfully",
+      message: 'Production process deleted successfully',
     };
   } catch (error) {
     return {
       success: false,
-      message: "Failed to delete production process",
+      message: 'Failed to delete production process',
     };
   }
 };
@@ -96,7 +96,7 @@ export const fetchAllHandbagStages = async () => {
   } catch (error) {
     return {
       success: false,
-      message: "Failed to fetch handbag stages",
+      message: 'Failed to fetch handbag stages',
     };
   }
 };
@@ -108,13 +108,13 @@ export const createHandbag = async (handbag: Handbag) => {
     // });
     return {
       success: true,
-      message: "Handbag created successfully",
+      message: 'Handbag created successfully',
       // handbag: newHandbag,
     };
   } catch (error) {
     return {
       success: false,
-      message: "Failed to create handbag",
+      message: 'Failed to create handbag',
     };
   }
 };

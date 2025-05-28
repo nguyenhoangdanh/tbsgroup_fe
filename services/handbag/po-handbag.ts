@@ -1,4 +1,4 @@
-import dayjs from "dayjs";
+import dayjs from 'dayjs';
 
 export interface IPoHandbagTableRowData {
   id: string;
@@ -27,15 +27,14 @@ export class PoHandbagService {
     return this.instance;
   }
 
-  // ---------------------------------------------------
   mappingDataToTable(data: IPoHandbag[]): IPoHandbagTableRowData[] {
-    console.log("data", data);
-    return data.map((record) => ({
+    console.log('data', data);
+    return data.map(record => ({
       id: record.code,
       code: record.code,
       name: record.name,
-      created_at: dayjs(record.createdAt).format("DD/MM/YYYY"),
-      updated_at: dayjs(record.updatedAt).format("DD/MM/YYYY"),
+      created_at: dayjs(record.createdAt).format('DD/MM/YYYY'),
+      updated_at: dayjs(record.updatedAt).format('DD/MM/YYYY'),
     }));
   }
 }

@@ -1,4 +1,3 @@
-// components/time-slot-status.tsx
 import { CheckCircle, Clock, AlertCircle } from 'lucide-react';
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -39,7 +38,7 @@ export function TimeSlotStatus({
   const iconSize = iconSizes[size];
   const textSize = textSizes[size];
 
-  // Define the content to display
+  //Define the content to display
   const content = (
     <div className={cn('flex items-center gap-1', className)}>
       {status === 'completed' && (
@@ -95,6 +94,6 @@ export function TimeSlotStatus({
     );
   }
 
-  // Otherwise, return the content directly
+  //Otherwise, return the content directly
   return content;
 }

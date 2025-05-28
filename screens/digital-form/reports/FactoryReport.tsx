@@ -1,7 +1,21 @@
-// components/digital-form/reports/FactoryReport.tsx
 'use client';
 
-import {useEffect, useState} from 'react';
+import { Loader2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+
+import { FactoryLineBreakdown } from './breakdowns/FactoryLineBreakdown';
+import { DailyOutputChart } from './charts/DailyOutputChart';
+import { HourlyOutputChart } from './charts/HourlyOutputChart';
+import { OutputByBagChart } from './charts/OutputByBagChart';
+import { OutputByProcessChart } from './charts/OutputByProcessChart';
+import { PerformanceOutputChart } from './charts/PerformanceOutputChart';
+import { ProductionIssuesChart } from './charts/ProductionIssuesChart';
+import { AttendanceStats } from './stats/AttendanceStats';
+import { FactoryProductionSummary } from './summaries/FactoryProductionSummary';
+
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -9,21 +23,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {Checkbox} from '@/components/ui/checkbox';
-import {Label} from '@/components/ui/label';
-import {Loader2} from 'lucide-react';
-import {Separator} from '@/components/ui/separator';
-import {Alert, AlertDescription} from '@/components/ui/alert';
-import {FactoryProductionSummary} from './summaries/FactoryProductionSummary';
-import {FactoryLineBreakdown} from './breakdowns/FactoryLineBreakdown';
-import {OutputByBagChart} from './charts/OutputByBagChart';
-import {OutputByProcessChart} from './charts/OutputByProcessChart';
-import {HourlyOutputChart} from './charts/HourlyOutputChart';
-import {DailyOutputChart} from './charts/DailyOutputChart';
-import {AttendanceStats} from './stats/AttendanceStats';
-import {ProductionIssuesChart} from './charts/ProductionIssuesChart';
-import {ReportService} from '@/services/reportService';
-import {PerformanceOutputChart} from './charts/PerformanceOutputChart';
+import { Separator } from '@/components/ui/separator';
+import { ReportService } from '@/services/reportService';
 
 interface FactoryReportProps {
   factoryId: string;
@@ -60,7 +61,7 @@ export function FactoryReport({
 }: FactoryReportProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [factories, setFactories] = useState<{id: string; name: string}[]>([]);
+  const [factories, setFactories] = useState<{ id: string; name: string }[]>([]);
   const [report, setReport] = useState<any>(null);
 
   // Fetch factories list on component mount
@@ -131,14 +132,14 @@ export function FactoryReport({
   ]);
 
   const hourlyData = [
-    {hour: '07:30-8:30', totalOutput: 85, plannedOutput: 100},
-    {hour: '08:30-9:30', totalOutput: 92, plannedOutput: 100},
-    {hour: '09:30:10:30', totalOutput: 98, plannedOutput: 100},
-    {hour: '10:30:11:30', totalOutput: 105, plannedOutput: 100},
-    {hour: '12:30:13:30', totalOutput: 88, plannedOutput: 100},
-    {hour: '13:30:14:30', totalOutput: 78, plannedOutput: 100},
-    {hour: '14:30:15:30', totalOutput: 102, plannedOutput: 100},
-    {hour: '15:30:16:30', totalOutput: 95, plannedOutput: 100},
+    { hour: '07:30-8:30', totalOutput: 85, plannedOutput: 100 },
+    { hour: '08:30-9:30', totalOutput: 92, plannedOutput: 100 },
+    { hour: '09:30:10:30', totalOutput: 98, plannedOutput: 100 },
+    { hour: '10:30:11:30', totalOutput: 105, plannedOutput: 100 },
+    { hour: '12:30:13:30', totalOutput: 88, plannedOutput: 100 },
+    { hour: '13:30:14:30', totalOutput: 78, plannedOutput: 100 },
+    { hour: '14:30:15:30', totalOutput: 102, plannedOutput: 100 },
+    { hour: '15:30:16:30', totalOutput: 95, plannedOutput: 100 },
   ];
 
   return (

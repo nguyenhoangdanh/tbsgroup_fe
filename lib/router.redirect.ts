@@ -1,10 +1,10 @@
 // lib/router.ts
-"use client";
-import { useRouter } from "next/navigation";
+'use client';
+import { useRouter } from 'next/navigation';
 
 export const useRedirect = () => {
-    const router = useRouter();
-    return (path: string) => {
-        router.push(path);
-    };
+  const router = useRouter();
+  return (path: string) => {
+    router.push(path);
+  };
 };

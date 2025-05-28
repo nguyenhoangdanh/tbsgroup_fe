@@ -1,4 +1,3 @@
-// components/FormHeader.tsx
 'use client';
 
 import { RefreshCw, BarChart3 } from 'lucide-react';
@@ -21,7 +20,7 @@ interface FormHeaderProps {
 export function FormHeader({ formData, onOpenStats, onRefresh, isRefreshing }: FormHeaderProps) {
   const getOrganizationInfo = () => {
     try {
-      // Kiểm tra xem formData có trường workers hay entries không 
+      // Kiểm tra xem formData có trường workers hay entries không
       const workers = formData.workers || [];
 
       if (workers.length > 0 && workers[0].user) {
@@ -34,7 +33,7 @@ export function FormHeader({ formData, onOpenStats, onRefresh, isRefreshing }: F
         };
       }
 
-      // Fallback to form data
+      //  Fallback to form data
       return {
         factoryName: formData.factoryName || 'Không xác định',
         lineName: formData.lineName || 'Không xác định',

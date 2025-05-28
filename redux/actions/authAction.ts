@@ -1,4 +1,3 @@
-// src/store/actions/authActions.ts
 import {
   loginRequest,
   logoutRequest,

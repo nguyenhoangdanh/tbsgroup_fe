@@ -1,9 +1,10 @@
 'use client';
 
 import { useMemo } from 'react';
-import { useUserQueries } from './useUserQueries';
-import { useUserHelpers } from './useUserHelpers';
+
 import { useUserMutations } from './userMutations';
+import { useUserHelpers } from './useUserHelpers';
+import { useUserQueries } from './useUserQueries';
 
 /**
  * Main hook for user management
@@ -15,10 +16,10 @@ export const useUser = () => {
   const mutations = useUserMutations();
   const helpers = useUserHelpers();
 
-  // Memoized exports to prevent unnecessary rerenders
+  //  Memoized exports to prevent unnecessary rerenders
   const combinedHooks = useMemo(
     () => ({
-      // Spreading everything for convenience
+      //Spreading everything for convenience
       ...queries,
       ...mutations,
       ...helpers,
@@ -48,5 +49,5 @@ export const initializeUserContext = () => {
  */
 export { useUserQueries, useUserMutations, useUserHelpers };
 
-// Default export for convenience
+//Default export for convenience
 export default useUser;

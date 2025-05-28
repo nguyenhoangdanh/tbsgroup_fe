@@ -1,5 +1,5 @@
-// src/hooks/permission/useProtectedResource.ts
 import { useCallback } from 'react';
+
 import { usePermissionContext } from './PermissionContext';
 
 type ResourceType = 'page' | 'feature' | 'data' | 'permission';
@@ -8,14 +8,14 @@ type ResourceType = 'page' | 'feature' | 'data' | 'permission';
  * Hook for controlling access to protected resources based on user permissions
  */
 export const useProtectedResource = () => {
-  const { 
-    hasPermission, 
-    hasPageAccess, 
-    hasFeatureAccess, 
+  const {
+    hasPermission,
+    hasPageAccess,
+    hasFeatureAccess,
     hasDataAccess,
     hasAnyPermission,
     hasAllPermissions,
-    userPermissions
+    userPermissions,
   } = usePermissionContext();
 
   /**
@@ -39,7 +39,7 @@ export const useProtectedResource = () => {
           return false;
       }
     },
-    [hasPageAccess, hasFeatureAccess, hasDataAccess, hasPermission]
+    [hasPageAccess, hasFeatureAccess, hasDataAccess, hasPermission],
   );
 
   /**
@@ -51,10 +51,14 @@ export const useProtectedResource = () => {
   const createPermissionGate = useCallback(
     <T>(renderFn: () => T, fallbackFn?: () => T) => {
       return (permissionCode: string): T => {
-        return hasPermission(permissionCode) ? renderFn() : fallbackFn ? fallbackFn() : null as unknown as T;
+        return hasPermission(permissionCode)
+          ? renderFn()
+          : fallbackFn
+            ? fallbackFn()
+            : (null as unknown as T);
       };
     },
-    [hasPermission]
+    [hasPermission],
   );
 
   /**
@@ -66,9 +70,13 @@ export const useProtectedResource = () => {
    */
   const renderIfHasPermission = useCallback(
     <T>(permissionCode: string, children: T, fallback?: T): T => {
-      return hasPermission(permissionCode) ? children : fallback === undefined ? null as unknown as T : fallback;
+      return hasPermission(permissionCode)
+        ? children
+        : fallback === undefined
+          ? (null as unknown as T)
+          : fallback;
     },
-    [hasPermission]
+    [hasPermission],
   );
 
   /**
@@ -80,9 +88,13 @@ export const useProtectedResource = () => {
    */
   const renderIfHasPageAccess = useCallback(
     <T>(pageCode: string, children: T, fallback?: T): T => {
-      return hasPageAccess(pageCode) ? children : fallback === undefined ? null as unknown as T : fallback;
+      return hasPageAccess(pageCode)
+        ? children
+        : fallback === undefined
+          ? (null as unknown as T)
+          : fallback;
     },
-    [hasPageAccess]
+    [hasPageAccess],
   );
 
   /**
@@ -94,9 +106,13 @@ export const useProtectedResource = () => {
    */
   const renderIfHasFeatureAccess = useCallback(
     <T>(featureCode: string, children: T, fallback?: T): T => {
-      return hasFeatureAccess(featureCode) ? children : fallback === undefined ? null as unknown as T : fallback;
+      return hasFeatureAccess(featureCode)
+        ? children
+        : fallback === undefined
+          ? (null as unknown as T)
+          : fallback;
     },
-    [hasFeatureAccess]
+    [hasFeatureAccess],
   );
 
   return {
@@ -112,6 +128,6 @@ export const useProtectedResource = () => {
     hasPageAccess,
     hasFeatureAccess,
     hasDataAccess,
-    userPermissions
+    userPermissions,
   };
 };

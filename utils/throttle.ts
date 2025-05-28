@@ -21,14 +21,11 @@ type ThrottleFunction<F extends (...args: any[]) => any> = {
  * @param options Throttle configuration options
  */
 export function throttle<F extends (...args: any[]) => any>(
-  func: F, 
-  wait = 300, 
-  options: ThrottleOptions = {}
+  func: F,
+  wait = 300,
+  options: ThrottleOptions = {},
 ): ThrottleFunction<F> {
-  const { 
-    leading = true, 
-    trailing = true 
-  } = options;
+  const { leading = true, trailing = true } = options;
 
   let timeoutId: ReturnType<typeof setTimeout> | null = null;
   let lastArgs: Parameters<F> | null = null;
@@ -62,13 +59,13 @@ export function throttle<F extends (...args: any[]) => any>(
     lastThis = null;
   };
 
-  const throttledFunc: ThrottleFunction<F> = function(this: any, ...args: Parameters<F>) {
+  const throttledFunc: ThrottleFunction<F> = function (this: any, ...args: Parameters<F>) {
     const time = Date.now();
     const sinceLastCall = lastCallTime ? time - lastCallTime : 0;
 
     // Store the context and arguments for potential trailing call
     lastArgs = args;
-    lastThis = this;
+    // lastThis = this;
 
     // First invocation with leading option
     if (!lastCallTime && !leading) {
@@ -90,12 +87,12 @@ export function throttle<F extends (...args: any[]) => any>(
 
       // Reset last call time
       lastCallTime = time;
-    } 
+    }
     // Handle trailing call if enabled
     else if (!timeoutId && trailing) {
       timeoutId = setTimeout(() => {
         const currentTime = Date.now();
-        
+
         // Only execute if there are pending arguments
         if (lastArgs) {
           invokeFunc(currentTime);
@@ -129,9 +126,9 @@ export function throttle<F extends (...args: any[]) => any>(
  * @param options Throttle configuration options
  */
 export function useThrottledCallback<F extends (...args: any[]) => any>(
-  func: F, 
-  wait = 300, 
-  options: ThrottleOptions = {}
+  func: F,
+  wait = 300,
+  options: ThrottleOptions = {},
 ): F {
   const throttledRef = useRef<ThrottleFunction<F> | null>(null);
 
@@ -160,15 +157,15 @@ export function useThrottledCallback<F extends (...args: any[]) => any>(
  * @param options Throttle configuration options
  */
 export function throttledAsync<F extends (...args: any[]) => Promise<any>>(
-  func: F, 
-  wait = 300, 
-  options: ThrottleOptions = {}
+  func: F,
+  wait = 300,
+  options: ThrottleOptions = {},
 ): (...args: Parameters<F>) => Promise<ReturnType<F> | undefined> {
   const throttledFn = throttle(func, wait, options);
 
   return async (...args: Parameters<F>) => {
     try {
-      return await throttledFn(...args) as Promise<ReturnType<F>>;
+      return (await throttledFn(...args)) as Promise<ReturnType<F>>;
     } catch (error) {
       console.warn('Throttled async function error:', error);
       return undefined;

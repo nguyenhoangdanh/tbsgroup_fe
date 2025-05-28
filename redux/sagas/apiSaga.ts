@@ -1,16 +1,15 @@
-// src/store/sagas/apiSaga.ts
-import {call, put, select, takeEvery} from 'redux-saga/effects';
-import {refreshTokenRequest, logoutRequest} from '../slices/authSlice';
-import {RootState} from '../store';
-import {API_ERROR, API_REQUEST, API_SUCCESS, ApiRequestAction} from '../actions/apiAction';
+import { call, put, select, takeEvery } from 'redux-saga/effects';
 
-// Select auth state
+import { API_ERROR, API_REQUEST, API_SUCCESS, ApiRequestAction } from '../actions/apiAction';
+import { refreshTokenRequest, logoutRequest } from '../slices/authSlice';
+import { RootState } from '../store';
+
 const selectAuth = (state: RootState) => state.auth;
 
 const BASE_API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 function* handleApiRequest(action: ApiRequestAction): Generator<any, any, any> {
-  const {endpoint, method, data, onSuccess, onError} = action.payload;
+  const { endpoint, method, data, onSuccess, onError } = action.payload;
 
   try {
     const auth = yield select(selectAuth);
@@ -18,7 +17,7 @@ function* handleApiRequest(action: ApiRequestAction): Generator<any, any, any> {
     // Build request headers
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      ...(auth?.accessToken ? {Authorization: `Bearer ${auth.accessToken}`} : {}),
+      ...(auth?.accessToken ? { Authorization: `Bearer ${auth.accessToken}` } : {}),
     };
 
     // Make the API call
@@ -26,7 +25,7 @@ function* handleApiRequest(action: ApiRequestAction): Generator<any, any, any> {
       method,
       headers,
       credentials: 'include', // Important for cookies
-      ...(data ? {body: JSON.stringify(data)} : {}),
+      ...(data ? { body: JSON.stringify(data) } : {}),
     });
 
     // Handle 401 Unauthorized
@@ -49,16 +48,16 @@ function* handleApiRequest(action: ApiRequestAction): Generator<any, any, any> {
           method,
           headers: retryHeaders,
           credentials: 'include',
-          ...(data ? {body: JSON.stringify(data)} : {}),
+          ...(data ? { body: JSON.stringify(data) } : {}),
         });
 
         if (retryResponse.ok) {
           const retryData = yield call([retryResponse, 'json']);
           yield put({
             type: API_SUCCESS,
-            payload: {data: retryData, meta: action.payload.meta},
+            payload: { data: retryData, meta: action.payload.meta },
           });
-          if (onSuccess) yield put({type: onSuccess, payload: retryData});
+          if (onSuccess) yield put({ type: onSuccess, payload: retryData });
           return;
         }
       }
@@ -110,7 +109,7 @@ function* handleApiRequest(action: ApiRequestAction): Generator<any, any, any> {
     // Success case
     yield put({
       type: API_SUCCESS,
-      payload: {data: responseData, meta: action.payload.meta},
+      payload: { data: responseData, meta: action.payload.meta },
     });
 
     if (onSuccess)

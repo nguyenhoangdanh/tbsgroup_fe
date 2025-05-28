@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect } from 'react';
 
 /**
  * Custom hook for debouncing values
  * Useful for search inputs and other inputs that trigger network requests
- * 
+ *
  * @param value - Value to debounce
  * @param delay - Delay in milliseconds
  * @returns The debounced value
@@ -19,7 +19,7 @@ export function useDebounce<T>(value: T, delay = 500): T {
       setDebouncedValue(value);
     }, delay);
 
-    // Clean up the timeout if the value changes before the delay expires
+    //  Clean up the timeout if the value changes before the delay expires
     return () => {
       clearTimeout(timer);
     };

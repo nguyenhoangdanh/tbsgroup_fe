@@ -1,14 +1,16 @@
-// components/digital-form/reports/ComparisonReport.tsx
 'use client';
 
+import { Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+
+import { ComparisonByBagChart } from './charts/ComparisonByBagChart';
+import { ComparisonByProcessChart } from './charts/ComparisonByProcessChart';
+import { ComparisonTimeSeriesChart } from './charts/ComparisonTimeSeriesChart';
+import { ComparisonProductionSummary } from './summaries/ComparisonProductionSummary';
+
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import {
   MultiSelect,
   MultiSelectContent,
@@ -16,16 +18,15 @@ import {
   MultiSelectTrigger,
   MultiSelectValue,
 } from '@/components/ui/multi-select';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
-import { Loader2 } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ReportService } from '@/services/reportService';
-import { ComparisonProductionSummary } from './summaries/ComparisonProductionSummary';
-import { ComparisonByBagChart } from './charts/ComparisonByBagChart';
-import { ComparisonByProcessChart } from './charts/ComparisonByProcessChart';
-import { ComparisonTimeSeriesChart } from './charts/ComparisonTimeSeriesChart';
 
 interface ComparisonReportProps {
   lineId: string;
@@ -73,14 +74,17 @@ export function ComparisonReport({
         const response = await ReportService.getLines();
 
         if (response.success) {
-          setLines(response.data.map(line => ({
-            id: line.id,
-            name: line.name
-          })));
+          setLines(
+            response.data.map(line => ({
+              id: line.id,
+              name: line.name,
+            })),
+          );
         } else {
           setError('Không thể tải danh sách chuyền');
         }
       } catch (err) {
+        console.error(err);
         setError('Lỗi kết nối đến máy chủ');
       }
     }
@@ -104,14 +108,17 @@ export function ComparisonReport({
         }
 
         if (response.success) {
-          setEntities(response.data.map(entity => ({
-            id: entity.id,
-            name: entity.name
-          })));
+          setEntities(
+            response.data.map(entity => ({
+              id: entity.id,
+              name: entity.name,
+            })),
+          );
         } else {
           setError(`Không thể tải danh sách ${compareBy === 'team' ? 'tổ' : 'nhóm'}`);
         }
       } catch (err) {
+        console.error(err);
         setError('Lỗi kết nối đến máy chủ');
       }
     }
@@ -140,8 +147,8 @@ export function ComparisonReport({
           {
             includeHandBags,
             includeProcesses,
-            includeTimeSeries
-          }
+            includeTimeSeries,
+          },
         );
 
         if (response.success) {
@@ -150,6 +157,7 @@ export function ComparisonReport({
           setError(response.error || 'Không thể tải báo cáo');
         }
       } catch (err) {
+        console.error(err);
         setError('Lỗi kết nối đến máy chủ');
       } finally {
         setLoading(false);

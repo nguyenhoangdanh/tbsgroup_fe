@@ -1,164 +1,189 @@
-import type { Metadata } from 'next';
-
-import './globals.css';
+import { Metadata } from 'next';
 import Script from 'next/script';
+import { Suspense } from 'react';
 
 import RootLayoutWrapper from '@/components/common/layouts/admin/RootLayoutWrapper';
 import { LoadingProvider } from '@/components/common/loading/LoadingProvider';
-import ActivityMonitor from '@/components/security/ActivityMonitor';
-import { Toaster } from '@/components/ui/toaster';
-import { AuthSecurityProvider } from '@/contexts/auth/AuthProvider';
-import ClientProviders from '@/contexts/ClientProviders';
-import QueryProvider from '@/contexts/QueryProvider';
-import SagaProviders from '@/contexts/SagaProvider';
-import { ThemeProvider } from '@/contexts/ThemeProvider';
+import { MainProviders } from '@/contexts/MainProviders';
 import { beVietnamPro } from '@/lib/fonts';
+import { ClientToastProvider } from '@/contexts/ClientToastProvider';
+
+import './globals.css';
+
+// Environment detection
+const isProduction = process.env.NODE_ENV === 'production';
+const isDevelopment = process.env.NODE_ENV === 'development';
 
 export const metadata: Metadata = {
   title: 'Thoai Son Handbag Factory',
   description: 'TBS Group - Thoai Son Handbag Factory',
+  ...(isProduction && {
+    other: {
+      'X-Frame-Options': 'DENY',
+      'X-Content-Type-Options': 'nosniff',
+      'Referrer-Policy': 'strict-origin-when-cross-origin',
+    },
+  }),
 };
+
+// Security script (simplified)
+const SecurityScript = () => (
+  <Script
+    id="security-script"
+    strategy="beforeInteractive"
+    dangerouslySetInnerHTML={{
+      __html: `
+        (function() {
+          'use strict';
+          
+          const config = {
+            isProduction: ${isProduction},
+            enableCSRF: ${isProduction},
+          };
+          
+          function generateSecureToken() {
+            try {
+              if (window.crypto && window.crypto.randomUUID) {
+                return window.crypto.randomUUID();
+              }
+              return 'fallback-' + Date.now() + '-' + Math.random().toString(36).substring(2);
+            } catch (e) {
+              return 'fallback-' + Date.now() + '-' + Math.random().toString(36).substring(2);
+            }
+          }
+          
+          function setCSRFToken() {
+            if (!config.enableCSRF) return;
+            const token = generateSecureToken();
+            const maxAge = 30 * 60;
+            const secure = window.location.protocol === 'https:' ? '; Secure' : '';
+            const sameSite = config.isProduction ? '; SameSite=Strict' : '; SameSite=Lax';
+            
+            document.cookie = \`csrf-token=\${token}; Path=/; Max-Age=\${maxAge}\${secure}\${sameSite}\`;
+            
+            let meta = document.querySelector('meta[name="csrf-token"]');
+            if (!meta) {
+              meta = document.createElement('meta');
+              meta.setAttribute('name', 'csrf-token');
+              document.head.appendChild(meta);
+            }
+            meta.setAttribute('content', token);
+            return token;
+          }
+          
+          function initialize() {
+            const token = setCSRFToken();
+            const sessionId = sessionStorage.getItem('sessionId') || generateSecureToken();
+            sessionStorage.setItem('sessionId', sessionId);
+            
+            window.__security = {
+              getCSRFToken: () => document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
+              refreshCSRFToken: setCSRFToken,
+              getSessionId: () => sessionId,
+            };
+            
+            if (!config.isProduction) {
+              console.log('[Security] Initialized');
+            }
+          }
+          
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initialize);
+          } else {
+            initialize();
+          }
+        })();
+      `,
+    }}
+  />
+);
+
+// Analytics script
+const AnalyticsScript = () => {
+  if (!isProduction || !process.env.NEXT_PUBLIC_GA_ID) return null;
+
+  return (
+    <Script
+      src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`}
+      strategy="afterInteractive"
+    />
+  );
+};
+
+// Loading fallback
+const AppLoadingFallback = () => (
+  <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="text-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+      <p className="text-gray-600">Loading application...</p>
+    </div>
+  </div>
+);
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <meta name="csp-nonce" content="random-nonce-123" />
         <meta name="csrf-token" content="" />
+        {isProduction && (
+          <>
+            <meta httpEquiv="X-Frame-Options" content="DENY" />
+            <meta httpEquiv="X-Content-Type-Options" content="nosniff" />
+            <meta name="referrer" content="strict-origin-when-cross-origin" />
+          </>
+        )}
+        {process.env.NEXT_PUBLIC_API_BASE_URL && (
+          <link rel="preconnect" href={process.env.NEXT_PUBLIC_API_BASE_URL} />
+        )}
       </head>
-      <body className={`default-theme default-hover ${beVietnamPro.variable} antialiased`}>
-        {/* Sử dụng Script với chiến lược afterInteractive */}
-        <Script
-          id="csrf-script"
-          strategy="afterInteractive"
-          dangerouslySetInnerHTML={{
-            __html: `
-              try {
-                const generateToken = () => {
-                  // Sử dụng phương thức mạnh hơn để tạo token
-                  let token;
-                  if (crypto.randomUUID) {
-                    token = crypto.randomUUID();
-                  } else if (crypto.getRandomValues) {
-                    token = Array.from(crypto.getRandomValues(new Uint8Array(16)))
-                      .map(b => b.toString(16).padStart(2, '0'))
-                      .join('');
-                  } else {
-                    // Fallback kém an toàn hơn
-                    token = Math.random().toString(36).substring(2, 15) +
-                            Math.random().toString(36).substring(2, 15);
-                  }
-                  
-                  // Thêm secure flag và max-age
-                  const secure = window.location.protocol === 'https:' ? '; secure' : '';
-                  const maxAge = 30 * 60; // 30 phút
-                  document.cookie = 'csrf-token=' + token + '; path=/; samesite=strict' + secure + '; max-age=' + maxAge;
 
-                   // Kiểm tra xem token đã tồn tại chưa trước khi tạo mới
-  const existingToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-  if (existingToken && existingToken !== "") {
-    return existingToken;
-  }
-                  
-                  // Cập nhật meta tag
-                  let meta = document.querySelector('meta[name="csrf-token"]');
-                  if (!meta) {
-                    meta = document.createElement('meta');
-                    meta.name = 'csrf-token';
-                    document.head.appendChild(meta);
-                  }
-                  meta.content = token;
-                  
-                  // Thêm token vào localStorage để có thể sử dụng cho requests
-                  localStorage.setItem('csrf-token', token);
-                  
-                  // Lưu thời gian hoạt động cuối
-                  localStorage.setItem('last_activity', Date.now().toString());
-                  
-                  return token;
-                };
-                
-                // Thêm token vào tất cả fetch/XMLHttpRequest
-                const originalFetch = window.fetch;
-                window.fetch = function(url, options = {}) {
-                  const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-                  if (token) {
-                    options.headers = options.headers || {};
-                    if (options.headers instanceof Headers) {
-                      options.headers.append('X-CSRF-Token', token);
-                    } else {
-                      options.headers = {
-                        ...options.headers,
-                        'X-CSRF-Token': token
-                      };
+      <body className={`default-theme default-hover ${beVietnamPro.variable} antialiased`}>
+        <SecurityScript />
+        <AnalyticsScript />
+
+        <Suspense fallback={<AppLoadingFallback />}>
+          <ClientToastProvider>
+            <MainProviders>
+              <RootLayoutWrapper>
+                <LoadingProvider>
+                  <Suspense fallback={<AppLoadingFallback />}>
+                    {children}
+                  </Suspense>
+                </LoadingProvider>
+              </RootLayoutWrapper>
+            </MainProviders>
+          </ClientToastProvider>
+        </Suspense>
+
+        {isDevelopment && (
+          <Script
+            id="dev-tools"
+            strategy="lazyOnload"
+            dangerouslySetInnerHTML={{
+              __html: `
+                window.__dev = {
+                  clearCache: () => {
+                    localStorage.clear();
+                    sessionStorage.clear();
+                    console.log('Cache cleared');
+                  },
+                  getAuthState: () => {
+                    try {
+                      return JSON.parse(localStorage.getItem('persist:root') || '{}');
+                    } catch {
+                      return null;
                     }
-                  }
-                  return originalFetch(url, options);
+                  },
                 };
-                
-                // Patch XMLHttpRequest
-                const originalOpen = XMLHttpRequest.prototype.open;
-                XMLHttpRequest.prototype.open = function() {
-                  const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-                  this.addEventListener('readystatechange', function() {
-                    if (this.readyState === 1 && token) {
-                      this.setRequestHeader('X-CSRF-Token', token);
-                    }
-                  });
-                  originalOpen.apply(this, arguments);
-                };
-                
-                // Tạo token khi trang tải
-                const token = generateToken();
-                
-                // Làm mới token mỗi 30 phút
-                setInterval(generateToken, 30 * 60 * 1000);
-                
-                // Làm mới token trên hoạt động của người dùng nếu token gần hết hạn
-                ['mousedown', 'keydown', 'touchstart', 'scroll'].forEach(event => {
-                  window.addEventListener(event, () => {
-                    const lastActivity = parseInt(localStorage.getItem('last_activity') || '0', 10);
-                    const now = Date.now();
-                    // Làm mới nếu đã qua 20 phút
-                    if (now - lastActivity > 20 * 60 * 1000) {
-                      generateToken();
-                    }
-                    localStorage.setItem('last_activity', now.toString());
-                  }, { passive: true });
-                });
-                
-                console.log('CSRF protection initialized');
-              } catch (e) {
-                console.error('Failed to set CSRF token:', e);
-              }
-            `,
-          }}
-        />
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem={false}
-          disableTransitionOnChange
-        >
-          <SagaProviders>
-            <QueryProvider>
-              <AuthSecurityProvider>
-                {/* <ActivityMonitor /> */}
-                <RootLayoutWrapper>
-                  <ClientProviders>
-                    {/* <SecurityBanner /> */}
-                    <Toaster />
-                    <LoadingProvider>{children}</LoadingProvider>
-                  </ClientProviders>
-                </RootLayoutWrapper>
-              </AuthSecurityProvider>
-            </QueryProvider>
-          </SagaProviders>
-        </ThemeProvider>
+                console.log('Dev tools: window.__dev');
+              `,
+            }}
+          />
+        )}
       </body>
     </html>
   );

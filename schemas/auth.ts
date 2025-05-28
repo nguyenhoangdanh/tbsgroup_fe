@@ -1,4 +1,4 @@
-import {z} from 'zod';
+import { z } from 'zod';
 
 export const loginSchema = z.object({
   username: z.string().nonempty({
@@ -28,7 +28,7 @@ export const resetPasswordSchema = z
   .object({
     password: z
       .string()
-      .regex(/^\S*$/, {message: 'Mật khẩu không được chứa khoảng trắng'}) // 🚀 Thêm điều kiện này
+      .regex(/^\S*$/, { message: 'Mật khẩu không được chứa khoảng trắng' }) // 🚀 Thêm điều kiện này
       .optional(),
     confirmPassword: z
       .string({

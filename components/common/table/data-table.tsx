@@ -1,6 +1,5 @@
-"use client";
+'use client';
 
-import * as React from "react";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -12,36 +11,42 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
-} from "@tanstack/react-table";
-import { ChevronDown, ChevronDownIcon, ChevronRight, ChevronRightIcon, Download, EditIcon, FileSpreadsheet, FileText, FileType, FolderIcon, Search, Trash } from "lucide-react";
+} from '@tanstack/react-table';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import {
+  ChevronDown,
+  ChevronDownIcon,
+  ChevronRight,
+  ChevronRightIcon,
+  Download,
+  EditIcon,
+  FileSpreadsheet,
+  FileText,
+  FileType,
+  FolderIcon,
+  Search,
+  Trash,
+} from 'lucide-react';
+import { useTheme } from 'next-themes';
+import * as React from 'react';
+import { toast } from 'react-toast-kit';
+import * as XLSX from 'xlsx';
 
-import { Button } from "@/components/ui/button";
+import { useLoading } from '../loading/LoadingProvider';
+import TableSkeletonLoader from '../loading/TableSkeletonLoader';
+import ButtonGroupAction from './actions/button-group-actions';
+import { CreateActionDialog } from './actions/popup-create';
+
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuTrigger,
   DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
-import { CreateActionDialog } from "./actions/popup-create";
-import * as XLSX from 'xlsx';
-import { jsPDF } from "jspdf"
-import autoTable from 'jspdf-autotable'
-import ButtonGroupAction from "./actions/button-group-actions";
-import { useTheme } from "next-themes";
-import { DialogChildrenProps, DialogType, useDialog } from "@/contexts/DialogProvider";
-import { extractPlainValue, removeVietnameseAccents } from "@/utils";
-import { toast } from "@/hooks/use-toast";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+} from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
 import {
   Pagination,
   PaginationContent,
@@ -50,13 +55,30 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-} from "@/components/ui/pagination";
-import { useLoading } from "../loading/LoadingProvider";
-import TableSkeletonLoader from "../loading/TableSkeletonLoader";
-// import './table.css';
+} from '@/components/ui/pagination';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { extractPlainValue, removeVietnameseAccents } from '@/utils';
+
+import './table.css';
+
+import { DialogChildrenProps, DialogType, useDialog } from '@/contexts/DialogProvider';
 
 // Explicitly define types and actions
-export type TActions = "create" | "edit" | "delete" | "read-only";
+export type TActions = 'create' | 'edit' | 'delete' | 'read-only';
 
 export interface BaseData {
   id: string;
@@ -100,7 +122,7 @@ interface DataTableProps<TData extends BaseData, TValue> {
   searchPlaceholder?: string;
   customSearchFunction?: (item: TData, searchValue: string) => boolean;
   exportData?: boolean;
-  exportFormats?: Array<"csv" | "excel" | "pdf">;
+  exportFormats?: Array<'csv' | 'excel' | 'pdf'>;
   isLoading?: boolean;
   children?: React.ReactNode;
   initialPageIndex?: number;
@@ -120,7 +142,7 @@ interface DataTableProps<TData extends BaseData, TValue> {
   forceGrouping?: boolean; // Force grouping even for single items
 }
 
-// Hàm chuyển đổi tiếng Việt không dấu
+//Hàm chuyển đổi tiếng Việt không dấu
 export default function removeAccents(str: string) {
   return str
     .normalize('NFD')
@@ -147,9 +169,9 @@ export function DataTable<TData extends BaseData, TValue>({
   onEdit,
   onSelected,
   searchColumn,
-  searchPlaceholder = "Tìm kiếm...",
+  searchPlaceholder = 'Tìm kiếm...',
   exportData = false,
-  exportFormats = ["csv", "excel", "pdf"],
+  exportFormats = ['csv', 'excel', 'pdf'],
   isLoading = false,
   children,
   initialPageIndex = 0,
@@ -161,7 +183,7 @@ export function DataTable<TData extends BaseData, TValue>({
   serverPageSize = 20,
   customSearchFunction,
 
-  // New props for grouping
+  //New props for grouping
   enableRowGrouping = false,
   groupByField,
   initialExpandedGroups = false,
@@ -177,36 +199,35 @@ export function DataTable<TData extends BaseData, TValue>({
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
-  const [searchValue, setSearchValue] = React.useState("");
+  const [searchValue, setSearchValue] = React.useState('');
 
-  // Pagination state
+  //Pagination state
   const [pageIndex, setPageIndex] = React.useState(initialPageIndex);
   const [pageSize, setPageSize] = React.useState(initialPageSize);
 
-  // For tracking server page
+  //For tracking server page
   const isFirstRender = React.useRef(true);
   const tableRef = React.useRef<any>(null);
 
-  // 1. Add a ref to track pagination changes
+  //1. Add a ref to track pagination changes
   const isPaginationChange = React.useRef(false);
   const [isDataFetching, setIsDataFetching] = React.useState(false);
 
-
   const { startLoading, stopLoading, isLoading: isTableLoading, configs } = useLoading();
-  const loadingKey = `table-data-${title.replace(/\s+/g, "-").toLowerCase()}`;
+  const loadingKey = `table-data-${title.replace(/\s+/g, '-').toLowerCase()}`;
 
   React.useEffect(() => {
     if (isLoading) {
       startLoading(loadingKey, {
-        variant: "custom",
-        // skeletonConfig: { columns: columns.length + (actions ? 1 : 0), rows: initialPageSize },
+        variant: 'custom',
+        skeletonConfig: { columns: columns.length + (actions ? 1 : 0), rows: initialPageSize },
       });
     } else {
       stopLoading(loadingKey);
     }
   }, [isLoading, startLoading, stopLoading, columns.length, initialPageSize, actions]);
 
-  // Filter data based on search
+  //Filter data based on search
   const filteredData = React.useMemo(() => {
     if (!searchValue.trim() || !searchColumn) {
       return data;
@@ -228,27 +249,25 @@ export function DataTable<TData extends BaseData, TValue>({
     });
   }, [data, searchValue, searchColumn, customSearchFunction]);
 
-
-
-  // =============================== Grouping Logic =============================== //
+  //=============================== Grouping Logic =============================== //
   const [expandedGroups, setExpandedGroups] = React.useState<Record<string, boolean>>({});
 
-  // Add this function to transform data
+  //Add this function to transform data
   const processedData = React.useMemo(() => {
     if (!enableRowGrouping || !groupByField) {
       return data;
     }
 
-    // Group the data by the specified field
+    //  Group the data by the specified field
     const groupedByField = data.reduce<Record<string, TData[]>>((acc, item) => {
-      // Safely get the group value and convert to string
+      //  Safely get the group value and convert to string
       const groupValue = item[groupByField] != null ? String(item[groupByField]) : 'undefined';
       if (!acc[groupValue]) acc[groupValue] = [];
       acc[groupValue].push(item);
       return acc;
     }, {});
 
-    // Create a flattened array with group rows
+    //  Create a flattened array with group rows
     const result: (TData | GroupedData<TData>)[] = [];
 
     Object.entries(groupedByField).forEach(([groupValue, items]) => {
@@ -279,18 +298,18 @@ export function DataTable<TData extends BaseData, TValue>({
         groupValue: groupValue,
         groupName: nameValue,
         groupCount: items.length,
-        isExpanded: isExpanded
+        isExpanded: isExpanded,
       };
 
       result.push(groupRow);
 
-      // Add child rows if expanded
+      //  Add child rows if expanded
       if (isExpanded) {
         items.forEach(item => {
-          // Mark as child row so we can add styling
+          //  Mark as child row so we can add styling
           const childItem = {
             ...item,
-            isChildRow: true
+            isChildRow: true,
           };
           result.push(childItem);
         });
@@ -300,19 +319,21 @@ export function DataTable<TData extends BaseData, TValue>({
     return result;
   }, [data, groupByField, expandedGroups, enableRowGrouping, forceGrouping]);
 
+  const toggleGroup = React.useCallback(
+    (groupValue: string) => {
+      if (!groupValue) {
+        return;
+      }
 
-  const toggleGroup = React.useCallback((groupValue: string) => {
-    if (!groupValue) {
-      return;
-    }
-
-    // Use functional update to avoid race conditions
-    setExpandedGroups(prev => {
-      const newState = { ...prev };
-      newState[groupValue] = !prev[groupValue];
-      return newState;
-    });
-  }, [expandedGroups]); // Include expandedGroups in dependencies
+      //  Use functional update to avoid race conditions
+      setExpandedGroups(prev => {
+        const newState = { ...prev };
+        newState[groupValue] = !prev[groupValue];
+        return newState;
+      });
+    },
+    [expandedGroups],
+  ); // Include expandedGroups in dependencies
 
   // Fix for expandAllGroups and collapseAllGroups
   const expandAllGroups = React.useCallback(() => {
@@ -335,8 +356,7 @@ export function DataTable<TData extends BaseData, TValue>({
     setExpandedGroups({});
   }, []);
 
-
-  // Initialize expandedGroups with proper initial values
+  //Initialize expandedGroups with proper initial values
   React.useEffect(() => {
     if (enableRowGrouping && groupByField && data?.length > 0) {
       // Create a set of unique group values
@@ -357,13 +377,11 @@ export function DataTable<TData extends BaseData, TValue>({
         initialState[group] = initialExpandedGroups;
       });
 
-      console.log("Initializing expanded groups:", initialState);
+      console.log('Initializing expanded groups:', initialState);
       setExpandedGroups(initialState);
     }
   }, [data, groupByField, enableRowGrouping, initialExpandedGroups]);
   // ============================================================================== //
-
-
 
   // Manually handle the client-side pagination
   const displayData = React.useMemo(() => {
@@ -379,14 +397,17 @@ export function DataTable<TData extends BaseData, TValue>({
   }, [filteredData, pageIndex, pageSize, disablePagination]);
 
   // Calculate which server page we need based on client page
-  const getServerPageForClientPage = React.useCallback((clientPageIndex: number, clientPageSize: number) => {
-    if (!serverSidePagination) return 0;
+  const getServerPageForClientPage = React.useCallback(
+    (clientPageIndex: number, clientPageSize: number) => {
+      if (!serverSidePagination) return 0;
 
-    const firstItemIndex = clientPageIndex * clientPageSize;
-    const serverPageIndex = Math.floor(firstItemIndex / serverPageSize);
+      const firstItemIndex = clientPageIndex * clientPageSize;
+      const serverPageIndex = Math.floor(firstItemIndex / serverPageSize);
 
-    return serverPageIndex;
-  }, [serverPageSize, serverSidePagination]);
+      return serverPageIndex;
+    },
+    [serverPageSize, serverSidePagination],
+  );
 
   // Initialize table
   const table = useReactTable({
@@ -411,10 +432,8 @@ export function DataTable<TData extends BaseData, TValue>({
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
-    onPaginationChange: (updater) => {
-      const newState = typeof updater === 'function'
-        ? updater({ pageIndex, pageSize })
-        : updater;
+    onPaginationChange: updater => {
+      const newState = typeof updater === 'function' ? updater({ pageIndex, pageSize }) : updater;
 
       setPageIndex(newState.pageIndex);
       setPageSize(newState.pageSize);
@@ -422,7 +441,8 @@ export function DataTable<TData extends BaseData, TValue>({
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: (!serverSidePagination && !disablePagination) ? getPaginationRowModel() : undefined,
+    getPaginationRowModel:
+      !serverSidePagination && !disablePagination ? getPaginationRowModel() : undefined,
     manualPagination: true, // We're manually handling pagination
   });
 
@@ -430,34 +450,33 @@ export function DataTable<TData extends BaseData, TValue>({
   tableRef.current = table;
 
   // Effect for pagination changes
-  // React.useEffect(() => {
-  //   if (!serverSidePagination || !onPageChange) return;
+  React.useEffect(() => {
+    if (!serverSidePagination || !onPageChange) return;
 
-  //   if (isFirstRender.current) {
-  //     isFirstRender.current = false;
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
 
-  //     // Ensure we start with correct page on first load
-  //     const initialServerPage = getServerPageForClientPage(initialPageIndex, initialPageSize);
-  //     onPageChange(initialServerPage, serverPageSize);
-  //     return;
-  //   }
+      // Ensure we start with correct page on first load
+      const initialServerPage = getServerPageForClientPage(initialPageIndex, initialPageSize);
+      onPageChange(initialServerPage, serverPageSize);
+      return;
+    }
 
-  //   // Calculate which server page we need
-  //   const serverPageIndex = getServerPageForClientPage(pageIndex, pageSize);
+    // Calculate which server page we need
+    const serverPageIndex = getServerPageForClientPage(pageIndex, pageSize);
 
-  //   // Call API with server pagination params
-  //   onPageChange(serverPageIndex, serverPageSize);
-  // }, [
-  //   pageIndex,
-  //   pageSize,
-  //   serverSidePagination,
-  //   onPageChange,
-  //   serverPageSize,
-  //   getServerPageForClientPage,
-  //   initialPageIndex,
-  //   initialPageSize
-  // ]);
-
+    // Call API with server pagination params
+    onPageChange(serverPageIndex, serverPageSize);
+  }, [
+    pageIndex,
+    pageSize,
+    serverSidePagination,
+    onPageChange,
+    serverPageSize,
+    getServerPageForClientPage,
+    initialPageIndex,
+    initialPageSize,
+  ]);
 
   React.useEffect(() => {
     if (!serverSidePagination || !onPageChange) return;
@@ -468,7 +487,7 @@ export function DataTable<TData extends BaseData, TValue>({
 
       // Bật loading khi bắt đầu fetch data
       startLoading(loadingKey, {
-        variant: "custom",
+        variant: 'custom',
       });
       onPageChange(initialServerPage, serverPageSize);
       return;
@@ -477,13 +496,13 @@ export function DataTable<TData extends BaseData, TValue>({
     const serverPageIndex = getServerPageForClientPage(pageIndex, pageSize);
 
     startLoading(loadingKey, {
-      variant: "custom",
+      variant: 'custom',
     });
 
     // Only set fetching state, don't trigger full page loader
     setIsDataFetching(true);
 
-    // Call API with server pagination params
+    //  Call API with server pagination params
     onPageChange(serverPageIndex, serverPageSize);
 
     // Safety timeout to reset loading state
@@ -500,35 +519,31 @@ export function DataTable<TData extends BaseData, TValue>({
     serverPageSize,
     getServerPageForClientPage,
     initialPageIndex,
-    initialPageSize
-  ])
-
+    initialPageSize,
+  ]);
 
   // 4. Add a new effect to handle data changes
   React.useEffect(() => {
     // Reset pagination flag whenever data changes
     isPaginationChange.current = false;
 
-    // Reset data fetching state
-    setIsDataFetching(false)
-    // Tắt loading khi có data mới
-    stopLoading(loadingKey);;
-  }, [data, stopLoading]);;
-
+    //  Reset data fetching state
+    setIsDataFetching(false);
+    //  Tắt loading khi có data mới
+    stopLoading(loadingKey);
+  }, [data, stopLoading]);
 
   // Track selected rows
-  // React.useEffect(() => {
-  //   if (onSelected) {
-  //     const selectedIds = table
-  //       .getFilteredSelectedRowModel()
-  //       .rows.map((row) => row.original.id);
-  //     onSelected(selectedIds);
-  //   }
-  // }, [onSelected, rowSelection, table]);
+  React.useEffect(() => {
+    if (onSelected) {
+      const selectedIds = table.getFilteredSelectedRowModel().rows.map(row => row.original.id);
+      onSelected(selectedIds);
+    }
+  }, [onSelected, rowSelection, table]);
   React.useEffect(() => {
     if (onSelected) {
       const selectedRows = table.getFilteredSelectedRowModel().rows;
-      // Filter out group rows and only include actual data rows
+      //  Filter out group rows and only include actual data rows
       const selectedIds = selectedRows
         .filter(row => !row.original?.isGroupRow)
         .map(row => row.original.id);
@@ -546,7 +561,7 @@ export function DataTable<TData extends BaseData, TValue>({
   const endRow = Math.min((pageIndex + 1) * pageSize, totalRows);
   const pageCount = Math.max(1, Math.ceil(totalRows / pageSize));
   const currentPage = pageIndex + 1;
-  // PART 2: Render Functions and Export Logic
+  //  PART 2: Render Functions and Export Logic
 
   // Batch delete button
   const renderBatchDeleteButton = () => {
@@ -555,28 +570,26 @@ export function DataTable<TData extends BaseData, TValue>({
 
     if (selectedCount === 0) return null;
 
-
-
     return (
       <div className="flex items-center gap-2 my-2">
-        <span className="text-sm font-medium">
-          {selectedCount} dòng đã chọn
-        </span>
+        <span className="text-sm font-medium">{selectedCount} dòng đã chọn</span>
         <Button
           variant="destructive"
           size="sm"
           onClick={() => {
             if (!onBatchDelete) return;
 
-            // Trong phần renderBatchDeleteButton()
-            const selectedRowIds = selectedRows.map(row => {
-              return row.original?.isGroupRow ? null : row.original.id;
-            }).filter(id => id !== null) as string[];
+            //   Trong phần renderBatchDeleteButton()
+            const selectedRowIds = selectedRows
+              .map(row => {
+                return row.original?.isGroupRow ? null : row.original.id;
+              })
+              .filter(id => id !== null) as string[];
 
             showDialog({
               type: DialogType.BATCH_DELETE,
               title: `Xóa ${selectedCount} dòng đã chọn?`,
-              description: "Thao tác này không thể hoàn tác.",
+              description: 'Thao tác này không thể hoàn tác.',
               onSubmit: async () => {
                 try {
                   await onBatchDelete(selectedRowIds);
@@ -584,21 +597,21 @@ export function DataTable<TData extends BaseData, TValue>({
                   if (refetchData) refetchData();
 
                   toast({
-                    title: "Xóa hàng loạt thành công",
+                    title: 'Xóa hàng loạt thành công',
                     description: `${selectedCount} mục đã được xóa`,
-                    variant: "default"
+                    variant: 'default',
                   });
                   return true;
                 } catch (error) {
-                  console.error("Lỗi khi xóa hàng loạt:", error);
+                  console.error('Lỗi khi xóa hàng loạt:', error);
                   toast({
-                    title: "Xóa hàng loạt thất bại",
-                    description: error instanceof Error ? error.message : "Đã xảy ra lỗi",
-                    variant: "destructive"
+                    title: 'Xóa hàng loạt thất bại',
+                    description: error instanceof Error ? error.message : 'Đã xảy ra lỗi',
+                    variant: 'error',
                   });
                   throw error;
                 }
-              }
+              },
             });
           }}
           className="flex items-center gap-1"
@@ -619,15 +632,15 @@ export function DataTable<TData extends BaseData, TValue>({
       const range: (number | 'ellipsis')[] = [];
 
       if (pageCount <= 7) {
-        // If fewer than 7 pages, show all
+        //  If fewer than 7 pages, show all
         for (let i = 1; i <= pageCount; i++) {
           range.push(i);
         }
       } else {
-        // Always show first page
+        //  Always show first page
         range.push(1);
 
-        // Determine which pages to show based on current page
+        //  Determine which pages to show based on current page
         if (currentPage <= 3) {
           range.push(2, 3, 4, 'ellipsis');
         } else if (currentPage >= pageCount - 2) {
@@ -636,7 +649,7 @@ export function DataTable<TData extends BaseData, TValue>({
           range.push('ellipsis', currentPage - 1, currentPage, currentPage + 1, 'ellipsis');
         }
 
-        // Always show last page
+        //  Always show last page
         if (pageCount > 1) {
           range.push(pageCount);
         }
@@ -673,29 +686,25 @@ export function DataTable<TData extends BaseData, TValue>({
       setPageIndex(0);
     };
 
-
     return (
       <div className="flex flex-col space-y-4 lg:flex-row lg:items-center justify-between py-4">
         {/* Page info and page size selector */}
         <div className="flex flex-col sm:flex-row items-center gap-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
             <span>
-              Hiển thị {totalRows > 0 ? startRow : 0}-
-              {totalRows > 0 ? endRow : 0} trên {totalRows} dòng
+              Hiển thị {totalRows > 0 ? startRow : 0}-{totalRows > 0 ? endRow : 0} trên {totalRows}{' '}
+              dòng
             </span>
           </div>
 
           <div className="flex items-center whitespace-nowrap">
             <span className="text-sm mr-2">Hiển thị</span>
-            <Select
-              value={String(pageSize)}
-              onValueChange={handlePageSizeChange}
-            >
+            <Select value={String(pageSize)} onValueChange={handlePageSizeChange}>
               <SelectTrigger className="h-8 w-20">
                 <SelectValue>{pageSize}</SelectValue>
               </SelectTrigger>
               <SelectContent>
-                {pageSizeOptions.map((size) => (
+                {pageSizeOptions.map(size => (
                   <SelectItem key={size} value={String(size)}>
                     {size} dòng
                   </SelectItem>
@@ -708,7 +717,7 @@ export function DataTable<TData extends BaseData, TValue>({
 
         {/* Selected rows info */}
         <div className="text-sm text-muted-foreground text-center">
-          Đã chọn {table.getFilteredSelectedRowModel().rows.length} / {" "}
+          Đã chọn {table.getFilteredSelectedRowModel().rows.length} /{' '}
           {table.getFilteredRowModel().rows.length} dòng
         </div>
 
@@ -719,7 +728,7 @@ export function DataTable<TData extends BaseData, TValue>({
               <PaginationPrevious
                 onClick={handlePreviousPage}
                 aria-disabled={pageIndex === 0}
-                className={pageIndex === 0 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                className={pageIndex === 0 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
               />
             </PaginationItem>
 
@@ -737,14 +746,16 @@ export function DataTable<TData extends BaseData, TValue>({
                     {page}
                   </PaginationLink>
                 </PaginationItem>
-              )
+              ),
             )}
 
             <PaginationItem>
               <PaginationNext
                 onClick={handleNextPage}
                 aria-disabled={pageIndex >= pageCount - 1}
-                className={pageIndex >= pageCount - 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                className={
+                  pageIndex >= pageCount - 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'
+                }
               />
             </PaginationItem>
           </PaginationContent>
@@ -761,16 +772,14 @@ export function DataTable<TData extends BaseData, TValue>({
     );
   };
 
-  // Export data functions
+  //  Export data functions
   function prepareExportData<TData>(
     data: TData[],
     columns: ColumnDef<TData, any>[],
-    shouldRemoveAccents: boolean = false
-  ): { headers: string[], rows: string[][] } {
-    const visibleColumns = columns.filter(col =>
-      col.id !== 'select' &&
-      col.id !== 'actions' &&
-      col.id !== 'action'
+    shouldRemoveAccents: boolean = false,
+  ): { headers: string[]; rows: string[][] } {
+    const visibleColumns = columns.filter(
+      col => col.id !== 'select' && col.id !== 'actions' && col.id !== 'action',
     );
 
     const headers = visibleColumns.map(col => {
@@ -790,20 +799,17 @@ export function DataTable<TData extends BaseData, TValue>({
 
         if ('accessorKey' in col && typeof col.accessorKey === 'string') {
           cellValue = row[col.accessorKey as keyof TData];
-        }
-        else if ('accessorFn' in col && typeof col.accessorFn === 'function') {
+        } else if ('accessorFn' in col && typeof col.accessorFn === 'function') {
           cellValue = col.accessorFn(row, 0);
-        }
-        else if (col.cell && typeof col.cell === 'function') {
+        } else if (col.cell && typeof col.cell === 'function') {
           cellValue = col.id ? row[col.id as keyof TData] : '';
-        }
-        else if (col.id) {
+        } else if (col.id) {
           cellValue = row[col.id as keyof TData];
         } else {
           cellValue = '';
         }
 
-        let plainValue = extractPlainValue(cellValue);
+        const plainValue = extractPlainValue(cellValue);
         return shouldRemoveAccents ? removeVietnameseAccents(plainValue) : plainValue;
       });
     });
@@ -814,21 +820,21 @@ export function DataTable<TData extends BaseData, TValue>({
   const exportExcel = <TData extends Record<string, any>>(
     data: TData[],
     columns: ColumnDef<TData, any>[],
-    title: string
+    title: string,
   ) => {
     try {
       const { headers, rows } = prepareExportData(data, columns);
-      const fileName = `${title.toLowerCase().replace(/\s+/g, "-")}-${new Date().toISOString().split("T")[0]}`;
+      const fileName = `${title.toLowerCase().replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}`;
       const worksheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
       const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Data');
       XLSX.writeFile(workbook, `${fileName}.xlsx`);
     } catch (error) {
       console.error('Lỗi khi tạo Excel:', error);
       toast({
         title: 'Xuất Excel thất bại',
         description: error instanceof Error ? error.message : 'Đã xảy ra lỗi khi xuất dữ liệu',
-        variant: 'destructive'
+        variant: 'error',
       });
     }
   };
@@ -836,19 +842,16 @@ export function DataTable<TData extends BaseData, TValue>({
   const exportCSV = <TData extends Record<string, any>>(
     data: TData[],
     columns: ColumnDef<TData, any>[],
-    title: string
+    title: string,
   ) => {
     try {
       const { headers, rows } = prepareExportData(data, columns);
-      const fileName = `${title.toLowerCase().replace(/\s+/g, "-")}-${new Date().toISOString().split("T")[0]}`;
-      const csvContent = [
-        headers.join(","),
-        ...rows.map(row => row.join(","))
-      ].join("\n");
+      const fileName = `${title.toLowerCase().replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}`;
+      const csvContent = [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
 
-      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
+      const link = document.createElement('a');
       link.href = url;
       link.download = `${fileName}.csv`;
       document.body.appendChild(link);
@@ -860,7 +863,7 @@ export function DataTable<TData extends BaseData, TValue>({
       toast({
         title: 'Xuất CSV thất bại',
         description: error instanceof Error ? error.message : 'Đã xảy ra lỗi khi xuất dữ liệu',
-        variant: 'destructive'
+        variant: 'error',
       });
     }
   };
@@ -868,12 +871,12 @@ export function DataTable<TData extends BaseData, TValue>({
   const exportPDF = <TData extends Record<string, any>>(
     data: TData[],
     columns: ColumnDef<TData, any>[],
-    title: string
+    title: string,
   ) => {
     try {
       const { headers, rows } = prepareExportData(data, columns, true);
       const normalizedTitle = removeVietnameseAccents(title);
-      const fileName = `${normalizedTitle.toLowerCase().replace(/\s+/g, "-")}-${new Date().toISOString().split("T")[0]}`;
+      const fileName = `${normalizedTitle.toLowerCase().replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}`;
       const doc = new jsPDF();
       doc.text(normalizedTitle, 14, 10);
       autoTable(doc, {
@@ -883,14 +886,14 @@ export function DataTable<TData extends BaseData, TValue>({
         headStyles: {
           fillColor: [41, 128, 185],
           textColor: 255,
-          fontStyle: 'bold'
+          fontStyle: 'bold',
         },
         styles: {
           font: 'helvetica',
           fontSize: 10,
-          cellPadding: 3
+          cellPadding: 3,
         },
-        theme: 'grid'
+        theme: 'grid',
       });
       doc.save(`${fileName}.pdf`);
     } catch (error) {
@@ -898,22 +901,22 @@ export function DataTable<TData extends BaseData, TValue>({
       toast({
         title: 'Xuất PDF thất bại',
         description: error instanceof Error ? error.message : 'Đã xảy ra lỗi khi xuất dữ liệu',
-        variant: 'destructive'
+        variant: 'error',
       });
     }
   };
 
-  const handleExportData = (format: "csv" | "excel" | "pdf") => {
+  const handleExportData = (format: 'csv' | 'excel' | 'pdf') => {
     if (!data.length) return;
 
     switch (format) {
-      case "csv":
+      case 'csv':
         exportCSV(data, columns, title);
         break;
-      case "excel":
+      case 'excel':
         exportExcel(data, columns, title);
         break;
-      case "pdf":
+      case 'pdf':
         exportPDF(data, columns, title);
         break;
     }
@@ -923,9 +926,7 @@ export function DataTable<TData extends BaseData, TValue>({
     if (!enableRowGrouping) return null;
 
     const hasExpandedGroups = Object.values(expandedGroups).some(Boolean);
-    const hasCollapsedGroups = processedData.some(
-      row => row.isGroupRow && !row.isExpanded
-    );
+    const hasCollapsedGroups = processedData.some(row => row.isGroupRow && !row.isExpanded);
 
     return (
       <div className="flex gap-2 mb-4">
@@ -938,17 +939,11 @@ export function DataTable<TData extends BaseData, TValue>({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
-            <DropdownMenuItem
-              onClick={expandAllGroups}
-              disabled={!hasCollapsedGroups}
-            >
+            <DropdownMenuItem onClick={expandAllGroups} disabled={!hasCollapsedGroups}>
               <ChevronDownIcon className="h-4 w-4 mr-2" />
               Mở rộng tất cả
             </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={collapseAllGroups}
-              disabled={!hasExpandedGroups}
-            >
+            <DropdownMenuItem onClick={collapseAllGroups} disabled={!hasExpandedGroups}>
               <ChevronRightIcon className="h-4 w-4 mr-2" />
               Thu gọn tất cả
             </DropdownMenuItem>
@@ -958,19 +953,20 @@ export function DataTable<TData extends BaseData, TValue>({
         {enableBatchUpdate && (
           <Button
             onClick={() => {
-              // Get all selected rows that belong to the same group
-              const selectedRowIds = table.getFilteredSelectedRowModel().rows
-                .filter(row => !row.original?.isGroupRow)
+              //  Get all selected rows that belong to the same group
+              const selectedRowIds = table
+                .getFilteredSelectedRowModel()
+                .rows.filter(row => !row.original?.isGroupRow)
                 .map(row => row.original.id);
 
               if (selectedRowIds.length === 0) return;
 
-              // Show batch edit form
+              //  Show batch edit form
               showDialog({
                 type: DialogType.EDIT,
-                title: "Chỉnh sửa hàng loạt",
+                title: 'Chỉnh sửa hàng loạt',
                 data: { selectedIds: selectedRowIds },
-                children: editFormComponent
+                children: editFormComponent,
               });
             }}
             variant="outline"
@@ -985,14 +981,13 @@ export function DataTable<TData extends BaseData, TValue>({
     );
   };
 
-
-  // Main render
+  //  Main render
   return (
     <div className="min-h-[calc(100vh-2rem)] flex-1 rounded-xl bg-white dark:bg-gray-950 md:min-h-min border border-gray-200 shadow-sm p-2 sm:p-4">
       <div className="flex flex-col sm:flex-row gap-2 justify-between items-start sm:items-center mb-4">
         <span className="text-lg font-semibold">{title}</span>
 
-        {actions && actions.includes("create") && !isLoading && (
+        {actions && actions.includes('create') && !isLoading && (
           <CreateActionDialog
             name={title}
             description={description}
@@ -1005,7 +1000,6 @@ export function DataTable<TData extends BaseData, TValue>({
         )} */}
       </div>
 
-
       <div className="w-full">
         {enableRowGrouping && <GroupControls />}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between py-2 sm:py-4 gap-2">
@@ -1016,7 +1010,7 @@ export function DataTable<TData extends BaseData, TValue>({
                 <Input
                   placeholder={searchPlaceholder}
                   value={searchValue}
-                  onChange={(e) => setSearchValue(e.target.value)}
+                  onChange={e => setSearchValue(e.target.value)}
                   className="pl-8 w-full"
                 />
               </div>
@@ -1036,28 +1030,28 @@ export function DataTable<TData extends BaseData, TValue>({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  {(!exportFormats || exportFormats.includes("csv")) && (
+                  {(!exportFormats || exportFormats.includes('csv')) && (
                     <DropdownMenuCheckboxItem
                       className="cursor-pointer"
-                      onClick={() => handleExportData("csv")}
+                      onClick={() => handleExportData('csv')}
                     >
                       <FileText className="h-4 w-4 mr-2 text-blue-500" />
                       CSV (.csv)
                     </DropdownMenuCheckboxItem>
                   )}
-                  {(!exportFormats || exportFormats.includes("excel")) && (
+                  {(!exportFormats || exportFormats.includes('excel')) && (
                     <DropdownMenuCheckboxItem
                       className="cursor-pointer"
-                      onClick={() => handleExportData("excel")}
+                      onClick={() => handleExportData('excel')}
                     >
                       <FileSpreadsheet className="h-4 w-4 mr-2 text-green-500" />
                       Excel (.xlsx)
                     </DropdownMenuCheckboxItem>
                   )}
-                  {(!exportFormats || exportFormats.includes("pdf")) && (
+                  {(!exportFormats || exportFormats.includes('pdf')) && (
                     <DropdownMenuCheckboxItem
                       className="cursor-pointer"
-                      onClick={() => handleExportData("pdf")}
+                      onClick={() => handleExportData('pdf')}
                     >
                       <FileType className="h-4 w-4 mr-2 text-red-500" />
                       PDF (.pdf)
@@ -1073,25 +1067,24 @@ export function DataTable<TData extends BaseData, TValue>({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="w-full sm:ml-auto sm:w-auto">
-                  <span className="mr-1">Cột</span><ChevronDown className="h-4 w-4" />
+                  <span className="mr-1">Cột</span>
+                  <ChevronDown className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 {table
                   .getAllColumns()
-                  .filter((column) => column.getCanHide())
-                  .map((column) => {
+                  .filter(column => column.getCanHide())
+                  .map(column => {
                     return (
                       <DropdownMenuCheckboxItem
                         key={column.id}
                         className="capitalize"
                         checked={column.getIsVisible()}
-                        onCheckedChange={(value) =>
-                          column.toggleVisibility(!!value)
-                        }
+                        onCheckedChange={value => column.toggleVisibility(!!value)}
                       >
                         {/* {column.getName()} */}
-                        {typeof column.columnDef.header === "string"
+                        {typeof column.columnDef.header === 'string'
                           ? column.columnDef.header
                           : column.id}
                       </DropdownMenuCheckboxItem>
@@ -1107,24 +1100,26 @@ export function DataTable<TData extends BaseData, TValue>({
         <div className="overflow-x-auto border rounded-md">
           <Table>
             <TableHeader>
-              {table.getHeaderGroups().map((headerGroup) => (
+              {table.getHeaderGroups().map(headerGroup => (
                 <TableRow key={headerGroup.id}>
                   <TableHead key="select" className="whitespace-nowrap">
                     STT
                   </TableHead>
-                  {headerGroup.headers.map((header) => (
+                  {headerGroup.headers.map(header => (
                     <TableHead key={header.id} className="whitespace-nowrap">
                       {header.isPlaceholder
                         ? null
-                        : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
+                        : flexRender(header.column.columnDef.header, header.getContext())}
                     </TableHead>
                   ))}
-                  {(actions && (actions.includes("edit") || actions.includes("delete") || actions.includes("read-only"))) && (
-                    <TableHead key="actions" className="whitespace-nowrap">Thao tác</TableHead>
-                  )}
+                  {actions &&
+                    (actions.includes('edit') ||
+                      actions.includes('delete') ||
+                      actions.includes('read-only')) && (
+                      <TableHead key="actions" className="whitespace-nowrap">
+                        Thao tác
+                      </TableHead>
+                    )}
                 </TableRow>
               ))}
             </TableHeader>
@@ -1156,22 +1151,24 @@ export function DataTable<TData extends BaseData, TValue>({
                   return (
                     <TableRow
                       key={isGroupRow ? `group-${row.original.groupValue}` : row.id}
-                      data-state={row.getIsSelected() && "selected"}
+                      data-state={row.getIsSelected() && 'selected'}
                       className={`${isGroupRow ? 'group-row' : ''} ${isChildRow ? 'child-row' : ''}`}
-                    // className={isChildRow ? "bg-muted/30" : ""}
+                      // className={isChildRow ? "bg-muted/30" : ""}
                     >
                       <TableCell key="select" className="py-2">
-                        {isGroupRow
-                          ? <span className="text-xs text-muted-foreground">Nhóm</span>
-                          : pageIndex * pageSize + rowIndex + 1}
+                        {isGroupRow ? (
+                          <span className="text-xs text-muted-foreground">Nhóm</span>
+                        ) : (
+                          pageIndex * pageSize + rowIndex + 1
+                        )}
                       </TableCell>
 
-                      {row.getVisibleCells().map((cell) => {
+                      {row.getVisibleCells().map(cell => {
                         const column = cell.column;
 
-                        // Handle group row special case
+                        //  Handle group row special case
                         if (isGroupRow) {
-                          // For the first column, show the group header with expand/collapse button
+                          //   For the first column, show the group header with expand/collapse button
                           if (column.id === columns[0].id) {
                             return (
                               <TableCell key={cell.id} className="py-2">
@@ -1179,7 +1176,10 @@ export function DataTable<TData extends BaseData, TValue>({
                                   <Button
                                     variant="ghost"
                                     size="icon"
-                                    onClick={() => row.original.groupValue && toggleGroup(row.original.groupValue)}
+                                    onClick={() =>
+                                      row.original.groupValue &&
+                                      toggleGroup(row.original.groupValue)
+                                    }
                                     className="h-6 w-6 mr-1 p-0"
                                   >
                                     {row.original.isExpanded ? (
@@ -1198,11 +1198,11 @@ export function DataTable<TData extends BaseData, TValue>({
                               </TableCell>
                             );
                           }
-                          // Other columns in group row should be empty
+                          //  Other columns in group row should be empty
                           return <TableCell key={cell.id} className="py-2"></TableCell>;
                         }
 
-                        // Child row styling for the first column
+                        //  Child row styling for the first column
                         if (isChildRow && column.id === columns[0].id) {
                           return (
                             <TableCell key={cell.id} className="py-2 pl-8">
@@ -1211,40 +1211,54 @@ export function DataTable<TData extends BaseData, TValue>({
                           );
                         }
 
-                        // Standard cell rendering
+                        //  Standard cell rendering
                         return (
                           <TableCell key={cell.id} className="py-2">
                             {flexRender(column.columnDef.cell, cell.getContext())}
                           </TableCell>
                         );
                       })}
-                      {(actions && (actions.includes("edit") || actions.includes("delete") || actions.includes("read-only"))) && (
-                        <TableCell key={`${row.id}-actions`} className="py-2">
-                          {!isGroupRow && (
-                            <ButtonGroupAction
-                              actions={actions}
-                              onEdit={(data) => onEdit && onEdit(data)}
-                              onDelete={async (id) => onDelete && await onDelete(id)}
-                              onRefetchData={refetchData}
-                              rowData={row.original}
-                              editComponent={editFormComponent}
-                              viewComponent={viewFormComponent}
-                              editClick={editClickAction}
-                            />
-                          )}
-                        </TableCell>
-                      )}
+                      {actions &&
+                        (actions.includes('edit') ||
+                          actions.includes('delete') ||
+                          actions.includes('read-only')) && (
+                          <TableCell key={`${row.id}-actions`} className="py-2">
+                            {!isGroupRow && (
+                              <ButtonGroupAction
+                                actions={actions}
+                                onEdit={data => onEdit && onEdit(data)}
+                                onDelete={async id => onDelete && (await onDelete(id))}
+                                onRefetchData={refetchData}
+                                rowData={row.original}
+                                editComponent={editFormComponent}
+                                viewComponent={viewFormComponent}
+                                editClick={editClickAction}
+                              />
+                            )}
+                          </TableCell>
+                        )}
                     </TableRow>
-                  )
+                  );
                 })
               ) : (
                 <TableRow>
                   <TableCell
-                    colSpan={columns.length + ((actions ?? []).includes("edit") || (actions ?? []).includes("delete") || (actions ?? []).includes("read-only") ? 2 : 1)}
+                    colSpan={
+                      columns.length +
+                      ((actions ?? []).includes('edit') ||
+                      (actions ?? []).includes('delete') ||
+                      (actions ?? []).includes('read-only')
+                        ? 2
+                        : 1)
+                    }
                     className="h-24 text-center"
                   >
                     {Object.entries(configs).map(([key, config]) => (
-                      <TableSkeletonLoader key={key} config={config} onExitComplete={() => stopLoading(key)} />
+                      <TableSkeletonLoader
+                        key={key}
+                        config={config}
+                        onExitComplete={() => stopLoading(key)}
+                      />
                     ))}
                   </TableCell>
                 </TableRow>
@@ -1257,8 +1271,6 @@ export function DataTable<TData extends BaseData, TValue>({
 
         {/* Phân trang với ShadcnUI */}
         {!disablePagination && renderPagination()}
-
-
       </div>
     </div>
   );

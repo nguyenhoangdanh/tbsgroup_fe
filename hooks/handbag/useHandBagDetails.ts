@@ -1,7 +1,8 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { toast } from '../use-toast';
+
 import { getHandBagFullDetails } from '@/apis/handbag/handbag.api';
 import { HandBag, BagColor, BagColorProcess } from '@/common/interface/handbag';
+import { toast } from 'react-toast-kit';
 
 /**
  * Extended type for a HandBag with its colors and processes
@@ -15,10 +16,7 @@ export interface HandBagWithDetails extends HandBag {
 /**
  * Hook for working with the full handbag details (including colors and processes)
  */
-export const useHandBagDetails = (
-  handBagId?: string,
-  options?: { enabled?: boolean }
-) => {
+export const useHandBagDetails = (handBagId?: string, options?: { enabled?: boolean }) => {
   const queryClient = useQueryClient();
 
   // Query for fetching full handbag details
@@ -34,14 +32,14 @@ export const useHandBagDetails = (
         if (error instanceof Error) {
           errorMessage = error.message;
         }
-        
+
         toast({
           title: 'Không thể tải chi tiết túi xách',
           description: errorMessage,
-          variant: 'destructive',
+          variant: 'error',
           duration: 3000,
         });
-        
+
         throw error;
       }
     },
@@ -61,7 +59,7 @@ export const useHandBagDetails = (
       await queryClient.prefetchQuery({
         queryKey: ['handBag', id, 'fullDetails'],
         queryFn: async () => {
-          // Trả về trực tiếp từ API (đã là HandBagWithDetails)
+          //  Trả về trực tiếp từ API (đã là HandBagWithDetails)
           return await getHandBagFullDetails(id);
         },
         staleTime: 5 * 60 * 1000,

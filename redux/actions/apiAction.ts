@@ -1,4 +1,3 @@
-// src/store/actions/apiActions.ts
 export const API_REQUEST = 'API_REQUEST';
 export const API_SUCCESS = 'API_SUCCESS';
 export const API_ERROR = 'API_ERROR';
@@ -60,10 +59,10 @@ export const apiRequest = (
 
 export const apiSuccess = (data: any, meta: any = {}): ApiSuccessAction => ({
   type: API_SUCCESS,
-  payload: {data, meta},
+  payload: { data, meta },
 });
 
 export const apiError = (error: string, meta: any = {}): ApiErrorAction => ({
   type: API_ERROR,
-  payload: {error, meta},
+  payload: { error, meta },
 });

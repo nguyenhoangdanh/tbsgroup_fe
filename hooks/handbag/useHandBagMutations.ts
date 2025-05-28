@@ -1,4 +1,7 @@
+import { useQueryClient } from '@tanstack/react-query';
+
 import { useBaseMutations } from '../base/useBaseMutations';
+
 import {
   createHandBag,
   updateHandBag,
@@ -21,8 +24,6 @@ import {
   BagColorProcessCreateDTO,
   BagColorProcessUpdateDTO,
 } from '@/common/interface/handbag';
-import { useQueryClient } from '@tanstack/react-query';
-import { useHandBagDetails, HandBagWithDetails } from './useHandBagDetails';
 
 /**
  * Hook cho HandBag mutations
@@ -35,7 +36,7 @@ export const useHandBagMutations = () => {
     'handBag',
     createHandBag,
     updateHandBag,
-    deleteHandBag
+    deleteHandBag,
   );
 
   // Sử dụng hook cơ sở cho BagColor mutations
@@ -43,16 +44,15 @@ export const useHandBagMutations = () => {
     'bagColor',
     createBagColor,
     updateBagColor,
-    deleteBagColor
+    deleteBagColor,
   );
 
   // Sử dụng hook cơ sở cho BagColorProcess mutations
-  const bagColorProcessMutations = useBaseMutations<BagColorProcess, BagColorProcessCreateDTO, BagColorProcessUpdateDTO>(
-    'bagColorProcess',
-    createBagColorProcess,
-    updateBagColorProcess,
-    deleteBagColorProcess
-  );
+  const bagColorProcessMutations = useBaseMutations<
+    BagColorProcess,
+    BagColorProcessCreateDTO,
+    BagColorProcessUpdateDTO
+  >('bagColorProcess', createBagColorProcess, updateBagColorProcess, deleteBagColorProcess);
 
   // Custom onSuccess handlers with cache invalidation
   const onHandBagMutationSuccess = (handBagId: string) => {
@@ -62,7 +62,7 @@ export const useHandBagMutations = () => {
       refetchType: 'none',
     });
 
-    // Invalidate specific handbag data
+    //  Invalidate specific handbag data
     queryClient.invalidateQueries({
       queryKey: ['handBag', handBagId],
       refetchType: 'none',
@@ -88,7 +88,7 @@ export const useHandBagMutations = () => {
       refetchType: 'none',
     });
 
-    // Invalidate parent handbag detail view if parent ID is provided
+    //  Invalidate parent handbag detail view if parent ID is provided
     if (handBagId) {
       queryClient.invalidateQueries({
         queryKey: ['handBag', handBagId, 'fullDetails'],
@@ -97,7 +97,11 @@ export const useHandBagMutations = () => {
     }
   };
 
-  const onBagColorProcessMutationSuccess = (processId: string, bagColorId?: string, handBagId?: string) => {
+  const onBagColorProcessMutationSuccess = (
+    processId: string,
+    bagColorId?: string,
+    handBagId?: string,
+  ) => {
     // Invalidate process lists
     queryClient.invalidateQueries({
       queryKey: ['bagColorProcess-list'],
@@ -137,14 +141,14 @@ export const useHandBagMutations = () => {
     updateBagColorMutation: bagColorMutations.updateMutation,
     deleteBagColorMutation: bagColorMutations.deleteMutation,
 
-    // BagColorProcess mutations
+    //  BagColorProcess mutations
     createBagColorProcessMutation: bagColorProcessMutations.createMutation,
     updateBagColorProcessMutation: bagColorProcessMutations.updateMutation,
     deleteBagColorProcessMutation: bagColorProcessMutations.deleteMutation,
 
-    // Custom cache invalidation helpers
+    //  Custom cache invalidation helpers
     onHandBagMutationSuccess,
     onBagColorMutationSuccess,
-    onBagColorProcessMutationSuccess
+    onBagColorProcessMutationSuccess,
   };
 };

@@ -1,8 +1,6 @@
 // Action types with const assertions for type safety and autocompletion
 
-// import { type IUserInfo } from '@/provider/interfaces/user';
 import { FETCH_USER_FAILURE, FETCH_USER, FETCH_USER_SUCCESS } from '../actions';
-// import { IExam } from '@/provider/interfaces/survey';
 
 // TypeScript interfaces for the state and action types
 interface IUserState {

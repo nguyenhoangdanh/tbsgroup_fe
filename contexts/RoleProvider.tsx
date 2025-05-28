@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useMemo } from 'react';
 
-import useAuthManager from '@/hooks/useAuthManager';
+import { useAuthManager } from '@/hooks/auth/useAuthManager'; // Fixed import path
 import {
   defaultPermissions,
   hasRouteAccess,

@@ -1,260 +1,256 @@
-import React, { useState, useEffect } from "react";
-import dayjs from "dayjs";
-import { Controller, FieldValues, Control, Path } from "react-hook-form";
-import { Label } from "@/components/ui/label";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
-import { TimeRangePicker } from "./TimeRangePicker";
-import { CalendarIcon, ClockIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Matcher } from "react-day-picker";
-import StyledRangeCalendar from "./StyledRangeCalendar";
+import dayjs from 'dayjs';
+import { CalendarIcon, ClockIcon } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Matcher } from 'react-day-picker';
+import { Controller, FieldValues, Control, Path } from 'react-hook-form';
+
+import StyledRangeCalendar from './StyledRangeCalendar';
+import { TimeRangePicker } from './TimeRangePicker';
+
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
 
 interface FieldRangeDateTimePickerProps<T extends FieldValues> {
-    name: Path<T>;
-    label: string;
-    control: Control<T>;
-    placeholder?: string;
-    className?: string;
-    disabled?: boolean;
-    required?: boolean;
-    minDate?: Date;
-    maxDate?: Date;
-    allowSameDateTime?: boolean;
-    accentColor?: string;
+  name: Path<T>;
+  label: string;
+  control: Control<T>;
+  placeholder?: string;
+  className?: string;
+  disabled?: boolean;
+  required?: boolean;
+  minDate?: Date;
+  maxDate?: Date;
+  allowSameDateTime?: boolean;
+  accentColor?: string;
 }
 
 export const FieldRangeDateTimePicker = <T extends FieldValues>({
-    name,
-    label,
-    control,
-    placeholder = "Chọn ngày và giờ",
-    className,
-    disabled = false,
-    required = false,
-    minDate,
-    maxDate,
-    allowSameDateTime = false,
-    accentColor = "#0284c7"
+  name,
+  label,
+  control,
+  // placeholder = 'Chọn ngày và giờ',
+  className,
+  disabled = false,
+  required = false,
+  minDate,
+  maxDate,
+  allowSameDateTime = false,
+  accentColor = '#0284c7',
 }: FieldRangeDateTimePickerProps<T>) => {
-    const [dateOpen, setDateOpen] = useState(false);
-    const [timeOpen, setTimeOpen] = useState(false);
-    const [isMobile, setIsMobile] = useState(false);
+  const [dateOpen, setDateOpen] = useState(false);
+  const [timeOpen, setTimeOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
-    // Responsive handler
-    useEffect(() => {
-        const checkMobile = () => {
-            setIsMobile(window.innerWidth <= 768);
+  //Responsive handler
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    // Check on mount
+    checkMobile();
+
+    // Add event listener for resize
+    window.addEventListener('resize', checkMobile);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+    };
+  }, []);
+
+  return (
+    <Controller
+      control={control}
+      name={name}
+      render={({ field, fieldState: { error } }) => {
+        // Ensure field value exists with default dates
+        const currentValue = field.value || {
+          startDateTime: dayjs().toDate(),
+          endDateTime: dayjs().add(1, 'day').toDate(), // Default to next day
         };
 
-        // Check on mount
-        checkMobile();
+        // Convert to dayjs for easier manipulation
+        const startDate = dayjs(currentValue.startDateTime);
+        const endDate = dayjs(currentValue.endDateTime);
 
-        // Add event listener for resize
-        window.addEventListener('resize', checkMobile);
+        // Create disabled date matcher
+        const disabledDates: Matcher[] = [];
+        if (minDate) {
+          disabledDates.push({ before: minDate });
+        }
+        if (maxDate) {
+          disabledDates.push({ after: maxDate });
+        }
 
-        // Cleanup
-        return () => {
-            window.removeEventListener('resize', checkMobile);
+        //  Handle date selection - FIXED VERSION
+        const handleDateSelect = (range?: { from?: Date; to?: Date }) => {
+          //   If no date selected, do nothing
+          if (!range || !range.from) return;
+
+          //  Start with the existing value to avoid any issues
+          const updatedValue = { ...currentValue };
+
+          //  Update start date preserving the time part
+          updatedValue.startDateTime = new Date(
+            range.from.getFullYear(),
+            range.from.getMonth(),
+            range.from.getDate(),
+            startDate.hour(),
+            startDate.minute(),
+          );
+
+          // If to date is provided, use it; otherwise leave end date unchanged
+          if (range.to) {
+            updatedValue.endDateTime = new Date(
+              range.to.getFullYear(),
+              range.to.getMonth(),
+              range.to.getDate(),
+              endDate.hour(),
+              endDate.minute(),
+            );
+          }
+
+          // Don't auto-close if the user only selected the start date
+          if (range.from && !range.to) {
+            //   Keep popover open to allow selecting the end date
+          } else {
+            //    Close the popover since both dates are selected
+            setDateOpen(false);
+          }
+
+          // Update the field value
+          field.onChange(updatedValue);
         };
-    }, []);
 
-    return (
-        <Controller
-            control={control}
-            name={name}
-            render={({ field, fieldState: { error } }) => {
-                // Ensure field value exists with default dates
-                const currentValue = field.value || {
-                    startDateTime: dayjs().toDate(),
-                    endDateTime: dayjs().add(1, 'day').toDate() // Default to next day
-                };
+        // Handle time range selection
+        const handleTimeRangeSelect = (
+          startHours: number,
+          startMinutes: number,
+          endHours: number,
+          endMinutes: number,
+        ) => {
+          // Create copies of the current dates
+          const start = new Date(currentValue.startDateTime);
+          const end = new Date(currentValue.endDateTime);
 
-                // Convert to dayjs for easier manipulation
-                const startDate = dayjs(currentValue.startDateTime);
-                const endDate = dayjs(currentValue.endDateTime);
+          // Update hours and minutes
+          start.setHours(startHours);
+          start.setMinutes(startMinutes);
 
-                // Create disabled date matcher
-                const disabledDates: Matcher[] = [];
-                if (minDate) {
-                    disabledDates.push({ before: minDate });
-                }
-                if (maxDate) {
-                    disabledDates.push({ after: maxDate });
-                }
+          end.setHours(endHours);
+          end.setMinutes(endMinutes);
 
-                // Handle date selection - FIXED VERSION
-                const handleDateSelect = (range?: { from?: Date; to?: Date }) => {
-                    // If no date selected, do nothing
-                    if (!range || !range.from) return;
+          //  Update the field value
+          field.onChange({
+            startDateTime: start,
+            endDateTime: end,
+          });
 
-                    // Start with the existing value to avoid any issues
-                    const updatedValue = { ...currentValue };
+          setTimeOpen(false);
+        };
 
-                    // Update start date preserving the time part
-                    updatedValue.startDateTime = new Date(
-                        range.from.getFullYear(),
-                        range.from.getMonth(),
-                        range.from.getDate(),
-                        startDate.hour(),
-                        startDate.minute()
-                    );
+        //  Validate time range
+        const isValidDateTime = () => {
+          const start = new Date(currentValue.startDateTime);
+          const end = new Date(currentValue.endDateTime);
 
-                    // If to date is provided, use it; otherwise leave end date unchanged
-                    if (range.to) {
-                        updatedValue.endDateTime = new Date(
-                            range.to.getFullYear(),
-                            range.to.getMonth(),
-                            range.to.getDate(),
-                            endDate.hour(),
-                            endDate.minute()
-                        );
-                    }
+          if (allowSameDateTime) {
+            return start.getTime() <= end.getTime();
+          } else {
+            return start.getTime() < end.getTime();
+          }
+        };
 
-                    // Don't auto-close if the user only selected the start date
-                    if (range.from && !range.to) {
-                        // Keep popover open to allow selecting the end date
-                    } else {
-                        // Close the popover since both dates are selected
-                        setDateOpen(false);
-                    }
+        return (
+          <div className={cn('flex flex-col gap-1 default-theme', className)}>
+            <Label htmlFor={name} className="text-left font-medium">
+              {label}
+              {required && <span className="text-red-500">*</span>}
+            </Label>
 
-                    // Update the field value
-                    field.onChange(updatedValue);
-                };
+            <div className="flex gap-2">
+              {/* Date Selection */}
+              <Popover open={dateOpen} onOpenChange={setDateOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    disabled={disabled}
+                    className={cn(
+                      'flex-grow justify-start text-left font-normal',
+                      !currentValue && 'text-muted-foreground',
+                      disabled && 'bg-gray-100 cursor-not-allowed dark:bg-gray-800',
+                      error ? 'border-red-500' : 'border-gray-300',
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {`${startDate.format('DD/MM/YYYY')} - ${endDate.format('DD/MM/YYYY')}`}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent
+                  className="w-auto p-0 shadow-lg border-gray-200 dark:border-gray-700"
+                  align="start"
+                  side="bottom"
+                >
+                  <StyledRangeCalendar
+                    selected={{
+                      from: startDate.toDate(),
+                      to: endDate.toDate(),
+                    }}
+                    onSelect={handleDateSelect}
+                    disabled={disabledDates}
+                    initialFocus
+                    numberOfMonths={isMobile ? 1 : 2}
+                    accentColor={accentColor}
+                    className="calendar-container"
+                  />
+                </PopoverContent>
+              </Popover>
 
-                // Handle time range selection
-                const handleTimeRangeSelect = (
-                    startHours: number,
-                    startMinutes: number,
-                    endHours: number,
-                    endMinutes: number
-                ) => {
-                    // Create copies of the current dates
-                    const start = new Date(currentValue.startDateTime);
-                    const end = new Date(currentValue.endDateTime);
+              {/* Time Selection */}
+              <Popover open={timeOpen} onOpenChange={setTimeOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    disabled={disabled}
+                    className={cn(
+                      'flex-grow justify-start text-left font-normal',
+                      !currentValue && 'text-muted-foreground',
+                      disabled && 'bg-gray-100 cursor-not-allowed dark:bg-gray-800',
+                      error ? 'border-red-500' : 'border-gray-300',
+                    )}
+                  >
+                    <ClockIcon className="mr-2 h-4 w-4" />
+                    {`${startDate.format('HH:mm')} - ${endDate.format('HH:mm')}`}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start" side="bottom">
+                  <TimeRangePicker
+                    onSelect={handleTimeRangeSelect}
+                    startHours={startDate.hour()}
+                    startMinutes={startDate.minute()}
+                    endHours={endDate.hour()}
+                    endMinutes={endDate.minute()}
+                    allowSameTime={allowSameDateTime}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
 
-                    // Update hours and minutes
-                    start.setHours(startHours);
-                    start.setMinutes(startMinutes);
+            {/* Error Handling */}
+            {error?.message && <p className="h-5 text-red-500 text-sm">{error.message}</p>}
 
-                    end.setHours(endHours);
-                    end.setMinutes(endMinutes);
-
-                    // Update the field value
-                    field.onChange({
-                        startDateTime: start,
-                        endDateTime: end
-                    });
-
-                    setTimeOpen(false);
-                };
-
-                // Validate time range
-                const isValidDateTime = () => {
-                    const start = new Date(currentValue.startDateTime);
-                    const end = new Date(currentValue.endDateTime);
-
-                    if (allowSameDateTime) {
-                        return start.getTime() <= end.getTime();
-                    } else {
-                        return start.getTime() < end.getTime();
-                    }
-                };
-
-                return (
-                    <div className={cn("flex flex-col gap-1 default-theme", className)}>
-                        <Label htmlFor={name} className="text-left font-medium">
-                            {label}
-                            {required && <span className="text-red-500">*</span>}
-                        </Label>
-
-                        <div className="flex gap-2">
-                            {/* Date Selection */}
-                            <Popover open={dateOpen} onOpenChange={setDateOpen}>
-                                <PopoverTrigger asChild>
-                                    <Button
-                                        variant="outline"
-                                        disabled={disabled}
-                                        className={cn(
-                                            "flex-grow justify-start text-left font-normal",
-                                            !currentValue && "text-muted-foreground",
-                                            disabled && "bg-gray-100 cursor-not-allowed dark:bg-gray-800",
-                                            error ? "border-red-500" : "border-gray-300"
-                                        )}
-                                    >
-                                        <CalendarIcon className="mr-2 h-4 w-4" />
-                                        {`${startDate.format('DD/MM/YYYY')} - ${endDate.format('DD/MM/YYYY')}`}
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent
-                                    className="w-auto p-0 shadow-lg border-gray-200 dark:border-gray-700"
-                                    align="start"
-                                    side="bottom"
-                                >
-                                    <StyledRangeCalendar
-                                        selected={{
-                                            from: startDate.toDate(),
-                                            to: endDate.toDate()
-                                        }}
-                                        onSelect={handleDateSelect}
-                                        disabled={disabledDates}
-                                        initialFocus
-                                        numberOfMonths={isMobile ? 1 : 2}
-                                        accentColor={accentColor}
-                                        className="calendar-container"
-                                    />
-                                </PopoverContent>
-                            </Popover>
-
-                            {/* Time Selection */}
-                            <Popover open={timeOpen} onOpenChange={setTimeOpen}>
-                                <PopoverTrigger asChild>
-                                    <Button
-                                        variant="outline"
-                                        disabled={disabled}
-                                        className={cn(
-                                            "flex-grow justify-start text-left font-normal",
-                                            !currentValue && "text-muted-foreground",
-                                            disabled && "bg-gray-100 cursor-not-allowed dark:bg-gray-800",
-                                            error ? "border-red-500" : "border-gray-300"
-                                        )}
-                                    >
-                                        <ClockIcon className="mr-2 h-4 w-4" />
-                                        {`${startDate.format('HH:mm')} - ${endDate.format('HH:mm')}`}
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent
-                                    className="w-auto p-0"
-                                    align="start"
-                                    side="bottom"
-                                >
-                                    <TimeRangePicker
-                                        onSelect={handleTimeRangeSelect}
-                                        startHours={startDate.hour()}
-                                        startMinutes={startDate.minute()}
-                                        endHours={endDate.hour()}
-                                        endMinutes={endDate.minute()}
-                                        allowSameTime={allowSameDateTime}
-                                    />
-                                </PopoverContent>
-                            </Popover>
-                        </div>
-
-                        {/* Error Handling */}
-                        {error?.message && (
-                            <p className="h-5 text-red-500 text-sm">{error.message}</p>
-                        )}
-
-                        {/* Validation Warning */}
-                        {currentValue && !isValidDateTime() && (
-                            <p className="h-5 text-red-500 text-sm">
-                                Thời gian kết thúc phải sau thời gian bắt đầu
-                            </p>
-                        )}
-                    </div>
-                )
-            }}
-        />
-    );
+            {/* Validation Warning */}
+            {currentValue && !isValidDateTime() && (
+              <p className="h-5 text-red-500 text-sm">
+                Thời gian kết thúc phải sau thời gian bắt đầu
+              </p>
+            )}
+          </div>
+        );
+      }}
+    />
+  );
 };

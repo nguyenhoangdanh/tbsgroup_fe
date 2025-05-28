@@ -1,20 +1,21 @@
-// components/digital-form/DigitalFormReportsHeader.tsx
 'use client';
 
-import {useState, useCallback} from 'react';
-import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card';
-import {Tabs, TabsList, TabsTrigger, TabsContent} from '@/components/ui/tabs';
-import {Button} from '@/components/ui/button';
-import {Calendar} from '@/components/ui/calendar';
-import {Popover, PopoverContent, PopoverTrigger} from '@/components/ui/popover';
-import {Calendar as CalendarIcon, Download, BarChart2, ArrowRight} from 'lucide-react';
-import {format} from 'date-fns';
-import {vi} from 'date-fns/locale';
-import {FactoryReport} from './reports/FactoryReport';
-import {LineReport} from './reports/LineReport';
-import {TeamReport} from './reports/TeamReport';
-import {GroupReport} from './reports/GroupReport';
-import {ComparisonReport} from './reports/ComparisonReport';
+import { format } from 'date-fns';
+import { vi } from 'date-fns/locale';
+import { Calendar as CalendarIcon, Download, BarChart2, ArrowRight } from 'lucide-react';
+import { useState, useCallback } from 'react';
+
+import { ComparisonReport } from './reports/ComparisonReport';
+import { FactoryReport } from './reports/FactoryReport';
+import { GroupReport } from './reports/GroupReport';
+import { LineReport } from './reports/LineReport';
+import { TeamReport } from './reports/TeamReport';
+
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
 interface ReportDateRangeProps {
   dateFrom: Date;
@@ -83,12 +84,12 @@ const ReportDateRange = ({
 };
 
 export function DigitalFormReportsHeader() {
-  // Date range state
+  //Date range state
   const [dateFrom, setDateFrom] = useState<Date>(new Date());
   const [dateTo, setDateFrom] = useState<Date>(new Date());
   const [activeReport, setActiveReport] = useState<string>('factory');
 
-  // Filters state for different report types
+  //Filters state for different report types
   const [factoryId, setFactoryId] = useState<string>('');
   const [lineId, setLineId] = useState<string>('');
   const [teamId, setTeamId] = useState<string>('');
@@ -108,7 +109,7 @@ export function DigitalFormReportsHeader() {
   const [includeProcesses, setIncludeProcesses] = useState<boolean>(true);
   const [includeTimeSeries, setIncludeTimeSeries] = useState<boolean>(true);
 
-  // Export function
+  //Export function
   const handleExport = useCallback(
     (format: 'pdf' | 'excel' | 'csv') => {
       // Implementation of export functionality

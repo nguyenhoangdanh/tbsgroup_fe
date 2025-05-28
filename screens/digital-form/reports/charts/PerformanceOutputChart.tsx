@@ -1,7 +1,5 @@
-// components/digital-form/reports/charts/PerformanceOutputChart.tsx
 'use client';
 
-import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card';
 import {
   BarChart,
   Bar,
@@ -13,6 +11,8 @@ import {
   Cell,
   ReferenceLine,
 } from 'recharts';
+
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface PerformanceData {
   hour: string;
@@ -44,18 +44,18 @@ const getPerformanceLabel = (percentage: number): string => {
 };
 
 // Custom Tooltip component
-const CustomTooltip = ({active, payload, label}: any) => {
+const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     const item = payload[0].payload;
     const percentage = item.percentage;
-    const performanceLevel = getPerformanceLabel(percentage);
+    const performanceLevel = getPerformanceLabel(Number(percentage));
 
     return (
       <div className="bg-white p-3 border rounded shadow-md">
         <p className="font-semibold">{`Giờ: ${label}`}</p>
         <p>{`Sản lượng thực tế: ${item.totalOutput}`}</p>
         <p>{`Sản lượng kế hoạch: ${item.plannedOutput}`}</p>
-        <p style={{color: getPerformanceColor(percentage)}}>
+        <p style={{ color: getPerformanceColor(Number(percentage)) }}>
           {`Tỷ lệ: ${percentage}% (${performanceLevel})`}
         </p>
       </div>
@@ -65,7 +65,7 @@ const CustomTooltip = ({active, payload, label}: any) => {
   return null;
 };
 
-export function PerformanceOutputChart({data}: PerformanceOutputChartProps) {
+export function PerformanceOutputChart({ data }: PerformanceOutputChartProps) {
   // Xử lý dữ liệu để thêm phần trăm
   const processedData = data.map(item => ({
     ...item,
@@ -74,11 +74,11 @@ export function PerformanceOutputChart({data}: PerformanceOutputChartProps) {
 
   // Tạo dữ liệu cho legend
   const legendItems = [
-    {name: 'Giỏi (≥100%)', color: '#D580FF'},
-    {name: 'Khá (95-<100%)', color: '#82ca9d'},
-    {name: 'Trung bình (90-<95%)', color: '#FFD700'},
-    {name: 'Yếu (85-<90%)', color: '#FFA500'},
-    {name: 'Kém (<85%)', color: '#FF0000'},
+    { name: 'Giỏi (≥100%)', color: '#D580FF' },
+    { name: 'Khá (95-<100%)', color: '#82ca9d' },
+    { name: 'Trung bình (90-<95%)', color: '#FFD700' },
+    { name: 'Yếu (85-<90%)', color: '#FFA500' },
+    { name: 'Kém (<85%)', color: '#FF0000' },
   ];
 
   // Custom Legend component
@@ -88,7 +88,7 @@ export function PerformanceOutputChart({data}: PerformanceOutputChartProps) {
         <div key={index} className="flex items-center">
           <div
             className="w-4 h-4 mr-1"
-            style={{backgroundColor: item.color, display: 'inline-block'}}
+            style={{ backgroundColor: item.color, display: 'inline-block' }}
           />
           <span>{item.name}</span>
         </div>
@@ -102,7 +102,7 @@ export function PerformanceOutputChart({data}: PerformanceOutputChartProps) {
         <CardTitle className="text-lg">Phân tích hiệu suất sản lượng theo giờ</CardTitle>
       </CardHeader>
       <CardContent>
-        <div style={{width: '100%', height: 400}}>
+        <div style={{ width: '100%', height: 400 }}>
           {processedData && processedData.length > 0 ? (
             <>
               <ResponsiveContainer width="100%" height="80%">
@@ -123,7 +123,7 @@ export function PerformanceOutputChart({data}: PerformanceOutputChartProps) {
                       value: 'Phần trăm (%)',
                       angle: -90,
                       position: 'insideLeft',
-                      style: {textAnchor: 'middle'},
+                      style: { textAnchor: 'middle' },
                     }}
                   />
                   <Tooltip content={<CustomTooltip />} />

@@ -1,4 +1,3 @@
-// components/StatsSheet.tsx
 'use client';
 
 import { useMemo } from 'react';
@@ -36,6 +35,29 @@ interface StatsSheetProps {
   onTabChange: (tab: string) => void;
 }
 
+interface IWorker {
+  id: string;
+  user?: {
+    id: string;
+    fullName?: string;
+    employeeId?: string;
+  };
+  employeeId: string;
+  name?: string;
+  attendanceStatus: AttendanceStatus;
+  totalOutput?: number;
+  hourlyData?: Record<string, number>;
+  bagId?: string;
+  processId?: string;
+  process?: { name: string };
+  colorId?: string;
+  colorName?: string;
+  handBag?: { name: string };
+  bagName?: string;
+  processName?: string;
+  bagColor?: { colorName: string };
+}
+
 export function StatsSheet({
   open,
   onOpenChange,
@@ -58,8 +80,8 @@ export function StatsSheet({
     }
 
     // Group workers by user ID to avoid duplicates
-    const uniqueWorkers = new Map();
-    formData.workers.forEach(worker => {
+    const uniqueWorkers = new Map<string, IWorker>();
+    formData.workers.forEach((worker: IWorker) => {
       if (worker.user?.id && !uniqueWorkers.has(worker.user.id)) {
         uniqueWorkers.set(worker.user.id, worker);
       }
@@ -107,7 +129,7 @@ export function StatsSheet({
 
     // Group workers by user ID to avoid duplicates
     const uniqueWorkers = new Map();
-    formData.workers.forEach(worker => {
+    formData.workers.forEach((worker: IWorker) => {
       if (worker.user?.id && !uniqueWorkers.has(worker.user.id)) {
         uniqueWorkers.set(worker.user.id, worker);
       }
@@ -116,23 +138,26 @@ export function StatsSheet({
 
     let totalSlots = 0;
     let filledSlots = 0;
-    let totalOutput = 0;
+    let totalOutput: number = 0;
 
     // Calculate total output
-    totalOutput = formData.workers.reduce((sum, worker) => sum + (worker.totalOutput || 0), 0);
+    totalOutput = (formData.workers as IWorker[]).reduce(
+      (sum, worker) => sum + (worker.totalOutput || 0),
+      0,
+    );
 
     // Calculate average
     const averageOutput =
       uniqueWorkersList.length > 0 ? Math.round(totalOutput / uniqueWorkersList.length) : 0;
 
     // Simplified slot calculation
-    formData.workers.forEach(worker => {
+    formData.workers.forEach((worker: IWorker) => {
       // Skip counting slots for absent workers
       if (worker.attendanceStatus === AttendanceStatus.ABSENT) {
         return;
       }
 
-      const hourlyData = worker.hourlyData || {};
+      const hourlyData: Record<string, number> = worker.hourlyData || {};
       totalSlots += 8; // Simplification - count 8 slots per worker
       filledSlots += Object.values(hourlyData).filter(value => (value as number) > 0).length;
     });
@@ -155,7 +180,7 @@ export function StatsSheet({
     // Group entries by user ID and calculate total output
     const userMap = new Map();
 
-    formData.workers.forEach(worker => {
+    formData.workers.forEach((worker: IWorker) => {
       if (!worker.user?.id) return;
 
       const userId = worker.user.id;
@@ -170,25 +195,35 @@ export function StatsSheet({
         });
       }
 
-      // Add to total output
+      //  Add to total output
       const userData = userMap.get(userId);
       userData.totalOutput += worker.totalOutput || 0;
     });
 
     // Convert to array and sort by total output (highest first)
     return Array.from(userMap.values())
-      .filter(worker => worker.attendanceStatus !== AttendanceStatus.ABSENT)
+      .filter(
+        (
+          worker,
+        ): worker is {
+          userId: string;
+          userName: string;
+          employeeId: string;
+          totalOutput: number;
+          attendanceStatus: AttendanceStatus;
+        } => worker.attendanceStatus !== AttendanceStatus.ABSENT,
+      )
       .sort((a, b) => b.totalOutput - a.totalOutput);
   }, [formData]);
 
-  // Get all bag production data
+  //  Get all bag production data
   const productionData = useMemo(() => {
     if (!formData || !formData.workers) return [];
 
     const bagMap = new Map();
 
     // Iterate through all workers
-    formData.workers.forEach(worker => {
+    formData.workers.forEach((worker: IWorker) => {
       if (!worker.hourlyData) return;
       if (!worker.bagId || !worker.processId || !worker.colorId) return;
 
@@ -221,7 +256,7 @@ export function StatsSheet({
   const hourlyOutputDistribution = useMemo(() => {
     if (!formData || !formData.workers) return {};
 
-    const hourlyOutput = {};
+    const hourlyOutput: Record<string, number> = {};
 
     // Initialize with all time slots
     const timeSlots = [
@@ -240,7 +275,7 @@ export function StatsSheet({
     });
 
     // Sum up output for each time slot
-    formData.workers.forEach(worker => {
+    formData.workers.forEach((worker: IWorker) => {
       if (!worker.hourlyData) return;
 
       Object.entries(worker.hourlyData).forEach(([timeSlot, output]) => {
@@ -441,7 +476,7 @@ export function StatsSheet({
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {workerProductionStats.slice(0, 5).map((worker, index) => (
+                          {workerProductionStats.slice(0, 5).map(worker => (
                             <TableRow key={worker.userId}>
                               <TableCell className="py-2">
                                 <div className="font-medium text-sm">{worker.userName}</div>
@@ -551,7 +586,7 @@ export function StatsSheet({
                         <TableBody>
                           {formData &&
                             formData.workers &&
-                            formData.workers.slice(0, 8).map(worker => (
+                            formData.workers.slice(0, 8).map((worker: IWorker) => (
                               <TableRow key={worker.id}>
                                 <TableCell className="py-2">
                                   <div className="font-medium text-sm">

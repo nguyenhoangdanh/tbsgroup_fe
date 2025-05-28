@@ -1,4 +1,3 @@
-// components/ImprovedFormProgress.tsx
 'use client';
 
 import { Clock } from 'lucide-react';
@@ -50,7 +49,7 @@ export function FormProgress({
         };
       }
 
-      // Determine available time slots based on shift type
+      //  Determine available time slots based on shift type
       const regularTimeSlots = [
         '07:30-08:30',
         '08:30-09:30',
@@ -129,7 +128,7 @@ export function FormProgress({
         return;
       }
 
-      // Determine available time slots based on shift type
+      //Determine available time slots based on shift type
       let availableSlots: string[] = [];
 
       // Regular shift slots (standard for all shift types)

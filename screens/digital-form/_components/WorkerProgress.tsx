@@ -1,4 +1,3 @@
-// components/WorkerProgress.tsx
 import { Info } from 'lucide-react';
 
 import { Progress } from '@/components/ui/progress';

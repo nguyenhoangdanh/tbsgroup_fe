@@ -1,14 +1,16 @@
-"use client";
+'use client';
 
-import { BagGroupRateProvider } from '@/hooks/group/bag-group-rate/BagGroupRateContext';
-import { HandBagProvider } from '@/hooks/handbag/HandBagContext';
-import dynamic from 'next/dynamic';
 import React from 'react';
 
-// Use dynamic import with ssr:false to avoid SSR context issues
+import dynamic from 'next/dynamic';
+
+import {BagGroupRateProvider} from '@/hooks/group/bag-group-rate/BagGroupRateContext';
+import {HandBagProvider} from '@/hooks/handbag/HandBagContext';
+
+Use dynamic import with ssr:false to avoid SSR context issues
 const DynamicBagGroupRateContainer = dynamic(
-    () => import('@/screens/admin/bag-group-rate/Container'),
-    { ssr: false }
+  () => import('@/screens/admin/bag-group-rate/Container'),
+  {ssr: false},
 );
 
 /**
@@ -16,11 +18,11 @@ const DynamicBagGroupRateContainer = dynamic(
  * Using dynamic import ensures the components only load on the client
  */
 export default function BagGroupRatePage() {
-    return (
-        <HandBagProvider>
-            <BagGroupRateProvider>
-                <DynamicBagGroupRateContainer />
-            </BagGroupRateProvider>
-        </HandBagProvider>
-    );
+  return (
+    <HandBagProvider>
+      <BagGroupRateProvider>
+        <DynamicBagGroupRateContainer />
+      </BagGroupRateProvider>
+    </HandBagProvider>
+  );
 }

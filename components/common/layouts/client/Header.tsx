@@ -1,4 +1,5 @@
 'use client';
+
 import { Menu, X } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -7,9 +8,9 @@ import React, { useState, useEffect, useRef } from 'react';
 
 import UserAvatar from './UserAvatar';
 import ThemeSwitcher from '../admin/ThemeSwitcher';
-import ImageLogo from '../ImageLogo';
 
-import useAuthManager from '@/hooks/useAuthManager';
+import ImageLogo from '../ImageLogo';
+import { useAuthManager } from '@/hooks/auth/useAuthManager';
 
 interface IHeaderProps {
   children?: React.ReactNode;
@@ -39,7 +40,7 @@ const Header: React.FC<IHeaderProps> = ({ children }) => {
   const dropdownRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const headerRef = useRef<HTMLElement>(null);
 
-  // Handle scroll effect
+  //  Handle scroll effect
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 10);
@@ -77,7 +78,7 @@ const Header: React.FC<IHeaderProps> = ({ children }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [activeDropdown]);
 
-  // Handle clicks outside of mobile menu
+  //  Handle clicks outside of mobile menu
   useEffect(() => {
     const handleClickOutsideMenu = (event: MouseEvent) => {
       if (isMenuOpen && headerRef.current && !headerRef.current.contains(event.target as Node)) {

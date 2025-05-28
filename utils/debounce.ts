@@ -22,15 +22,11 @@ type DebounceFunction<F extends (...args: any[]) => any> = {
  * @param options Debounce configuration options
  */
 export function debounce<F extends (...args: any[]) => any>(
-  func: F, 
-  wait = 300, 
-  options: DebounceOptions = {}
+  func: F,
+  wait = 300,
+  options: DebounceOptions = {},
 ): DebounceFunction<F> {
-  const { 
-    leading = false, 
-    trailing = true, 
-    maxWait 
-  } = options;
+  const { leading = false, trailing = true, maxWait } = options;
 
   let timeoutId: ReturnType<typeof setTimeout> | null = null;
   let maxTimeoutId: ReturnType<typeof setTimeout> | null = null;
@@ -57,11 +53,11 @@ export function debounce<F extends (...args: any[]) => any>(
     return result;
   };
 
-  const remainingWait = (time: number) => {
-    if (!lastCallTime) return wait;
-    const timeSinceLastCall = time - lastCallTime;
-    return Math.max(wait - timeSinceLastCall, 0);
-  };
+  // const remainingWait = (time: number) => {
+  //   if (!lastCallTime) return wait;
+  //   const timeSinceLastCall = time - lastCallTime;
+  //   return Math.max(wait - timeSinceLastCall, 0);
+  // };
 
   const startTimer = (pendingFunc: () => void, localWait: number) => {
     if (timeoutId) clearTimeout(timeoutId);
@@ -78,14 +74,14 @@ export function debounce<F extends (...args: any[]) => any>(
     lastThis = null;
   };
 
-  const debouncedFunc: DebounceFunction<F> = function(this: any, ...args: Parameters<F>) {
+  const debouncedFunc: DebounceFunction<F> = function (this: any, ...args: Parameters<F>) {
     const time = Date.now();
-    const isInvoking = 
-      (leading && (!lastCallTime || time - lastCallTime >= wait)) || 
-      (trailing && (lastArgs !== null));
+    const isInvoking =
+      (leading && (!lastCallTime || time - lastCallTime >= wait)) ||
+      (trailing && lastArgs !== null);
 
     lastArgs = args;
-    lastThis = this;
+    // lastThis = this;
 
     if (isInvoking) {
       if (!timeoutId) {
@@ -138,9 +134,9 @@ export function debounce<F extends (...args: any[]) => any>(
  * @param options Debounce configuration options
  */
 export function useDebouncedCallback<F extends (...args: any[]) => any>(
-  func: F, 
-  wait = 300, 
-  options: DebounceOptions = {}
+  func: F,
+  wait = 300,
+  options: DebounceOptions = {},
 ): F {
   const debouncedRef = useRef<DebounceFunction<F> | null>(null);
 
@@ -169,15 +165,15 @@ export function useDebouncedCallback<F extends (...args: any[]) => any>(
  * @param options Debounce configuration options
  */
 export function debouncedAsync<F extends (...args: any[]) => Promise<any>>(
-  func: F, 
-  wait = 300, 
-  options: DebounceOptions = {}
+  func: F,
+  wait = 300,
+  options: DebounceOptions = {},
 ): (...args: Parameters<F>) => Promise<ReturnType<F> | undefined> {
   const debouncedFn = debounce(func, wait, options);
 
   return async (...args: Parameters<F>) => {
     try {
-      return await debouncedFn(...args) as Promise<ReturnType<F>>;
+      return (await debouncedFn(...args)) as Promise<ReturnType<F>>;
     } catch (error) {
       console.warn('Debounced async function error:', error);
       return undefined;

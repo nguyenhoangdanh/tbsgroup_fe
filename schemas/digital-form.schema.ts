@@ -1,11 +1,7 @@
 // schemas/digital-form.schema.ts
-import {z} from 'zod';
-import {
-  ShiftType,
-  RecordStatus,
-  AttendanceStatus,
-  ProductionIssueType,
-} from '@/common/types/digital-form';
+import { z } from 'zod';
+
+import { ShiftType, AttendanceStatus, ProductionIssueType } from '@/common/types/digital-form';
 
 // Base pagination schema
 export const paginationSchema = z.object({
@@ -84,6 +80,7 @@ export const digitalFormEntrySchema = z.object({
   // Quality information
   qualityScore: z.number().int().min(0).max(100).default(100),
   qualityNotes: z.string().optional(),
+  shiftType: z.nativeEnum(ShiftType).default(ShiftType.REGULAR),
 });
 
 // Update Form Entry schema

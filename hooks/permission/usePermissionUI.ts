@@ -1,22 +1,27 @@
-// src/hooks/permission/usePermissionUI.ts
-import { useState, useCallback, useMemo } from 'react';
-import { usePermissionQueries } from './usePermissionQueries';
-import { toast } from '@/hooks/use-toast';
-import { usePermissionContext } from './PermissionContext';
-import { PaginationDTO, PermissionCondDTO } from '@/common/types/permission';
-import { PermissionType } from '@/common/enum';
 import { useQueryClient } from '@tanstack/react-query';
-import { ids } from 'googleapis/build/src/apis/ids';
+import { useState, useCallback, useMemo } from 'react';
+
+import { usePermissionContext } from './PermissionContext';
+import { usePermissionQueries } from './usePermissionQueries';
+
 import { batchDeletePermissionApi } from '@/apis/permission/permission.api';
+import { PermissionType } from '@/common/enum';
+import {
+  CreatePermissionDTO,
+  PaginationDTO,
+  PermissionCondDTO,
+  UpdatePermissionDTO,
+} from '@/common/types/permission';
+import { toast } from 'react-toast-kit';
 
 /**
  * Hook for permission-related UI operations and state management
  */
 export const usePermissionUI = () => {
-  const { 
-    userPermissions, 
-    hasPermission, 
-    hasPageAccess, 
+  const {
+    userPermissions,
+    hasPermission,
+    hasPageAccess,
     hasFeatureAccess,
     createPermission,
     updatePermission,
@@ -24,31 +29,30 @@ export const usePermissionUI = () => {
     assignPermissionsToRole,
     removePermissionsFromRole,
   } = usePermissionContext();
-  
+
   const { listPermissions } = usePermissionQueries();
   const queryClient = useQueryClient();
-  
-  // UI state
+
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
   const [searchFilters, setSearchFilters] = useState<PermissionCondDTO>({});
   const [pagination, setPagination] = useState<PaginationDTO>({
     page: 1,
     limit: 10,
     sortBy: 'createdAt',
-    sortOrder: 'desc'
+    sortOrder: 'desc',
   });
 
   // Fetch permissions list with current filters and pagination
   const {
     data: permissionsListData,
     isLoading: isLoadingPermissions,
-    refetch: refetchPermissions
+    refetch: refetchPermissions,
   } = listPermissions(
-    { ...searchFilters, ...pagination }
-    // Removed all options due to TypeScript errors
+    { ...searchFilters, ...pagination },
+    //   Removed all options due to TypeScript errors
   );
 
-  // Selection handlers
+  //Selection handlers
   const handleSelectPermission = useCallback((permissionId: string) => {
     setSelectedPermissions(prev => {
       if (prev.includes(permissionId)) {
@@ -66,99 +70,111 @@ export const usePermissionUI = () => {
   const handleClearSelection = useCallback(() => {
     setSelectedPermissions([]);
   }, []);
-  
+
   // Filter handlers
   const handleFilterChange = useCallback((filters: PermissionCondDTO) => {
     setSearchFilters(filters);
     setPagination(prev => ({ ...prev, page: 1 })); // Reset to first page on filter change
   }, []);
-  
-  // Pagination handlers
+
+  //  Pagination handlers
   const handlePageChange = useCallback((page: number) => {
     setPagination(prev => ({ ...prev, page }));
   }, []);
-  
+
   const handleLimitChange = useCallback((limit: number) => {
     setPagination(prev => ({ ...prev, limit, page: 1 }));
   }, []);
-  
+
   const handleSortChange = useCallback((sortBy: string, sortOrder: 'asc' | 'desc') => {
     setPagination(prev => ({ ...prev, sortBy, sortOrder }));
   }, []);
 
   // Permission management actions with UI feedback
-  const handleCreatePermission = useCallback(async (data: any) => {
-    try {
-      const id = await createPermission(data);
-      if (id) {
+  const handleCreatePermission = useCallback(
+    async (data: CreatePermissionDTO) => {
+      try {
+        const id = await createPermission(data);
+        if (id) {
+          toast({
+            title: 'Permission created',
+            description: 'New permission has been created successfully',
+          });
+          await queryClient.refetchQueries({ queryKey: ['permission-list'] });
+          return true;
+        }
+        return false;
+      } catch (error) {
+        console.error('Failed to create permission:', error);
         toast({
-          title: 'Permission created',
-          description: 'New permission has been created successfully',
+          title: 'Error',
+          description: 'Failed to create permission',
+          variant: 'error',
         });
-        await queryClient.refetchQueries({ queryKey: ['permission-list'] });
-        return true;
+        return false;
       }
-      return false;
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to create permission',
-        variant: 'destructive',
-      });
-      return false;
-    }
-  }, [createPermission, queryClient]);
+    },
+    [createPermission, queryClient],
+  );
 
-  const handleUpdatePermission = useCallback(async (id: string, data: any) => {
-    try {
-      const success = await updatePermission(id, data);
-      if (success) {
+  const handleUpdatePermission = useCallback(
+    async (id: string, data: UpdatePermissionDTO) => {
+      try {
+        const success = await updatePermission(id, data);
+        if (success) {
+          toast({
+            title: 'Permission updated',
+            description: 'Permission has been updated successfully',
+          });
+          await refetchPermissions();
+          return true;
+        }
+        return false;
+      } catch (error) {
+        console.error('Error in handleUpdatePermission:', error);
         toast({
-          title: 'Permission updated',
-          description: 'Permission has been updated successfully',
+          title: 'Error',
+          description: 'Failed to update permission',
+          variant: 'error',
         });
-        await refetchPermissions();
-        return true;
+        return false;
       }
-      return false;
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to update permission',
-        variant: 'destructive',
-      });
-      return false;
-    }
-  }, [updatePermission, refetchPermissions]);
+    },
+    [updatePermission, refetchPermissions],
+  );
 
-  const handleDeletePermission = useCallback(async (id: string) => {
-    try {
-      const success = await deletePermission(id);
-      if (success) {
+  const handleDeletePermission = useCallback(
+    async (id: string) => {
+      try {
+        const success = await deletePermission(id);
+        if (success) {
+          toast({
+            title: 'Permission deleted',
+            description: 'Permission has been deleted successfully',
+          });
+          await refetchPermissions();
+          return true;
+        }
+        return false;
+      } catch (error) {
+        console.error('Error in handleDeletePermission:', error);
         toast({
-          title: 'Permission deleted',
-          description: 'Permission has been deleted successfully',
+          title: 'Error',
+          description: 'Failed to delete permission',
+          variant: 'error',
         });
-        await refetchPermissions();
-        return true;
+        return false;
       }
-      return false;
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to delete permission',
-        variant: 'destructive',
-      });
-      return false;
-    }
-  }, [deletePermission, refetchPermissions]);
+    },
+    [deletePermission, refetchPermissions],
+  );
 
   const handleBulkDelete = useCallback(async () => {
     if (selectedPermissions.length === 0) {
       toast({
         title: 'No permissions selected',
         description: 'Please select at least one permission to delete',
-        variant: 'destructive',
+        variant: 'error',
       });
       return false;
     }
@@ -179,7 +195,7 @@ export const usePermissionUI = () => {
         toast({
           title: 'Partial success',
           description: 'Some permissions could not be deleted',
-          variant: 'destructive',
+          variant: 'error',
         });
       }
 
@@ -187,77 +203,86 @@ export const usePermissionUI = () => {
       await refetchPermissions();
       return success;
     } catch (error) {
+      console.error('Failed to delete permissions:', error);
       toast({
         title: 'Error',
         description: 'Failed to delete permissions',
-        variant: 'destructive',
+        variant: 'error',
       });
       return false;
     }
   }, [selectedPermissions, deletePermission, refetchPermissions]);
 
   // Role permission management
-  const handleAssignToRole = useCallback(async (roleId: string) => {
-    if (selectedPermissions.length === 0) {
-      toast({
-        title: 'No permissions selected',
-        description: 'Please select at least one permission to assign',
-        variant: 'destructive',
-      });
-      return false;
-    }
-
-    try {
-      const success = await assignPermissionsToRole(roleId, selectedPermissions);
-      if (success) {
+  const handleAssignToRole = useCallback(
+    async (roleId: string) => {
+      if (selectedPermissions.length === 0) {
         toast({
-          title: 'Permissions assigned',
-          description: `${selectedPermissions.length} permissions have been assigned to the role`,
+          title: 'No permissions selected',
+          description: 'Please select at least one permission to assign',
+          variant: 'error',
         });
-        setSelectedPermissions([]);
-        return true;
+        return false;
       }
-      return false;
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to assign permissions to role',
-        variant: 'destructive',
-      });
-      return false;
-    }
-  }, [selectedPermissions, assignPermissionsToRole]);
 
-  const handleRemoveFromRole = useCallback(async (roleId: string) => {
-    if (selectedPermissions.length === 0) {
-      toast({
-        title: 'No permissions selected',
-        description: 'Please select at least one permission to remove',
-        variant: 'destructive',
-      });
-      return false;
-    }
-
-    try {
-      const success = await removePermissionsFromRole(roleId, selectedPermissions);
-      if (success) {
+      try {
+        const success = await assignPermissionsToRole(roleId, selectedPermissions);
+        if (success) {
+          toast({
+            title: 'Permissions assigned',
+            description: `${selectedPermissions.length} permissions have been assigned to the role`,
+          });
+          setSelectedPermissions([]);
+          return true;
+        }
+        return false;
+      } catch (error) {
+        console.error('Failed to assign permissions to role:', error);
         toast({
-          title: 'Permissions removed',
-          description: `${selectedPermissions.length} permissions have been removed from the role`,
+          title: 'Error',
+          description: 'Failed to assign permissions to role',
+          variant: 'error',
         });
-        setSelectedPermissions([]);
-        return true;
+        return false;
       }
-      return false;
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to remove permissions from role',
-        variant: 'destructive',
-      });
-      return false;
-    }
-  }, [selectedPermissions, removePermissionsFromRole]);
+    },
+    [selectedPermissions, assignPermissionsToRole],
+  );
+
+  const handleRemoveFromRole = useCallback(
+    async (roleId: string) => {
+      if (selectedPermissions.length === 0) {
+        toast({
+          title: 'No permissions selected',
+          description: 'Please select at least one permission to remove',
+          variant: 'error',
+        });
+        return false;
+      }
+
+      try {
+        const success = await removePermissionsFromRole(roleId, selectedPermissions);
+        if (success) {
+          toast({
+            title: 'Permissions removed',
+            description: `${selectedPermissions.length} permissions have been removed from the role`,
+          });
+          setSelectedPermissions([]);
+          return true;
+        }
+        return false;
+      } catch (error) {
+        console.error('Failed to remove permissions from role:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to remove permissions from role',
+          variant: 'error',
+        });
+        return false;
+      }
+    },
+    [selectedPermissions, removePermissionsFromRole],
+  );
 
   // Helper for permission type display
   const getPermissionTypeLabel = useCallback((type: PermissionType): string => {
@@ -278,10 +303,10 @@ export const usePermissionUI = () => {
     return hasPermission('MANAGE_PERMISSIONS') || hasPermission('ADMIN_ACCESS');
   }, [hasPermission]);
 
-  // Calculate permissions stats
+  //  Calculate permissions stats
   const permissionStats = useMemo(() => {
     if (!userPermissions.permissions) return null;
-    
+
     return {
       total: userPermissions.permissions.length,
       pageAccess: userPermissions.pageAccess.length,
@@ -290,20 +315,24 @@ export const usePermissionUI = () => {
     };
   }, [userPermissions]);
 
-  const handleBatchDeletePermissions = useCallback(async (ids: string[]): Promise<void> => {
-    try {
-      await batchDeletePermissionApi(ids);
-      setSelectedPermissions([]);
-      await queryClient.invalidateQueries({ queryKey: ['permission-list'] }); // Làm mới cache
-      await refetchPermissions(); // Tải lại dữ liệu
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to delete permissions',
-        variant: 'destructive',
-      });
-    }
-  }, [queryClient, refetchPermissions]);
+  const handleBatchDeletePermissions = useCallback(
+    async (ids: string[]): Promise<void> => {
+      try {
+        await batchDeletePermissionApi(ids);
+        setSelectedPermissions([]);
+        await queryClient.invalidateQueries({ queryKey: ['permission-list'] }); // Làm mới cache
+        await refetchPermissions(); // Tải lại dữ liệu
+      } catch (error) {
+        console.error(error);
+        toast({
+          title: 'Error',
+          description: 'Failed to delete permissions',
+          variant: 'error',
+        });
+      }
+    },
+    [queryClient, refetchPermissions],
+  );
 
   return {
     // State
@@ -318,34 +347,34 @@ export const usePermissionUI = () => {
     userPermissions,
     permissionStats,
     canManagePermissions,
-    
+
     // Selection handlers
     handleSelectPermission,
     handleSelectAll,
     handleClearSelection,
-    
+
     // Filter/pagination handlers
     handleFilterChange,
     handlePageChange,
     handleLimitChange,
     handleSortChange,
-    
+
     // Permission actions
     handleCreatePermission,
     handleUpdatePermission,
     handleDeletePermission,
     handleBulkDelete,
-    
-    // Role permission management
+
+    //  Role permission management
     handleAssignToRole,
     handleRemoveFromRole,
-    
+
     // Helpers
     getPermissionTypeLabel,
     hasPermission,
     hasPageAccess,
     hasFeatureAccess,
-    
+
     // Refetch
     refetchPermissions,
     handleBatchDeletePermissions,

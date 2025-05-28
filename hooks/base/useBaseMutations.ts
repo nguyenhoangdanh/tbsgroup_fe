@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from '../use-toast';
+
+import { toast } from 'react-toast-kit';
 
 /**
  * Hook cơ sở cho mutations, có thể tái sử dụng cho bất kỳ module nào
@@ -13,94 +14,95 @@ export const useBaseMutations = <T, CreateDTO, UpdateDTO>(
 ) => {
   const queryClient = useQueryClient();
 
-/**
- * Create a new item with optimistic update
- */
-const createMutation = useMutation({
-  mutationFn: (data: CreateDTO) => createFn(data),
-  onMutate: async (newData) => {
-    // Cancel any outgoing refetches to avoid overwriting optimistic update
-    await queryClient.cancelQueries({ queryKey: [`${resourceName}-list`] });
+  /**
+   * Create a new item with optimistic update
+   */
+  const createMutation = useMutation({
+    mutationFn: (data: CreateDTO) => createFn(data),
+    onMutate: async newData => {
+      // Cancel any outgoing refetches to avoid overwriting optimistic update
+      await queryClient.cancelQueries({ queryKey: [`${resourceName}-list`] });
 
-    // Find and store the current query data for list
-    const queries = queryClient.getQueriesData({ queryKey: [`${resourceName}-list`] });
-    const previousListData = Array.from(queries).map(([queryKey, queryData]) => ({
-      queryKey,
-      queryData,
-    }));
-
-    // Create a temporary ID for the optimistic update
-    const tempId = getTempId();
-
-    // We need to cast the data since we don't know its exact shape at compile time
-    const optimisticItem = {
-      id: tempId,
-      ...newData,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    } as unknown as T;
-
-    // Update each list query with optimistic data
-    for (const { queryKey } of previousListData) {
-      queryClient.setQueryData(queryKey, (oldData: any) => {
-        if (!oldData || !oldData.data) return oldData;
-
-        return {
-          ...oldData,
-          data: [optimisticItem, ...oldData.data],
-          total: oldData.total + 1,
-        };
+      // Find and store the current query data for list
+      const queries = queryClient.getQueriesData({
+        queryKey: [`${resourceName}-list`],
       });
-    }
+      const previousListData = Array.from(queries).map(([queryKey, queryData]) => ({
+        queryKey,
+        queryData,
+      }));
 
-    return { previousListData, tempId };
-  },
-  onSuccess: async (result) => {
-    // Show success toast
-    toast({
-      title: `${resourceName} đã được tạo thành công`,
-      duration: 2000,
-    });
+      //  Create a temporary ID for the optimistic update
+      const tempId = getTempId();
+      //
+      //  We need to cast the data since we don't know its exact shape at compile time
+      const optimisticItem = {
+        id: tempId,
+        ...newData,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      } as unknown as T;
 
-    // Handle both direct ID access and response.data.id patterns
-    const resultId = result?.id;
+      // Update each list query with optimistic data
+      for (const { queryKey } of previousListData) {
+        queryClient.setQueryData(queryKey, (oldData: any) => {
+          if (!oldData || !oldData.data) return oldData;
 
-    // Mark queries as stale without auto-refetching
-    queryClient.invalidateQueries({
-      queryKey: [`${resourceName}-list`],
-      refetchType: 'none',
-    });
+          return {
+            ...oldData,
+            data: [optimisticItem, ...oldData.data],
+            total: oldData.total + 1,
+          };
+        });
+      }
 
-    queryClient.invalidateQueries({
-      queryKey: [`${resourceName}-infinite`],
-      refetchType: 'none',
-    });
+      return { previousListData, tempId };
+    },
+    onSuccess: async result => {
+      toast({
+        title: `${resourceName} đã được tạo thành công`,
+        duration: 2000,
+      });
 
-    if (resultId) {
+      //  Handle both direct ID access and response.data.id patterns
+      const resultId = result?.id;
+
+      // Mark queries as stale without auto-refetching
       queryClient.invalidateQueries({
-        queryKey: [resourceName, resultId],
+        queryKey: [`${resourceName}-list`],
         refetchType: 'none',
       });
-    } else {
-      console.warn(`Created ${resourceName} but no ID was returned:`, result);
-    }
-  },
-  onError: (error, _, context) => {
-    toast({
-      title: `Không thể tạo ${resourceName}`,
-      description: (error as Error).message,
-      variant: 'destructive',
-      duration: 2000,
-    });
 
-    // Rollback to the previous state
-    if (context?.previousListData) {
-      for (const { queryKey, queryData } of context.previousListData) {
-        queryClient.setQueryData(queryKey, queryData);
+      queryClient.invalidateQueries({
+        queryKey: [`${resourceName}-infinite`],
+        refetchType: 'none',
+      });
+
+      if (resultId) {
+        queryClient.invalidateQueries({
+          queryKey: [resourceName, resultId],
+          refetchType: 'none',
+        });
+      } else {
+        console.warn(`Created ${resourceName} but no ID was returned:`, result);
       }
-    }
-  },
-});
+    },
+    onError: (error, _, context) => {
+      toast({
+        title: `Không thể tạo ${resourceName}`,
+        description: (error as Error).message,
+        variant: 'error',
+        duration: 2000,
+      });
+
+      // Rollback to the previous state
+      if (context?.previousListData) {
+        for (const { queryKey, queryData } of context.previousListData) {
+          queryClient.setQueryData(queryKey, queryData);
+        }
+      }
+    },
+  });
 
   /**
    * Update an existing item with optimistic update
@@ -108,15 +110,17 @@ const createMutation = useMutation({
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateDTO }) => updateFn(id, data),
     onMutate: async ({ id, data }) => {
-      // Cancel any outgoing refetches
+      //  Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: [`${resourceName}-list`] });
       await queryClient.cancelQueries({ queryKey: [resourceName, id] });
 
-      // Get current data
+      //  Get current data
       const previousItem = queryClient.getQueryData([resourceName, id]);
 
       // Find and store the current query data for list
-      const queries = queryClient.getQueriesData({ queryKey: [`${resourceName}-list`] });
+      const queries = queryClient.getQueriesData({
+        queryKey: [`${resourceName}-list`],
+      });
       const previousListData = Array.from(queries).map(([queryKey, queryData]) => ({
         queryKey,
         queryData,
@@ -126,11 +130,11 @@ const createMutation = useMutation({
       for (const { queryKey } of previousListData) {
         queryClient.setQueryData(queryKey, (old: any) => {
           if (!old || !old.data) return old;
-          
+
           return {
             ...old,
             data: old.data.map((item: any) =>
-              item.id === id ? { ...item, ...data, updatedAt: new Date().toISOString() } : item
+              item.id === id ? { ...item, ...data, updatedAt: new Date().toISOString() } : item,
             ),
           };
         });
@@ -148,7 +152,6 @@ const createMutation = useMutation({
       return { previousItem, previousListData };
     },
     onSuccess: async (_, variables) => {
-      // Show success toast
       toast({
         title: `${resourceName} đã được cập nhật thành công`,
         duration: 2000,
@@ -174,16 +177,16 @@ const createMutation = useMutation({
       toast({
         title: `Không thể cập nhật ${resourceName}`,
         description: (error as Error).message,
-        variant: 'destructive',
+        variant: 'error',
         duration: 2000,
       });
 
-      // Rollback
+      //  Rollback
       if (context?.previousItem) {
         queryClient.setQueryData([resourceName, variables.id], context.previousItem);
       }
 
-      // Restore all list queries
+      //  Restore all list queries
       if (context?.previousListData) {
         for (const { queryKey, queryData } of context.previousListData) {
           queryClient.setQueryData(queryKey, queryData);
@@ -197,12 +200,14 @@ const createMutation = useMutation({
    */
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteFn(id),
-    onMutate: async (id) => {
+    onMutate: async id => {
       // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: [`${resourceName}-list`] });
 
       // Find and store the current query data for list
-      const queries = queryClient.getQueriesData({ queryKey: [`${resourceName}-list`] });
+      const queries = queryClient.getQueriesData({
+        queryKey: [`${resourceName}-list`],
+      });
       const previousListData = Array.from(queries).map(([queryKey, queryData]) => ({
         queryKey,
         queryData,
@@ -215,7 +220,7 @@ const createMutation = useMutation({
       for (const { queryKey } of previousListData) {
         queryClient.setQueryData(queryKey, (old: any) => {
           if (!old || !old.data) return old;
-          
+
           return {
             ...old,
             data: old.data.filter((item: any) => item.id !== id),
@@ -227,7 +232,6 @@ const createMutation = useMutation({
       return { previousListData, previousItem };
     },
     onSuccess: async (_, id) => {
-      // Show success toast
       toast({
         title: `${resourceName} đã được xóa thành công`,
         duration: 2000,
@@ -246,7 +250,7 @@ const createMutation = useMutation({
       toast({
         title: `Không thể xóa ${resourceName}`,
         description: (error as Error).message,
-        variant: 'destructive',
+        variant: 'error',
         duration: 2000,
       });
 

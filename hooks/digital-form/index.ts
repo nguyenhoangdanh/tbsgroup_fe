@@ -1,16 +1,27 @@
-// hooks/digital-form-hooks/index.ts
+// Export base query and mutation hooks
+export { default as useDigitalFormQueries } from './useDigitalFormQueries';
+export { default as useDigitalFormMutations } from './useDigitalFormMutations';
 
-// Export all digital form related hooks from a single file
-export { useDigitalForm } from './useDigitalForm';
-export { useDigitalFormContext } from './DigitalFormContext';
-export { useDigitalFormQueries } from './useDigitalFormQueries';
-export { useDigitalFormMutations } from './useDigitalFormMutations';
-export { useDigitalFormHelpers } from './useDigitalFormHelpers';
-export { useDigitalFormCrudHandlers } from './useDigitalFormCrudHandlers';
-export { useDigitalFormStats } from './useDigitalFormStats';
-export { useDigitalFormFilters, DATE_RANGES } from './useDigitalFormFilters';
-export { useDigitalFormPagination } from './useDigitalFormPagination';
-export { useDigitalFormEntries } from './useDigitalFormEntries';
+// Export specialized hooks
+export { default as useDigitalFormStats } from './useDigitalFormStats'; 
+export { default as useDigitalFormReports } from './useDigitalFormReports';
+export { default as useWorkShifts } from './useWorkShifts';
+export { DATE_RANGES } from './useDigitalFormReports';
 
-// Also export the provider component
-export { DigitalFormProvider } from './DigitalFormContext';
+// Export context provider
+export { DigitalFormProvider, useDigitalFormContext } from './DigitalFormContext';
+
+// Export custom hooks
+export { default as useCustomDigitalForm } from './useCustomDigitalForm';
+
+// Create consolidated default object with all hooks
+const digitalFormHooks = {
+  useDigitalFormQueries,
+  useDigitalFormMutations,
+  useDigitalFormStats,
+  useDigitalFormReports,
+  useWorkShifts,
+  useCustomDigitalForm,
+};
+
+export default digitalFormHooks;

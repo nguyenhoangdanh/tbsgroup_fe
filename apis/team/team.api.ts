@@ -1,10 +1,10 @@
-import { 
+import {
   Team,
   TeamCondDTO,
   TeamCreateDTO,
   TeamUpdateDTO,
   TeamLeaderDTO,
-  TeamLeader
+  TeamLeader,
 } from '@/common/interface/team';
 import { BasePaginationParams, BaseResponseData } from '@/hooks/base/useBaseQueries';
 import { fetchWithAuth } from '@/lib/fetcher';
@@ -15,21 +15,21 @@ import { fetchWithAuth } from '@/lib/fetcher';
  * Lấy danh sách tổ theo điều kiện lọc và phân trang
  */
 export const getTeamsList = async (
-  params: TeamCondDTO & BasePaginationParams
+  params: TeamCondDTO & BasePaginationParams,
 ): Promise<BaseResponseData<Team>> => {
   // Build query params
   const queryParams = new URLSearchParams();
-  
+
   if (params.page) queryParams.append('page', params.page.toString());
   if (params.limit) queryParams.append('limit', params.limit.toString());
   if (params.sortBy) queryParams.append('sortBy', params.sortBy);
   if (params.sortOrder) queryParams.append('sortOrder', params.sortOrder);
-  
+
   if (params.code) queryParams.append('code', params.code);
   if (params.name) queryParams.append('name', params.name);
   if (params.lineId) queryParams.append('lineId', params.lineId);
   if (params.search) queryParams.append('search', params.search);
-  
+
   const response = await fetchWithAuth(`/teams?${queryParams.toString()}`);
   return response;
 };
@@ -69,9 +69,7 @@ export const getTeamsByLine = async (lineId: string): Promise<Team[]> => {
 /**
  * Tạo mới một tổ
  */
-export const createTeam = async (
-  data: TeamCreateDTO
-): Promise<{ id: string }> => {
+export const createTeam = async (data: TeamCreateDTO): Promise<{ id: string }> => {
   const response = await fetchWithAuth('/teams', {
     method: 'POST',
     body: JSON.stringify(data),
@@ -83,15 +81,12 @@ export const createTeam = async (
 /**
  * Cập nhật thông tin tổ
  */
-export const updateTeam = async (
-  id: string,
-  data: TeamUpdateDTO
-): Promise<void> => {
+export const updateTeam = async (id: string, data: TeamUpdateDTO): Promise<void> => {
   const response = await fetchWithAuth(`/teams/${id}`, {
     method: 'PATCH',
     body: JSON.stringify(data),
   });
-  
+
   return response.data;
 };
 
@@ -102,7 +97,7 @@ export const deleteTeam = async (id: string): Promise<void> => {
   const response = await fetchWithAuth(`/teams/${id}`, {
     method: 'DELETE',
   });
-  
+
   return response.data;
 };
 
@@ -117,15 +112,12 @@ export const getTeamLeaders = async (teamId: string): Promise<TeamLeader[]> => {
 /**
  * Thêm trưởng nhóm vào tổ
  */
-export const addTeamLeader = async (
-  teamId: string,
-  leaderDTO: TeamLeaderDTO
-): Promise<void> => {
+export const addTeamLeader = async (teamId: string, leaderDTO: TeamLeaderDTO): Promise<void> => {
   const response = await fetchWithAuth(`/teams/${teamId}/leaders`, {
     method: 'POST',
     body: JSON.stringify(leaderDTO),
   });
-  
+
   return response.data;
 };
 
@@ -138,27 +130,24 @@ export const updateTeamLeader = async (
   data: {
     isPrimary?: boolean;
     endDate?: Date | null;
-  }
+  },
 ): Promise<void> => {
   const response = await fetchWithAuth(`/teams/${teamId}/leaders/${userId}`, {
     method: 'PATCH',
     body: JSON.stringify(data),
   });
-  
+
   return response.data;
 };
 
 /**
  * Xóa trưởng nhóm khỏi tổ
  */
-export const removeTeamLeader = async (
-  teamId: string,
-  userId: string
-): Promise<void> => {
+export const removeTeamLeader = async (teamId: string, userId: string): Promise<void> => {
   const response = await fetchWithAuth(`/teams/${teamId}/leaders/${userId}`, {
     method: 'DELETE',
   });
-  
+
   return response.data;
 };
 

@@ -1,0 +1,135 @@
+# .github/workflows/deploy.yml
+name: Deploy to Production
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  NODE_VERSION: '18.x'
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run linting
+        run: npm run lint
+      
+      - name: Run type checking
+        run: npm run type-check
+      
+      - name: Run tests
+        run: npm run test:ci
+        env:
+          CI: true
+      
+      - name: Run security audit
+        run: npm audit --audit-level high
+      
+      - name: Check bundle size
+        run: npm run analyze
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build application
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_BASE_URL: ${{ secrets.NEXT_PUBLIC_API_BASE_URL }}
+          NEXT_PUBLIC_AUTH_COOKIE_DOMAIN: ${{ secrets.NEXT_PUBLIC_AUTH_COOKIE_DOMAIN }}
+          NEXT_PUBLIC_ENVIRONMENT: production
+          NEXT_PUBLIC_ENABLE_PWA: true
+          NEXT_PUBLIC_ENABLE_ANALYTICS: true
+      
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-files
+          path: .next/
+
+  deploy-staging:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    environment: staging
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Deploy to Staging
+        run: |
+          echo "Deploying to staging environment"
+          # Add your staging deployment commands here
+        env:
+          STAGING_URL: ${{ secrets.STAGING_URL }}
+          STAGING_TOKEN: ${{ secrets.STAGING_TOKEN }}
+
+  deploy-production:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    environment: production
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Download build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: build-files
+          path: .next/
+      
+      - name: Deploy to Production
+        run: |
+          echo "Deploying to production environment"
+          # Add your production deployment commands here
+        env:
+          PRODUCTION_URL: ${{ secrets.PRODUCTION_URL }}
+          PRODUCTION_TOKEN: ${{ secrets.PRODUCTION_TOKEN }}
+      
+      - name: Health Check
+        run: |
+          curl -f ${{ secrets.PRODUCTION_URL }}/api/health || exit 1
+
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+      
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-results.sarif'

@@ -1,6 +1,5 @@
-// src/store/sagas/authSaga.ts
 import { PayloadAction } from '@reduxjs/toolkit';
-import { takeLatest, call, put, select, delay, fork, take, race } from 'redux-saga/effects';
+import { takeLatest, call, put, select, delay, fork, take, race, all } from 'redux-saga/effects';
 
 import {
   loginRequest,
@@ -17,6 +16,15 @@ import {
   updateUserRequest,
   updateUserSuccess,
   updateUserFailure,
+  resetPasswordRequest,
+  resetPasswordSuccess,
+  resetPasswordFailure,
+  requestPasswordResetRequest,
+  requestPasswordResetSuccess,
+  requestPasswordResetFailure,
+  verifyAccountRequest,
+  verifyAccountSuccess,
+  verifyAccountFailure,
 } from '../slices/authSlice';
 import { RootState } from '../store';
 import type {
@@ -25,95 +33,101 @@ import type {
   ApiResponse,
   AuthResponse,
   User,
+  ResetPasswordParams,
+  RequestResetParams,
+  VerifyRegistration,
 } from '../types/auth';
 
 import { authService } from '@/services/auth/auth.service';
 
-// Selectors
 const selectAuth = (state: RootState) => state.auth;
 const selectExpiresAt = (state: RootState) => state.auth.expiresAt;
 
-// Worker Sagas
+/**
+ * Login saga that handles user authentication
+ */
 function* loginSaga(action: PayloadAction<LoginCredentials>) {
   try {
-    const response: ApiResponse<AuthResponse> = yield call(authService.login, action.payload);
+    const response: ApiResponse<AuthResponse> = yield call(
+      authService.login.bind(authService),
+      action.payload,
+    );
 
     if (response.success && response.data) {
-      // Set token in localStorage as fallback (better to use HTTP-only cookies)
-      yield call(
-        authService.setStoredToken,
-        response.data.accessToken,
-        // new Date(response.data.expiresAt),
-      );
+      // Token is stored in localStorage by the auth service
+
+      // Record login time for security monitoring
+      yield call(authService.recordLoginTime);
 
       // Update Redux state
-      console.log('Login successful', response.data);
       yield put(
         loginSuccess({
           user: response.data.user,
-          accessToken: response.data.accessToken,
-          expiresAt: response.data.expiresAt,
+          accessToken: response.data.token,
+          expiresAt: new Date(Date.now() + response.data.expiresIn * 1000).toISOString(),
+          requiredResetPassword: response.data.user.status === 'PENDING_ACTIVATION',
         }),
       );
     } else {
-      yield put(
-        loginFailure(
-          typeof response.error === 'string'
-            ? response.error
-            : response.error?.message || 'Login failed',
-        ),
-      );
+      yield put(loginFailure(response.error || 'Đăng nhập thất bại'));
     }
   } catch (error: any) {
-    yield put(loginFailure((error.message as string) || 'An unexpected error occurred'));
+    yield put(loginFailure((error.message as string) || 'Đã xảy ra lỗi không mong muốn'));
   }
 }
 
+/**
+ * Logout saga that handles user logout
+ */
 function* logoutSaga(
   action: PayloadAction<{ reason?: string; allDevices?: boolean; silent?: boolean } | undefined>,
 ) {
   try {
     const options = action.payload;
-    const allDevices = options?.allDevices || false;
     const silent = options?.silent || false;
 
-    // Chỉ gọi API logout nếu không phải chế độ im lặng
+    // Only call logout API if not silent mode
     if (!silent) {
-      yield call(authService.logout, { allDevices });
+      yield call(authService.logout.bind(authService));
+    } else {
+      // Just clear local token for silent logout
+      yield call(authService.clearStoredToken.bind(authService));
     }
 
-    // Xóa token khỏi storage
-    yield call(authService.clearStoredToken);
-
-    // Cập nhật trạng thái Redux
+    // Update Redux state
     yield put(logoutSuccess());
 
-    // Ghi lại lý do nếu được cung cấp (có thể lưu trữ cho phân tích)
+    // Log reason if provided (could store for analytics)
     if (options?.reason) {
-      console.log('Lý do đăng xuất:', options.reason);
+      console.log('Logout reason:', options.reason);
     }
 
-    // Chỉ chuyển hướng đến trang chủ nếu không im lặng
+    // Only redirect to login if not silent
     if (!silent) {
-      yield call([window.location, 'replace'], '/');
+      yield call([window.location, 'replace'], '/login');
     }
   } catch (error) {
-    console.error('Lỗi đăng xuất:', error);
+    console.error('Logout error:', error);
 
-    // Ngay cả khi API đăng xuất thất bại, chúng ta vẫn nên xóa trạng thái cục bộ
-    yield call(authService.clearStoredToken);
+    // Even if API logout fails, we should still clear local state
     yield put(logoutSuccess());
 
-    // Chỉ chuyển hướng nếu không im lặng
-    // if (!options?.silent) {
-    //   yield call([window.location, 'replace'], '/');
-    // }
+    // Only redirect if not silent
+    if (!options?.silent) {
+      yield call([window.location, 'replace'], '/login');
+    }
   }
 }
 
+/**
+ * Register saga that handles user registration
+ */
 function* registerSaga(action: PayloadAction<RegisterCredentials>) {
   try {
-    const response: ApiResponse = yield call(authService.register, action.payload);
+    const response: ApiResponse<any> = yield call(
+      authService.register.bind(authService),
+      action.payload,
+    );
 
     if (response.success) {
       yield put(registerSuccess());
@@ -122,40 +136,64 @@ function* registerSaga(action: PayloadAction<RegisterCredentials>) {
       if (action.payload.redirectTo) {
         yield call([window.location, 'replace'], action.payload.redirectTo);
       } else {
-        yield call([window.location, 'replace'], `/verify-code?email=${action.payload.email}`);
+        yield call([window.location, 'replace'], '/login?registered=true');
       }
     } else {
-      yield put(
-        registerFailure(
-          typeof response.error === 'string'
-            ? response.error
-            : response.error?.message || 'Registration failed',
-        ),
-      );
+      yield put(registerFailure(response.error || 'Đăng ký thất bại'));
     }
   } catch (error: any) {
-    yield put(registerFailure((error.message as string) || 'An unexpected error occurred'));
+    yield put(registerFailure((error.message as string) || 'Đã xảy ra lỗi không mong muốn'));
   }
 }
 
-function* refreshTokenSaga() {
+/**
+ * Verify account saga
+ */
+function* verifyAccountSaga(action: PayloadAction<VerifyRegistration>) {
   try {
-    console.log('Attempting to refresh token');
-    // Just call the function normally - it already handles credentials
-    const response: ApiResponse<AuthResponse> = yield call(authService.refreshToken);
+    // For account verification we need to call API directly since this method isn't in authService
+    const response: ApiResponse<any> = yield call(authService.register.bind(authService), {
+      ...action.payload,
+      verify: true,
+    });
 
     if (response.success && response.data) {
-      console.log('Token refresh successful');
-      yield call(
-        authService.setStoredToken,
-        response.data.accessToken,
-        new Date(response.data.expiresAt),
+      yield put(
+        verifyAccountSuccess({
+          user: response.data.user,
+          accessToken: response.data.token,
+          expiresAt: new Date(Date.now() + response.data.expiresIn * 1000).toISOString(),
+        }),
       );
 
+      // Store token
+      yield call(
+        authService.setStoredToken.bind(authService),
+        response.data.token,
+        new Date(Date.now() + response.data.expiresIn * 1000),
+      );
+    } else {
+      yield put(verifyAccountFailure(response.error || 'Xác minh tài khoản thất bại'));
+    }
+  } catch (error: any) {
+    yield put(verifyAccountFailure((error.message as string) || 'Đã xảy ra lỗi không mong muốn'));
+  }
+}
+
+/**
+ * Token refresh saga
+ */
+function* refreshTokenSaga() {
+  try {
+    const response: ApiResponse<AuthResponse> = yield call(
+      authService.refreshToken.bind(authService),
+    );
+
+    if (response.success && response.data) {
       yield put(
         refreshTokenSuccess({
-          accessToken: response.data.accessToken,
-          expiresAt: response.data.expiresAt,
+          accessToken: response.data.token,
+          expiresAt: new Date(Date.now() + response.data.expiresIn * 1000).toISOString(),
         }),
       );
 
@@ -172,27 +210,75 @@ function* refreshTokenSaga() {
   }
 }
 
+/**
+ * Request password reset saga
+ */
+function* requestPasswordResetSaga(action: PayloadAction<RequestResetParams>) {
+  try {
+    const response: ApiResponse<{
+      resetToken: string;
+      expiryDate: string;
+      username: string;
+    }> = yield call(authService.requestPasswordReset.bind(authService), action.payload);
+
+    if (response.success && response.data) {
+      yield put(requestPasswordResetSuccess(response.data));
+    } else {
+      yield put(
+        requestPasswordResetFailure(response.error || 'Không thể yêu cầu đặt lại mật khẩu'),
+      );
+    }
+  } catch (error: any) {
+    yield put(requestPasswordResetFailure(error.message || 'Đã xảy ra lỗi không mong muốn'));
+  }
+}
+
+/**
+ * Reset password saga
+ */
+function* resetPasswordSaga(action: PayloadAction<ResetPasswordParams>) {
+  try {
+    const response: ApiResponse<any> = yield call(
+      authService.resetPassword.bind(authService),
+      action.payload,
+    );
+
+    if (response.success) {
+      yield put(resetPasswordSuccess());
+
+      // Automatically redirect to login after successful password reset
+      yield call([window.location, 'replace'], '/login?reset=success');
+    } else {
+      yield put(resetPasswordFailure(response.error || 'Đặt lại mật khẩu thất bại'));
+    }
+  } catch (error: any) {
+    yield put(resetPasswordFailure(error.message || 'Đã xảy ra lỗi không mong muốn'));
+  }
+}
+
+/**
+ * Update user profile saga
+ */
 function* updateUserSaga(action: PayloadAction<Partial<User>>) {
   try {
-    const response: ApiResponse<User> = yield call(authService.updateUserProfile, action.payload);
+    const response: ApiResponse<User> = yield call(
+      authService.updateUserProfile.bind(authService),
+      action.payload,
+    );
 
     if (response.success && response.data) {
       yield put(updateUserSuccess(response.data));
     } else {
-      yield put(
-        updateUserFailure(
-          typeof response.error === 'string'
-            ? response.error
-            : response.error?.message || 'Failed to update user profile',
-        ),
-      );
+      yield put(updateUserFailure(response.error || 'Không thể cập nhật thông tin người dùng'));
     }
   } catch (error: any) {
-    yield put(updateUserFailure((error.message as string) || 'An unexpected error occurred'));
+    yield put(updateUserFailure((error.message as string) || 'Đã xảy ra lỗi không mong muốn'));
   }
 }
 
-// Calculate time until token expires (in milliseconds)
+/**
+ * Calculate time until token expires (in milliseconds)
+ */
 function* getTimeUntilExpiry() {
   const expiresAtStr: string | null = yield select(selectExpiresAt);
   if (!expiresAtStr) return 0;
@@ -203,11 +289,12 @@ function* getTimeUntilExpiry() {
   return Math.max(0, expiryTime - currentTime);
 }
 
-// Saga to refresh token before it expires
-// Saga to refresh token before it expires with improved throttling
+/**
+ * Saga to refresh token before it expires with improved throttling
+ */
 function* refreshTokenWatcher(): Generator {
   let lastRefreshTime = Date.now();
-  const MIN_REFRESH_INTERVAL = 10 * 60 * 1000; // 10 minutes minimum between refreshes
+  const MIN_REFRESH_INTERVAL = 10 * 60 * 1000; // 10 phút tối thiểu giữa các lần làm mới
 
   while (true) {
     try {
@@ -215,31 +302,31 @@ function* refreshTokenWatcher(): Generator {
 
       // Không làm mới nếu còn quá nhiều thời gian (> 45 phút)
       if (timeUntilExpiry > 45 * 60 * 1000) {
-        // Chờ và kiểm tra lại sau 30 phút
+        // Đợi và kiểm tra lại sau 30 phút
         const { logout } = yield race({
           timeout: delay(30 * 60 * 1000),
           logout: take(logoutRequest.type),
         });
 
         if (logout) {
-          console.log('User logged out, breaking refresh cycle');
+          console.log('Người dùng đã đăng xuất, dừng chu kỳ làm mới');
           break;
         }
 
         continue; // Bỏ qua phần còn lại của vòng lặp và kiểm tra lại
       }
 
-      // Enhanced token refresh timing - aim for 80% of lifetime
-      // But ensure a minimum interval between refreshes
+      // Cải thiện thời gian làm mới token - nhắm đến 80% thời gian sống
+      // Nhưng đảm bảo khoảng thời gian tối thiểu giữa các lần làm mới
       const now = Date.now();
       const timeSinceLastRefresh = now - lastRefreshTime;
 
       if (timeSinceLastRefresh < MIN_REFRESH_INTERVAL) {
         console.log(
-          `Skipping token refresh, last refresh was ${Math.floor(timeSinceLastRefresh / 1000 / 60)} minutes ago`,
+          `Bỏ qua làm mới token, lần làm mới cuối cách đây ${Math.floor(timeSinceLastRefresh / 1000 / 60)} phút`,
         );
 
-        // Wait until we can refresh again
+        // Đợi cho đến khi có thể làm mới lại
         const waitTime = MIN_REFRESH_INTERVAL - timeSinceLastRefresh;
 
         const { logout } = yield race({
@@ -248,18 +335,18 @@ function* refreshTokenWatcher(): Generator {
         });
 
         if (logout) {
-          console.log('User logged out, breaking refresh cycle');
+          console.log('Người dùng đã đăng xuất, dừng chu kỳ làm mới');
           break;
         }
 
         continue;
       }
 
-      // Calculate refresh timing with jitter to spread out refresh requests
-      const refreshTime = Math.min(timeUntilExpiry * 0.8, 30 * 60 * 1000); // max 30 minutes
-      const jitter = Math.random() * 60000; // Random delay up to 1 minute
+      // Tính toán thời gian làm mới với jitter để trải đều các yêu cầu làm mới
+      const refreshTime = Math.min(timeUntilExpiry * 0.8, 30 * 60 * 1000); // tối đa 30 phút
+      const jitter = Math.random() * 60000; // Độ trễ ngẫu nhiên lên đến 1 phút
 
-      console.log(`Token will refresh in ${(refreshTime - jitter) / 1000 / 60} minutes`);
+      console.log(`Token sẽ được làm mới sau ${(refreshTime - jitter) / 1000 / 60} phút`);
 
       const { logout } = yield race({
         timeout: delay(refreshTime - jitter),
@@ -267,53 +354,55 @@ function* refreshTokenWatcher(): Generator {
       });
 
       if (logout) {
-        console.log('User logged out, breaking refresh cycle');
+        console.log('Người dùng đã đăng xuất, dừng chu kỳ làm mới');
         break;
       }
 
-      // Record attempt time even before we dispatch
+      // Ghi lại thời gian thử ngay cả trước khi chúng tôi gửi
       lastRefreshTime = Date.now();
 
-      // Request refresh
+      // Yêu cầu làm mới
       yield put(refreshTokenRequest());
       const refreshed: boolean = yield call(refreshTokenSaga);
 
       if (!refreshed) {
-        console.log('Token refresh failed');
+        console.log('Làm mới token thất bại');
 
-        // Add delay before trying again to avoid rapid retries
-        yield delay(5 * 60 * 1000); // 5 minute delay on failure
+        // Thêm độ trễ trước khi thử lại để tránh thử lại nhanh chóng
+        yield delay(5 * 60 * 1000); // 5 phút độ trễ khi thất bại
 
-        // Check if user logged out during the delay
+        // Kiểm tra xem người dùng đã đăng xuất trong thời gian chờ chưa
         const authState = yield select(selectAuth);
         if (authState.status !== 'authenticated') {
-          console.log('User is no longer authenticated, breaking refresh cycle');
+          console.log('Người dùng không còn được xác thực, dừng chu kỳ làm mới');
           break;
         }
       }
     } catch (error) {
-      console.error('Token refresh watcher error:', error);
+      console.error('Lỗi watcher làm mới token:', error);
 
-      // Add delay before retrying the watcher loop on errors
-      yield delay(10 * 60 * 1000); // 10 minute delay on errors
+      // Thêm độ trễ trước khi thử lại vòng lặp watcher khi có lỗi
+      yield delay(10 * 60 * 1000); // 10 phút độ trễ khi có lỗi
     }
   }
 }
 
-// Initialize auth state on application start
+/**
+ * Initialize auth state on application start
+ */
 function* initAuthSaga(): Generator {
   try {
     const auth = yield select(selectAuth);
 
-    // Skip if we already have a valid token and user
+    // Bỏ qua nếu chúng ta đã có token hợp lệ và người dùng
     if (auth.status === 'authenticated' && auth.user && auth.accessToken && auth.expiresAt) {
-      // Start token refresh cycle
+      // Bắt đầu chu kỳ làm mới token
       yield fork(refreshTokenWatcher);
       return;
     }
 
     // Kiểm tra token trong localStorage trước khi gọi API
-    const token: string | null = yield call(authService.getStoredToken);
+    const token: string | null = yield call(authService.getStoredToken.bind(authService));
 
     // Nếu không có token, không cần gọi API /auth/me
     if (!token) {
@@ -322,8 +411,8 @@ function* initAuthSaga(): Generator {
       return;
     }
 
-    // Chỉ gọi API lấy thông tin người dùng hiện tại nếu có token
-    const response: ApiResponse<User> = yield call(authService.getCurrentUser);
+    // Chỉ gọi API để lấy thông tin người dùng hiện tại nếu token tồn tại
+    const response: ApiResponse<User> = yield call(authService.getCurrentUser.bind(authService));
 
     if (response.success && response.data) {
       const expiresAtStr = localStorage.getItem('tokenExpiresAt');
@@ -336,25 +425,26 @@ function* initAuthSaga(): Generator {
           user: response.data,
           accessToken: token,
           expiresAt,
+          requiredResetPassword: response.data.status === 'PENDING_ACTIVATION',
         }),
       );
 
-      // Start token refresh cycle
+      // Bắt đầu chu kỳ làm mới token
       yield fork(refreshTokenWatcher);
     } else {
-      // Clear any existing tokens
-      yield call(authService.clearStoredToken);
+      // Xóa bất kỳ token hiện có
+      yield call(authService.clearStoredToken.bind(authService));
       yield put(logoutSuccess());
     }
   } catch (error) {
-    console.error('Failed to initialize auth:', error);
+    console.error('Không thể khởi tạo xác thực:', error);
 
-    // Xác định nếu đây là lỗi mạng
+    // Xác định xem đây có phải là lỗi mạng không
     if (
       error instanceof Error &&
       (error.message.includes('Failed to fetch') || error.message.includes('Network error'))
     ) {
-      // Xử lý lỗi mạng khác biệt - không xóa token
+      // Xử lý lỗi mạng khác nhau - không xóa token
       yield put({
         type: 'AUTH_ERROR',
         payload: {
@@ -364,25 +454,34 @@ function* initAuthSaga(): Generator {
       });
     } else {
       // Đối với các lỗi khác, xóa token và đăng xuất
-      yield call(authService.clearStoredToken);
+      yield call(authService.clearStoredToken.bind(authService));
       yield put(logoutSuccess());
     }
   }
 }
 
-// Handle the auth initialization action
+/**
+ * Handle the auth initialization action
+ */
 function* handleAuthInit() {
   yield call(initAuthSaga);
 }
 
-// Root auth saga
+/**
+ * Root auth saga
+ */
 export function* authSaga() {
-  // On app start, watch for initialization action
-  yield takeLatest('AUTH_INIT', handleAuthInit);
+  yield all([
+    // Khi ứng dụng bắt đầu, theo dõi hành động khởi tạo
+    takeLatest('AUTH_INIT', handleAuthInit),
 
-  // Watch for auth actions
-  yield takeLatest(loginRequest.type, loginSaga);
-  yield takeLatest(registerRequest.type, registerSaga);
-  yield takeLatest(logoutRequest.type, logoutSaga);
-  yield takeLatest(updateUserRequest.type, updateUserSaga);
+    // Theo dõi hành động xác thực
+    takeLatest(loginRequest.type, loginSaga),
+    takeLatest(registerRequest.type, registerSaga),
+    takeLatest(verifyAccountRequest.type, verifyAccountSaga),
+    takeLatest(logoutRequest.type, logoutSaga),
+    takeLatest(updateUserRequest.type, updateUserSaga),
+    takeLatest(requestPasswordResetRequest.type, requestPasswordResetSaga),
+    takeLatest(resetPasswordRequest.type, resetPasswordSaga),
+  ]);
 }

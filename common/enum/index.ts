@@ -1,9 +1,9 @@
 export enum UserStatusEnum {
-  PENDING_ACTIVATION = "PENDING_ACTIVATION",
-  ACTIVE = "ACTIVE",
-  INACTIVE = "INACTIVE",
-  BANNED = "BANNED",
-  DELETED = "DELETED",
+  PENDING_ACTIVATION = 'PENDING_ACTIVATION',
+  ACTIVE = 'ACTIVE',
+  INACTIVE = 'INACTIVE',
+  BANNED = 'BANNED',
+  DELETED = 'DELETED',
 }
 
 export enum PermissionType {
@@ -11,4 +11,3 @@ export enum PermissionType {
   FEATURE_ACCESS = 'FEATURE_ACCESS',
   DATA_ACCESS = 'DATA_ACCESS',
 }
-

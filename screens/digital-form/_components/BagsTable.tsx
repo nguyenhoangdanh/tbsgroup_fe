@@ -1,4 +1,3 @@
-// components/BagsTable.tsx
 import { Package } from 'lucide-react';
 
 import {

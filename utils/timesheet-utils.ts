@@ -1,20 +1,21 @@
-import { TIME_SLOTS, TimeSheetEntryType, TimeSheetType } from "@/schemas/timesheet";
-import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
+
+import { TIME_SLOTS, TimeSheetEntryType, TimeSheetType } from '@/schemas/timesheet';
 
 /**
  * Formats a date string to a localized date format
  */
 export const formatDate = (dateString?: string): string => {
   if (!dateString) return '';
-  
+
   try {
     const date = new Date(dateString);
     return date.toLocaleDateString('vi-VN', {
       day: '2-digit',
       month: '2-digit',
-      year: 'numeric'
+      year: 'numeric',
     });
   } catch (error) {
     console.error('Invalid date format:', error);
@@ -43,20 +44,22 @@ export const calculateTotalHours = (timesheet: TimeSheetType): number => {
  */
 export const searchTimesheets = (
   timesheets: TimeSheetType[],
-  searchTerm: string
+  searchTerm: string,
 ): TimeSheetType[] => {
   if (!searchTerm.trim()) return timesheets;
-  
+
   const term = searchTerm.toLowerCase();
-  
-  return timesheets.filter(timesheet => 
-    timesheet.employeeName.toLowerCase().includes(term) ||
-    timesheet.employeeId.toLowerCase().includes(term) ||
-    timesheet.department.toLowerCase().includes(term) ||
-    (timesheet.entries.some(entry => 
-      entry.taskName?.toLowerCase().includes(term) ||
-      entry.taskCode?.toLowerCase().includes(term)
-    ))
+
+  return timesheets.filter(
+    timesheet =>
+      timesheet.employeeName.toLowerCase().includes(term) ||
+      timesheet.employeeId.toLowerCase().includes(term) ||
+      timesheet.department.toLowerCase().includes(term) ||
+      timesheet.entries.some(
+        entry =>
+          entry.taskName?.toLowerCase().includes(term) ||
+          entry.taskCode?.toLowerCase().includes(term),
+      ),
   );
 };
 
@@ -66,15 +69,15 @@ export const searchTimesheets = (
 export const filterTimesheetsByDateRange = (
   timesheets: TimeSheetType[],
   startDate?: Date,
-  endDate?: Date
+  endDate?: Date,
 ): TimeSheetType[] => {
   if (!startDate && !endDate) return timesheets;
-  
+
   return timesheets.filter(timesheet => {
     if (!timesheet.date) return false;
-    
+
     const date = new Date(timesheet.date);
-    
+
     if (startDate && endDate) {
       return date >= startDate && date <= endDate;
     } else if (startDate) {
@@ -82,7 +85,7 @@ export const filterTimesheetsByDateRange = (
     } else if (endDate) {
       return date <= endDate;
     }
-    
+
     return true;
   });
 };
@@ -91,7 +94,7 @@ export const filterTimesheetsByDateRange = (
  * Generates a printable version of the timesheet
  */
 export const generatePrintableTimesheet = (timesheet: TimeSheetType): string => {
-  let html = `
+  const html = `
     <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
         <div>
@@ -131,8 +134,9 @@ export const generatePrintableTimesheet = (timesheet: TimeSheetType): string => 
             <th style="border: 1px solid #ddd; padding: 6px; text-align: left;">TÊN C.ĐOẠN SẢN XUẤT</th>
             <th style="border: 1px solid #ddd; padding: 6px; text-align: center;">CHỈ TIÊU GIỜ</th>
             <th style="border: 1px solid #ddd; padding: 6px; text-align: center;">Đ.GIÁ</th>
-            ${TIME_SLOTS.map(slot => 
-              `<th style="border: 1px solid #ddd; padding: 6px; text-align: center;">${slot.label}</th>`
+            ${TIME_SLOTS.map(
+              slot =>
+                `<th style="border: 1px solid #ddd; padding: 6px; text-align: center;">${slot.label}</th>`,
             ).join('')}
             <th style="border: 1px solid #ddd; padding: 6px; text-align: center;">TỔNG CỘNG</th>
             <th style="border: 1px solid #ddd; padding: 6px; text-align: center;">VT</th>
@@ -142,7 +146,9 @@ export const generatePrintableTimesheet = (timesheet: TimeSheetType): string => 
           </tr>
         </thead>
         <tbody>
-          ${timesheet.entries.map((entry, index) => `
+          ${timesheet.entries
+            .map(
+              (entry, index) => `
             <tr>
               <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">${index + 1}</td>
               <td style="border: 1px solid #ddd; padding: 6px;">${entry.taskCode || ''}</td>
@@ -150,10 +156,11 @@ export const generatePrintableTimesheet = (timesheet: TimeSheetType): string => 
               <td style="border: 1px solid #ddd; padding: 6px;">${entry.taskName || ''}</td>
               <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">${entry.target || ''}</td>
               <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">${entry.note || ''}</td>
-              ${TIME_SLOTS.map(slot => 
-                `<td style="border: 1px solid #ddd; padding: 6px; text-align: center;">
+              ${TIME_SLOTS.map(
+                slot =>
+                  `<td style="border: 1px solid #ddd; padding: 6px; text-align: center;">
                   ${entry.slots && entry.slots[slot.id.toString()] ? '✓' : ''}
-                </td>`
+                </td>`,
               ).join('')}
               <td style="border: 1px solid #ddd; padding: 6px; text-align: center; font-weight: bold;">${entry.total || 0}</td>
               <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">
@@ -169,7 +176,9 @@ export const generatePrintableTimesheet = (timesheet: TimeSheetType): string => 
                 ${entry.reasons?.MM ? '✓' : ''}
               </td>
             </tr>
-          `).join('')}
+          `,
+            )
+            .join('')}
         </tbody>
       </table>
       
@@ -198,7 +207,7 @@ export const generatePrintableTimesheet = (timesheet: TimeSheetType): string => 
       </div>
     </div>
   `;
-  
+
   return html;
 };
 
@@ -207,7 +216,6 @@ export const generatePrintableTimesheet = (timesheet: TimeSheetType): string => 
  */
 export const exportTimesheetToExcel = (timesheet: TimeSheetType): void => {
   try {
-    // Create worksheet
     const worksheet = XLSX.utils.aoa_to_sheet([
       ['PHIẾU THEO DÕI CÔNG ĐOẠN - GIAO CHỈ TIÊU CÁ NHÂN'],
       ['MS: P11H1HB034', '', `Ngày: ${formatDate(timesheet.date)}`],
@@ -219,22 +227,21 @@ export const exportTimesheetToExcel = (timesheet: TimeSheetType): void => {
       ['CHUYỀN TRƯỞNG KÝ TÊN:', timesheet.shiftLeader || ''],
       [],
       [
-        'STT', 
-        'MÃ TÚI', 
-        'MÃ C.ĐOẠN', 
-        'TÊN C.ĐOẠN SẢN XUẤT', 
-        'CHỈ TIÊU GIỜ', 
+        'STT',
+        'MÃ TÚI',
+        'MÃ C.ĐOẠN',
+        'TÊN C.ĐOẠN SẢN XUẤT',
+        'CHỈ TIÊU GIỜ',
         'Đ.GIÁ',
         ...TIME_SLOTS.map(slot => slot.label),
         'TỔNG CỘNG',
         'VT',
         'CN',
         'CL',
-        'MM'
-      ]
+        'MM',
+      ],
     ]);
-    
-    // Add entries
+
     timesheet.entries.forEach((entry, index) => {
       const rowData = [
         index + 1,
@@ -243,41 +250,39 @@ export const exportTimesheetToExcel = (timesheet: TimeSheetType): void => {
         entry.taskName || '',
         entry.target || '',
         entry.note || '',
-        ...TIME_SLOTS.map(slot => 
-          entry.slots && entry.slots[slot.id.toString()] ? '✓' : ''
-        ),
+        ...TIME_SLOTS.map(slot => (entry.slots && entry.slots[slot.id.toString()] ? '✓' : '')),
         entry.total || 0,
         entry.reasons?.VT ? '✓' : '',
         entry.reasons?.CN ? '✓' : '',
         entry.reasons?.CL ? '✓' : '',
-        entry.reasons?.MM ? '✓' : ''
+        entry.reasons?.MM ? '✓' : '',
       ];
-      
+
       XLSX.utils.sheet_add_aoa(worksheet, [rowData], { origin: 10 + index });
     });
-    
+
     // Set column widths
     const colWidths = [
-      { wch: 5 },  // STT
+      { wch: 5 }, // STT
       { wch: 10 }, // MÃ TÚI
       { wch: 10 }, // MÃ C.ĐOẠN
       { wch: 30 }, // TÊN C.ĐOẠN SẢN XUẤT
       { wch: 12 }, // CHỈ TIÊU GIỜ
-      { wch: 8 },  // Đ.GIÁ
+      { wch: 8 }, // Đ.GIÁ
       ...Array(TIME_SLOTS.length).fill({ wch: 10 }), // Time slots
       { wch: 10 }, // TỔNG CỘNG
-      { wch: 5 },  // VT
-      { wch: 5 },  // CN
-      { wch: 5 },  // CL
-      { wch: 5 }   // MM
+      { wch: 5 }, // VT
+      { wch: 5 }, // CN
+      { wch: 5 }, // CL
+      { wch: 5 }, // MM
     ];
-    
+
     worksheet['!cols'] = colWidths;
-    
-    // Create workbook
+
+    //  Create workbook
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Phiếu công đoạn');
-    
+
     // Write file
     const fileName = `Phieu_cong_doan_${timesheet.employeeName.replace(/\s+/g, '_')}_${timesheet.date || 'Unknown'}.xlsx`;
     XLSX.writeFile(workbook, fileName);
@@ -296,18 +301,18 @@ export const exportTimesheetToPDF = (timesheet: TimeSheetType): void => {
     const doc = new jsPDF({
       orientation: 'landscape',
       unit: 'mm',
-      format: 'a4'
+      format: 'a4',
     });
-    
-    // Add title
+
+    //  Add title
     doc.setFontSize(16);
     doc.text('PHIẾU THEO DÕI CÔNG ĐOẠN - GIAO CHỈ TIÊU CÁ NHÂN', 15, 10);
-    
-    // Add metadata
+
+    //  Add metadata
     doc.setFontSize(10);
     doc.text(`MS: P11H1HB034`, 15, 18);
     doc.text(`Ngày: ${formatDate(timesheet.date)}`, 240, 18);
-    
+
     // Add employee info
     doc.text(`HỌ TÊN: ${timesheet.employeeName}`, 15, 26);
     doc.text(`ĐƠN VỊ: ${timesheet.department}`, 120, 26);
@@ -316,14 +321,26 @@ export const exportTimesheetToPDF = (timesheet: TimeSheetType): void => {
     doc.text(`QUẢN KÝ TÊN: ${timesheet.supervisor || ''}`, 15, 38);
     doc.text(`NHÓM TRƯỞNG KÝ TÊN: ${timesheet.teamLeader || ''}`, 15, 44);
     doc.text(`CHUYỀN TRƯỞNG KÝ TÊN: ${timesheet.shiftLeader || ''}`, 15, 50);
-    
+
     // Prepare table headers
     const tableHeaders = [
-      ['STT', 'MÃ TÚI', 'MÃ C.ĐOẠN', 'TÊN C.ĐOẠN SẢN XUẤT', 'CHỈ TIÊU GIỜ', 'Đ.GIÁ',
-       ...TIME_SLOTS.map(slot => slot.label), 'TỔNG', 'VT', 'CN', 'CL', 'MM']
+      [
+        'STT',
+        'MÃ TÚI',
+        'MÃ C.ĐOẠN',
+        'TÊN C.ĐOẠN SẢN XUẤT',
+        'CHỈ TIÊU GIỜ',
+        'Đ.GIÁ',
+        ...TIME_SLOTS.map(slot => slot.label),
+        'TỔNG',
+        'VT',
+        'CN',
+        'CL',
+        'MM',
+      ],
     ];
-    
-    // Prepare table data
+
+    //  Prepare table data
     const tableData = timesheet.entries.map((entry, index) => [
       (index + 1).toString(),
       entry.taskCode || '',
@@ -331,17 +348,15 @@ export const exportTimesheetToPDF = (timesheet: TimeSheetType): void => {
       entry.taskName || '',
       entry.target || '',
       entry.note || '',
-      ...TIME_SLOTS.map(slot => 
-        entry.slots && entry.slots[slot.id.toString()] ? '✓' : ''
-      ),
+      ...TIME_SLOTS.map(slot => (entry.slots && entry.slots[slot.id.toString()] ? '✓' : '')),
       (entry.total || 0).toString(),
       entry.reasons?.VT ? '✓' : '',
       entry.reasons?.CN ? '✓' : '',
       entry.reasons?.CL ? '✓' : '',
-      entry.reasons?.MM ? '✓' : ''
+      entry.reasons?.MM ? '✓' : '',
     ]);
-    
-    // Set table styles and render
+
+    //Set table styles and render
     autoTable(doc, {
       startY: 55,
       head: tableHeaders,
@@ -349,12 +364,12 @@ export const exportTimesheetToPDF = (timesheet: TimeSheetType): void => {
       theme: 'grid',
       styles: {
         fontSize: 8,
-        cellPadding: 1
+        cellPadding: 1,
       },
       headStyles: {
         fillColor: [220, 220, 220],
         textColor: [0, 0, 0],
-        fontStyle: 'bold'
+        fontStyle: 'bold',
       },
       columnStyles: {
         0: { cellWidth: 8 },
@@ -367,23 +382,27 @@ export const exportTimesheetToPDF = (timesheet: TimeSheetType): void => {
         18: { cellWidth: 8 },
         19: { cellWidth: 8 },
         20: { cellWidth: 8 },
-        21: { cellWidth: 8 }
-      }
+        21: { cellWidth: 8 },
+      },
     });
-    
+
     // Add footer text
-    const finalY = (doc as any).lastAutoTable.finalY || 180;
-    doc.text('VT = VẬT TƯ     CN = CÔNG NGHỆ     CL = CHẤT LƯỢNG     MM = MÁY MÓC - THIẾT BỊ', 15, finalY + 10);
-    
+    const finalY = ((doc as any).lastAutoTable?.finalY as number) || 180;
+    doc.text(
+      'VT = VẬT TƯ     CN = CÔNG NGHỆ     CL = CHẤT LƯỢNG     MM = MÁY MÓC - THIẾT BỊ',
+      15,
+      finalY + 10,
+    );
+
     // Add signature lines
     doc.text('Người lập phiếu', 60, finalY + 20);
     doc.text('Nhóm trưởng', 140, finalY + 20);
     doc.text('Quản lý', 220, finalY + 20);
-    
+
     doc.text(timesheet.employeeName, 60, finalY + 40);
     doc.text(timesheet.teamLeader || '', 140, finalY + 40);
     doc.text(timesheet.supervisor || '', 220, finalY + 40);
-    
+
     // Save the PDF
     const fileName = `Phieu_cong_doan_${timesheet.employeeName.replace(/\s+/g, '_')}_${timesheet.date || 'Unknown'}.pdf`;
     doc.save(fileName);
@@ -398,12 +417,12 @@ export const exportTimesheetToPDF = (timesheet: TimeSheetType): void => {
  */
 export const getReasonNames = (entry: TimeSheetEntryType): string[] => {
   const reasons: string[] = [];
-  
+
   if (entry.reasons?.VT) reasons.push('Vật tư');
   if (entry.reasons?.CN) reasons.push('Công nghệ');
   if (entry.reasons?.CL) reasons.push('Chất lượng');
   if (entry.reasons?.MM) reasons.push('Máy móc - Thiết bị');
-  
+
   return reasons;
 };
 
@@ -412,10 +431,14 @@ export const getReasonNames = (entry: TimeSheetEntryType): string[] => {
  */
 export const getStatusLabel = (status?: string): string => {
   switch (status) {
-    case 'approved': return 'Đã duyệt';
-    case 'pending': return 'Chờ duyệt';
-    case 'draft': return 'Bản nháp';
-    default: return 'Không xác định';
+    case 'approved':
+      return 'Đã duyệt';
+    case 'pending':
+      return 'Chờ duyệt';
+    case 'draft':
+      return 'Bản nháp';
+    default:
+      return 'Không xác định';
   }
 };
 
@@ -425,12 +448,24 @@ export const getStatusLabel = (status?: string): string => {
 export const getStatusColor = (status?: string): { bg: string; text: string } => {
   switch (status) {
     case 'approved':
-      return { bg: 'bg-green-100 dark:bg-green-800', text: 'text-green-800 dark:text-green-100' };
+      return {
+        bg: 'bg-green-100 dark:bg-green-800',
+        text: 'text-green-800 dark:text-green-100',
+      };
     case 'pending':
-      return { bg: 'bg-yellow-100 dark:bg-yellow-800', text: 'text-yellow-800 dark:text-yellow-100' };
+      return {
+        bg: 'bg-yellow-100 dark:bg-yellow-800',
+        text: 'text-yellow-800 dark:text-yellow-100',
+      };
     case 'draft':
-      return { bg: 'bg-gray-100 dark:bg-gray-700', text: 'text-gray-800 dark:text-gray-100' };
+      return {
+        bg: 'bg-gray-100 dark:bg-gray-700',
+        text: 'text-gray-800 dark:text-gray-100',
+      };
     default:
-      return { bg: 'bg-gray-100 dark:bg-gray-800', text: 'text-gray-800 dark:text-gray-200' };
+      return {
+        bg: 'bg-gray-100 dark:bg-gray-800',
+        text: 'text-gray-800 dark:text-gray-200',
+      };
   }
 };

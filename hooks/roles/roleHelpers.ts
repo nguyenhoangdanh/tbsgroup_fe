@@ -1,17 +1,18 @@
 'use client';
 
 import { useCallback, useEffect, useState, useRef } from 'react';
-import { useRoleMutations } from './roleMutations';
-import { TRoleSchema } from '@/schemas/role';
-import { RoleType } from '@/apis/roles/role.api';
+
 import { useDebounce } from '../useDebounce';
+import { useRoleMutations } from './roleMutations';
+
+import { RoleType } from '@/apis/roles/role.api';
+import { TRoleSchema } from '@/schemas/role';
 
 /**
  * Hook for role-related helper functions and state management
  * Optimized for high performance with 5000+ users
  */
 export const useRoleHelpers = () => {
-  // State
   const [selectedRole, setSelectedRole] = useState<RoleType | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
@@ -33,7 +34,7 @@ export const useRoleHelpers = () => {
     isSearching: false,
     pendingRequests: new Set<string>(),
     filterChangeId: 0,
-    paginationChangeId: 0
+    paginationChangeId: 0,
   });
 
   // Debounced filter values for optimized search
@@ -53,7 +54,7 @@ export const useRoleHelpers = () => {
   // Combined filters with debounced values - using reducer for better state updates
   const [activeFilters, setActiveFilters] = useState(initialActiveFilters);
 
-  // Previous filter values reference for comparison
+  //  Previous filter values reference for comparison
   const previousFiltersRef = useRef({
     code: '',
     name: '',
@@ -73,10 +74,10 @@ export const useRoleHelpers = () => {
       if (prev.page === page && prev.limit === limit) {
         return prev;
       }
-      
+
       // Track this change to coordinate with effects
       operationsRef.current.paginationChangeId++;
-      
+
       return { page, limit };
     });
   }, []);
@@ -97,7 +98,7 @@ export const useRoleHelpers = () => {
     if (hasFilterChanged) {
       // Track this filter change to coordinate with effects
       operationsRef.current.filterChangeId++;
-      
+
       // Save filter values for future comparison
       previousFiltersRef.current = {
         code: debouncedCode,
@@ -127,13 +128,7 @@ export const useRoleHelpers = () => {
         }));
       }
     }
-  }, [
-    debouncedCode,
-    debouncedName,
-    filterValues.level,
-    filterValues.isSystem,
-    pagination.page,
-  ]);
+  }, [debouncedCode, debouncedName, filterValues.level, filterValues.isSystem, pagination.page]);
 
   /**
    * Separate effect to handle pagination changes
@@ -158,20 +153,17 @@ export const useRoleHelpers = () => {
    * Update filter values with memoization to prevent unnecessary re-renders
    * Using a more robust approach to handle concurrent updates
    */
-  const updateFilter = useCallback(
-    (key: keyof typeof filterValues, value: any) => {
-      setFilterValues(prev => {
-        // Skip update if value hasn't changed
-        if (prev[key] === value) return prev;
+  const updateFilter = useCallback((key: keyof typeof filterValues, value: any) => {
+    setFilterValues(prev => {
+      // Skip update if value hasn't changed
+      if (prev[key] === value) return prev;
 
-        // Flag as searching to prevent redundant API calls
-        operationsRef.current.isSearching = true;
+      // Flag as searching to prevent redundant API calls
+      operationsRef.current.isSearching = true;
 
-        return { ...prev, [key]: value };
-      });
-    },
-    [],
-  );
+      return { ...prev, [key]: value };
+    });
+  }, []);
 
   /**
    * Reset all filters with optimized implementation
@@ -188,7 +180,7 @@ export const useRoleHelpers = () => {
     // Reset to page 1 when clearing filters
     setPagination(prev => ({
       ...prev,
-      page: 1
+      page: 1,
     }));
   }, []);
 
@@ -203,15 +195,15 @@ export const useRoleHelpers = () => {
 
       // Generate a unique request ID
       const requestId = `create-${Date.now()}`;
-      
+
       try {
         operationsRef.current.isSubmitting = true;
         operationsRef.current.pendingRequests.add(requestId);
-        
+
         setLoading(true);
         setError(null);
 
-        const result = await createRoleMutation.mutateAsync(data);
+        const result: TRoleSchema = await createRoleMutation.mutateAsync(data);
         return result;
       } catch (err) {
         const error = err instanceof Error ? err : new Error(String(err));
@@ -231,22 +223,19 @@ export const useRoleHelpers = () => {
    * Similar optimizations as handleCreateRole
    */
   const handleUpdateRole = useCallback(
-    async (
-      id: string,
-      data: Omit<TRoleSchema, 'id' | 'createdAt' | 'updatedAt'>,
-    ) => {
+    async (id: string, data: Omit<TRoleSchema, 'id' | 'createdAt' | 'updatedAt'>) => {
       if (operationsRef.current.isSubmitting) return;
 
       const requestId = `update-${Date.now()}`;
-      
+
       try {
         operationsRef.current.isSubmitting = true;
         operationsRef.current.pendingRequests.add(requestId);
-        
+
         setLoading(true);
         setError(null);
 
-        const result = await updateRoleMutation.mutateAsync({id, data});
+        const result: TRoleSchema = await updateRoleMutation.mutateAsync({ id, data });
         return result;
       } catch (err) {
         const error = err instanceof Error ? err : new Error(String(err));
@@ -269,15 +258,15 @@ export const useRoleHelpers = () => {
       if (operationsRef.current.isSubmitting) return;
 
       const requestId = `delete-${Date.now()}`;
-      
+
       try {
         operationsRef.current.isSubmitting = true;
         operationsRef.current.pendingRequests.add(requestId);
-        
+
         setLoading(true);
         setError(null);
 
-        const result = await deleteRoleMutation.mutateAsync(id);
+        const result: TRoleSchema = await deleteRoleMutation.mutateAsync(id);
 
         // If the deleted role was selected, deselect it
         if (selectedRole?.id === id) {
@@ -309,7 +298,7 @@ export const useRoleHelpers = () => {
   useEffect(() => {
     // Cleanup function that runs on component unmount
     return () => {
-      // Clear any pending operations
+      //  Clear any pending operations
       operationsRef.current.pendingRequests.clear();
       operationsRef.current.isSubmitting = false;
       operationsRef.current.isSearching = false;

@@ -1,19 +1,21 @@
-"use client";
-import { DataTable } from "@/components/common/table/data-table";
-import React from "react";
-import { columns } from "./_components/columns";
-import HandbagStageForm from "./_components/form";
-import { deleteProductionProcess } from "@/actions/admin/handbag";
-import { useSelector } from "react-redux";
-import { RootState } from "@/redux/store";
-import { useDispatchType } from "@/lib/dispatch.utils";
+'use client';
+import React from 'react';
+import { useSelector } from 'react-redux';
+
+import { columns } from './_components/columns';
+import HandbagStageForm from './_components/form';
+
+import { deleteProductionProcess } from '@/actions/admin/handbag';
+import { DataTable } from '@/components/common/table/data-table';
+import { useDispatchType } from '@/lib/dispatch.utils';
+import { RootState } from '@/redux/store';
 
 const HandbagStageContainer = () => {
   const dispatch = useDispatchType();
   const { data } = useSelector((state: RootState) => state.handbagStages);
 
   React.useEffect(() => {
-    dispatch("FETCH_PO_HANDBAG");
+    dispatch('FETCH_PO_HANDBAG');
   }, []);
 
   return (
@@ -30,14 +32,14 @@ const HandbagStageContainer = () => {
               <div className="">Edit form</div>
             </>
           }
-          // onDelete={(id) => deleteProductionProcess(Number(id))}
-          onEdit={(data) => {
-            console.log("Edit", data);
+          onDelete={id => deleteProductionProcess(Number(id))}
+          onEdit={data => {
+            console.log('Edit', data);
           }}
           refetchData={() => {
-            dispatch("FETCH_PO_HANDBAG");
+            dispatch('FETCH_PO_HANDBAG');
           }}
-          actions={["create", "edit", "delete"]}
+          actions={['create', 'edit', 'delete']}
         />
       )}
     </div>

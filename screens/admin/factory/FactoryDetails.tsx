@@ -1,339 +1,366 @@
-
-
-import React, { useCallback, useEffect, useState } from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { useFactoryQueries } from '@/hooks/factory/useFactoryQueries';
-import { useFactoryMutations } from '@/hooks/factory/useFactoryMutations';
-import {
-    Factory as FactoryIcon,
-    Users,
-    Building,
-    Pencil,
-    ArrowLeft,
-    Plus,
-    Trash2,
-    Workflow
-} from 'lucide-react';
-import { FactoryWithDetails, FactoryManager } from '@/common/interface/factory';
-import { Badge } from '@/components/ui/badge';
-import { DialogType, useDialog } from '@/contexts/DialogProvider';
-import { toast } from '@/hooks/use-toast';
+import { Factory as FactoryIcon, Users, Building, Pencil, ArrowLeft, Workflow } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { Separator } from '@/components/ui/separator';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import ManagerForm from './ManagerForm';
-import { useUserQueries } from '@/hooks/users';
+import React, { useCallback } from 'react';
+import { toast } from 'react-toast-kit';
+
 import { FactoryManagersTable } from './FactoryManagersTable';
+import ManagerForm from './ManagerForm';
+
+import { FactoryManager } from '@/common/interface/factory';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { DialogType, useDialog } from '@/contexts/DialogProvider';
+import { useFactoryMutations } from '@/hooks/factory/useFactoryMutations';
+import { useFactoryQueries } from '@/hooks/factory/useFactoryQueries';
+import { useUserQueries } from '@/hooks/users';
 
 interface FactoryDetailsProps {
-    factoryId: string;
+  factoryId: string;
 }
 
 export const FactoryDetails: React.FC<FactoryDetailsProps> = ({ factoryId }) => {
-    const router = useRouter();
-    const { showDialog } = useDialog();
-    const { Mode: ManagerFormMode } = ManagerForm;
+  const router = useRouter();
+  const { showDialog } = useDialog();
+  const { Mode: ManagerFormMode } = ManagerForm;
 
-    // Fetch users for manager selection
-    const { getAllUsers } = useUserQueries();
-    const { data: users, isLoading: isLoadingUsers } = getAllUsers;
+  // Fetch users for manager selection
+  const { getAllUsers } = useUserQueries();
+  const { data: users, isLoading: isLoadingUsers } = getAllUsers;
 
-    // Fetch factory details with optimized query options
-    const { getFactoryWithDetails, invalidateFactoryDetailsCache } = useFactoryQueries();
-    const {
-        data: factoryDetails,
-        isLoading,
-        error,
-        refetch
-    } = getFactoryWithDetails(factoryId, {
-        includeManagers: true,
-        // Only refetch on window focus if data is stale (over 5 minutes old)
-        refetchOnWindowFocus: false
+  // Fetch factory details with optimized query options
+  const { getFactoryWithDetails, invalidateFactoryDetailsCache } = useFactoryQueries();
+  const {
+    data: factoryDetails,
+    isLoading,
+    error,
+    refetch,
+  } = getFactoryWithDetails(factoryId, {
+    includeManagers: true,
+    // Only refetch on window focus if data is stale (over 5 minutes old)
+    // refetchOnWindowFocus: false,
+  });
+
+  // Mutations with optimistic updates
+  const { removeManagerMutation } = useFactoryMutations();
+
+  // Handle back button
+  const handleBack = useCallback(() => {
+    router.push('/admin/factories');
+  }, [router]);
+
+  // Handle edit factory with optimized dialog flow
+  const handleEdit = useCallback(() => {
+    if (!factoryDetails) return;
+
+    showDialog({
+      type: DialogType.EDIT,
+      data: factoryDetails,
+      onClose: () => {
+        // Use a more targeted refetch approach
+        invalidateFactoryDetailsCache(factoryId);
+        refetch();
+      },
     });
+  }, [factoryDetails, showDialog, invalidateFactoryDetailsCache, factoryId, refetch]);
 
-    // Mutations with optimistic updates
-    const { removeManagerMutation } = useFactoryMutations();
+  const handleNavigateToLines = useCallback(() => {
+    router.push(`/admin/factories/${factoryId}/lines`);
+  }, [router, factoryId]);
 
-    // Handle back button
-    const handleBack = useCallback(() => {
-        router.push('/admin/factories');
-    }, [router]);
+  // Handle add manager with optimized cache updates
+  const handleAddManager = useCallback(() => {
+    if (!factoryDetails) return;
 
-    // Handle edit factory with optimized dialog flow
-    const handleEdit = useCallback(() => {
-        if (!factoryDetails) return;
+    showDialog({
+      title: 'Thêm quản lý nhà máy',
+      type: DialogType.CREATE,
+      data: {
+        factoryId: factoryDetails.id,
+        factoryName: factoryDetails.name,
+      },
+      children: () => (
+        <ManagerForm
+          mode={ManagerFormMode.CREATE}
+          factoryId={factoryId}
+          users={users || []}
+          isLoadingUsers={isLoadingUsers}
+          onSuccess={() => {
+            // More targeted approach to cache invalidation
+            invalidateFactoryDetailsCache(factoryId);
+          }}
+        />
+      ),
+      onClose: () => {
+        refetch();
+      },
+    });
+  }, [
+    factoryDetails,
+    showDialog,
+    invalidateFactoryDetailsCache,
+    factoryId,
+    refetch,
+    users,
+    isLoadingUsers,
+    ManagerFormMode,
+  ]);
 
-        showDialog({
-            type: DialogType.EDIT,
-            data: factoryDetails,
-            onClose: () => {
-                // Use a more targeted refetch approach
-                invalidateFactoryDetailsCache(factoryId);
-                refetch();
-            }
-        });
-    }, [factoryDetails, showDialog, invalidateFactoryDetailsCache, factoryId, refetch]);
+  //  Handle update manager with optimized cache handling
+  const handleUpdateManager = useCallback(
+    (manager: FactoryManager) => {
+      if (!factoryDetails) return;
 
-    const handleNavigateToLines = useCallback(() => {
-        router.push(`/admin/factories/${factoryId}/lines`);
-    }, [router, factoryId]);
+      showDialog({
+        title: 'Cập nhật quản lý',
+        type: DialogType.EDIT,
+        data: manager,
+        children: () => (
+          <ManagerForm
+            mode={ManagerFormMode.UPDATE}
+            factoryId={factoryDetails.id}
+            existingManager={manager}
+            onSuccess={() => {
+              invalidateFactoryDetailsCache(factoryId);
+            }}
+          />
+        ),
+        onClose: () => {
+          refetch();
+        },
+      });
+    },
+    [
+      factoryDetails,
+      showDialog,
+      invalidateFactoryDetailsCache,
+      factoryId,
+      refetch,
+      ManagerFormMode,
+    ],
+  );
 
+  // Handle remove manager confirmation with optimized UX
+  const handleConfirmRemoveManager = useCallback(
+    (userId: string, userName: string) => {
+      showDialog({
+        title: 'Xác nhận xóa quản lý',
+        description: `Bạn có chắc chắn muốn xóa quản lý ${userName} khỏi nhà máy ${factoryDetails?.name}?`,
+        type: DialogType.DELETE,
+        data: { userId, factoryId },
+        onSubmit: async data => {
+          try {
+            await removeManagerMutation.mutateAsync({
+              factoryId: data.factoryId,
+              userId: data.userId,
+            });
 
-    // Handle add manager with optimized cache updates
-    const handleAddManager = useCallback(() => {
-        if (!factoryDetails) return;
+            toast({
+              title: 'Xóa quản lý thành công',
+              description: `Đã xóa quản lý khỏi nhà máy.`,
+              duration: 2000,
+            });
 
-        showDialog({
-            title: 'Thêm quản lý nhà máy',
-            type: DialogType.CREATE,
-            data: {
-                factoryId: factoryDetails.id,
-                factoryName: factoryDetails.name
-            },
-            children: () => (
-                <ManagerForm
-                    mode={ManagerFormMode.CREATE}
-                    factoryId={factoryId}
-                    users={users || []}
-                    isLoadingUsers={isLoadingUsers}
-                    onSuccess={() => {
-                        // More targeted approach to cache invalidation
-                        invalidateFactoryDetailsCache(factoryId);
-                    }}
-                />
-            ),
-            onClose: () => {
-                refetch();
-            }
-        });
-    }, [factoryDetails, showDialog, invalidateFactoryDetailsCache, factoryId, refetch, users, isLoadingUsers, ManagerFormMode]);
+            // Single operation for cache invalidation
+            invalidateFactoryDetailsCache(factoryId);
 
-    // Handle update manager with optimized cache handling
-    const handleUpdateManager = useCallback((manager: FactoryManager) => {
-        if (!factoryDetails) return;
+            return true;
+          } catch (error) {
+            toast({
+              title: 'Lỗi xóa quản lý',
+              description:
+                error instanceof Error ? error.message : 'Đã xảy ra lỗi khi xóa quản lý.',
+              variant: 'error',
+              duration: 3000,
+            });
+            return false;
+          }
+        },
+      });
+    },
+    [factoryDetails, removeManagerMutation, invalidateFactoryDetailsCache, factoryId],
+  );
 
-        showDialog({
-            title: 'Cập nhật quản lý',
-            type: DialogType.EDIT,
-            data: manager,
-            children: () => (
-                <ManagerForm
-                    mode={ManagerFormMode.UPDATE}
-                    factoryId={factoryDetails.id}
-                    existingManager={manager}
-                    onSuccess={() => {
-                        invalidateFactoryDetailsCache(factoryId);
-                    }}
-                />
-            ),
-            onClose: () => {
-                refetch();
-            }
-        });
-    }, [factoryDetails, showDialog, invalidateFactoryDetailsCache, factoryId, refetch, ManagerFormMode]);
-
-    // Handle remove manager confirmation with optimized UX
-    const handleConfirmRemoveManager = useCallback((userId: string, userName: string) => {
-        showDialog({
-            title: "Xác nhận xóa quản lý",
-            description: `Bạn có chắc chắn muốn xóa quản lý ${userName} khỏi nhà máy ${factoryDetails?.name}?`,
-            type: DialogType.DELETE,
-            data: { userId, factoryId },
-            onSubmit: async (data) => {
-                try {
-                    await removeManagerMutation.mutateAsync({
-                        factoryId: data.factoryId,
-                        userId: data.userId
-                    });
-
-                    toast({
-                        title: 'Xóa quản lý thành công',
-                        description: `Đã xóa quản lý khỏi nhà máy.`,
-                        duration: 2000,
-                    });
-
-                    // Single operation for cache invalidation
-                    invalidateFactoryDetailsCache(factoryId);
-
-                    return true;
-                } catch (error) {
-                    toast({
-                        title: 'Lỗi xóa quản lý',
-                        description: error instanceof Error ? error.message : 'Đã xảy ra lỗi khi xóa quản lý.',
-                        variant: 'destructive',
-                        duration: 3000,
-                    });
-                    return false;
-                }
-            }
-        });
-    }, [factoryDetails, removeManagerMutation, invalidateFactoryDetailsCache, factoryId]);
-
-    // Loading state
-    if (isLoading) {
-        return (
-            <Card>
-                <CardHeader>
-                    <CardTitle>Đang tải...</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="flex items-center justify-center h-64">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                    </div>
-                </CardContent>
-            </Card>
-        );
-    }
-
-    // Error state
-    if (error || !factoryDetails) {
-        return (
-            <Card>
-                <CardHeader>
-                    <CardTitle>Lỗi tải dữ liệu</CardTitle>
-                    <CardDescription>Không thể tải thông tin nhà máy</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="text-destructive">
-                        {error instanceof Error ? error.message : 'Đã xảy ra lỗi khi tải thông tin nhà máy'}
-                    </div>
-                </CardContent>
-                <CardFooter>
-                    <Button variant="outline" onClick={handleBack}>
-                        <ArrowLeft className="mr-2 h-4 w-4" />
-                        Quay lại
-                    </Button>
-                </CardFooter>
-            </Card>
-        );
-    }
-
+  // Loading state
+  if (isLoading) {
     return (
-        <div className="space-y-6">
-            {/* Header with back button and actions */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-2">
-                    <Button variant="outline" size="icon" onClick={handleBack}>
-                        <ArrowLeft className="h-4 w-4" />
-                    </Button>
-                    <h1 className="text-2xl font-bold">{factoryDetails.name}</h1>
-                    <Badge>{factoryDetails.code}</Badge>
+      <Card>
+        <CardHeader>
+          <CardTitle>Đang tải...</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  //  Error state
+  if (error || !factoryDetails) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Lỗi tải dữ liệu</CardTitle>
+          <CardDescription>Không thể tải thông tin nhà máy</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="text-destructive">
+            {error instanceof Error ? error.message : 'Đã xảy ra lỗi khi tải thông tin nhà máy'}
+          </div>
+        </CardContent>
+        <CardFooter>
+          <Button variant="outline" onClick={handleBack}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Quay lại
+          </Button>
+        </CardFooter>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header with back button and actions */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="icon" onClick={handleBack}>
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <h1 className="text-2xl font-bold">{factoryDetails.name}</h1>
+          <Badge>{factoryDetails.code}</Badge>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={handleEdit}>
+            <Pencil className="mr-2 h-4 w-4" />
+            Chỉnh sửa
+          </Button>
+        </div>
+      </div>
+
+      {/* Factory details in tabs */}
+      <Tabs defaultValue="general" className="w-full">
+        <TabsList>
+          <TabsTrigger value="general">
+            <FactoryIcon className="mr-2 h-4 w-4" />
+            Thông tin chung
+          </TabsTrigger>
+          <TabsTrigger value="managers">
+            <Users className="mr-2 h-4 w-4" />
+            Quản lý ({factoryDetails.managers?.length || 0})
+          </TabsTrigger>
+          <TabsTrigger value="lines">
+            <Workflow className="mr-2 h-4 w-4" />
+            Dây chuyền
+          </TabsTrigger>
+        </TabsList>
+
+        {/* General information tab */}
+        <TabsContent value="general" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Thông tin nhà máy</CardTitle>
+              <CardDescription>Thông tin chi tiết về nhà máy {factoryDetails.name}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <h3 className="text-sm font-medium text-muted-foreground">Mã nhà máy</h3>
+                  <p className="font-medium">{factoryDetails.code}</p>
                 </div>
-                <div className="flex items-center gap-2">
-                    <Button variant="outline" onClick={handleEdit}>
-                        <Pencil className="mr-2 h-4 w-4" />
-                        Chỉnh sửa
-                    </Button>
+
+                <div className="space-y-2">
+                  <h3 className="text-sm font-medium text-muted-foreground">Tên nhà máy</h3>
+                  <p className="font-medium">{factoryDetails.name}</p>
                 </div>
-            </div>
 
-            {/* Factory details in tabs */}
-            <Tabs defaultValue="general" className="w-full">
-                <TabsList>
-                    <TabsTrigger value="general">
-                        <FactoryIcon className="mr-2 h-4 w-4" />
-                        Thông tin chung
-                    </TabsTrigger>
-                    <TabsTrigger value="managers">
-                        <Users className="mr-2 h-4 w-4" />
-                        Quản lý ({factoryDetails.managers?.length || 0})
-                    </TabsTrigger>
-                    <TabsTrigger value="lines">
-                        <Workflow className="mr-2 h-4 w-4" />
-                        Dây chuyền
-                    </TabsTrigger>
-                </TabsList>
+                <div className="space-y-2">
+                  <h3 className="text-sm font-medium text-muted-foreground">Địa chỉ</h3>
+                  <p className="font-medium">{factoryDetails.address || 'Chưa cập nhật'}</p>
+                </div>
 
-                {/* General information tab */}
-                <TabsContent value="general" className="space-y-4">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Thông tin nhà máy</CardTitle>
-                            <CardDescription>Thông tin chi tiết về nhà máy {factoryDetails.name}</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="space-y-2">
-                                    <h3 className="text-sm font-medium text-muted-foreground">Mã nhà máy</h3>
-                                    <p className="font-medium">{factoryDetails.code}</p>
-                                </div>
+                <div className="space-y-2">
+                  <h3 className="text-sm font-medium text-muted-foreground">Thời gian tạo</h3>
+                  <p className="font-medium">
+                    {factoryDetails.createdAt
+                      ? new Date(factoryDetails.createdAt).toLocaleString('vi-VN')
+                      : 'N/A'}
+                  </p>
+                </div>
+              </div>
 
-                                <div className="space-y-2">
-                                    <h3 className="text-sm font-medium text-muted-foreground">Tên nhà máy</h3>
-                                    <p className="font-medium">{factoryDetails.name}</p>
-                                </div>
+              <Separator />
 
-                                <div className="space-y-2">
-                                    <h3 className="text-sm font-medium text-muted-foreground">Địa chỉ</h3>
-                                    <p className="font-medium">{factoryDetails.address || 'Chưa cập nhật'}</p>
-                                </div>
+              <div className="space-y-2">
+                <h3 className="text-sm font-medium text-muted-foreground">Mô tả</h3>
+                <p className="text-sm">{factoryDetails.description || 'Không có mô tả'}</p>
+              </div>
 
-                                <div className="space-y-2">
-                                    <h3 className="text-sm font-medium text-muted-foreground">Thời gian tạo</h3>
-                                    <p className="font-medium">
-                                        {factoryDetails.createdAt ? new Date(factoryDetails.createdAt).toLocaleString('vi-VN') : 'N/A'}
-                                    </p>
-                                </div>
-                            </div>
+              <Separator />
 
-                            <Separator />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <h3 className="text-sm font-medium text-muted-foreground">Phòng ban quản lý</h3>
+                  {factoryDetails.department ? (
+                    <div className="flex items-center">
+                      <Building className="mr-2 h-4 w-4 text-muted-foreground" />
+                      <span>{factoryDetails.department.name}</span>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      Chưa thiết lập phòng ban quản lý
+                    </p>
+                  )}
+                </div>
 
-                            <div className="space-y-2">
-                                <h3 className="text-sm font-medium text-muted-foreground">Mô tả</h3>
-                                <p className="text-sm">{factoryDetails.description || 'Không có mô tả'}</p>
-                            </div>
+                <div className="space-y-2">
+                  <h3 className="text-sm font-medium text-muted-foreground">
+                    Phòng ban tại nhà máy
+                  </h3>
+                  {factoryDetails.managingDepartment ? (
+                    <div className="flex items-center">
+                      <Building className="mr-2 h-4 w-4 text-muted-foreground" />
+                      <span>{factoryDetails.managingDepartment.name}</span>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      Chưa thiết lập phòng ban tại nhà máy
+                    </p>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-                            <Separator />
+        {/* Managers tab */}
+        <TabsContent value="managers" className="space-y-4">
+          <FactoryManagersTable
+            factoryId={factoryDetails.id || ''}
+            managers={factoryDetails.managers || []}
+            users={users || []}
+            onAddManager={handleAddManager}
+            onEditManager={handleUpdateManager}
+            onDeleteManager={userId => {
+              //  Find the user name from the managers array
+              const manager = factoryDetails.managers?.find(m => m.userId === userId);
+              const userName = manager?.user?.fullName || userId;
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="space-y-2">
-                                    <h3 className="text-sm font-medium text-muted-foreground">Phòng ban quản lý</h3>
-                                    {factoryDetails.department ? (
-                                        <div className="flex items-center">
-                                            <Building className="mr-2 h-4 w-4 text-muted-foreground" />
-                                            <span>{factoryDetails.department.name}</span>
-                                        </div>
-                                    ) : (
-                                        <p className="text-sm text-muted-foreground">Chưa thiết lập phòng ban quản lý</p>
-                                    )}
-                                </div>
-
-                                <div className="space-y-2">
-                                    <h3 className="text-sm font-medium text-muted-foreground">Phòng ban tại nhà máy</h3>
-                                    {factoryDetails.managingDepartment ? (
-                                        <div className="flex items-center">
-                                            <Building className="mr-2 h-4 w-4 text-muted-foreground" />
-                                            <span>{factoryDetails.managingDepartment.name}</span>
-                                        </div>
-                                    ) : (
-                                        <p className="text-sm text-muted-foreground">Chưa thiết lập phòng ban tại nhà máy</p>
-                                    )}
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-
-                {/* Managers tab */}
-                <TabsContent value="managers" className="space-y-4">
-                    <FactoryManagersTable
-                        factoryId={factoryDetails.id || ''}
-                        managers={factoryDetails.managers || []}
-                        users={users || []}
-                        onAddManager={handleAddManager}
-                        onEditManager={handleUpdateManager}
-                        onDeleteManager={(userId) => {
-                            // Find the user name from the managers array
-                            const manager = factoryDetails.managers?.find(m => m.userId === userId);
-                            const userName = manager?.user?.fullName || userId;
-
-                            // Now call handleConfirmRemoveManager with both parameters
-                            handleConfirmRemoveManager(userId, userName);
-                        }}
-                    />
-                    {/* <Card>
+              //Now call handleConfirmRemoveManager with both parameters
+              handleConfirmRemoveManager(userId, userName);
+            }}
+          />
+          {/* <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <div>
                                 <CardTitle>Danh sách quản lý</CardTitle>
@@ -405,31 +432,33 @@ export const FactoryDetails: React.FC<FactoryDetailsProps> = ({ factoryId }) => 
                             )}
                         </CardContent>
                     </Card> */}
-                </TabsContent>
+        </TabsContent>
 
-                {/* Lines tab */}
-                <TabsContent value="lines" className="space-y-4">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Quản lý dây chuyền</CardTitle>
-                            <CardDescription>Dây chuyền sản xuất của nhà máy {factoryDetails.name}</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="flex flex-col items-center justify-center p-6 text-center">
-                                <Workflow className="h-12 w-12 text-primary mb-4" />
-                                <h3 className="text-lg font-medium mb-2">Quản lý dây chuyền sản xuất</h3>
-                                <p className="text-muted-foreground mb-4">
-                                    Quản lý các dây chuyền sản xuất và thiết lập kế hoạch sản xuất
-                                </p>
-                                <Button onClick={handleNavigateToLines}>
-                                    <Workflow className="mr-2 h-4 w-4" />
-                                    Đi đến quản lý dây chuyền
-                                </Button>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-            </Tabs>
-        </div>
-    );
+        {/* Lines tab */}
+        <TabsContent value="lines" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Quản lý dây chuyền</CardTitle>
+              <CardDescription>
+                Dây chuyền sản xuất của nhà máy {factoryDetails.name}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex flex-col items-center justify-center p-6 text-center">
+                <Workflow className="h-12 w-12 text-primary mb-4" />
+                <h3 className="text-lg font-medium mb-2">Quản lý dây chuyền sản xuất</h3>
+                <p className="text-muted-foreground mb-4">
+                  Quản lý các dây chuyền sản xuất và thiết lập kế hoạch sản xuất
+                </p>
+                <Button onClick={handleNavigateToLines}>
+                  <Workflow className="mr-2 h-4 w-4" />
+                  Đi đến quản lý dây chuyền
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
 };

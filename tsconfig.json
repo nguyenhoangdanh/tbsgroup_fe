@@ -31,6 +31,6 @@
     ".next/types/app/(auth)/layout.tsx",
     ".next/types/app/(auth)/reset-password/page.tsx",
     "utils"
-  ],
+, "config/environment.js"  ],
   "exclude": ["node_modules"]
 }

@@ -1,10 +1,10 @@
-"use client"
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
-import React from "react";
-import { toast } from "@/hooks/use-toast";
-import { DialogType, useDialog, DialogChildrenProps } from "@/contexts/DialogProvider";
-import { on } from "events";
+'use client';
+import { Plus } from 'lucide-react';
+import React from 'react';
+import { toast } from 'react-toast-kit';
+
+import { Button } from '@/components/ui/button';
+import { DialogType, useDialog, DialogChildrenProps } from '@/contexts/DialogProvider';
 
 interface CreateActionDialogProps<T = any> {
   name: string;
@@ -13,8 +13,8 @@ interface CreateActionDialogProps<T = any> {
   onSubmit?: (data?: T) => Promise<void | boolean>;
   buttonText?: string;
   buttonIcon?: React.ReactNode;
-  buttonVariant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
-  buttonSize?: "default" | "sm" | "lg" | "icon";
+  buttonVariant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
+  buttonSize?: 'default' | 'sm' | 'lg' | 'icon';
   fullWidth?: boolean;
   disableButton?: boolean;
   onClose?: () => void;
@@ -26,69 +26,89 @@ export function CreateActionDialog<T = any>({
   description,
   children,
   onSubmit,
-  buttonText = "Tạo mới",
+  buttonText = 'Tạo mới',
   buttonIcon = <Plus size={16} />,
-  buttonVariant = "default",
-  buttonSize = "default",
+  buttonVariant = 'default',
+  buttonSize = 'default',
   fullWidth = false,
   disableButton = false,
   onClose,
-  onClick
+  onClick,
 }: CreateActionDialogProps<T>) {
-  const { showDialog, hideDialog } = useDialog<T>();
+  const { showDialog } = useDialog<T>();
 
   const handleOpenDialog = () => {
+    // If there's no children component to show in dialog, don't open it
+    if (!children) return;
+
     showDialog({
       type: DialogType.CREATE,
       title: `Tạo mới ${name}`,
       description: description,
       fullWidth: fullWidth,
-      children: typeof children === 'function'
-        ? (props) => {
-          // Truyền các props cần thiết cho children function
-          return children({
-            ...props,
-            onClose: () => {
-              props.onClose();
-              onClose && onClose();
+      children:
+        typeof children === 'function'
+          ? props => {
+              return children({
+                ...props,
+                onClose: () => {
+                  props.onClose();
+                  if (onClose) {
+                    onClose();
+                  }
+                },
+              });
             }
-          });
-        }
-        : children,
-      onSubmit: async (formData) => {
+          : children,
+      onSubmit: async formData => {
         if (onSubmit) {
           try {
             const result = await onSubmit(formData);
             toast({
               title: `Tạo mới ${name.toLowerCase()} thành công`,
-              variant: "default",
+              variant: 'default',
             });
 
-            // Quan trọng: Không cần gọi hideDialog() ở đây
-            // DialogProvider sẽ tự động gọi hideDialog sau khi onSubmit thành công
-
             if (result === true) {
-              // Phải đảm bảo onClose được gọi trước khi hideDialog
-              // để component cha có thể biết và refetch
-              onClose && onClose();
+              if (onClose) {
+                onClose();
+              }
             }
 
             return result;
           } catch (error) {
-            console.error("[CreateActionDialog] onSubmit error:", error);
+            console.error('[CreateActionDialog] onSubmit error:', error);
             toast({
               title: `Lỗi khi tạo mới ${name.toLowerCase()}`,
-              description: error instanceof Error ? error.message : "Có lỗi xảy ra",
-              variant: "destructive",
+              description: error instanceof Error ? error.message : 'Có lỗi xảy ra',
+              variant: 'error',
             });
-            throw error; // Ném lại lỗi để DialogProvider không đóng dialog
+            throw error;
           }
         }
       },
       onClose: () => {
-        onClose && onClose();
-      }
+        if (onClose) {
+          onClose();
+        }
+      },
     });
+  };
+
+  const handleClick = () => {
+    // If onClick is provided, call it
+    if (onClick) {
+      onClick();
+      // Only open dialog if children exists AND onClick doesn't handle dialog opening itself
+      if (children) {
+        handleOpenDialog();
+      }
+    } else {
+      // If no onClick, open dialog if children exists
+      if (children) {
+        handleOpenDialog();
+      }
+    }
   };
 
   return (
@@ -97,9 +117,7 @@ export function CreateActionDialog<T = any>({
       size={buttonSize}
       className={`flex items-center gap-1 bg-green-800 text-white hover:bg-green-700 ${fullWidth ? 'w-full' : 'sm:w-auto'}`}
       disabled={disableButton}
-      onClick={() => {
-        onClick ? onClick() : handleOpenDialog();
-      }}
+      onClick={handleClick}
     >
       {buttonIcon}
       {buttonText}

@@ -1,7 +1,20 @@
-// components/digital-form/reports/GroupReport.tsx
 'use client';
 
+import { Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+
+import { GroupWorkerBreakdown } from './breakdowns/GroupWorkerBreakdown';
+import { DailyOutputChart } from './charts/DailyOutputChart';
+import { HourlyOutputChart } from './charts/HourlyOutputChart';
+import { OutputByBagChart } from './charts/OutputByBagChart';
+import { OutputByProcessChart } from './charts/OutputByProcessChart';
+import { ProductionIssuesChart } from './charts/ProductionIssuesChart';
+import { AttendanceStats } from './stats/AttendanceStats';
+import { GroupProductionSummary } from './summaries/GroupProductionSummary';
+
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -9,19 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
-import { Loader2 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { GroupProductionSummary } from './summaries/GroupProductionSummary';
-import { GroupWorkerBreakdown } from './breakdowns/GroupWorkerBreakdown';
-import { OutputByBagChart } from './charts/OutputByBagChart';
-import { OutputByProcessChart } from './charts/OutputByProcessChart';
-import { HourlyOutputChart } from './charts/HourlyOutputChart';
-import { DailyOutputChart } from './charts/DailyOutputChart';
-import { AttendanceStats } from './stats/AttendanceStats';
-import { ProductionIssuesChart } from './charts/ProductionIssuesChart';
 import { ReportService } from '@/services/reportService';
 
 interface GroupReportProps {
@@ -65,14 +66,17 @@ export function GroupReport({
         const response = await ReportService.getGroups();
 
         if (response.success) {
-          setGroups(response.data.map(group => ({
-            id: group.id,
-            name: group.name
-          })));
+          setGroups(
+            response.data.map(group => ({
+              id: group.id,
+              name: group.name,
+            })),
+          );
         } else {
           setError('Không thể tải danh sách nhóm');
         }
       } catch (err) {
+        console.error('Error fetching groups:', err);
         setError('Lỗi kết nối đến máy chủ');
       }
     }
@@ -92,17 +96,12 @@ export function GroupReport({
         const dateFromStr = dateFrom.toISOString().split('T')[0];
         const dateToStr = dateTo.toISOString().split('T')[0];
 
-        const response = await ReportService.getGroupReport(
-          groupId,
-          dateFromStr,
-          dateToStr,
-          {
-            includeWorkers,
-            detailedAttendance,
-            groupByBag,
-            groupByProcess
-          }
-        );
+        const response = await ReportService.getGroupReport(groupId, dateFromStr, dateToStr, {
+          includeWorkers,
+          detailedAttendance,
+          groupByBag,
+          groupByProcess,
+        });
 
         if (response.success) {
           setReport(response.data);
@@ -110,6 +109,7 @@ export function GroupReport({
           setError(response.error || 'Không thể tải báo cáo');
         }
       } catch (err) {
+        console.error('Error fetching groups:', err);
         setError('Lỗi kết nối đến máy chủ');
       } finally {
         setLoading(false);

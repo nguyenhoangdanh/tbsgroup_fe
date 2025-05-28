@@ -4,10 +4,7 @@
  * @param {number} [maxInitials=2] - Maximum number of initials to return
  * @returns {string} Initials in uppercase
  */
-export const getInitialsFromName = (
-  fullName: string,
-  maxInitials: number = 2,
-): string => {
+export const getInitialsFromName = (fullName: string, maxInitials: number = 2): string => {
   // Return empty string if fullName is not provided
   if (!fullName) return '';
 
@@ -33,8 +30,8 @@ export const getInitialsFromName = (
   } else {
     // Use the standard: first character of first part and first character of last part
     // For Vietnamese names: this would be first character of family name and first character of first name
-    const firstPart = nameParts[0];
-    const lastPart = nameParts[nameParts.length - 1];
+    // const firstPart = nameParts[0];
+    // const lastPart = nameParts[nameParts.length - 1];
 
     if (nameParts.length >= maxInitials) {
       // If there are enough name parts, use first character of first maxInitials parts
@@ -66,7 +63,7 @@ export const getDisplayInitials = (
   fullName: string,
   options: DisplayInitialsOptions = {},
 ): string => {
-  const {vietnameseStyle = true, maxInitials = 2} = options;
+  const { vietnameseStyle = true, maxInitials = 2 } = options;
 
   if (!fullName) return '';
 
@@ -157,9 +154,7 @@ export function extractPlainValue(value: any): string {
   if (
     value &&
     typeof value === 'object' &&
-    (value.type !== undefined ||
-      value.props !== undefined ||
-      value.$$typeof !== undefined)
+    (value.type !== undefined || value.props !== undefined || value.$$typeof !== undefined)
   ) {
     // Nếu có props.children là string, trả về
     if (value.props && typeof value.props.children === 'string') {
@@ -174,6 +169,7 @@ export function extractPlainValue(value: any): string {
     try {
       return JSON.stringify(value);
     } catch (e) {
+      console.error('Error stringifying object:', e);
       return Object.prototype.toString.call(value);
     }
   }
@@ -192,4 +188,3 @@ export function removeVietnameseAccents(str: string): string {
     .replace(/đ/g, 'd')
     .replace(/Đ/g, 'D');
 }
-

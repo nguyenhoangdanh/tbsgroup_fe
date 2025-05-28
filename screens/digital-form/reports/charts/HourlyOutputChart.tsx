@@ -1,7 +1,5 @@
-// components/digital-form/reports/charts/HourlyOutputChart.tsx
 'use client';
 
-import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card';
 import {
   BarChart,
   Bar,
@@ -13,6 +11,8 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
 interface HourlyOutputChartProps {
   data: Array<{
     hour: string;
@@ -21,7 +21,7 @@ interface HourlyOutputChartProps {
   }>;
 }
 
-export function HourlyOutputChart({data}: HourlyOutputChartProps) {
+export function HourlyOutputChart({ data }: HourlyOutputChartProps) {
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -29,7 +29,7 @@ export function HourlyOutputChart({data}: HourlyOutputChartProps) {
       </CardHeader>
       <CardContent>
         {/* Key fix 1: Use a fixed height instead of h-auto */}
-        <div style={{width: '100%', height: 400}}>
+        <div style={{ width: '100%', height: 400 }}>
           {data && data.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
               <BarChart

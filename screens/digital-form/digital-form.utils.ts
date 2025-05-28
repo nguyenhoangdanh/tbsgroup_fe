@@ -1,4 +1,3 @@
-// utils/index.ts
 import { format, isValid } from 'date-fns';
 import { vi } from 'date-fns/locale';
 
@@ -9,7 +8,7 @@ import { vi } from 'date-fns/locale';
  */
 export function formatDate(date: Date): string {
   if (!isValid(date)) return 'Ngày không hợp lệ';
-  
+
   return format(date, 'dd MMMM yyyy', { locale: vi });
 }
 
@@ -20,7 +19,7 @@ export function formatDate(date: Date): string {
  */
 export function formatDateTime(date: Date): string {
   if (!isValid(date)) return 'Thời gian không hợp lệ';
-  
+
   return format(date, 'dd MMMM yyyy HH:mm', { locale: vi });
 }
 
@@ -31,7 +30,7 @@ export function formatDateTime(date: Date): string {
  */
 export function formatTime(date: Date): string {
   if (!isValid(date)) return 'Thời gian không hợp lệ';
-  
+
   return format(date, 'HH:mm', { locale: vi });
 }
 
@@ -44,12 +43,12 @@ export function formatTimeString(timeString: string): string {
   if (!timeString || !timeString.match(/^\d{2}:\d{2}$/)) {
     return timeString;
   }
-  
+
   const [hours, minutes] = timeString.split(':').map(Number);
   const date = new Date();
   date.setHours(hours);
   date.setMinutes(minutes);
-  
+
   return format(date, 'HH:mm', { locale: vi });
 }
 
@@ -85,14 +84,14 @@ export function timeStringToDate(timeString: string): Date | null {
   if (!timeString || !timeString.match(/^\d{2}:\d{2}$/)) {
     return null;
   }
-  
+
   const [hours, minutes] = timeString.split(':').map(Number);
   const date = new Date();
   date.setHours(hours);
   date.setMinutes(minutes);
   date.setSeconds(0);
   date.setMilliseconds(0);
-  
+
   return date;
 }
 
@@ -105,9 +104,9 @@ export function timeStringToDate(timeString: string): Date | null {
 export function compareTimeStrings(time1: string, time2: string): number {
   const date1 = timeStringToDate(time1);
   const date2 = timeStringToDate(time2);
-  
+
   if (!date1 || !date2) return 0;
-  
+
   return date1 < date2 ? -1 : date1 > date2 ? 1 : 0;
 }
 
@@ -122,9 +121,9 @@ export function isTimeBetween(time: string, startTime: string, endTime: string):
   const timeDate = timeStringToDate(time);
   const startDate = timeStringToDate(startTime);
   const endDate = timeStringToDate(endTime);
-  
+
   if (!timeDate || !startDate || !endDate) return false;
-  
+
   return timeDate >= startDate && timeDate < endDate;
 }
 
@@ -136,6 +135,6 @@ export function getCurrentTimeString(): string {
   const now = new Date();
   const hours = now.getHours().toString().padStart(2, '0');
   const minutes = now.getMinutes().toString().padStart(2, '0');
-  
+
   return `${hours}:${minutes}`;
 }

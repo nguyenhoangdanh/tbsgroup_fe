@@ -1,14 +1,15 @@
 'use client';
+import { Loader } from 'lucide-react';
 import React from 'react';
-import {Button} from './ui/button';
-import {Loader} from 'lucide-react';
+
+import { Button } from './ui/button';
 
 interface SubmitButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   isLoading?: boolean;
   name: string;
 }
 
-export default function SubmitButton({isLoading = false, name, ...props}: SubmitButtonProps) {
+export default function SubmitButton({ isLoading = false, name, ...props }: SubmitButtonProps) {
   return (
     <Button
       disabled={isLoading}

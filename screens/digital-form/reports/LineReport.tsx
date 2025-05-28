@@ -1,7 +1,20 @@
-// components/digital-form/reports/LineReport.tsx
 'use client';
 
+import { Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+
+import { LineTeamBreakdown } from './breakdowns/LineTeamBreakdown';
+import { DailyOutputChart } from './charts/DailyOutputChart';
+import { HourlyOutputChart } from './charts/HourlyOutputChart';
+import { OutputByBagChart } from './charts/OutputByBagChart';
+import { OutputByProcessChart } from './charts/OutputByProcessChart';
+import { ProductionIssuesChart } from './charts/ProductionIssuesChart';
+import { AttendanceStats } from './stats/AttendanceStats';
+import { LineProductionSummary } from './summaries/LineProductionSummary';
+
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -9,19 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
-import { Loader2 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { LineProductionSummary } from './summaries/LineProductionSummary';
-import { LineTeamBreakdown } from './breakdowns/LineTeamBreakdown';
-import { OutputByBagChart } from './charts/OutputByBagChart';
-import { OutputByProcessChart } from './charts/OutputByProcessChart';
-import { HourlyOutputChart } from './charts/HourlyOutputChart';
-import { DailyOutputChart } from './charts/DailyOutputChart';
-import { AttendanceStats } from './stats/AttendanceStats';
-import { ProductionIssuesChart } from './charts/ProductionIssuesChart';
 import { ReportService } from '@/services/reportService';
 
 interface LineReportProps {
@@ -65,14 +66,17 @@ export function LineReport({
         const response = await ReportService.getLines();
 
         if (response.success) {
-          setLines(response.data.map(line => ({
-            id: line.id,
-            name: line.name
-          })));
+          setLines(
+            response.data.map(line => ({
+              id: line.id,
+              name: line.name,
+            })),
+          );
         } else {
           setError('Không thể tải danh sách chuyền');
         }
       } catch (err) {
+        console.error('Error fetching lines:', err);
         setError('Lỗi kết nối đến máy chủ');
       }
     }
@@ -92,17 +96,12 @@ export function LineReport({
         const dateFromStr = dateFrom.toISOString().split('T')[0];
         const dateToStr = dateTo.toISOString().split('T')[0];
 
-        const response = await ReportService.getLineReport(
-          lineId,
-          dateFromStr,
-          dateToStr,
-          {
-            includeTeams,
-            includeGroups,
-            groupByBag,
-            groupByProcess
-          }
-        );
+        const response = await ReportService.getLineReport(lineId, dateFromStr, dateToStr, {
+          includeTeams,
+          includeGroups,
+          groupByBag,
+          groupByProcess,
+        });
 
         if (response.success) {
           setReport(response.data);
@@ -110,6 +109,7 @@ export function LineReport({
           setError(response.error || 'Không thể tải báo cáo');
         }
       } catch (err) {
+        console.error('Error fetching report:', err);
         setError('Lỗi kết nối đến máy chủ');
       } finally {
         setLoading(false);

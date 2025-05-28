@@ -31,7 +31,9 @@ body {
 }
 
 .default-hover {
-  transition: backgrounda-color 0.2s ease, color 0.2s ease;
+  transition:
+    backgrounda-color 0.2s ease,
+    color 0.2s ease;
 }
 
 .default-hover:hover {
@@ -87,7 +89,9 @@ main {
   overflow-y: auto;
   scrollbar-width: thin; /* Firefox */
   scrollbar-color: rgb(176, 174, 174) #ddd; /* Firefox */
-  transition: scrollbar-color 0.3s ease, scrollbar-width 0.3s ease;
+  transition:
+    scrollbar-color 0.3s ease,
+    scrollbar-width 0.3s ease;
 }
 
 .scrollbar::-webkit-scrollbar {
@@ -418,7 +422,8 @@ aside {
   border-radius: 0.5rem;
   min-width: 10rem;
   z-index: 50;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
     0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
@@ -531,5 +536,15 @@ aside {
 @media (max-width: 1023px) {
   .sidebar-initial-hidden {
     display: none;
+  }
+}
+
+/* Add shimmer animation for ShimmerLoader component */
+@keyframes shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
   }
 }

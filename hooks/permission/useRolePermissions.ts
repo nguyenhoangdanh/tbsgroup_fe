@@ -1,10 +1,11 @@
-// src/hooks/permission/useRolePermissions.ts
 import { useState, useCallback, useMemo, useEffect } from 'react';
-import { usePermissionQueries } from './usePermissionQueries';
+
 import { usePermissionMutations } from './usePermissionMutations';
-import { toast } from '@/hooks/use-toast';
-import { AssignPermissionsDTO, PermissionDTO } from '@/common/types/permission';
+import { usePermissionQueries } from './usePermissionQueries';
+
 import { PermissionType } from '@/common/enum';
+import { AssignPermissionsDTO, PermissionDTO } from '@/common/types/permission';
+import { toast } from 'react-toast-kit';
 
 interface RolePermissionsHookOptions {
   initialRoleId?: string;
@@ -15,29 +16,24 @@ interface RolePermissionsHookOptions {
  */
 export const useRolePermissions = (options?: RolePermissionsHookOptions) => {
   const initialRoleId = options?.initialRoleId || '';
-  
+
   const [currentRoleId, setCurrentRoleId] = useState<string>(initialRoleId);
   const [selectedPermissionIds, setSelectedPermissionIds] = useState<string[]>([]);
   const [availablePermissions, setAvailablePermissions] = useState<PermissionDTO[]>([]);
   const [assignedPermissions, setAssignedPermissions] = useState<PermissionDTO[]>([]);
-  
+
   // Get queries and mutations
-  const { 
-    getPermissionsByRole, 
-    listPermissions,
-    invalidatePermissionsCache
-  } = usePermissionQueries();
-  
-  const {
-    assignPermissionsToRoleMutation,
-    removePermissionsFromRoleMutation
-  } = usePermissionMutations();
-  
+  const { getPermissionsByRole, listPermissions, invalidatePermissionsCache } =
+    usePermissionQueries();
+
+  const { assignPermissionsToRoleMutation, removePermissionsFromRoleMutation } =
+    usePermissionMutations();
+
   // Fetch role permissions when role changes
   const {
     data: rolePermissionsData,
     isLoading: isLoadingRolePermissions,
-    refetch: refetchRolePermissions
+    refetch: refetchRolePermissions,
   } = getPermissionsByRole(currentRoleId, {
     // The 'enabled' property is included in the queryFn and not needed here
   });
@@ -53,7 +49,7 @@ export const useRolePermissions = (options?: RolePermissionsHookOptions) => {
   const {
     data: allPermissionsData,
     isLoading: isLoadingAllPermissions,
-    refetch: refetchAllPermissions
+    refetch: refetchAllPermissions,
   } = listPermissions({});
 
   // Set available permissions when data is loaded
@@ -68,7 +64,7 @@ export const useRolePermissions = (options?: RolePermissionsHookOptions) => {
     setCurrentRoleId(roleId);
     setSelectedPermissionIds([]); // Clear selection when role changes
   }, []);
-  
+
   // Toggle selection of a permission
   const togglePermissionSelection = useCallback((permissionId: string) => {
     setSelectedPermissionIds(prev => {
@@ -79,140 +75,151 @@ export const useRolePermissions = (options?: RolePermissionsHookOptions) => {
       }
     });
   }, []);
-  
+
   // Select all permissions of a specific type
-  const selectPermissionsByType = useCallback((type: PermissionType) => {
-    const permissionIds = availablePermissions
-      .filter(p => p.type === type)
-      .map(p => p.id);
-      
-    setSelectedPermissionIds(prev => {
-      const newSelection = [...prev];
-      
-      // Add only the ones that aren't already selected
-      permissionIds.forEach(id => {
-        if (!newSelection.includes(id)) {
-          newSelection.push(id);
-        }
+  const selectPermissionsByType = useCallback(
+    (type: PermissionType) => {
+      const permissionIds = availablePermissions.filter(p => p.type === type).map(p => p.id);
+
+      setSelectedPermissionIds(prev => {
+        const newSelection = [...prev];
+
+        // Add only the ones that aren't already selected
+        permissionIds.forEach(id => {
+          if (!newSelection.includes(id)) {
+            newSelection.push(id);
+          }
+        });
+
+        return newSelection;
       });
-      
-      return newSelection;
-    });
-  }, [availablePermissions]);
-  
-  // Select all permissions
+    },
+    [availablePermissions],
+  );
+
+  //Select all permissions
   const selectAllPermissions = useCallback(() => {
     const allIds = availablePermissions.map(p => p.id);
     setSelectedPermissionIds(allIds);
   }, [availablePermissions]);
-  
+
   // Clear all selections
   const clearAllSelections = useCallback(() => {
     setSelectedPermissionIds([]);
   }, []);
-  
-  // Assign selected permissions to the current role
+
+  //  Assign selected permissions to the current role
   const assignSelectedPermissions = useCallback(async () => {
     if (!currentRoleId) {
       toast({
         title: 'No role selected',
         description: 'Please select a role first',
-        variant: 'destructive'
+        variant: 'error',
       });
       return false;
     }
-    
+
     if (selectedPermissionIds.length === 0) {
       toast({
         title: 'No permissions selected',
         description: 'Please select at least one permission to assign',
-        variant: 'destructive'
+        variant: 'error',
       });
       return false;
     }
-    
+
     try {
       const data: AssignPermissionsDTO = {
-        permissionIds: selectedPermissionIds
+        permissionIds: selectedPermissionIds,
       };
-      
+
       await assignPermissionsToRoleMutation.mutateAsync({
         roleId: currentRoleId,
-        data
+        data,
       });
-      
+
       // Refresh data
       await refetchRolePermissions();
       setSelectedPermissionIds([]);
-      
+
       toast({
         title: 'Permissions assigned',
-        description: `${selectedPermissionIds.length} permissions have been assigned to the role`
+        description: `${selectedPermissionIds.length} permissions have been assigned to the role`,
       });
-      
+
       return true;
     } catch (error) {
       console.error('Failed to assign permissions:', error);
       toast({
         title: 'Error',
         description: 'Failed to assign permissions to role',
-        variant: 'destructive'
+        variant: 'error',
       });
       return false;
     }
-  }, [currentRoleId, selectedPermissionIds, assignPermissionsToRoleMutation, refetchRolePermissions]);
-  
+  }, [
+    currentRoleId,
+    selectedPermissionIds,
+    assignPermissionsToRoleMutation,
+    refetchRolePermissions,
+  ]);
+
   // Remove selected permissions from the current role
   const removeSelectedPermissions = useCallback(async () => {
     if (!currentRoleId) {
       toast({
         title: 'No role selected',
         description: 'Please select a role first',
-        variant: 'destructive'
+        variant: 'error',
       });
       return false;
     }
-    
+
     if (selectedPermissionIds.length === 0) {
       toast({
         title: 'No permissions selected',
         description: 'Please select at least one permission to remove',
-        variant: 'destructive'
+        variant: 'error',
       });
       return false;
     }
-    
+
     try {
       const data: AssignPermissionsDTO = {
-        permissionIds: selectedPermissionIds
+        permissionIds: selectedPermissionIds,
       };
-      
+
       await removePermissionsFromRoleMutation.mutateAsync({
         roleId: currentRoleId,
-        data
+        data,
       });
-      
+
       // Refresh data
       await refetchRolePermissions();
       setSelectedPermissionIds([]);
-      
+
       toast({
         title: 'Permissions removed',
-        description: `${selectedPermissionIds.length} permissions have been removed from the role`
+        description: `${selectedPermissionIds.length} permissions have been removed from the role`,
       });
-      
+
       return true;
     } catch (error) {
       console.error('Failed to remove permissions:', error);
       toast({
         title: 'Error',
         description: 'Failed to remove permissions from role',
-        variant: 'destructive'
+        variant: 'error',
       });
       return false;
     }
-  }, [currentRoleId, selectedPermissionIds, removePermissionsFromRoleMutation, refetchRolePermissions]);
-  
+  }, [
+    currentRoleId,
+    selectedPermissionIds,
+    removePermissionsFromRoleMutation,
+    refetchRolePermissions,
+  ]);
+
   // Refresh all data
   const refreshAllData = useCallback(async () => {
     await invalidatePermissionsCache(true);
@@ -221,38 +228,41 @@ export const useRolePermissions = (options?: RolePermissionsHookOptions) => {
       await refetchRolePermissions();
     }
   }, [invalidatePermissionsCache, refetchAllPermissions, refetchRolePermissions, currentRoleId]);
-  
+
   // Check if a permission is assigned to the current role
-  const isPermissionAssigned = useCallback((permissionId: string): boolean => {
-    return assignedPermissions.some(p => p.id === permissionId);
-  }, [assignedPermissions]);
-  
+  const isPermissionAssigned = useCallback(
+    (permissionId: string): boolean => {
+      return assignedPermissions.some(p => p.id === permissionId);
+    },
+    [assignedPermissions],
+  );
+
   // Unassigned permissions
   const unassignedPermissions = useMemo(() => {
     if (!assignedPermissions.length) return availablePermissions;
-    
+
     const assignedIds = assignedPermissions.map(p => p.id);
     return availablePermissions.filter(p => !assignedIds.includes(p.id));
   }, [availablePermissions, assignedPermissions]);
-  
+
   // Group permissions by type
   const permissionsByType = useMemo(() => {
     const grouped: Record<PermissionType, PermissionDTO[]> = {
       [PermissionType.PAGE_ACCESS]: [],
       [PermissionType.FEATURE_ACCESS]: [],
-      [PermissionType.DATA_ACCESS]: []
+      [PermissionType.DATA_ACCESS]: [],
     };
-    
+
     availablePermissions.forEach(permission => {
       if (permission.type in grouped) {
         grouped[permission.type].push(permission);
       }
     });
-    
+
     return grouped;
   }, [availablePermissions]);
-  
-  // Statistics
+
+  //  Statistics
   const stats = useMemo(() => {
     return {
       total: availablePermissions.length,
@@ -262,17 +272,17 @@ export const useRolePermissions = (options?: RolePermissionsHookOptions) => {
       byType: {
         [PermissionType.PAGE_ACCESS]: permissionsByType[PermissionType.PAGE_ACCESS].length,
         [PermissionType.FEATURE_ACCESS]: permissionsByType[PermissionType.FEATURE_ACCESS].length,
-        [PermissionType.DATA_ACCESS]: permissionsByType[PermissionType.DATA_ACCESS].length
-      }
+        [PermissionType.DATA_ACCESS]: permissionsByType[PermissionType.DATA_ACCESS].length,
+      },
     };
   }, [
-    availablePermissions, 
-    assignedPermissions, 
-    unassignedPermissions, 
-    selectedPermissionIds, 
-    permissionsByType
+    availablePermissions,
+    assignedPermissions,
+    unassignedPermissions,
+    selectedPermissionIds,
+    permissionsByType,
   ]);
-  
+
   return {
     // State
     currentRoleId,
@@ -283,7 +293,7 @@ export const useRolePermissions = (options?: RolePermissionsHookOptions) => {
     permissionsByType,
     stats,
     isLoading: isLoadingRolePermissions || isLoadingAllPermissions,
-    
+
     // Actions
     changeRole,
     togglePermissionSelection,
@@ -293,8 +303,8 @@ export const useRolePermissions = (options?: RolePermissionsHookOptions) => {
     assignSelectedPermissions,
     removeSelectedPermissions,
     refreshAllData,
-    
+
     // Helpers
-    isPermissionAssigned
+    isPermissionAssigned,
   };
 };

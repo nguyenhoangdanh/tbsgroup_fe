@@ -1,7 +1,9 @@
-import PermissionManagementSystem from '@/screens/admin/permissions'
-
+import PermissionManagementSystem from '@/screens/admin/permissions';
+import { RoleProvider } from '@/hooks/roles/roleContext';
 export default function RolePermissionPage() {
-    return (
-        <PermissionManagementSystem />
-    )
+  return (
+    <RoleProvider>
+      <PermissionManagementSystem />
+    </RoleProvider>
+  )
 }

@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import React, {
   createContext,
@@ -8,9 +8,8 @@ import React, {
   useCallback,
   useRef,
   useEffect,
-  useMemo
+  useMemo,
 } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 // Enum to define dialog types
 export enum DialogType {
@@ -72,14 +71,17 @@ const DialogContext = createContext<DialogContextType<DefaultDialogData>>({
   dialog: defaultDialogConfig,
   isOpen: false,
   isSubmitting: false,
-  showDialog: () => { },
-  hideDialog: () => { },
-  submit: async () => { },
-  updateDialogData: () => { },
+  showDialog: () => {},
+  hideDialog: () => {},
+  submit: async () => {},
+  updateDialogData: () => {},
   isReadOnly: false,
 });
 
-// Provider for managing dialog state
+/**
+ * Provider component for managing dialog state
+ * This provides a central dialog system that can be used anywhere in the application
+ */
 export const DialogProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   // State for dialog configuration
   const [dialog, setDialog] = useState<DialogConfig<DefaultDialogData>>(defaultDialogConfig);
@@ -89,35 +91,38 @@ export const DialogProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const isClosingRef = useRef(false);
   const currentDataRef = useRef<any>(null);
   const dialogTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const dialogIdRef = useRef<string>("");
+  const dialogIdRef = useRef<string>('');
   const submitInProgressRef = useRef(false);
 
   // Show dialog with new configuration
-  const showDialog = useCallback((config: Partial<Omit<DialogConfig<DefaultDialogData>, 'open'>>) => {
-    // Clear any pending close timer
-    if (dialogTimerRef.current) {
-      clearTimeout(dialogTimerRef.current);
-      dialogTimerRef.current = null;
-    }
+  const showDialog = useCallback(
+    (config: Partial<Omit<DialogConfig<DefaultDialogData>, 'open'>>) => {
+      // Clear any pending close timer
+      if (dialogTimerRef.current) {
+        clearTimeout(dialogTimerRef.current);
+        dialogTimerRef.current = null;
+      }
 
-    // Reset closing state
-    isClosingRef.current = false;
+      // Reset closing state
+      isClosingRef.current = false;
 
-    // Create unique ID if not provided
-    const dialogId = config.id || `dialog-${Date.now()}`;
-    dialogIdRef.current = dialogId;
+      // Create unique ID if not provided
+      const dialogId = config.id || `dialog-${Date.now()}`;
+      dialogIdRef.current = dialogId;
 
-    // Store data reference
-    currentDataRef.current = config.data || null;
+      // Store data reference
+      currentDataRef.current = config.data || null;
 
-    // Update dialog state
-    setDialog(prev => ({
-      ...prev,
-      ...config,
-      id: dialogId,
-      open: true
-    }));
-  }, []);
+      // Update dialog state
+      setDialog(prev => ({
+        ...prev,
+        ...config,
+        id: dialogId,
+        open: true,
+      }));
+    },
+    [],
+  );
 
   // Hide/close dialog
   const hideDialog = useCallback(() => {
@@ -130,7 +135,7 @@ export const DialogProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       try {
         dialog.onClose();
       } catch (error) {
-        console.error("[DialogProvider] Error in onClose handler:", error);
+        console.error('[DialogProvider] Error in onClose handler:', error);
       }
     }
 
@@ -142,59 +147,65 @@ export const DialogProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       // Reset dialog state
       setDialog(defaultDialogConfig);
       currentDataRef.current = null;
-      dialogIdRef.current = "";
+      dialogIdRef.current = '';
       isClosingRef.current = false;
       dialogTimerRef.current = null;
     }, 300); // Match animation duration
   }, [dialog]);
 
   // Update data for current dialog
-  const updateDialogData = useCallback((newData: Partial<DefaultDialogData>) => {
-    if (!dialog.open) return;
+  const updateDialogData = useCallback(
+    (newData: Partial<DefaultDialogData>) => {
+      if (!dialog.open) return;
 
-    // Update both ref and state
-    setDialog(prev => {
-      const updatedData = { ...prev.data, ...newData };
-      currentDataRef.current = updatedData;
-      return {
-        ...prev,
-        data: updatedData
-      };
-    });
-  }, [dialog.open]);
+      // Update both ref and state
+      setDialog(prev => {
+        const updatedData = { ...(prev.data || {}), ...newData };
+        currentDataRef.current = updatedData;
+        return {
+          ...prev,
+          data: updatedData,
+        };
+      });
+    },
+    [dialog.open],
+  );
 
   // Handle form submission
-  const submit = useCallback(async (data?: any) => {
-    // Skip if no submit handler or already submitting
-    if (!dialog.onSubmit || submitInProgressRef.current) return;
+  const submit = useCallback(
+    async (data?: any) => {
+      // Skip if no submit handler or already submitting
+      if (!dialog.onSubmit || submitInProgressRef.current) return;
 
-    // Set submitting state
-    submitInProgressRef.current = true;
-    setIsSubmitting(true);
+      // Set submitting state
+      submitInProgressRef.current = true;
+      setIsSubmitting(true);
 
-    try {
-      // Use provided data or fallback to stored data
-      const dataToSubmit = data || currentDataRef.current;
+      try {
+        // Use provided data or fallback to stored data
+        const dataToSubmit = data !== undefined ? data : currentDataRef.current;
 
-      // Call onSubmit and await result
-      const result = await dialog.onSubmit(dataToSubmit);
+        // Call onSubmit and await result
+        const result = await dialog.onSubmit(dataToSubmit);
 
-      // Close dialog after successful submission if result is true
-      if (result === true) {
-        hideDialog();
+        // Close dialog after successful submission if result is true
+        if (result === true) {
+          hideDialog();
+        }
+
+        return result;
+      } catch (error) {
+        console.error(`[DialogProvider] Dialog ${dialogIdRef.current} submit error:`, error);
+        // Propagate error to caller
+        return Promise.reject(error);
+      } finally {
+        // Reset submitting state
+        submitInProgressRef.current = false;
+        setIsSubmitting(false);
       }
-
-      return result;
-    } catch (error) {
-      console.error(`[DialogProvider] Dialog ${dialogIdRef.current} submit error:`, error);
-      // Propagate error to caller
-      return Promise.reject(error);
-    } finally {
-      // Reset submitting state
-      submitInProgressRef.current = false;
-      setIsSubmitting(false);
-    }
-  }, [dialog, hideDialog]);
+    },
+    [dialog, hideDialog],
+  );
 
   // Cleanup on unmount
   useEffect(() => {
@@ -205,262 +216,29 @@ export const DialogProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     };
   }, []);
 
-  // Memoized context value
-  const contextValue = useMemo(() => ({
-    dialog,
-    isOpen: dialog.open,
-    isSubmitting,
-    showDialog,
-    hideDialog,
-    submit,
-    updateDialogData,
-    isReadOnly: dialog.isReadOnly || false
-  }), [dialog, isSubmitting, showDialog, hideDialog, submit, updateDialogData]);
-
-  return (
-    <DialogContext.Provider value={contextValue}>
-      {children}
-    </DialogContext.Provider>
+  // Memoized context value to prevent unnecessary rerenders
+  const contextValue = useMemo(
+    () => ({
+      dialog,
+      isOpen: dialog.open,
+      isSubmitting,
+      showDialog,
+      hideDialog,
+      submit,
+      updateDialogData,
+      isReadOnly: dialog.isReadOnly || false,
+    }),
+    [dialog, isSubmitting, showDialog, hideDialog, submit, updateDialogData],
   );
+
+  return <DialogContext.Provider value={contextValue}>{children}</DialogContext.Provider>;
 };
 
-// Custom hook to use dialog context - with generic type support
-export const useDialog = <T = any>() => {
+// Custom hook to use dialog context with generic type support
+export const useDialog = <T = any,>() => {
   const context = useContext(DialogContext) as DialogContextType<T>;
   if (!context) {
     throw new Error('useDialog must be used within a DialogProvider');
   }
   return context;
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-// import React, {
-//   createContext,
-//   useContext,
-//   useState,
-//   ReactNode,
-//   useCallback,
-//   useRef,
-//   useEffect,
-//   useMemo
-// } from 'react';
-
-// // Enum to define dialog types
-// export enum DialogType {
-//   CREATE = 'create',
-//   EDIT = 'edit',
-//   DELETE = 'delete',
-//   BATCH_DELETE = 'batch_delete',
-//   VIEW = 'view',
-//   CUSTOM = 'custom',
-// }
-
-// // Generic interface for dialog configuration
-// export interface DialogConfig<TData> {
-//   type?: DialogType;
-//   open: boolean;
-//   title?: string;
-//   description?: string;
-//   data?: TData;
-//   children?: React.ReactNode | ((props: DialogChildrenProps<TData>) => React.ReactNode);
-//   onSubmit?: (data?: TData) => Promise<void | boolean>;
-//   onClose?: () => void;
-//   fullWidth?: boolean;
-//   maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl'; // Additional size option
-//   id?: string;
-//   isReadOnly?: boolean;
-//   preventOutsideClick?: boolean; // Prevent closing when clicking outside
-// }
-
-// // Interface for dialog children props
-// export interface DialogChildrenProps<TData> {
-//   data?: TData;
-//   isSubmitting: boolean;
-//   onSubmit: (data?: TData) => Promise<void | boolean>;
-//   onClose: () => void;
-//   isReadOnly?: boolean;
-// }
-
-// // Interface for dialog context
-// interface DialogContextType<TData> {
-//   dialog: DialogConfig<TData>;
-//   isOpen: boolean;
-//   isSubmitting: boolean;
-//   showDialog: (config: Partial<Omit<DialogConfig<TData>, 'open'>>) => void;
-//   hideDialog: () => void;
-//   submit: (data?: TData) => Promise<void | boolean>;
-//   updateDialogData: (newData: Partial<TData>) => void;
-//   isReadOnly: boolean;
-// }
-
-// // Define a type for the default data structure
-// export type DefaultDialogData = Record<string, unknown>;
-
-// // Create dialog context
-// const DialogContext = createContext<DialogContextType<DefaultDialogData>>({
-//   dialog: { open: false },
-//   isOpen: false,
-//   isSubmitting: false,
-//   showDialog: () => { },
-//   hideDialog: () => { },
-//   submit: async () => { },
-//   updateDialogData: () => { },
-//   isReadOnly: false
-// });
-
-// // Provider for managing dialog state
-// export const DialogProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-//   const [dialog, setDialog] = useState<DialogConfig<DefaultDialogData>>({
-//     open: false
-//   });
-
-//   const [isSubmitting, setIsSubmitting] = useState(false);
-//   const isClosingRef = useRef(false);
-//   const currentDataRef = useRef<any>(null);
-//   const dialogTimerRef = useRef<NodeJS.Timeout | null>(null);
-//   const dialogIdRef = useRef<string>("");
-
-//   const showDialog = useCallback((config: Partial<Omit<DialogConfig<DefaultDialogData>, 'open'>>) => {
-//     // Stop dialog closing timer if exists
-//     if (dialogTimerRef.current) {
-//       clearTimeout(dialogTimerRef.current);
-//       dialogTimerRef.current = null;
-//     }
-
-//     isClosingRef.current = false;
-
-//     // Create ID if not provided
-//     const dialogId = config.id || `dialog-${Date.now()}`;
-//     dialogIdRef.current = dialogId;
-
-//     // Store data in ref
-//     if (config.data) {
-//       currentDataRef.current = config.data;
-//     } else {
-//       currentDataRef.current = null;
-//     }
-
-//     // Use functional update to ensure latest state
-//     setDialog(prev => ({
-//       ...prev,
-//       ...config,
-//       id: dialogId,
-//       open: true
-//     }));
-//   }, []);
-
-//   const hideDialog = useCallback(() => {
-//     // Prevent closing multiple times
-//     if (isClosingRef.current) {
-//       return;
-//     }
-
-//     isClosingRef.current = true;
-
-//     // Call onClose callback if exists
-//     if (dialog.onClose) {
-//       dialog.onClose();
-//     }
-
-//     // Set open to false first
-//     setDialog(prev => ({ ...prev, open: false }));
-
-//     // Set timer to clear other data after animation ends
-//     dialogTimerRef.current = setTimeout(() => {
-//       setDialog({ open: false });
-//       currentDataRef.current = null;
-//       dialogIdRef.current = "";
-//       isClosingRef.current = false;
-//       dialogTimerRef.current = null;
-//     }, 300); // 300ms for animation
-//   }, [dialog]);
-
-//   // Update data for open dialog
-//   const updateDialogData = useCallback((newData: any) => {
-//     if (!dialog.open) return;
-
-//     // Update both the ref and state
-//     setDialog(prev => {
-//       const updatedData = { ...prev.data, ...newData };
-//       currentDataRef.current = updatedData;
-//       return {
-//         ...prev,
-//         data: updatedData
-//       };
-//     });
-//   }, [dialog.open]);
-
-//   const submit = useCallback(async (data?: any) => {
-//     if (!dialog.onSubmit) {
-//       return;
-//     }
-
-//     try {
-//       setIsSubmitting(true);
-
-//       // Use data from parameter or from ref if not provided
-//       const dataToSubmit = data || currentDataRef.current;
-
-//       // Call onSubmit and await result
-//       const result = await dialog.onSubmit(dataToSubmit);
-
-//       // Always close dialog after successful submission
-//       hideDialog();
-
-//       return result;
-//     } catch (error) {
-//       console.error(`[DialogProvider] Dialog ${dialogIdRef.current} submit error:`, error);
-//       // Don't close dialog on error to allow user to retry
-//       return Promise.reject(error);
-//     } finally {
-//       setIsSubmitting(false);
-//     }
-//   }, [dialog, hideDialog]);
-
-//   // Ensure cleanup when unmounting
-//   useEffect(() => {
-//     return () => {
-//       if (dialogTimerRef.current) {
-//         clearTimeout(dialogTimerRef.current);
-//       }
-//     };
-//   }, []);
-
-//   // Optimize context value to avoid unnecessary re-renders
-//   const contextValue = useMemo(() => ({
-//     dialog,
-//     isOpen: dialog.open,
-//     isSubmitting,
-//     showDialog,
-//     hideDialog,
-//     submit,
-//     updateDialogData,
-//     isReadOnly: dialog.isReadOnly || false
-//   }), [dialog, isSubmitting, showDialog, hideDialog, submit, updateDialogData]);
-
-//   return (
-//     <DialogContext.Provider value={contextValue}>
-//       {children}
-//     </DialogContext.Provider>
-//   );
-// };
-
-// // Hook to use dialog context - Optimized with generic type
-// export const useDialog = <T = any>() => {
-//   const context = useContext(DialogContext) as DialogContextType<T>;
-//   if (!context) {
-//     throw new Error('useDialog must be used within a DialogProvider');
-//   }
-//   return context;
-// };

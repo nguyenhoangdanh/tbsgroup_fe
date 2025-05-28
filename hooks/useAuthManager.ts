@@ -1,13 +1,12 @@
-// hooks/useAuthManager.ts
-
 'use client';
+
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import * as CryptoJS from 'crypto-js';
 import { useRouter, usePathname } from 'next/navigation';
 import { useState, useCallback, useEffect } from 'react';
 
-import useAppDispatch from './useAppDispatch';
-import useAppSelector from './useAppSelector';
+import useAppDispatch from './redux/useAppDispatch';
+import useAppSelector from './redux/useAppSelector';
 
 import { fetchRoles } from '@/apis/roles/role.api';
 import {
@@ -20,19 +19,16 @@ import {
   registerMutationFn,
 } from '@/apis/user/user.api';
 import { UserStatusEnum } from '@/common/enum';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'react-toast-kit';
 import { login, logout } from '@/redux/actions/authAction';
 
-// Định nghĩa khóa bí mật cho mã hóa (lý tưởng nên lấy từ biến môi trường)
 const ENCRYPTION_KEY =
   process.env.NEXT_PUBLIC_ENCRYPTION_KEY || 'default-secure-key-change-in-production';
 
-// Hàm mã hóa dữ liệu
 const encryptData = (data: any): string => {
   return CryptoJS.AES.encrypt(JSON.stringify(data), ENCRYPTION_KEY).toString();
 };
 
-// Hàm giải mã dữ liệu
 const decryptData = (encryptedData: string): any => {
   try {
     const bytes = CryptoJS.AES.decrypt(encryptedData, ENCRYPTION_KEY);
@@ -43,7 +39,6 @@ const decryptData = (encryptedData: string): any => {
   }
 };
 
-// Tạo một phiên bản đơn giản hóa của thông tin người dùng để lưu trữ cục bộ
 type MinimalUserInfo = {
   id: string;
   username: string;
@@ -76,7 +71,6 @@ export type AuthUser = {
   groupId: string | null;
 };
 
-// Định nghĩa kiểu dữ liệu trả về từ API
 interface ApiResponse<T> {
   data: T;
   message: string;
@@ -101,7 +95,6 @@ type RequestResetParams = {
   cardId: string;
 };
 
-// Định nghĩa kiểu dữ liệu đầu ra cho requestPasswordReset
 interface RequestResetResponse {
   success: boolean;
   data: {
@@ -112,7 +105,6 @@ interface RequestResetResponse {
   };
 }
 
-// Hằng số cho phiên đăng nhập
 const TOKEN_KEY = 'auth-token';
 const USER_DATA_KEY = 'auth-user-minimal';
 const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 phút
@@ -126,7 +118,6 @@ export const useAuthManager = () => {
   const pathname = usePathname();
   const dispatch = useAppDispatch();
   const queryClient = useQueryClient();
-  const [isLoading, setIsLoading] = useState(false);
   const [isLoggedOut, setIsLoggedOut] = useState(false);
   const [lastActivity, setLastActivity] = useState<number>(Date.now());
 
@@ -134,7 +125,7 @@ export const useAuthManager = () => {
   const [authToken, setAuthToken] = useState<string | null>(null);
   const [minimalUserInfo, setMinimalUserInfo] = useState<MinimalUserInfo | null>(null);
 
-  // Load minimal cached user from localStorage on mount
+  //  Load minimal cached user from localStorage on mount
   useEffect(() => {
     if (typeof window !== 'undefined') {
       try {
@@ -151,54 +142,53 @@ export const useAuthManager = () => {
         }
       } catch (e) {
         console.error('Error loading cached auth data:', e);
-        // Xóa dữ liệu cục bộ nếu có lỗi khi giải mã
+        //  Xóa dữ liệu cục bộ nếu có lỗi khi giải mã
         localStorage.removeItem(TOKEN_KEY);
         localStorage.removeItem(USER_DATA_KEY);
       }
     }
   }, []);
 
-  // Thiết lập theo dõi hoạt động người dùng để quản lý thời gian phiên
-  // useEffect(() => {
-  //   const updateLastActivity = () => {
-  //     setLastActivity(Date.now());
-  //   };
+  //  Thiết lập theo dõi hoạt động người dùng để quản lý thời gian phiên
+  useEffect(() => {
+    const updateLastActivity = () => {
+      setLastActivity(Date.now());
+    };
 
-  //   // Theo dõi các sự kiện người dùng để cập nhật lastActivity
-  //   window.addEventListener('mousemove', updateLastActivity);
-  //   window.addEventListener('keydown', updateLastActivity);
-  //   window.addEventListener('click', updateLastActivity);
-  //   window.addEventListener('scroll', updateLastActivity);
+    // Theo dõi các sự kiện người dùng để cập nhật lastActivity
+    window.addEventListener('mousemove', updateLastActivity);
+    window.addEventListener('keydown', updateLastActivity);
+    window.addEventListener('click', updateLastActivity);
+    window.addEventListener('scroll', updateLastActivity);
 
-  //   // Kiểm tra phiên hoạt động đã hết hạn hay chưa
-  //   const checkSessionTimeout = setInterval(() => {
-  //     const now = Date.now();
-  //     // Only logout if authenticated and not on public pages
-  //     if (
-  //       now - lastActivity > SESSION_TIMEOUT &&
-  //       authToken &&
-  //       !location.pathname.includes('/login')
-  //     ) {
-  //       // Phiên đã hết hạn, đăng xuất tự động
-  //       if (!isLoggedOut) {
-  //         handleLogout(true);
-  //       }
-  //       toast({
-  //         title: 'Phiên đã hết hạn',
-  //         description:
-  //           'Bạn đã tự động đăng xuất do không hoạt động trong thời gian dài',
-  //       });
-  //     }
-  //   }, 60000); // Kiểm tra mỗi phút
+    // Kiểm tra phiên hoạt động đã hết hạn hay chưa
+    const checkSessionTimeout = setInterval(() => {
+      const now = Date.now();
+      // Only logout if authenticated and not on public pages
+      if (
+        now - lastActivity > SESSION_TIMEOUT &&
+        authToken &&
+        !location.pathname.includes('/login')
+      ) {
+        // Phiên đã hết hạn, đăng xuất tự động
+        // if (!isLoggedOut) {
+        //   handleLogout(true);
+        // }
+        toast({
+          title: 'Phiên đã hết hạn',
+          description: 'Bạn đã tự động đăng xuất do không hoạt động trong thời gian dài',
+        });
+      }
+    }, 60000); // Kiểm tra mỗi phút
 
-  //   return () => {
-  //     window.removeEventListener('mousemove', updateLastActivity);
-  //     window.removeEventListener('keydown', updateLastActivity);
-  //     window.removeEventListener('click', updateLastActivity);
-  //     window.removeEventListener('scroll', updateLastActivity);
-  //     clearInterval(checkSessionTimeout);
-  //   };
-  // }, [lastActivity, authToken]);
+    return () => {
+      window.removeEventListener('mousemove', updateLastActivity);
+      window.removeEventListener('keydown', updateLastActivity);
+      window.removeEventListener('click', updateLastActivity);
+      window.removeEventListener('scroll', updateLastActivity);
+      clearInterval(checkSessionTimeout);
+    };
+  }, [lastActivity, authToken]);
 
   // Type for the useQuery result
   type UserQueryResult = {
@@ -211,13 +201,13 @@ export const useAuthManager = () => {
   // Initialize local state for cached user
   const [localCachedUser, setLocalCachedUser] = useState<AuthUser | null>(null);
 
-  // Load cached user from localStorage on mount
+  //  Load cached user from localStorage on mount
   useEffect(() => {
     if (typeof window !== 'undefined') {
       try {
         const cachedData = localStorage.getItem('auth-user');
         if (cachedData) {
-          setLocalCachedUser(JSON.parse(cachedData));
+          setLocalCachedUser(JSON.parse(cachedData) as AuthUser);
         }
       } catch (e) {
         console.error('Error loading cached user:', e);
@@ -225,7 +215,7 @@ export const useAuthManager = () => {
     }
   }, []);
 
-  // Fetch user profile data with optimizations
+  //  Fetch user profile data with optimizations
   const userQuery = useQuery({
     queryKey: ['authUser'],
     queryFn: getUserProfileQueryFn,
@@ -247,7 +237,7 @@ export const useAuthManager = () => {
     if (userQuery.data?.data && typeof window !== 'undefined') {
       const userData = userQuery.data.data;
 
-      // Chỉ lưu thông tin tối thiểu cần thiết
+      //   Chỉ lưu thông tin tối thiểu cần thiết
       const minimalData: MinimalUserInfo = {
         id: userData.id || '',
         username: userData.username,
@@ -261,12 +251,12 @@ export const useAuthManager = () => {
     }
   }, [userQuery.data]);
 
-  // Sử dụng dữ liệu người dùng từ query
+  //Sử dụng dữ liệu người dùng từ query
   const user = isLoggedOut ? null : userQuery.data?.data || null;
 
   // Kiểm tra xem người dùng đã xác thực hay chưa
   // const isAuthenticated = !!user && !!authToken && !isLoggedOut;
-  const isAuthenticated = auth.status === 'authenticated' && !isLoggedOut;
+  // const isAuthenticated = auth.status === 'authenticated' && !isLoggedOut;
 
   // User status check helpers
   const needsPasswordReset = user?.status === UserStatusEnum.PENDING_ACTIVATION;
@@ -295,9 +285,9 @@ export const useAuthManager = () => {
   });
 
   // Logout mutation
-  const logoutMutation = useMutation({
-    mutationFn: logoutMutationFn,
-  });
+  // const logoutMutation = useMutation({
+  //   mutationFn: logoutMutationFn,
+  // });
 
   // Request password reset token
   const requestPasswordResetMutation = useMutation({
@@ -309,7 +299,7 @@ export const useAuthManager = () => {
     mutationFn: resetPasswordMutationFn,
   });
 
-  // Update user status
+  //  Update user status
   const updateStatusMutation = useMutation({
     mutationFn: updateStatusMutationFn,
   });
@@ -319,22 +309,21 @@ export const useAuthManager = () => {
    */
   const handleLogin = useCallback(
     async (credentials: LoginCredentials, opts?: { message?: string }) => {
-      setIsLoading(true);
       const { message } = opts || {};
       try {
-        // Reset logged out state when attempting to login
+        //  Reset logged out state when attempting to login
         setIsLoggedOut(false);
 
-        // Await the login mutation to catch errors
+        //  Await the login mutation to catch errors
         const response = await loginMutation.mutateAsync(credentials);
         const { data } = response;
 
         if (data.token) {
-          localStorage.setItem(TOKEN_KEY, data.token);
-          setAuthToken(data.token);
+          localStorage.setItem(TOKEN_KEY, String(data.token));
+          setAuthToken(String(data.token));
         }
 
-        // Check if password reset is required
+        //  Check if password reset is required
         if (data.requiredResetPassword) {
           toast({
             title: 'Cần đổi mật khẩu',
@@ -351,17 +340,12 @@ export const useAuthManager = () => {
 
         return response;
       } catch (error: any) {
-        // Show toast notification
         toast({
           title: 'Lỗi',
           description: error.message || 'Đăng nhập thất bại',
-          variant: 'destructive',
+          variant: 'error',
         });
-
-        // Re-throw the error for the component to handle
         throw error;
-      } finally {
-        setIsLoading(false);
       }
     },
     [loginMutation, router],
@@ -369,7 +353,6 @@ export const useAuthManager = () => {
 
   const handleRegister = useCallback(
     async (data: any) => {
-      setIsLoading(true);
       try {
         const response = await registerUserMutation.mutateAsync(data);
         return response;
@@ -377,85 +360,19 @@ export const useAuthManager = () => {
         toast({
           title: 'Lỗi',
           description: error.message || 'Đăng ký thất bại',
-          variant: 'destructive',
+          variant: 'error',
         });
         throw error;
-      } finally {
-        setIsLoading(false);
       }
     },
     [registerUserMutation],
   );
 
   /**
-   * Handles logout with proper error propagation
-   */
-  // const handleLogout = useCallback(
-  //   async (silent: boolean = false) => {
-  //     setIsLoading(true);
-  //     try {
-  //       // Call the logout API
-  //       if (!silent) {
-  //         // Call the logout API (chỉ khi không phải tự động đăng xuất do timeout)
-  //         await logoutMutation.mutateAsync();
-  //       }
-
-  //       // Xóa tất cả dữ liệu xác thực
-  //       localStorage.removeItem(TOKEN_KEY);
-  //       localStorage.removeItem(USER_DATA_KEY);
-  //       setAuthToken(null);
-  //       setMinimalUserInfo(null);
-  //       setIsLoggedOut(true);
-
-  //       // Even on success, manually clean up
-  //       queryClient.setQueryData(['authUser'], null);
-  //       queryClient.resetQueries();
-  //       queryClient.clear();
-
-  //       router.push('/login');
-
-  //       toast({
-  //         title: 'Đăng xuất',
-  //         description: 'Đăng xuất thành công',
-  //       });
-  //     } catch (error: any) {
-  //       // Vẫn thực hiện dọn dẹp khi gặp lỗi
-  //       localStorage.removeItem(TOKEN_KEY);
-  //       localStorage.removeItem(USER_DATA_KEY);
-  //       setAuthToken(null);
-  //       setMinimalUserInfo(null);
-  //       setIsLoggedOut(true);
-
-  //       // Still perform cleanup on error
-  //       queryClient.setQueryData(['authUser'], null);
-  //       queryClient.resetQueries();
-  //       queryClient.clear();
-
-  //       router.push('/login');
-
-  //       if (!silent) {
-  //         toast({
-  //           title: 'Lỗi',
-  //           description: error.message || 'Đăng xuất thất bại',
-  //           variant: 'destructive',
-  //         });
-  //       }
-
-  //       // Re-throw the error for the component to handle
-  //       throw error;
-  //     } finally {
-  //       setIsLoading(false);
-  //     }
-  //   },
-  //   [logoutMutation, queryClient, router],
-  // );
-
-  /**
    * Handles password reset with proper error propagation
    */
   const handleResetPassword = useCallback(
     async (params: ResetPasswordParams): Promise<any> => {
-      setIsLoading(true);
       try {
         const response = await resetPasswordMutation.mutateAsync(params);
 
@@ -472,13 +389,11 @@ export const useAuthManager = () => {
         toast({
           title: 'Lỗi',
           description: error.message || 'Đổi mật khẩu thất bại',
-          variant: 'destructive',
+          variant: 'error',
         });
 
         // Re-throw the error for the component to handle
         throw error;
-      } finally {
-        setIsLoading(false);
       }
     },
     [resetPasswordMutation, queryClient],
@@ -489,7 +404,6 @@ export const useAuthManager = () => {
    */
   const handleRequestPasswordReset = useCallback(
     async (params: RequestResetParams): Promise<RequestResetResponse> => {
-      setIsLoading(true);
       try {
         const response = await requestPasswordResetMutation.mutateAsync(params);
         return response as RequestResetResponse;
@@ -497,13 +411,11 @@ export const useAuthManager = () => {
         toast({
           title: 'Lỗi',
           description: error.message || 'Không thể yêu cầu đặt lại mật khẩu',
-          variant: 'destructive',
+          variant: 'error',
         });
 
-        // Re-throw the error for the component to handle
+        //Re-throw the error for the component to handle
         throw error;
-      } finally {
-        setIsLoading(false);
       }
     },
     [requestPasswordResetMutation],
@@ -525,7 +437,7 @@ export const useAuthManager = () => {
         toast({
           title: 'Lỗi',
           description: error.message || 'Cập nhật trạng thái thất bại',
-          variant: 'destructive',
+          variant: 'error',
         });
 
         // Re-throw the error for the component to handle
@@ -535,21 +447,21 @@ export const useAuthManager = () => {
     [updateStatusMutation, queryClient],
   );
 
-  // // Check for authentication state on mount and redirect if needed
-  // useEffect(() => {
-  //   // If we have a user and they need to reset their password, redirect
-  //   if (user && needsPasswordReset && pathname !== '/reset-password') {
-  //     router.replace('/reset-password');
-  //   }
-  // }, [user, needsPasswordReset, router, pathname]);
+  // Check for authentication state on mount and redirect if needed
+  useEffect(() => {
+    // If we have a user and they need to reset their password, redirect
+    if (user && needsPasswordReset && pathname !== '/reset-password') {
+      router.replace('/reset-password');
+    }
+  }, [user, needsPasswordReset, router, pathname]);
 
   // Kiểm tra trạng thái xác thực khi mount và chuyển hướng nếu cần
-  //  useEffect(() => {
-  //   // Nếu chúng ta có người dùng và họ cần đặt lại mật khẩu, chuyển hướng
-  //   if ((user || minimalUserInfo) && needsPasswordReset && pathname !== '/reset-password') {
-  //     router.replace('/reset-password');
-  //   }
-  // }, [user, minimalUserInfo, needsPasswordReset, router, pathname]);
+  useEffect(() => {
+    // Nếu chúng ta có người dùng và họ cần đặt lại mật khẩu, chuyển hướng
+    if ((user || minimalUserInfo) && needsPasswordReset && pathname !== '/reset-password') {
+      router.replace('/reset-password');
+    }
+  }, [user, minimalUserInfo, needsPasswordReset, router, pathname]);
   const loginWithCredentials = useCallback(
     (credentials: LoginCredentials) => {
       return dispatch(login(credentials));
@@ -575,7 +487,7 @@ export const useAuthManager = () => {
     isLoading: auth.status === 'loading',
 
     needsPasswordReset,
-    // error: userQuery.error,
+    error: userQuery.error,
     login: handleLogin,
     logout: logoutUser,
     resetPassword: handleResetPassword,

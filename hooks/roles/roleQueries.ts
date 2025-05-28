@@ -8,6 +8,9 @@ import {
   UseInfiniteQueryResult,
   QueryClient,
 } from '@tanstack/react-query';
+import { useCallback, useMemo, useState, useRef } from 'react';
+import { toast } from 'react-toast-kit';
+
 import {
   fetchRoleById,
   fetchRoleByCode,
@@ -20,19 +23,14 @@ import {
   RoleWithRelationsType,
   RoleListResponse,
 } from '@/apis/roles/role.api';
-import {useCallback, useMemo, useState, useRef} from 'react';
-import {toast} from '../use-toast';
 
-// Enhanced cache configurations for high-traffic applications
 const GC_TIME = 2 * 60 * 60 * 1000; // 2 hours (increased from 1 hour)
 const STALE_TIME = 30 * 60 * 1000; // 30 minutes (increased from 10 minutes)
 const LIST_STALE_TIME = 5 * 60 * 1000; // 5 minutes (increased from 1 minute)
 
-// Improved retry configuration with exponential backoff
 const DEFAULT_RETRY_OPTIONS = {
-  retry:  1,
-  retryDelay: (attemptIndex: number) =>
-    Math.min(1000 * Math.pow(2, attemptIndex), 30000), // exponential backoff capped at 30s
+  retry: 1,
+  retryDelay: (attemptIndex: number) => Math.min(1000 * Math.pow(2, attemptIndex), 30000), // exponential backoff capped at 30s
 };
 
 /**
@@ -58,15 +56,18 @@ const createStableQueryKey = (params: any) => {
  * @param func The function to debounce
  * @param wait The debounce time in milliseconds
  */
-function debounce<T extends (...args: any[]) => any>(func: T, wait: number): (...args: Parameters<T>) => void {
+function debounce<T extends (...args: any[]) => any>(
+  func: T,
+  wait: number,
+): (...args: Parameters<T>) => void {
   let timeout: ReturnType<typeof setTimeout> | null = null;
-  
-  return function(this: any, ...args: Parameters<T>) {
+
+  return function (this: any, ...args: Parameters<T>) {
     const later = () => {
       timeout = null;
       func.apply(this, args);
     };
-    
+
     if (timeout !== null) {
       clearTimeout(timeout);
     }
@@ -98,7 +99,7 @@ function setupPrefetchOnHover(queryClient: QueryClient, id: string) {
 export const useRoleQueries = () => {
   const queryClient = useQueryClient();
   const [queryError, setQueryError] = useState<Error | null>(null);
-  
+
   // Use ref for tracking active requests to prevent memory leaks and race conditions
   const activeRequestsRef = useRef(new Set<string>());
 
@@ -107,7 +108,7 @@ export const useRoleQueries = () => {
    * Improved error extraction and formatting
    */
   const handleQueryError = useCallback((error: any, queryName: string) => {
-    // Extract message safely with improved error handling
+    //   Extract message safely with improved error handling
     let errorMessage = 'Lỗi không xác định';
     try {
       if (error instanceof Error) {
@@ -129,19 +130,19 @@ export const useRoleQueries = () => {
     } catch (e) {
       errorMessage = 'Không thể hiển thị chi tiết lỗi';
     }
-    
+
     // Log for debugging
     console.error(`Query error in ${queryName}:`, error);
-    
-    // Store error state
+
+    //  Store error state
     setQueryError(error instanceof Error ? error : new Error(errorMessage));
-    
+
     // Show toast with safe message - limit to one toast per error type
     // This prevents toast flood in case of multiple errors
     toast({
       title: `Không thể tải dữ liệu ${queryName}`,
       description: errorMessage || 'Vui lòng thử lại sau',
-      variant: 'destructive',
+      variant: 'error',
       duration: 3000,
     });
   }, []);
@@ -160,7 +161,7 @@ export const useRoleQueries = () => {
   const prefetchRoles = useCallback(async () => {
     const requestId = `prefetch-roles-${Date.now()}`;
     activeRequestsRef.current.add(requestId);
-    
+
     try {
       await queryClient.prefetchQuery({
         queryKey: ['roles'],
@@ -183,7 +184,7 @@ export const useRoleQueries = () => {
   const prefetchRoleById = useCallback(
     async (id: string) => {
       if (!id) return;
-      
+
       const requestId = `prefetch-role-${id}-${Date.now()}`;
       activeRequestsRef.current.add(requestId);
 
@@ -210,7 +211,7 @@ export const useRoleQueries = () => {
    */
   const getPrefetchOnHoverHandler = useCallback(
     (id: string) => setupPrefetchOnHover(queryClient, id),
-    [queryClient]
+    [queryClient],
   );
 
   /**
@@ -221,7 +222,7 @@ export const useRoleQueries = () => {
     queryFn: async () => {
       const requestId = `fetch-all-roles-${Date.now()}`;
       activeRequestsRef.current.add(requestId);
-      
+
       try {
         return await fetchRoles();
       } catch (error) {
@@ -242,16 +243,16 @@ export const useRoleQueries = () => {
    */
   const getRoleById = (
     id?: string,
-    options?: {enabled?: boolean},
+    options?: { enabled?: boolean },
   ): UseQueryResult<RoleItemType, Error> =>
     useQuery<RoleItemType, Error>({
       queryKey: ['role', id],
       queryFn: async () => {
         if (!id) throw new Error('Role ID is required');
-        
+
         const requestId = `fetch-role-${id}-${Date.now()}`;
         activeRequestsRef.current.add(requestId);
-        
+
         try {
           return await fetchRoleById(id);
         } catch (error) {
@@ -274,16 +275,16 @@ export const useRoleQueries = () => {
    */
   const getRoleByCode = (
     code?: string,
-    options?: {enabled?: boolean},
+    options?: { enabled?: boolean },
   ): UseQueryResult<RoleItemType, Error> =>
     useQuery<RoleItemType, Error>({
       queryKey: ['role-by-code', code],
       queryFn: async () => {
         if (!code) throw new Error('Role code is required');
-        
+
         const requestId = `fetch-role-by-code-${code}-${Date.now()}`;
         activeRequestsRef.current.add(requestId);
-        
+
         try {
           return await fetchRoleByCode(code);
         } catch (error) {
@@ -306,16 +307,16 @@ export const useRoleQueries = () => {
    */
   const getRoleWithRelations = (
     id?: string,
-    options?: {enabled?: boolean},
+    options?: { enabled?: boolean },
   ): UseQueryResult<RoleWithRelationsType, Error> =>
     useQuery<RoleWithRelationsType, Error>({
       queryKey: ['role-with-relations', id],
       queryFn: async () => {
         if (!id) throw new Error('Role ID is required');
-        
+
         const requestId = `fetch-role-with-relations-${id}-${Date.now()}`;
         activeRequestsRef.current.add(requestId);
-        
+
         try {
           return await fetchRoleWithRelations(id);
         } catch (error) {
@@ -341,7 +342,7 @@ export const useRoleQueries = () => {
     params: RoleListParams = {},
     options?: any,
   ): UseQueryResult<RoleListResponse, Error> => {
-    // Create stable query key to avoid unnecessary refetches
+    //Create stable query key to avoid unnecessary refetches
     const stableParams = useMemo(() => createStableQueryKey(params), [params]);
 
     return useQuery<RoleListResponse, Error>({
@@ -349,7 +350,7 @@ export const useRoleQueries = () => {
       queryFn: async () => {
         const requestId = `fetch-roles-list-${JSON.stringify(stableParams)}-${Date.now()}`;
         activeRequestsRef.current.add(requestId);
-        
+
         try {
           return await fetchRolesList(params);
         } catch (error) {
@@ -377,18 +378,15 @@ export const useRoleQueries = () => {
     filters: Omit<RoleListParams, 'page' | 'limit'> = {},
   ): UseInfiniteQueryResult<RoleListResponse, Error> => {
     // Create stable query key
-    const stableFilters = useMemo(
-      () => createStableQueryKey(filters),
-      [filters],
-    );
+    const stableFilters = useMemo(() => createStableQueryKey(filters), [filters]);
 
     return useInfiniteQuery<RoleListResponse, Error>({
       queryKey: ['roles-infinite', limit, stableFilters],
       initialPageParam: 1,
-      queryFn: async ({pageParam}) => {
+      queryFn: async ({ pageParam }) => {
         const requestId = `fetch-roles-infinite-${pageParam}-${JSON.stringify(stableFilters)}-${Date.now()}`;
         activeRequestsRef.current.add(requestId);
-        
+
         try {
           return await fetchRolesList({
             ...filters,
@@ -423,7 +421,7 @@ export const useRoleQueries = () => {
   const invalidateRolesCache = useCallback(
     async (forceRefetch = false) => {
       try {
-        // Use selective invalidation to minimize unnecessary refetches
+        //  Use selective invalidation to minimize unnecessary refetches
         await queryClient.invalidateQueries({
           queryKey: ['roles'],
           refetchType: forceRefetch ? 'active' : 'none',
@@ -433,8 +431,8 @@ export const useRoleQueries = () => {
           queryKey: ['roles-list'],
           refetchType: forceRefetch ? 'active' : 'none',
         });
-        
-        // Also invalidate infinite queries without forcing refetch
+
+        //  Also invalidate infinite queries without forcing refetch
         await queryClient.invalidateQueries({
           queryKey: ['roles-infinite'],
           refetchType: forceRefetch ? 'active' : 'none',
@@ -446,7 +444,7 @@ export const useRoleQueries = () => {
     [queryClient],
   );
   return {
-    // Query hooks
+    //  Query hooks
     getAllRoles,
     getRoleById,
     getRoleByCode,
@@ -460,8 +458,8 @@ export const useRoleQueries = () => {
 
     // Cache invalidation methods
     invalidateRolesCache,
-    
-    // Error handling
+
+    //  Error handling
     queryError,
     resetQueryError,
   };

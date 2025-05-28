@@ -1,13 +1,14 @@
+import { useQueryClient } from '@tanstack/react-query';
+
 import {
   createBagProcess,
   updateBagProcess,
   deleteBagProcess,
   BagProcessCreateDTO,
-  BagProcessUpdateDTO
+  BagProcessUpdateDTO,
 } from '@/apis/handbag/bagProcess.api';
 import { BagProcess } from '@/common/interface/handbag';
 import { useBaseMutations } from '@/hooks/base/useBaseMutations';
-import { useQueryClient } from '@tanstack/react-query';
 
 /**
  * Hook for BagProcess mutations
@@ -16,14 +17,13 @@ export const useBagProcessMutations = () => {
   const queryClient = useQueryClient();
 
   // Use base mutations hook for BagProcess mutations
-  const bagProcessMutations = useBaseMutations<BagProcess, BagProcessCreateDTO, BagProcessUpdateDTO>(
-    'bagProcess',
-    createBagProcess,
-    updateBagProcess,
-    deleteBagProcess
-  );
+  const bagProcessMutations = useBaseMutations<
+    BagProcess,
+    BagProcessCreateDTO,
+    BagProcessUpdateDTO
+  >('bagProcess', createBagProcess, updateBagProcess, deleteBagProcess);
 
-  // Custom onSuccess handler with cache invalidation
+  //  Custom onSuccess handler with cache invalidation
   const onBagProcessMutationSuccess = async (bagProcessId: string) => {
     // Invalidate general bagProcess lists
     await queryClient.invalidateQueries({
@@ -45,6 +45,6 @@ export const useBagProcessMutations = () => {
     deleteBagProcessMutation: bagProcessMutations.deleteMutation,
 
     // Custom cache invalidation helper
-    onBagProcessMutationSuccess
+    onBagProcessMutationSuccess,
   };
 };

@@ -1,4 +1,3 @@
-// components/WorkerHeader.tsx
 import { UserCircle } from 'lucide-react';
 
 import { ShiftTypeBadge } from './shift-type-badge';

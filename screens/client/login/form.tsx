@@ -1,4 +1,5 @@
 'use client';
+
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useEffect } from 'react';
@@ -6,31 +7,48 @@ import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 
 import { FieldCheckbox } from '@/components/common/Form/FieldCheckbox';
 import { FieldInput } from '@/components/common/Form/FieldInput';
+import { toast } from 'react-toast-kit';
 import SubmitButton from '@/components/SubmitButton';
-import useAuthManager from '@/hooks/useAuthManager';
 import { defaultLoginValues, loginSchema, TLoginSchema } from '@/schemas/auth';
+import { useAuthManager } from '@/hooks/auth/useAuthManager';
 
 const LoginForm = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { loginWithCredentials, isLoading, isAuthenticated } = useAuthManager();
+  const { login, isLoading, isAuthenticated, error } = useAuthManager();
   const methods = useForm<TLoginSchema>({
     defaultValues: defaultLoginValues,
     resolver: zodResolver(loginSchema),
   });
   const callbackUrl = searchParams.get('callbackUrl') || '/';
-  const onSubmit: SubmitHandler<TLoginSchema> = async data => {
-    // await login(data);
-    loginWithCredentials(data);
-    localStorage.setItem('lastLoginTime', new Date().toISOString());
+
+  const onSubmit: SubmitHandler<TLoginSchema> = async (data) => {
+    // Remove the duplicate localStorage call - saga handles this
+    login(data);
   };
 
-  // Effect to handle authentication status changes
+  // Handle successful authentication
   useEffect(() => {
     if (isAuthenticated) {
+      toast({
+        title: 'Đăng nhập thành công',
+        variant: 'success',
+      });
       router.push(callbackUrl);
     }
-  }, [isAuthenticated, router, callbackUrl, isLoading]);
+  }, [isAuthenticated, router, callbackUrl]);
+
+  // Handle authentication errors
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: 'Đăng nhập thất bại',
+        description: error || 'Vui lòng kiểm tra lại thông tin đăng nhập của bạn.',
+        variant: 'error',
+      });
+    }
+  }, [error]);
+
   return (
     <FormProvider {...methods}>
       <form onSubmit={methods.handleSubmit(onSubmit)}>
@@ -67,8 +85,7 @@ const LoginForm = () => {
           <div className="flex justify-center mt-4">
             <a
               href="/reset-password"
-              className="text-blue-500
-                    hover:underline"
+              className="text-blue-500 hover:underline"
             >
               Quên mật khẩu?
             </a>

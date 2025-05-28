@@ -1,4 +1,3 @@
-// components/ImprovedFormStatistics.tsx
 'use client';
 
 import { useMemo } from 'react';
@@ -51,7 +50,7 @@ export function FormStatistics({
       };
     }
 
-    // Group workers by user ID to avoid duplicates (for all workers view)
+    //  Group workers by user ID to avoid duplicates (for all workers view)
     const uniqueWorkers = new Map();
     formData.workers.forEach(worker => {
       if (worker.user?.id && !uniqueWorkers.has(worker.user.id)) {

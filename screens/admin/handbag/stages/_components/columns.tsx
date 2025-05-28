@@ -1,6 +1,9 @@
-"use client";
-import { Checkbox } from "@/components/ui/checkbox";
-import { ColumnDef } from "@tanstack/react-table";
+'use client';
+import { ColumnDef } from '@tanstack/react-table';
+
+import ButtonGroupAction from '@/components/common/table/actions/button-group-actions';
+import { Checkbox } from '@/components/ui/checkbox';
+
 export type HandbagProductionProcess = {
   id: string;
   code: string;
@@ -9,21 +12,20 @@ export type HandbagProductionProcess = {
 
 export const columns: ColumnDef<HandbagProductionProcess>[] = [
   {
-    id: "select",
+    id: 'select',
     header: ({ table }) => (
       <Checkbox
         checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && "indeterminate")
+          table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && 'indeterminate')
         }
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        onCheckedChange={value => table.toggleAllPageRowsSelected(!!value)}
         aria-label="Select all"
       />
     ),
     cell: ({ row }) => (
       <Checkbox
         checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
+        onCheckedChange={value => row.toggleSelected(!!value)}
         aria-label="Select row"
       />
     ),
@@ -31,26 +33,26 @@ export const columns: ColumnDef<HandbagProductionProcess>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: "code",
-    header: "Mã công đoạn",
-    cell: ({ row }) => <div className="capitalize">{row.getValue("code")}</div>,
+    accessorKey: 'code',
+    header: 'Mã công đoạn',
+    cell: ({ row }) => <div className="capitalize">{row.getValue('code')}</div>,
   },
   {
-    accessorKey: "name",
-    header: "Tên công đoạn",
-    cell: ({ row }) => <div className="capitalize">{row.getValue("name")}</div>,
+    accessorKey: 'name',
+    header: 'Tên công đoạn',
+    cell: ({ row }) => <div className="capitalize">{row.getValue('name')}</div>,
   },
-  // {
-  //   accessorKey: "actions",
-  //   header: "",
-  //   cell: ({ row }) => {
-  //     const id = row.original.id;
-  //     return (
-  //       <ButtonGroupAction
-  //         onEdit={() => console.log("update", id)}
-  //         onDelete={() => deleteProductionProcess(Number(id))}
-  //       />
-  //     );
-  //   },
-  // },
+  {
+    accessorKey: 'actions',
+    header: '',
+    cell: ({ row }) => {
+      const id = row.original.id;
+      return (
+        <ButtonGroupAction
+          onEdit={() => console.log('update', id)}
+          onDelete={() => deleteProductionProcess(Number(id))}
+        />
+      );
+    },
+  },
 ];

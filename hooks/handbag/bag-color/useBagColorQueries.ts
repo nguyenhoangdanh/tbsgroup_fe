@@ -1,11 +1,9 @@
-import { useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { 
-  getBagColorsList, 
-  getBagColorById,
-} from '@/apis/handbag/handbag.api';
+import { useCallback } from 'react';
+
+import { getBagColorsList, getBagColorById } from '@/apis/handbag/handbag.api';
 import { BagColor, BagColorCondDTO } from '@/common/interface/handbag';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'react-toast-kit';
 import { useBaseQueries } from '@/hooks/base/useBaseQueries';
 
 /**
@@ -13,7 +11,7 @@ import { useBaseQueries } from '@/hooks/base/useBaseQueries';
  */
 export const useBagColorQueries = () => {
   const queryClient = useQueryClient();
-  
+
   /**
    * Handle query errors with toast notifications
    */
@@ -25,40 +23,41 @@ export const useBagColorQueries = () => {
     } else if (typeof error === 'object' && error !== null && 'message' in error) {
       errorMessage = error.message as string;
     }
-    
-    // Show toast with safe message
+
     toast({
       title: `Không thể tải dữ liệu ${queryName}`,
       description: errorMessage || 'Vui lòng thử lại sau',
-      variant: 'destructive',
+      variant: 'error',
       duration: 3000,
     });
   }, []);
 
-  // Use base hook for BagColor queries
   const bagColorQueries = useBaseQueries<BagColor, BagColorCondDTO>(
     'bagColor',
     getBagColorsList,
     getBagColorById,
     undefined,
-    handleQueryError
+    handleQueryError,
   );
 
   /**
    * Get colors for a specific handbag
    */
-  const getHandBagColors = useCallback((handBagId?: string, options?: { enabled?: boolean }) => {
-    return bagColorQueries.listItems(
-      {
-        handBagId: handBagId || '',
-        limit: 100,
-        page: 1
-      },
-      {
-        enabled: !!handBagId && options?.enabled !== false,
-      }
-    );
-  }, [bagColorQueries]);
+  const getHandBagColors = useCallback(
+    (handBagId?: string, options?: { enabled?: boolean }) => {
+      return bagColorQueries.listItems(
+        {
+          handBagId: handBagId || '',
+          limit: 100,
+          page: 1,
+        },
+        {
+          enabled: !!handBagId && options?.enabled !== false,
+        },
+      );
+    },
+    [bagColorQueries],
+  );
 
   /**
    * Prefetch colors for a specific handbag
@@ -79,12 +78,12 @@ export const useBagColorQueries = () => {
         console.error(`Failed to prefetch colors for handbag ${handBagId}:`, error);
       }
     },
-    [queryClient]
+    [queryClient],
   );
 
   return {
     ...bagColorQueries,
     getHandBagColors,
-    prefetchHandBagColors
+    prefetchHandBagColors,
   };
 };

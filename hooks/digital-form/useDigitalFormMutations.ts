@@ -1,1168 +1,460 @@
-// hooks/useDigitalFormMutations.ts
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { DigitalFormService } from '@/services/digitalFormService';
+import { toast } from 'react-toast-kit';
+
+import { digitalFormKeys } from './useDigitalFormQueries';
+
+import { AttendanceStatus, ShiftType } from '@/common/types/digital-form';
 import {
-  TDigitalFormCreate,
-  TDigitalFormUpdate,
-  TDigitalFormSubmit,
-  TDigitalFormEntry,
-  TUpdateFormEntry,
-  TShiftTypeFormEntry,
-} from '@/schemas/digital-form.schema';
-import { toast } from '@/hooks/use-toast';
-import { DigitalForm, DigitalFormEntry } from '@/common/types/digital-form';
+  DigitalFormCreateRequest,
+  DigitalFormUpdateRequest,
+  DigitalFormEntryRequest,
+  FormEntryUpdateRequest,
+  DigitalFormSubmitRequest,
+} from '@/common/types/digital-form-dto';
+import digitalFormApi from '@/services/api/digitalFormApi';
 
 /**
- * Hook for digital form related mutations with optimistic updates
+ * React Query hook for digital form mutations (create, update, delete operations)
+ * Handles automatic cache invalidation and optimistic updates
  */
-export const useDigitalFormMutations = () => {
+export const useDigitalFormMutations = (onError?: (error: any, operation: string) => void) => {
   const queryClient = useQueryClient();
 
-  /**
-   * Create a new digital form
-   */
+  // Default error handler if not provided
+  const defaultErrorHandler = (error: any, operation: string) => {
+    console.error(`Error during ${operation}:`, error);
+    toast.error(`Operation failed: ${error.message || 'Unknown error'}`);
+  };
+
+  // Use provided error handler or default
+  const handleError = onError || defaultErrorHandler;
+
+  // Create a new digital form
   const createFormMutation = useMutation({
-    mutationFn: (data: TDigitalFormCreate) =>
-      DigitalFormService.createForm(data),
-    
-    onMutate: async (newFormData) => {
-      // Cancel any outgoing refetches to avoid overwriting optimistic update
-      await queryClient.cancelQueries({ queryKey: ['digital-forms-list'] });
-
-      // Find and store the current query data for list
-      const queries = queryClient.getQueriesData({ queryKey: ['digital-forms-list'] });
-      const previousListData = Array.from(queries).map(([queryKey, queryData]) => ({
-        queryKey,
-        queryData,
-      }));
-
-      // Create a temporary ID for the optimistic update
-      const tempId = `temp-${Date.now()}`;
-
-      // Create optimistic form entry
-      const optimisticForm = {
-        id: tempId,
-        ...newFormData,
-        formCode: `TEMP-${Date.now()}`,
-        status: 'DRAFT',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        createdById: 'current-user', // This would ideally come from auth context
-        updatedById: 'current-user',
-        submitTime: null,
-        approvalRequestId: null,
-        approvedAt: null,
-        isExported: false,
-        syncStatus: null,
-      } as unknown as DigitalForm;
-
-      // Update each list query with optimistic data
-      for (const { queryKey } of previousListData) {
-        queryClient.setQueryData(queryKey, (oldData: any) => {
-          if (!oldData || !oldData.data) return oldData;
-
-          return {
-            ...oldData,
-            data: [optimisticForm, ...oldData.data],
-            total: oldData.total + 1,
-          };
-        });
+    mutationFn: async (data: DigitalFormCreateRequest) => {
+      const response = await digitalFormApi.createDigitalForm(data);
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to create form');
       }
-
-      return { previousListData, tempId };
+      return response.data;
     },
-    
-    onSuccess: async (result) => {
-      // Show success toast
-      toast({
-        title: 'Biểu mẫu đã được tạo thành công',
-        duration: 2000,
-      });
-
-      // Mark queries as stale without auto-refetching
-      queryClient.invalidateQueries({
-        queryKey: ['digital-forms-list'],
-        refetchType: 'none',
-      });
-
-      queryClient.invalidateQueries({
-        queryKey: ['digital-forms-infinite'],
-        refetchType: 'none',
-      });
-
-      if (result.data?.id) {
-        queryClient.invalidateQueries({
-          queryKey: ['digital-form', result.data.id],
-          refetchType: 'none',
-        });
-      }
+    onSuccess: () => {
+      // Invalidate list queries to refetch the list after creation
+      queryClient.invalidateQueries({ queryKey: digitalFormKeys.lists() });
+      toast.success('Digital form created successfully');
     },
-    
-    onError: (error, _, context) => {
-      toast({
-        title: 'Không thể tạo biểu mẫu',
-        description: error instanceof Error ? error.message : 'Đã xảy ra lỗi',
-        variant: 'destructive',
-        duration: 2000,
-      });
-
-      // Rollback to the previous state
-      if (context?.previousListData) {
-        for (const { queryKey, queryData } of context.previousListData) {
-          queryClient.setQueryData(queryKey, queryData);
-        }
-      }
-    },
+    onError: error => handleError(error, 'creating form'),
   });
 
-  /**
-   * Update an existing digital form
-   */
+  // Create a form for a specific worker
+  const createWorkerFormMutation = useMutation({
+    mutationFn: async (workerId: string) => {
+      const response = await digitalFormApi.createDigitalFormForWorker(workerId);
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to create worker form');
+      }
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: digitalFormKeys.lists() });
+      toast.success('Worker form created successfully');
+    },
+    onError: error => handleError(error, 'creating worker form'),
+  });
+
+  // Generate daily forms (admin function)
+  const generateDailyFormsMutation = useMutation({
+    mutationFn: async (options?: {
+      handBagId?: string;
+      bagProcessId?: string;
+      bagColorId?: string;
+    }) => {
+      const response = await digitalFormApi.generateDailyForms(options);
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to generate daily forms');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: digitalFormKeys.lists() });
+      toast.success('Daily forms generated successfully');
+    },
+    onError: error => handleError(error, 'generating daily forms'),
+  });
+
+  // Update digital form
   const updateFormMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: TDigitalFormUpdate }) =>
-      DigitalFormService.updateForm(id, data),
-    
-    onMutate: async ({ id, data }) => {
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ['digital-forms-list'] });
-      await queryClient.cancelQueries({ queryKey: ['digital-form', id] });
-      await queryClient.cancelQueries({ queryKey: ['digital-form-with-entries', id] });
-
-      // Get current data
-      const previousItem = queryClient.getQueryData(['digital-form', id]);
-      const previousItemWithEntries = queryClient.getQueryData(['digital-form-with-entries', id]);
-
-      // Find and store the current query data for list
-      const queries = queryClient.getQueriesData({ queryKey: ['digital-forms-list'] });
-      const previousListData = Array.from(queries).map(([queryKey, queryData]) => ({
-        queryKey,
-        queryData,
-      }));
-
-      // Update each list query optimistically
-      for (const { queryKey } of previousListData) {
-        queryClient.setQueryData(queryKey, (old: any) => {
-          if (!old || !old.data) return old;
-          
-          return {
-            ...old,
-            data: old.data.map((form: DigitalForm) =>
-              form.id === id ? { ...form, ...data, updatedAt: new Date().toISOString() } : form
-            ),
-          };
-        });
+    mutationFn: async ({ id, data }: { id: string; data: DigitalFormUpdateRequest }) => {
+      const response = await digitalFormApi.updateDigitalForm(id, data);
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to update form');
       }
-
-      // Update individual item cache if it exists
-      if (previousItem) {
-        queryClient.setQueryData(['digital-form', id], (old: any) => ({
-          ...old,
-          ...data,
-          updatedAt: new Date().toISOString(),
-        }));
-      }
-
-      // Update form with entries cache if it exists
-      if (previousItemWithEntries) {
-        queryClient.setQueryData(['digital-form-with-entries', id], (old: any) => {
-          if (!old || !old.form) return old;
-          
-          return {
-            ...old,
-            form: {
-              ...old.form,
-              ...data,
-              updatedAt: new Date().toISOString(),
-            }
-          };
-        });
-      }
-
-      return { previousItem, previousItemWithEntries, previousListData };
+      return { id, ...data };
     },
-    
-    onSuccess: async (_, variables) => {
-      // Show success toast
-      toast({
-        title: 'Biểu mẫu đã được cập nhật thành công',
-        duration: 2000,
-      });
-
-      // Mark queries as stale without auto-refetching
-      queryClient.invalidateQueries({
-        queryKey: ['digital-forms-list'],
-        refetchType: 'none',
-      });
-
-      queryClient.invalidateQueries({
-        queryKey: ['digital-forms-infinite'],
-        refetchType: 'none',
-      });
-
-      queryClient.invalidateQueries({
-        queryKey: ['digital-form', variables.id],
-        refetchType: 'none',
-      });
-
-      queryClient.invalidateQueries({
-        queryKey: ['digital-form-with-entries', variables.id],
-        refetchType: 'none',
-      });
+    onSuccess: result => {
+      // Invalidate specific form and list queries
+      queryClient.invalidateQueries({ queryKey: digitalFormKeys.detail(result.id) });
+      queryClient.invalidateQueries({ queryKey: digitalFormKeys.lists() });
+      toast.success('Form updated successfully');
     },
-    
-    onError: (error, variables, context) => {
-      toast({
-        title: 'Không thể cập nhật biểu mẫu',
-        description: error instanceof Error ? error.message : 'Đã xảy ra lỗi',
-        variant: 'destructive',
-        duration: 2000,
-      });
-
-      // Restore individual form data
-      if (context?.previousItem) {
-        queryClient.setQueryData(['digital-form', variables.id], context.previousItem);
-      }
-      
-      // Restore form with entries data
-      if (context?.previousItemWithEntries) {
-        queryClient.setQueryData(['digital-form-with-entries', variables.id], context.previousItemWithEntries);
-      }
-
-      // Restore all list queries
-      if (context?.previousListData) {
-        for (const { queryKey, queryData } of context.previousListData) {
-          queryClient.setQueryData(queryKey, queryData);
-        }
-      }
-    },
+    onError: error => handleError(error, 'updating form'),
   });
 
-  /**
-   * Delete a digital form
-   */
+  // Delete digital form
   const deleteFormMutation = useMutation({
-    mutationFn: (id: string) => DigitalFormService.deleteForm(id),
-    
-    onMutate: async (id) => {
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ['digital-forms-list'] });
-      await queryClient.cancelQueries({ queryKey: ['digital-form', id] });
-      await queryClient.cancelQueries({ queryKey: ['digital-form-with-entries', id] });
-
-      // Find and store the current query data for list
-      const queries = queryClient.getQueriesData({ queryKey: ['digital-forms-list'] });
-      const previousListData = Array.from(queries).map(([queryKey, queryData]) => ({
-        queryKey,
-        queryData,
-      }));
-
-      // Get the current item data
-      const previousItem = queryClient.getQueryData(['digital-form', id]);
-      const previousItemWithEntries = queryClient.getQueryData(['digital-form-with-entries', id]);
-
-      // Update each list query optimistically
-      for (const { queryKey } of previousListData) {
-        queryClient.setQueryData(queryKey, (old: any) => {
-          if (!old || !old.data) return old;
-          
-          return {
-            ...old,
-            data: old.data.filter((form: DigitalForm) => form.id !== id),
-            total: Math.max(0, old.total - 1),
-          };
-        });
+    mutationFn: async (id: string) => {
+      const response = await digitalFormApi.deleteDigitalForm(id);
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to delete form');
       }
-
-      return { previousListData, previousItem, previousItemWithEntries };
+      return id;
     },
-    
-    onSuccess: async (_, id) => {
-      // Show success toast
-      toast({
-        title: 'Biểu mẫu đã được xóa thành công',
-        duration: 2000,
-      });
-
-      // Mark queries as stale without auto-refetching
-      queryClient.invalidateQueries({
-        queryKey: ['digital-forms-list'],
-        refetchType: 'none',
-      });
-
-      queryClient.invalidateQueries({
-        queryKey: ['digital-forms-infinite'],
-        refetchType: 'none',
-      });
-
-      // Remove the item from cache
-      queryClient.removeQueries({ queryKey: ['digital-form', id] });
-      queryClient.removeQueries({ queryKey: ['digital-form-with-entries', id] });
-      queryClient.removeQueries({ queryKey: ['digital-form-print', id] });
+    onSuccess: id => {
+      // Invalidate specific form and list queries
+      queryClient.invalidateQueries({ queryKey: digitalFormKeys.detail(id) });
+      queryClient.invalidateQueries({ queryKey: digitalFormKeys.lists() });
+      toast.success('Form deleted successfully');
     },
-    
-    onError: (error, id, context) => {
-      toast({
-        title: 'Không thể xóa biểu mẫu',
-        description: error instanceof Error ? error.message : 'Đã xảy ra lỗi',
-        variant: 'destructive',
-        duration: 2000,
-      });
-
-      // Restore all list queries
-      if (context?.previousListData) {
-        for (const { queryKey, queryData } of context.previousListData) {
-          queryClient.setQueryData(queryKey, queryData);
-        }
-      }
-
-      // Restore the item if it existed
-      if (context?.previousItem) {
-        queryClient.setQueryData(['digital-form', id], context.previousItem);
-      }
-      
-      // Restore form with entries if it existed
-      if (context?.previousItemWithEntries) {
-        queryClient.setQueryData(['digital-form-with-entries', id], context.previousItemWithEntries);
-      }
-    },
+    onError: error => handleError(error, 'deleting form'),
   });
 
-  /**
-   * Add entry to form mutation
-   */
+  // Add entry to form
   const addFormEntryMutation = useMutation({
-    mutationFn: ({ formId, data }: { formId: string; data: TDigitalFormEntry }) =>
-      DigitalFormService.addFormEntry(formId, data),
-
-    onMutate: async ({ formId, data }) => {
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ['digital-form-with-entries', formId] });
-
-      // Get current data
-      const previousFormWithEntries = queryClient.getQueryData(['digital-form-with-entries', formId]);
-
-      // Create a temporary ID for the optimistic update
-      const tempId = `temp-entry-${Date.now()}`;
-
-      // Create optimistic entry
-      const optimisticEntry: DigitalFormEntry = {
-        id: tempId,
-        formId,
-        ...data,
-        hourlyData: data.hourlyData || {},
-        totalOutput: data.totalOutput || 0,
-        checkInTime: data.checkInTime ? new Date(data.checkInTime).toISOString() : null,
-        checkOutTime: data.checkOutTime ? new Date(data.checkOutTime).toISOString() : null,
-        attendanceNote: data.attendanceNote || null,
-        qualityScore: data.qualityScore || 100,
-        qualityNotes: data.qualityNotes || null,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      } as unknown as DigitalFormEntry;
-
-      // Update form with entries cache if it exists
-      if (previousFormWithEntries) {
-        queryClient.setQueryData(['digital-form-with-entries', formId], (old: any) => {
-          if (!old || !old.entries) return old;
-          
-          return {
-            ...old,
-            entries: [...old.entries, optimisticEntry],
-          };
-        });
+    mutationFn: async ({ formId, data }: { formId: string; data: DigitalFormEntryRequest }) => {
+      const response = await digitalFormApi.addFormEntry(formId, data);
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to add entry');
       }
-
-      return { previousFormWithEntries, tempId, optimisticEntry };
+      return { formId, entryId: response.data?.id };
     },
-
-    onSuccess: (result, variables) => {
-      // Show success toast
-      toast({
-        title: 'Đã thêm dữ liệu thành công',
-        duration: 2000,
-      });
-
-      // Mark queries as stale without auto-refetching
+    onSuccess: result => {
+      // Invalidate form with entries and detail queries
       queryClient.invalidateQueries({
-        queryKey: ['digital-form-with-entries', variables.formId],
-        refetchType: 'none',
+        queryKey: digitalFormKeys.detailWithEntries(result.formId),
       });
+      queryClient.invalidateQueries({ queryKey: digitalFormKeys.detail(result.formId) });
+      toast.success('Entry added successfully');
     },
-
-    onError: (error, variables, context) => {
-      toast({
-        title: 'Không thể thêm dữ liệu',
-        description: error instanceof Error ? error.message : 'Đã xảy ra lỗi',
-        variant: 'destructive',
-        duration: 2000,
-      });
-
-      // Restore form with entries data
-      if (context?.previousFormWithEntries) {
-        queryClient.setQueryData(['digital-form-with-entries', variables.formId], context.previousFormWithEntries);
-      }
-    },
+    onError: error => handleError(error, 'adding form entry'),
   });
 
-  /**
-   * Update a form entry mutation - Added to fix missing mutation
-   */
+  // Add bulk entries to form
+  const addBulkEntriesMutation = useMutation({
+    mutationFn: async ({
+      formId,
+      entries,
+    }: {
+      formId: string;
+      entries: Array<{
+        handBagId: string;
+        bagColorId: string;
+        processId: string;
+        plannedOutput: number;
+      }>;
+    }) => {
+      const response = await digitalFormApi.addBulkEntries(formId, entries);
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to add bulk entries');
+      }
+      return { formId, entries: response.data?.entries || [] };
+    },
+    onSuccess: result => {
+      // Invalidate form with entries and detail queries
+      queryClient.invalidateQueries({
+        queryKey: digitalFormKeys.detailWithEntries(result.formId),
+      });
+      queryClient.invalidateQueries({ queryKey: digitalFormKeys.detail(result.formId) });
+      toast.success(`${result.entries.length} entries added successfully`);
+    },
+    onError: error => handleError(error, 'adding bulk entries'),
+  });
+
+  // Update form entry
   const updateFormEntryMutation = useMutation({
-    mutationFn: ({ formId, entryId, data }: { formId: string; entryId: string; data: Partial<TUpdateFormEntry> }) =>
-      DigitalFormService.updateFormEntry(formId, entryId, data),
-
-    onMutate: async ({ formId, entryId, data }) => {
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ['digital-form-with-entries', formId] });
-
-      // Get current data
-      const previousFormWithEntries = queryClient.getQueryData(['digital-form-with-entries', formId]);
-
-      // Update form with entries cache if it exists
-      if (previousFormWithEntries) {
-        queryClient.setQueryData(['digital-form-with-entries', formId], (old: any) => {
-          if (!old || !old.entries) return old;
-          
-          return {
-            ...old,
-            entries: old.entries.map((entry: DigitalFormEntry) =>
-              entry.id === entryId
-                ? {
-                  ...entry,
-                  ...data,
-                  updatedAt: new Date().toISOString(),
-                  // Recalculate totalOutput if hourlyData is provided
-                  totalOutput: data.hourlyData
-                    ? Object.values({ ...entry.hourlyData, ...data.hourlyData }).reduce(
-                      (sum, output) => sum + (output || 0), 0
-                    )
-                    : entry.totalOutput
-                }
-                : entry
-            ),
-          };
-        });
-      }
-
-      return { previousFormWithEntries };
-    },
-
-    onSuccess: (_, variables) => {
-      // Show success toast
-      toast({
-        title: 'Đã cập nhật dữ liệu thành công',
-        duration: 2000,
-      });
-
-      // Mark queries as stale without auto-refetching
-      queryClient.invalidateQueries({
-        queryKey: ['digital-form-with-entries', variables.formId],
-        refetchType: 'none',
-      });
-    },
-
-    onError: (error, variables, context) => {
-      toast({
-        title: 'Không thể cập nhật dữ liệu',
-        description: error instanceof Error ? error.message : 'Đã xảy ra lỗi',
-        variant: 'destructive',
-        duration: 2000,
-      });
-
-      // Restore form with entries data
-      if (context?.previousFormWithEntries) {
-        queryClient.setQueryData(['digital-form-with-entries', variables.formId], context.previousFormWithEntries);
-      }
-    },
-  });
-
-  /**
-   * Update hourly data for a form entry - Special use case mutation
-   */
-  const updateHourlyDataMutation = useMutation({
-    mutationFn: ({ formId, entryId, timeSlot, quantity }: {
+    mutationFn: async ({
+      formId,
+      entryId,
+      data,
+    }: {
       formId: string;
       entryId: string;
-      timeSlot: string;
-      quantity: number;
-    }) => DigitalFormService.updateHourlyData(formId, entryId, { [timeSlot]: quantity }),
-
-    onMutate: async ({ formId, entryId, timeSlot, quantity }) => {
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ['digital-form-with-entries', formId] });
-
-      // Get current data
-      const previousFormWithEntries = queryClient.getQueryData(['digital-form-with-entries', formId]);
-
-      // Update form with entries cache if it exists
-      if (previousFormWithEntries) {
-        queryClient.setQueryData(['digital-form-with-entries', formId], (old: any) => {
-          if (!old || !old.entries) return old;
-          
-          return {
-            ...old,
-            entries: old.entries.map((entry: DigitalFormEntry) => {
-              if (entry.id !== entryId) return entry;
-              
-              // Update hourly data and recalculate total
-              const updatedHourlyData = { ...(entry.hourlyData || {}) };
-              updatedHourlyData[timeSlot] = quantity;
-              
-              const updatedTotalOutput = Object.values(updatedHourlyData)
-                .reduce((sum, val) => sum + (val || 0), 0);
-              
-              return {
-                ...entry,
-                hourlyData: updatedHourlyData,
-                totalOutput: updatedTotalOutput,
-                updatedAt: new Date().toISOString()
-              };
-            }),
-          };
-        });
+      data: FormEntryUpdateRequest;
+    }) => {
+      const response = await digitalFormApi.updateEntry(formId, entryId, data);
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to update entry');
       }
-
-      return { previousFormWithEntries };
+      return { formId, entryId };
     },
-
-    onSuccess: (_, variables) => {
-      // We can keep this toast hidden to prevent too many notifications
-      // when rapidly updating hourly data
-      /* 
-      toast({
-        title: 'Đã cập nhật dữ liệu thành công',
-        duration: 1000,
-      });
-      */
-
-      // Mark queries as stale without auto-refetching
+    onSuccess: result => {
+      // Invalidate form with entries queries
       queryClient.invalidateQueries({
-        queryKey: ['digital-form-with-entries', variables.formId],
-        refetchType: 'none',
+        queryKey: digitalFormKeys.detailWithEntries(result.formId),
       });
+      toast.success('Entry updated successfully');
     },
-
-    onError: (error, variables, context) => {
-      toast({
-        title: 'Không thể cập nhật dữ liệu',
-        description: error instanceof Error ? error.message : 'Đã xảy ra lỗi',
-        variant: 'destructive',
-        duration: 2000,
-      });
-
-      // Restore form with entries data
-      if (context?.previousFormWithEntries) {
-        queryClient.setQueryData(['digital-form-with-entries', variables.formId], context.previousFormWithEntries);
-      }
-    },
+    onError: error => handleError(error, 'updating entry'),
   });
 
-  /**
-   * Delete entry from form mutation
-   */
+  // Update hourly data
+  const updateHourlyDataMutation = useMutation({
+    mutationFn: async ({
+      formId,
+      entryId,
+      handBagId,
+      bagColorId,
+      processId,
+      hourlyData,
+    }: {
+      formId: string;
+      entryId: string;
+      handBagId: string;
+      bagColorId: string;
+      processId: string;
+      hourlyData: Record<string, number>;
+    }) => {
+      const response = await digitalFormApi.updateEntryHourlyData(formId, entryId, {
+        handBagId,
+        bagColorId,
+        processId,
+        hourlyData,
+      });
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to update hourly data');
+      }
+      return { formId, entryId, hourlyData };
+    },
+    onSuccess: result => {
+      // Invalidate form with entries queries
+      queryClient.invalidateQueries({
+        queryKey: digitalFormKeys.detailWithEntries(result.formId),
+      });
+      // Don't show toast on hourly data update to avoid spamming
+    },
+    onError: error => handleError(error, 'updating hourly data'),
+  });
+
+  // Update attendance status
+  const updateAttendanceMutation = useMutation({
+    mutationFn: async ({
+      formId,
+      entryId,
+      handBagId,
+      bagColorId,
+      processId,
+      attendanceStatus,
+      attendanceNote,
+    }: {
+      formId: string;
+      entryId: string;
+      handBagId: string;
+      bagColorId: string;
+      processId: string;
+      attendanceStatus: AttendanceStatus;
+      attendanceNote?: string;
+    }) => {
+      const response = await digitalFormApi.updateEntryAttendance(formId, entryId, {
+        handBagId,
+        bagColorId,
+        processId,
+        attendanceStatus,
+        attendanceNote,
+      });
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to update attendance');
+      }
+      return { formId, entryId, attendanceStatus };
+    },
+    onSuccess: result => {
+      // Invalidate form with entries queries
+      queryClient.invalidateQueries({
+        queryKey: digitalFormKeys.detailWithEntries(result.formId),
+      });
+      toast.success('Attendance status updated');
+    },
+    onError: error => handleError(error, 'updating attendance'),
+  });
+
+  // Update shift type
+  const updateShiftTypeMutation = useMutation({
+    mutationFn: async ({
+      formId,
+      entryId,
+      shiftType,
+    }: {
+      formId: string;
+      entryId: string;
+      shiftType: ShiftType;
+    }) => {
+      const response = await digitalFormApi.updateEntryShiftType(formId, entryId, shiftType);
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to update shift type');
+      }
+      return { formId, entryId, shiftType };
+    },
+    onSuccess: result => {
+      // Invalidate form with entries queries
+      queryClient.invalidateQueries({
+        queryKey: digitalFormKeys.detailWithEntries(result.formId),
+      });
+      toast.success('Shift type updated');
+    },
+    onError: error => handleError(error, 'updating shift type'),
+  });
+
+  // Delete form entry
   const deleteFormEntryMutation = useMutation({
-    mutationFn: ({ formId, entryId }: { formId: string; entryId: string }) =>
-      DigitalFormService.deleteFormEntry(formId, entryId),
-
-    onMutate: async ({ formId, entryId }) => {
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ['digital-form-with-entries', formId] });
-
-      // Get current data
-      const previousFormWithEntries = queryClient.getQueryData(['digital-form-with-entries', formId]);
-
-      // Update form with entries cache if it exists
-      if (previousFormWithEntries) {
-        queryClient.setQueryData(['digital-form-with-entries', formId], (old: any) => {
-          if (!old || !old.entries) return old;
-          
-          return {
-            ...old,
-            entries: old.entries.filter((entry: DigitalFormEntry) => entry.id !== entryId),
-          };
-        });
+    mutationFn: async ({ formId, entryId }: { formId: string; entryId: string }) => {
+      const response = await digitalFormApi.deleteFormEntry(formId, entryId);
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to delete entry');
       }
-
-      return { previousFormWithEntries };
+      return { formId, entryId };
     },
-
-    onSuccess: (_, variables) => {
-      // Show success toast
-      toast({
-        title: 'Đã xóa dữ liệu thành công',
-        duration: 2000,
-      });
-
-      // Mark queries as stale without auto-refetching
+    onSuccess: result => {
+      // Invalidate form with entries queries
       queryClient.invalidateQueries({
-        queryKey: ['digital-form-with-entries', variables.formId],
-        refetchType: 'none',
+        queryKey: digitalFormKeys.detailWithEntries(result.formId),
       });
+      toast.success('Entry deleted successfully');
     },
-
-    onError: (error, variables, context) => {
-      toast({
-        title: 'Không thể xóa dữ liệu',
-        description: error instanceof Error ? error.message : 'Đã xảy ra lỗi',
-        variant: 'destructive',
-        duration: 2000,
-      });
-
-      // Restore form with entries data
-      if (context?.previousFormWithEntries) {
-        queryClient.setQueryData(['digital-form-with-entries', variables.formId], context.previousFormWithEntries);
-      }
-    },
+    onError: error => handleError(error, 'deleting entry'),
   });
 
-  /**
-   * Submit form mutation
-   */
+  // Submit form for approval
   const submitFormMutation = useMutation({
-    mutationFn: ({ formId, data }: { formId: string; data?: TDigitalFormSubmit }) =>
-      DigitalFormService.submitForm(formId, data || {}),
-
-    onMutate: async ({ formId }) => {
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ['digital-forms-list'] });
-      await queryClient.cancelQueries({ queryKey: ['digital-form', formId] });
-      await queryClient.cancelQueries({ queryKey: ['digital-form-with-entries', formId] });
-
-      // Get current data
-      const previousItem = queryClient.getQueryData(['digital-form', formId]);
-      const previousItemWithEntries = queryClient.getQueryData(['digital-form-with-entries', formId]);
-
-      // Find and store the current query data for list
-      const queries = queryClient.getQueriesData({ queryKey: ['digital-forms-list'] });
-      const previousListData = Array.from(queries).map(([queryKey, queryData]) => ({
-        queryKey,
-        queryData,
-      }));
-
-      // Update each list query optimistically
-      for (const { queryKey } of previousListData) {
-        queryClient.setQueryData(queryKey, (old: any) => {
-          if (!old || !old.data) return old;
-          
-          return {
-            ...old,
-            data: old.data.map((form: DigitalForm) =>
-              form.id === formId ? {
-                ...form,
-                status: 'PENDING',
-                submitTime: new Date().toISOString(),
-                updatedAt: new Date().toISOString()
-              } : form
-            ),
-          };
-        });
+    mutationFn: async ({ formId, data }: { formId: string; data?: DigitalFormSubmitRequest }) => {
+      const response = await digitalFormApi.submitDigitalForm(formId, data);
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to submit form');
       }
-
-      // Update individual item cache if it exists
-      if (previousItem) {
-        queryClient.setQueryData(['digital-form', formId], (old: any) => ({
-          ...old,
-          status: 'PENDING',
-          submitTime: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        }));
-      }
-
-      // Update form with entries cache if it exists
-      if (previousItemWithEntries) {
-        queryClient.setQueryData(['digital-form-with-entries', formId], (old: any) => {
-          if (!old || !old.form) return old;
-          
-          return {
-            ...old,
-            form: {
-              ...old.form,
-              status: 'PENDING',
-              submitTime: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            }
-          };
-        });
-      }
-
-      return { previousItem, previousItemWithEntries, previousListData };
+      return { formId };
     },
-
-    onSuccess: (_, variables) => {
-      // Show success toast
-      toast({
-        title: 'Biểu mẫu đã được gửi thành công',
-        duration: 2000,
-      });
-
-      // Mark queries as stale without auto-refetching
+    onSuccess: result => {
+      // Invalidate specific form and list queries
+      queryClient.invalidateQueries({ queryKey: digitalFormKeys.detail(result.formId) });
       queryClient.invalidateQueries({
-        queryKey: ['digital-forms-list'],
-        refetchType: 'none',
+        queryKey: digitalFormKeys.detailWithEntries(result.formId),
       });
-
-      queryClient.invalidateQueries({
-        queryKey: ['digital-forms-infinite'],
-        refetchType: 'none',
-      });
-
-      queryClient.invalidateQueries({
-        queryKey: ['digital-form', variables.formId],
-        refetchType: 'none',
-      });
-
-      queryClient.invalidateQueries({
-        queryKey: ['digital-form-with-entries', variables.formId],
-        refetchType: 'none',
-      });
+      queryClient.invalidateQueries({ queryKey: digitalFormKeys.lists() });
+      toast.success('Form submitted for approval');
     },
-
-    onError: (error, variables, context) => {
-      toast({
-        title: 'Không thể gửi biểu mẫu',
-        description: error instanceof Error ? error.message : 'Đã xảy ra lỗi',
-        variant: 'destructive',
-        duration: 2000,
-      });
-
-      // Restore individual form data
-      if (context?.previousItem) {
-        queryClient.setQueryData(['digital-form', variables.formId], context.previousItem);
-      }
-      
-      // Restore form with entries data
-      if (context?.previousItemWithEntries) {
-        queryClient.setQueryData(['digital-form-with-entries', variables.formId], context.previousItemWithEntries);
-      }
-
-      // Restore all list queries
-      if (context?.previousListData) {
-        for (const { queryKey, queryData } of context.previousListData) {
-          queryClient.setQueryData(queryKey, queryData);
-        }
-      }
-    },
+    onError: error => handleError(error, 'submitting form'),
   });
 
-  /**
-   * Approve form mutation
-   */
+  // Approve form
   const approveFormMutation = useMutation({
-    mutationFn: (formId: string) => DigitalFormService.approveForm(formId),
-
-    onMutate: async (formId) => {
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ['digital-forms-list'] });
-      await queryClient.cancelQueries({ queryKey: ['digital-form', formId] });
-      await queryClient.cancelQueries({ queryKey: ['digital-form-with-entries', formId] });
-
-      // Get current data
-      const previousItem = queryClient.getQueryData(['digital-form', formId]);
-      const previousItemWithEntries = queryClient.getQueryData(['digital-form-with-entries', formId]);
-
-      // Find and store the current query data for list
-      const queries = queryClient.getQueriesData({ queryKey: ['digital-forms-list'] });
-      const previousListData = Array.from(queries).map(([queryKey, queryData]) => ({
-        queryKey,
-        queryData,
-      }));
-
-      // Update each list query optimistically
-      for (const { queryKey } of previousListData) {
-        queryClient.setQueryData(queryKey, (old: any) => {
-          if (!old || !old.data) return old;
-          
-          return {
-            ...old,
-            data: old.data.map((form: DigitalForm) =>
-              form.id === formId ? {
-                ...form,
-                status: 'CONFIRMED',
-                approvedAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString()
-              } : form
-            ),
-          };
-        });
+    mutationFn: async (formId: string) => {
+      const response = await digitalFormApi.approveDigitalForm(formId);
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to approve form');
       }
-
-      // Update individual item cache if it exists
-      if (previousItem) {
-        queryClient.setQueryData(['digital-form', formId], (old: any) => ({
-          ...old,
-          status: 'CONFIRMED',
-          approvedAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        }));
-      }
-
-      // Update form with entries cache if it exists
-      if (previousItemWithEntries) {
-        queryClient.setQueryData(['digital-form-with-entries', formId], (old: any) => {
-          if (!old || !old.form) return old;
-          
-          return {
-            ...old,
-            form: {
-              ...old.form,
-              status: 'CONFIRMED',
-              approvedAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            }
-          };
-        });
-      }
-
-      return { previousItem, previousItemWithEntries, previousListData };
+      return { formId };
     },
-
-    onSuccess: (_, formId) => {
-      // Show success toast
-      toast({
-        title: 'Biểu mẫu đã được phê duyệt thành công',
-        duration: 2000,
-      });
-
-      // Mark queries as stale without auto-refetching
+    onSuccess: result => {
+      // Invalidate specific form and list queries
+      queryClient.invalidateQueries({ queryKey: digitalFormKeys.detail(result.formId) });
       queryClient.invalidateQueries({
-        queryKey: ['digital-forms-list'],
-        refetchType: 'none',
+        queryKey: digitalFormKeys.detailWithEntries(result.formId),
       });
-
-      queryClient.invalidateQueries({
-        queryKey: ['digital-forms-infinite'],
-        refetchType: 'none',
-      });
-
-      queryClient.invalidateQueries({
-        queryKey: ['digital-form', formId],
-        refetchType: 'none',
-      });
-
-      queryClient.invalidateQueries({
-        queryKey: ['digital-form-with-entries', formId],
-        refetchType: 'none',
-      });
+      queryClient.invalidateQueries({ queryKey: digitalFormKeys.lists() });
+      toast.success('Form approved successfully');
     },
-
-    onError: (error, formId, context) => {
-      toast({
-        title: 'Không thể phê duyệt biểu mẫu',
-        description: error instanceof Error ? error.message : 'Đã xảy ra lỗi',
-        variant: 'destructive',
-        duration: 2000,
-      });
-
-      // Restore individual form data
-      if (context?.previousItem) {
-        queryClient.setQueryData(['digital-form', formId], context.previousItem);
-      }
-      
-      // Restore form with entries data
-      if (context?.previousItemWithEntries) {
-        queryClient.setQueryData(['digital-form-with-entries', formId], context.previousItemWithEntries);
-      }
-
-      // Restore all list queries
-      if (context?.previousListData) {
-        for (const { queryKey, queryData } of context.previousListData) {
-          queryClient.setQueryData(queryKey, queryData);
-        }
-      }
-    },
+    onError: error => handleError(error, 'approving form'),
   });
 
-  /**
-   * Reject form mutation
-   */
+  // Reject form
   const rejectFormMutation = useMutation({
-    mutationFn: (formId: string) => DigitalFormService.rejectForm(formId),
-
-    onMutate: async (formId) => {
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ['digital-forms-list'] });
-      await queryClient.cancelQueries({ queryKey: ['digital-form', formId] });
-      await queryClient.cancelQueries({ queryKey: ['digital-form-with-entries', formId] });
-
-      // Get current data
-      const previousItem = queryClient.getQueryData(['digital-form', formId]);
-      const previousItemWithEntries = queryClient.getQueryData(['digital-form-with-entries', formId]);
-
-      // Find and store the current query data for list
-      const queries = queryClient.getQueriesData({ queryKey: ['digital-forms-list'] });
-      const previousListData = Array.from(queries).map(([queryKey, queryData]) => ({
-        queryKey,
-        queryData,
-      }));
-
-      // Update each list query optimistically
-      for (const { queryKey } of previousListData) {
-        queryClient.setQueryData(queryKey, (old: any) => {
-          if (!old || !old.data) return old;
-          
-          return {
-            ...old,
-            data: old.data.map((form: DigitalForm) =>
-              form.id === formId ? {
-                ...form,
-                status: 'REJECTED',
-                updatedAt: new Date().toISOString()
-              } : form
-            ),
-          };
-        });
+    mutationFn: async (formId: string) => {
+      const response = await digitalFormApi.rejectDigitalForm(formId);
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to reject form');
       }
-
-      // Update individual item cache if it exists
-      if (previousItem) {
-        queryClient.setQueryData(['digital-form', formId], (old: any) => ({
-          ...old,
-          status: 'REJECTED',
-          updatedAt: new Date().toISOString(),
-        }));
-      }
-
-      // Update form with entries cache if it exists
-      if (previousItemWithEntries) {
-        queryClient.setQueryData(['digital-form-with-entries', formId], (old: any) => {
-          if (!old || !old.form) return old;
-          
-          return {
-            ...old,
-            form: {
-              ...old.form,
-              status: 'REJECTED',
-              updatedAt: new Date().toISOString(),
-            }
-          };
-        });
-      }
-
-      return { previousItem, previousItemWithEntries, previousListData };
+      return { formId };
     },
-
-    onSuccess: (_, formId) => {
-      // Show success toast
-      toast({
-        title: 'Biểu mẫu đã bị từ chối',
-        duration: 2000,
-      });
-
-      // Mark queries as stale without auto-refetching
+    onSuccess: result => {
+      // Invalidate specific form and list queries
+      queryClient.invalidateQueries({ queryKey: digitalFormKeys.detail(result.formId) });
       queryClient.invalidateQueries({
-        queryKey: ['digital-forms-list'],
-        refetchType: 'none',
+        queryKey: digitalFormKeys.detailWithEntries(result.formId),
       });
-
-      queryClient.invalidateQueries({
-        queryKey: ['digital-forms-infinite'],
-        refetchType: 'none',
-      });
-
-      queryClient.invalidateQueries({
-        queryKey: ['digital-form', formId],
-        refetchType: 'none',
-      });
-
-      queryClient.invalidateQueries({
-        queryKey: ['digital-form-with-entries', formId],
-        refetchType: 'none',
-      });
+      queryClient.invalidateQueries({ queryKey: digitalFormKeys.lists() });
+      toast.success('Form rejected');
     },
-
-    onError: (error, formId, context) => {
-      toast({
-        title: 'Không thể từ chối biểu mẫu',
-        description: error instanceof Error ? error.message : 'Đã xảy ra lỗi',
-        variant: 'destructive',
-        duration: 2000,
-      });
-
-      // Restore individual form data
-      if (context?.previousItem) {
-        queryClient.setQueryData(['digital-form', formId], context.previousItem);
-      }
-      
-      // Restore form with entries data
-      if (context?.previousItemWithEntries) {
-        queryClient.setQueryData(['digital-form-with-entries', formId], context.previousItemWithEntries);
-      }
-
-      // Restore all list queries
-      if (context?.previousListData) {
-        for (const { queryKey, queryData } of context.previousListData) {
-          queryClient.setQueryData(queryKey, queryData);
-        }
-      }
-    },
+    onError: error => handleError(error, 'rejecting form'),
   });
 
-  /**
-   * Export report mutation
-   */
+  // Export forms to Excel
+  const exportFormsMutation = useMutation({
+    mutationFn: async (formIds: string[]) => {
+      const response = await digitalFormApi.exportFormsToExcel(formIds);
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to export forms');
+      }
+      return response.data || { url: '' };
+    },
+    onSuccess: () => {
+      toast.success('Forms exported successfully');
+      // We could auto-download the file here if needed
+      // window.open(data.url, '_blank');
+    },
+    onError: error => handleError(error, 'exporting forms'),
+  });
+
+  // Export production report
   const exportReportMutation = useMutation({
-    mutationFn: ({
+    mutationFn: async ({
       reportType,
       parameters,
-      format
+      format,
     }: {
-      reportType: 'team' | 'group' | 'comparison';
+      reportType: 'team' | 'group' | 'comparison' | 'factory' | 'line';
       parameters: any;
       format: 'pdf' | 'excel' | 'csv';
-    }) => DigitalFormService.exportReport(reportType, parameters, format),
-
-    onMutate: () => {
-      // Show a loading toast
-      toast({
-        title: 'Đang xuất báo cáo...',
-        description: 'Quá trình này có thể mất vài giây.',
-        duration: 5000,
-      });
-    },
-
-    onSuccess: (result) => {
-      // Show success toast
-      toast({
-        title: 'Báo cáo đã được xuất thành công',
-        description: 'File sẽ được tải xuống sau ít giây.',
-        duration: 2000,
-      });
-
-      // Trigger download if fileUrl is available
-      if (result?.data?.fileUrl) {
-        // This would be replaced with your app's download handler
-        window.open(result.data.fileUrl, '_blank');
+    }) => {
+      const response = await digitalFormApi.exportProductionReport(reportType, parameters, format);
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to export report');
       }
+      return response.data || { url: '' };
     },
-
-    onError: (error) => {
-      toast({
-        title: 'Không thể xuất báo cáo',
-        description: error instanceof Error ? error.message : 'Đã xảy ra lỗi',
-        variant: 'destructive',
-        duration: 3000,
-      });
+    onSuccess: () => {
+      toast.success('Report exported successfully');
+      // We could auto-download the file here if needed
+      // window.open(data.url, '_blank');
     },
+    onError: error => handleError(error, 'exporting report'),
   });
-
-   /**
-   * Export single form data mutation
-   */
-   const exportFormMutation = useMutation({
-    mutationFn: ({ formId, format }: { formId: string; format: 'excel' | 'pdf' }) =>
-      DigitalFormService.exportForm(formId, format),
-
-    onMutate: () => {
-      // Show a loading toast
-      toast({
-        title: 'Đang xuất biểu mẫu...',
-        description: 'Quá trình này có thể mất vài giây.',
-        duration: 5000,
-      });
-    },
-
-    onSuccess: (result) => {
-      // Show success toast
-      toast({
-        title: 'Biểu mẫu đã được xuất thành công',
-        description: 'File sẽ được tải xuống sau ít giây.',
-        duration: 2000,
-      });
-
-      // Trigger download if fileUrl is available
-      if (result?.data?.fileUrl) {
-        window.open(result.data.fileUrl, '_blank');
-      }
-    },
-
-    onError: (error) => {
-      toast({
-        title: 'Không thể xuất biểu mẫu',
-        description: error instanceof Error ? error.message : 'Đã xảy ra lỗi',
-        variant: 'destructive',
-        duration: 3000,
-      });
-    },
-  });
-
-
-  const updateShiftTypeMutation = useMutation({
-    mutationFn: ({ formId, entryId, data }: { formId: string; entryId: string; data: TShiftTypeFormEntry }) =>
-      DigitalFormService.updateShiftTypeFormEntry(formId, entryId, data),
-
-    onMutate: async ({ formId, entryId, data }) => {
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ['digital-form-with-entries', formId] });
-
-      // Get current data
-      const previousFormWithEntries = queryClient.getQueryData(['digital-form-with-entries', formId]);
-
-      // Update form with entries cache if it exists
-      if (previousFormWithEntries) {
-        queryClient.setQueryData(['digital-form-with-entries', formId], (old: any) => {
-          if (!old || !old.entries) return old;
-          
-          return {
-            ...old,
-            entries: old.entries.map((entry: DigitalFormEntry) => {
-              if (entry.id !== entryId) return entry;
-              
-              // Update the shift type in the optimistic update
-              return {
-                ...entry,
-                shiftType: data.shiftType,
-                updatedAt: new Date().toISOString()
-              };
-            }),
-          };
-        });
-      }
-
-      return { previousFormWithEntries };
-    },
-
-    onSuccess: (_, variables) => {
-      // Show success toast
-      toast({
-        title: 'Đã cập nhật dữ liệu thành công',
-        duration: 2000,
-      });
-
-      // Mark queries as stale without auto-refetching
-      queryClient.invalidateQueries({
-        queryKey: ['digital-form-with-entries', variables.formId],
-      });
-    },
-
-    onError: (error, variables, context) => {
-      toast({
-        title: 'Không thể cập nhật dữ liệu',
-        description: error instanceof Error ? error.message : 'Đã xảy ra lỗi',
-        variant: 'destructive',
-        duration: 2000,
-      });
-
-      // Restore form with entries data
-      if (context?.previousFormWithEntries) {
-        queryClient.setQueryData(['digital-form-with-entries', variables.formId], context.previousFormWithEntries);
-      }
-    },
-  });
-
 
   return {
+    // Form CRUD operations
     createFormMutation,
+    createWorkerFormMutation,
+    generateDailyFormsMutation,
     updateFormMutation,
     deleteFormMutation,
+
+    // Entry operations
     addFormEntryMutation,
-    updateFormEntryMutation, // Added the missing mutation
-    updateHourlyDataMutation, // Added specific mutation for hourly data
+    addBulkEntriesMutation,
+    updateFormEntryMutation,
+    updateHourlyDataMutation,
+    updateAttendanceMutation,
     updateShiftTypeMutation,
     deleteFormEntryMutation,
+
+    // Form workflow operations
     submitFormMutation,
     approveFormMutation,
     rejectFormMutation,
+
+    // Export operations
+    exportFormsMutation,
     exportReportMutation,
-    exportFormMutation,
+
+    // Utility to invalidate all form-related queries
+    invalidateFormQueries: () => queryClient.invalidateQueries({ queryKey: digitalFormKeys.all }),
   };
-}
+};
+
+export default useDigitalFormMutations;

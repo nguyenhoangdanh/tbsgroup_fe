@@ -1,184 +1,298 @@
-// hooks/useDigitalFormStats.ts
 import { useMemo } from 'react';
-import { 
-  DigitalForm, 
-  DigitalFormEntry, 
-  AttendanceStatus 
-} from '@/common/types/digital-form';
-import { STANDARD_TIME_INTERVALS } from '@/common/constants/time-intervals';
+
+import { useWorkShifts } from './useWorkShifts';
+
+import { AttendanceStatus, DigitalForm, DigitalFormEntry } from '@/common/types/digital-form';
+
+interface FormStatsOptions {
+  includeAttendance?: boolean;
+  includeProductivity?: boolean;
+  includeQuality?: boolean;
+  includeHourlyBreakdown?: boolean;
+}
 
 /**
- * Hook for calculating and analyzing digital form statistics
- * Computes useful metrics from form data
+ * Hook for digital form statistics
+ * Provides analytics and statistics for digital forms and entries
  */
 export const useDigitalFormStats = (
-  form?: DigitalForm | null, 
-  entries?: DigitalFormEntry[] | null
+  form?: DigitalForm | null,
+  entries?: DigitalFormEntry[],
+  options: FormStatsOptions = {
+    includeAttendance: true,
+    includeProductivity: true,
+    includeQuality: true,
+    includeHourlyBreakdown: true,
+  },
 ) => {
-  // Calculate all form stats
-  const stats = useMemo(() => {
-    if (!form || !entries || !entries.length) {
+  const { timeSlots, calculateTotalOutput } = useWorkShifts(form?.shiftType);
+
+  // Calculate attendance statistics
+  const attendanceStats = useMemo(() => {
+    if (!entries || entries.length === 0) {
       return {
-        totalEntries: 0,
-        totalOutput: 0,
-        averageOutput: 0,
-        averageQuality: 0,
+        totalWorkers: 0,
         present: 0,
         absent: 0,
         late: 0,
         earlyLeave: 0,
         leaveApproved: 0,
         presentPercentage: 0,
-        absentPercentage: 0,
-        hourlyOutputs: {},
-        hourlyStats: [],
       };
     }
 
-    // Basic stats
-    const totalEntries = entries.length;
-    const totalOutput = entries.reduce((sum, entry) => sum + (entry.totalOutput || 0), 0);
-    const averageOutput = totalEntries > 0 ? totalOutput / totalEntries : 0;
+    const totalWorkers = entries.length;
+    const present = entries.filter(e => e.attendanceStatus === AttendanceStatus.PRESENT).length;
+    const absent = entries.filter(e => e.attendanceStatus === AttendanceStatus.ABSENT).length;
+    const late = entries.filter(e => e.attendanceStatus === AttendanceStatus.LATE).length;
+    const earlyLeave = entries.filter(
+      e => e.attendanceStatus === AttendanceStatus.EARLY_LEAVE,
+    ).length;
+    const leaveApproved = entries.filter(
+      e => e.attendanceStatus === AttendanceStatus.LEAVE_APPROVED,
+    ).length;
 
-    // Quality stats
-    const totalQualityScores = entries.reduce((sum, entry) => sum + (entry.qualityScore || 100), 0);
-    const averageQuality = totalEntries > 0 ? totalQualityScores / totalEntries : 100;
-
-    // Attendance stats
-    const present = entries.filter(entry => entry.attendanceStatus === AttendanceStatus.PRESENT).length;
-    const absent = entries.filter(entry => entry.attendanceStatus === AttendanceStatus.ABSENT).length;
-    const late = entries.filter(entry => entry.attendanceStatus === AttendanceStatus.LATE).length;
-    const earlyLeave = entries.filter(entry => entry.attendanceStatus === AttendanceStatus.EARLY_LEAVE).length;
-    const leaveApproved = entries.filter(entry => entry.attendanceStatus === AttendanceStatus.LEAVE_APPROVED).length;
-
-    const presentPercentage = totalEntries > 0 ? (present / totalEntries) * 100 : 0;
-    const absentPercentage = totalEntries > 0 ? (absent / totalEntries) * 100 : 0;
-
-    // Hourly output analysis
-    const hourlyOutputs: Record<string, number> = {};
-    
-    // Initialize with 0 for all standard hours
-    STANDARD_TIME_INTERVALS.forEach(interval => {
-      hourlyOutputs[interval.label] = 0;
-    });
-    
-    // Sum up hourly data from all entries
-    entries.forEach(entry => {
-      const hourlyData = entry.hourlyData || {};
-      Object.entries(hourlyData).forEach(([hour, output]) => {
-        if (!hourlyOutputs[hour]) {
-          hourlyOutputs[hour] = 0;
-        }
-        hourlyOutputs[hour] += output;
-      });
-    });
-
-    // Calculate hourly stats array for charting
-    const hourlyStats = Object.entries(hourlyOutputs)
-      .map(([hour, total]) => {
-        // Count how many entries have data for this hour
-        const entriesWithThisHour = entries.filter(
-          entry => entry.hourlyData && entry.hourlyData[hour] !== undefined
-        ).length;
-        
-        return {
-          hour,
-          totalOutput: total,
-          averageOutput: entriesWithThisHour > 0 ? total / entriesWithThisHour : 0,
-          entriesCount: entriesWithThisHour
-        };
-      })
-      .sort((a, b) => {
-        // Sort by time order
-        const timeA = a.hour.split('-')[0]; // Get start time
-        const timeB = b.hour.split('-')[0]; // Get start time
-        return timeA.localeCompare(timeB);
-      });
+    const presentPercentage = totalWorkers > 0 ? Math.round((present / totalWorkers) * 100) : 0;
 
     return {
-      totalEntries,
-      totalOutput,
-      averageOutput,
-      averageQuality,
+      totalWorkers,
       present,
       absent,
       late,
       earlyLeave,
       leaveApproved,
       presentPercentage,
-      absentPercentage,
-      hourlyOutputs,
-      hourlyStats,
     };
-  }, [form, entries]);
+  }, [entries]);
 
-  /**
-   * Calculate outputs grouped by a specific entity (user, bag, process, etc.)
-   */
-  const getOutputByEntity = (entityId: string, entityType: 'user' | 'handBag' | 'process' | 'bagColor' = 'user') => {
-    if (!entries) return { totalOutput: 0, qualityScore: 0 };
+  // Calculate productivity statistics
+  const productivityStats = useMemo(() => {
+    if (!entries || entries.length === 0) {
+      return {
+        totalOutput: 0,
+        averageOutput: 0,
+        plannedOutput: 0,
+        completionRate: 0,
+      };
+    }
 
-    const filteredEntries = entries.filter(entry => {
-      if (entityType === 'user') return entry.userId === entityId;
-      if (entityType === 'handBag') return entry.handBagId === entityId;
-      if (entityType === 'process') return entry.processId === entityId;
-      if (entityType === 'bagColor') return entry.bagColorId === entityId;
-      return false;
-    });
+    // Total actual output
+    const totalOutput = entries.reduce((sum, entry) => sum + (entry.totalOutput || 0), 0);
 
-    if (!filteredEntries.length) return { totalOutput: 0, qualityScore: 0 };
+    // Calculate planned output
+    const plannedOutput = entries.reduce((sum, entry) => sum + (entry.plannedOutput || 0), 0);
 
-    const totalOutput = filteredEntries.reduce((sum, entry) => sum + (entry.totalOutput || 0), 0);
-    const totalQuality = filteredEntries.reduce((sum, entry) => sum + (entry.qualityScore || 100), 0);
-    const averageQuality = filteredEntries.length > 0 ? totalQuality / filteredEntries.length : 100;
-    
+    // Average output per worker
+    const presentWorkers = entries.filter(
+      e =>
+        e.attendanceStatus === AttendanceStatus.PRESENT ||
+        e.attendanceStatus === AttendanceStatus.LATE ||
+        e.attendanceStatus === AttendanceStatus.EARLY_LEAVE,
+    ).length;
+
+    const averageOutput = presentWorkers > 0 ? Math.round(totalOutput / presentWorkers) : 0;
+
+    // Completion rate (percentage of planned output achieved)
+    const completionRate = plannedOutput > 0 ? Math.round((totalOutput / plannedOutput) * 100) : 0;
+
     return {
       totalOutput,
-      qualityScore: averageQuality,
-      entries: filteredEntries,
+      averageOutput,
+      plannedOutput,
+      completionRate,
     };
+  }, [entries]);
+
+  // Calculate quality statistics
+  const qualityStats = useMemo(() => {
+    if (!entries || entries.length === 0) {
+      return {
+        averageQuality: 0,
+        issueCount: 0,
+        issuesByType: {},
+        workersWithIssues: 0,
+        workersWithoutIssues: 0,
+      };
+    }
+
+    // Average quality score
+    const totalQualityScore = entries.reduce((sum, entry) => sum + (entry.qualityScore || 100), 0);
+    const averageQuality = Math.round(totalQualityScore / entries.length);
+
+    // Issues statistics
+    let issueCount = 0;
+    const issuesByType: Record<string, number> = {};
+    const workersWithIssues = entries.filter(
+      entry => entry.issues && entry.issues.length > 0,
+    ).length;
+
+    entries.forEach(entry => {
+      if (entry.issues && entry.issues.length > 0) {
+        issueCount += entry.issues.length;
+
+        entry.issues.forEach(issue => {
+          issuesByType[issue.type] = (issuesByType[issue.type] || 0) + 1;
+        });
+      }
+    });
+
+    return {
+      averageQuality,
+      issueCount,
+      issuesByType,
+      workersWithIssues,
+      workersWithoutIssues: entries.length - workersWithIssues,
+    };
+  }, [entries]);
+
+  // Calculate hourly breakdown statistics
+  const hourlyStats = useMemo(() => {
+    if (!entries || entries.length === 0 || !timeSlots || timeSlots.length === 0) {
+      return [];
+    }
+
+    return timeSlots.map(slot => {
+      const hourTotal = entries.reduce((sum, entry) => {
+        if (entry.hourlyData && entry.hourlyData[slot.label]) {
+          return sum + entry.hourlyData[slot.label];
+        }
+        return sum;
+      }, 0);
+
+      const presentWorkers = entries.filter(
+        e =>
+          e.attendanceStatus === AttendanceStatus.PRESENT ||
+          e.attendanceStatus === AttendanceStatus.LATE ||
+          e.attendanceStatus === AttendanceStatus.EARLY_LEAVE,
+      ).length;
+
+      const hourAverage = presentWorkers > 0 ? Math.round(hourTotal / presentWorkers) : 0;
+      const hourCompletionCount = entries.filter(
+        entry =>
+          entry.hourlyData && entry.hourlyData[slot.label] && entry.hourlyData[slot.label] > 0,
+      ).length;
+      const filledPercentage =
+        presentWorkers > 0 ? Math.round((hourCompletionCount / presentWorkers) * 100) : 0;
+
+      return {
+        timeSlot: slot.label,
+        startTime: slot.start,
+        endTime: slot.end,
+        totalOutput: hourTotal,
+        averageOutput: hourAverage,
+        filledEntries: hourCompletionCount,
+        filledPercentage,
+      };
+    });
+  }, [entries, timeSlots]);
+
+  // Calculate form completion percentage
+  const completionStats = useMemo(() => {
+    if (!entries || entries.length === 0 || !timeSlots || timeSlots.length === 0) {
+      return {
+        completionPercentage: 0,
+        filledTimeSlots: 0,
+        totalTimeSlots: 0,
+      };
+    }
+
+    let filledTimeSlots = 0;
+    let totalTimeSlots = 0;
+
+    entries.forEach(entry => {
+      // Only count present workers for completion stats
+      if (
+        entry.attendanceStatus === AttendanceStatus.PRESENT ||
+        entry.attendanceStatus === AttendanceStatus.LATE ||
+        entry.attendanceStatus === AttendanceStatus.EARLY_LEAVE
+      ) {
+        totalTimeSlots += timeSlots.length;
+
+        // Count filled time slots
+        if (entry.hourlyData) {
+          timeSlots.forEach(slot => {
+            if (entry.hourlyData[slot.label] && entry.hourlyData[slot.label] > 0) {
+              filledTimeSlots++;
+            }
+          });
+        }
+      }
+    });
+
+    const completionPercentage =
+      totalTimeSlots > 0 ? Math.round((filledTimeSlots / totalTimeSlots) * 100) : 0;
+
+    return {
+      completionPercentage,
+      filledTimeSlots,
+      totalTimeSlots,
+    };
+  }, [entries, timeSlots]);
+
+  // Combined form statistics with all metrics
+  const formStats = useMemo(() => {
+    return {
+      formId: form?.id || '',
+      formName: form?.formName || '',
+      formDate: form?.date || '',
+      status: form?.status,
+      factory: {
+        id: form?.factoryId || '',
+        name: form?.factoryName || '',
+      },
+      line: {
+        id: form?.lineId || '',
+        name: form?.lineName || '',
+      },
+      team: {
+        id: form?.teamId || '',
+        name: form?.teamName || '',
+      },
+      group: {
+        id: form?.groupId || '',
+        name: form?.groupName || '',
+      },
+      attendance: options.includeAttendance ? attendanceStats : undefined,
+      productivity: options.includeProductivity ? productivityStats : undefined,
+      quality: options.includeQuality ? qualityStats : undefined,
+      hourly: options.includeHourlyBreakdown ? hourlyStats : undefined,
+      completion: completionStats,
+    };
+  }, [
+    form,
+    options,
+    attendanceStats,
+    productivityStats,
+    qualityStats,
+    hourlyStats,
+    completionStats,
+  ]);
+
+  // Calculate efficiency for a single entry
+  const calculateEntryEfficiency = (entry: DigitalFormEntry) => {
+    if (!entry.plannedOutput || entry.plannedOutput === 0) return 0;
+    return Math.round((entry.totalOutput / entry.plannedOutput) * 100);
   };
 
-  /**
-   * Get hourly data for a specific entity
-   */
-  const getHourlyDataByEntity = (entityId: string, entityType: 'user' | 'handBag' | 'process' | 'bagColor' = 'user') => {
-    if (!entries) return {};
-
-    const filteredEntries = entries.filter(entry => {
-      if (entityType === 'user') return entry.userId === entityId;
-      if (entityType === 'handBag') return entry.handBagId === entityId;
-      if (entityType === 'process') return entry.processId === entityId;
-      if (entityType === 'bagColor') return entry.bagColorId === entityId;
-      return false;
-    });
-
-    if (!filteredEntries.length) return {};
-
-    // Initialize with standard hours
-    const hourlyData: Record<string, number> = {};
-    
-    STANDARD_TIME_INTERVALS.forEach(interval => {
-      hourlyData[interval.label] = 0;
-    });
-
-    // Sum up hourly data
-    filteredEntries.forEach(entry => {
-      const entryHourlyData = entry.hourlyData || {};
-      Object.entries(entryHourlyData).forEach(([hour, output]) => {
-        if (!hourlyData[hour]) {
-          hourlyData[hour] = 0;
-        }
-        hourlyData[hour] += output;
-      });
-    });
-
-    return hourlyData;
+  // Calculate total output for a single entry
+  const calculateEntryTotalOutput = (entry: DigitalFormEntry) => {
+    if (!entry.hourlyData) return entry.totalOutput || 0;
+    return calculateTotalOutput(entry.hourlyData);
   };
 
   return {
-    stats,
-    getOutputByEntity,
-    getHourlyDataByEntity
+    // Statistics
+    stats: formStats,
+    attendance: attendanceStats,
+    productivity: productivityStats,
+    quality: qualityStats,
+    hourly: hourlyStats,
+    completion: completionStats,
+
+    // Utility functions
+    calculateEntryEfficiency,
+    calculateEntryTotalOutput,
   };
 };
+
+export default useDigitalFormStats;

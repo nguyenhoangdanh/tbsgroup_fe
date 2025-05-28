@@ -1,12 +1,6 @@
-// src/hooks/permission/usePermissionQueries.ts
+import { useQuery, useQueryClient, UseQueryResult, UseQueryOptions } from '@tanstack/react-query';
 import { useCallback } from 'react';
-import { 
-  useQuery, 
-  useQueryClient, 
-  UseQueryResult, 
-  UseQueryOptions
-} from '@tanstack/react-query';
-import { toast } from '@/hooks/use-toast';
+
 import {
   getPermissionListApi,
   getPermissionByIdApi,
@@ -16,15 +10,22 @@ import {
   checkUserHasPermissionApi,
   getClientAccessPermissionsApi,
 } from '@/apis/permission/permission.api';
+import {
+  ClientAccessResponse,
+  PaginationDTO,
+  PermissionCondDTO,
+  PermissionDTO,
+  PermissionListResponse,
+  UserPermissionsQueryDTO,
+  UserPermissionsResponse,
+} from '@/common/types/permission';
+import { toast } from 'react-toast-kit';
 import { validateUUIDOrShowError } from '@/utils/uuid-utils';
-import { ClientAccessResponse, PaginationDTO, PermissionCondDTO, PermissionDTO, PermissionListResponse, UserPermissionsQueryDTO, UserPermissionsResponse } from '@/common/types/permission';
 
-// Define RolePermissionResponse type since it appears to be missing
 interface RolePermissionResponse {
   data: PermissionDTO[];
 }
 
-// Default stale times
 const PERMISSIONS_STALE_TIME = 5 * 60 * 1000; // 5 minutes
 const USER_PERMISSIONS_STALE_TIME = 1 * 60 * 1000; // 1 minute
 const CLIENT_ACCESS_STALE_TIME = 5 * 60 * 1000; // 5 minutes
@@ -34,7 +35,7 @@ const CLIENT_ACCESS_STALE_TIME = 5 * 60 * 1000; // 5 minutes
  */
 export const usePermissionQueries = () => {
   const queryClient = useQueryClient();
-  
+
   /**
    * Handle query errors with toast notification
    */
@@ -46,12 +47,11 @@ export const usePermissionQueries = () => {
     } else if (typeof error === 'object' && error !== null && 'message' in error) {
       errorMessage = error.message as string;
     }
-    
-    // Show toast with error message
+
     toast({
       title: `Không thể tải ${queryName}`,
       description: errorMessage || 'Vui lòng thử lại sau',
-      variant: 'destructive',
+      variant: 'error',
       duration: 3000,
     });
   }, []);
@@ -61,17 +61,20 @@ export const usePermissionQueries = () => {
    */
   const listPermissions = (
     params: PermissionCondDTO & PaginationDTO = {},
-    options?: Omit<UseQueryOptions<PermissionListResponse, Error, PermissionListResponse, unknown[]>, 'queryKey' | 'queryFn'>
+    options?: Omit<
+      UseQueryOptions<PermissionListResponse, Error, PermissionListResponse, unknown[]>,
+      'queryKey' | 'queryFn'
+    >,
   ): UseQueryResult<PermissionListResponse, Error> => {
     // Create stable query key from params
     const queryKey = ['permission-list', JSON.stringify(params)];
-    
+
     return useQuery({
       queryKey,
       queryFn: () => getPermissionListApi(params),
       staleTime: PERMISSIONS_STALE_TIME,
       gcTime: 5 * 60 * 1000, // Cache for 5 minutes
-      ...options
+      ...options,
     });
   };
 
@@ -80,12 +83,15 @@ export const usePermissionQueries = () => {
    */
   const getPermissionById = (
     id?: string,
-    options?: Omit<UseQueryOptions<PermissionDTO, Error, PermissionDTO, unknown[]>, 'queryKey' | 'queryFn' | 'enabled'>
+    options?: Omit<
+      UseQueryOptions<PermissionDTO, Error, PermissionDTO, unknown[]>,
+      'queryKey' | 'queryFn' | 'enabled'
+    >,
   ): UseQueryResult<PermissionDTO, Error> => {
     return useQuery({
       queryKey: ['permission', id],
       queryFn: () => {
-        // Validate UUID before making API call
+        //  Validate UUID before making API call
         const validatedId = validateUUIDOrShowError(id);
         if (!validatedId) {
           throw new Error('ID quyền không hợp lệ');
@@ -94,7 +100,7 @@ export const usePermissionQueries = () => {
       },
       enabled: !!id,
       staleTime: PERMISSIONS_STALE_TIME,
-      ...options
+      ...options,
     });
   };
 
@@ -103,7 +109,10 @@ export const usePermissionQueries = () => {
    */
   const getPermissionByCode = (
     code?: string,
-    options?: Omit<UseQueryOptions<PermissionDTO, Error, PermissionDTO, unknown[]>, 'queryKey' | 'queryFn' | 'enabled'>
+    options?: Omit<
+      UseQueryOptions<PermissionDTO, Error, PermissionDTO, unknown[]>,
+      'queryKey' | 'queryFn' | 'enabled'
+    >,
   ): UseQueryResult<PermissionDTO, Error> => {
     return useQuery({
       queryKey: ['permission-code', code],
@@ -113,7 +122,7 @@ export const usePermissionQueries = () => {
       },
       enabled: !!code,
       staleTime: PERMISSIONS_STALE_TIME,
-      ...options
+      ...options,
     });
   };
 
@@ -122,7 +131,10 @@ export const usePermissionQueries = () => {
    */
   const getPermissionsByRole = (
     roleId?: string,
-    options?: Omit<UseQueryOptions<RolePermissionResponse, Error, RolePermissionResponse, unknown[]>, 'queryKey' | 'queryFn' | 'enabled'>
+    options?: Omit<
+      UseQueryOptions<RolePermissionResponse, Error, RolePermissionResponse, unknown[]>,
+      'queryKey' | 'queryFn' | 'enabled'
+    >,
   ): UseQueryResult<RolePermissionResponse, Error> => {
     return useQuery({
       queryKey: ['permissions-by-role', roleId],
@@ -138,40 +150,62 @@ export const usePermissionQueries = () => {
       staleTime: PERMISSIONS_STALE_TIME,
       retry: 2,
       retryDelay: attempt => Math.min(1000 * 2 ** attempt, 10000),
-      ...options
+      ...options,
     });
   };
 
   /**
    * Get user permissions
    */
-  type UserPermissionsResponseWrapper = { success: boolean; data: UserPermissionsResponse };
-  
+  type UserPermissionsResponseWrapper = {
+    success: boolean;
+    data: UserPermissionsResponse;
+  };
+
   const getUserPermissions = (
     params: UserPermissionsQueryDTO = {},
-    options?: Omit<UseQueryOptions<UserPermissionsResponseWrapper, Error, UserPermissionsResponseWrapper, unknown[]>, 'queryKey' | 'queryFn'>
+    options?: Omit<
+      UseQueryOptions<
+        UserPermissionsResponseWrapper,
+        Error,
+        UserPermissionsResponseWrapper,
+        unknown[]
+      >,
+      'queryKey' | 'queryFn'
+    >,
   ): UseQueryResult<UserPermissionsResponseWrapper, Error> => {
     // Create stable query key from params
     const queryKey = ['user-permissions', JSON.stringify(params)];
-    
+
     return useQuery({
       queryKey,
       queryFn: () => getUserPermissionsApi(params),
       staleTime: USER_PERMISSIONS_STALE_TIME,
       retry: 3, // Thử lại 3 lần nếu thất bại
       retryDelay: attempt => Math.min(1000 * 2 ** attempt, 30000), // Tăng delay theo cấp số nhân
-      ...options
+      ...options,
     });
   };
 
   /**
    * Check if user has specific permission
    */
-  type CheckPermissionResponseWrapper = { success: boolean; data: { hasPermission: boolean } };
-  
+  type CheckPermissionResponseWrapper = {
+    success: boolean;
+    data: { hasPermission: boolean };
+  };
+
   const checkUserHasPermission = (
     permissionCode?: string,
-    options?: Omit<UseQueryOptions<CheckPermissionResponseWrapper, Error, CheckPermissionResponseWrapper, unknown[]>, 'queryKey' | 'queryFn' | 'enabled'>
+    options?: Omit<
+      UseQueryOptions<
+        CheckPermissionResponseWrapper,
+        Error,
+        CheckPermissionResponseWrapper,
+        unknown[]
+      >,
+      'queryKey' | 'queryFn' | 'enabled'
+    >,
   ): UseQueryResult<CheckPermissionResponseWrapper, Error> => {
     return useQuery({
       queryKey: ['has-permission', permissionCode],
@@ -181,23 +215,29 @@ export const usePermissionQueries = () => {
       },
       enabled: !!permissionCode,
       staleTime: USER_PERMISSIONS_STALE_TIME,
-      ...options
+      ...options,
     });
   };
 
   /**
    * Get client access permissions for UI rendering
    */
-  type ClientAccessResponseWrapper = { success: boolean; data: ClientAccessResponse };
-  
+  type ClientAccessResponseWrapper = {
+    success: boolean;
+    data: ClientAccessResponse;
+  };
+
   const getClientAccessPermissions = (
-    options?: Omit<UseQueryOptions<ClientAccessResponseWrapper, Error, ClientAccessResponseWrapper, unknown[]>, 'queryKey' | 'queryFn'>
+    options?: Omit<
+      UseQueryOptions<ClientAccessResponseWrapper, Error, ClientAccessResponseWrapper, unknown[]>,
+      'queryKey' | 'queryFn'
+    >,
   ): UseQueryResult<ClientAccessResponseWrapper, Error> => {
     return useQuery({
       queryKey: ['client-permissions'],
       queryFn: () => getClientAccessPermissionsApi(),
       staleTime: CLIENT_ACCESS_STALE_TIME,
-      ...options
+      ...options,
     });
   };
 
@@ -217,7 +257,7 @@ export const usePermissionQueries = () => {
         console.error(`Không thể làm mới cache cho quyền có ID ${id}:`, error);
       }
     },
-    [queryClient]
+    [queryClient],
   );
 
   /**
@@ -241,7 +281,7 @@ export const usePermissionQueries = () => {
         console.error('Không thể làm mới cache quyền:', error);
       }
     },
-    [queryClient]
+    [queryClient],
   );
 
   /**
@@ -255,7 +295,7 @@ export const usePermissionQueries = () => {
           await queryClient.invalidateQueries({
             queryKey: ['user-permissions'],
             refetchType: forceRefetch ? 'active' : 'none',
-            predicate: (query) => {
+            predicate: query => {
               const [, paramsString] = query.queryKey as [string, string];
               if (typeof paramsString === 'string') {
                 try {
@@ -266,7 +306,7 @@ export const usePermissionQueries = () => {
                 }
               }
               return false;
-            }
+            },
           });
         } else {
           // Otherwise invalidate all user permissions
@@ -290,9 +330,9 @@ export const usePermissionQueries = () => {
         console.error('Không thể làm mới cache quyền của người dùng:', error);
       }
     },
-    [queryClient]
+    [queryClient],
   );
-  
+
   // Return all query functions and the error handler for manual use
   return {
     listPermissions,
@@ -305,6 +345,6 @@ export const usePermissionQueries = () => {
     invalidatePermissionCache,
     invalidatePermissionsCache,
     invalidateUserPermissionsCache,
-    showErrorToast
+    showErrorToast,
   };
 };

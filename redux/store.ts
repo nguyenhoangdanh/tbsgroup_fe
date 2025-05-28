@@ -9,12 +9,8 @@ import rootSaga from '@/redux/sagas';
 import authReducer from '@/redux/slices/authSlice';
 
 const rootReducer = combineReducers({
-  // user: userReducer,
   // handbagStages: handbagReducer,
   auth: authReducer,
-  //   survey: surveyReducer,
-  //   socket: socketReducer,
-  //   ping: pingReducer,
 });
 
 // Persist config

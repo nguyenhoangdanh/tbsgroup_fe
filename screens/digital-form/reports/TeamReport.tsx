@@ -1,7 +1,20 @@
-// components/digital-form/reports/TeamReport.tsx
 'use client';
 
+import { Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+
+import { TeamGroupBreakdown } from './breakdowns/TeamGroupBreakdown';
+import { DailyOutputChart } from './charts/DailyOutputChart';
+import { HourlyOutputChart } from './charts/HourlyOutputChart';
+import { OutputByBagChart } from './charts/OutputByBagChart';
+import { OutputByProcessChart } from './charts/OutputByProcessChart';
+import { ProductionIssuesChart } from './charts/ProductionIssuesChart';
+import { AttendanceStats } from './stats/AttendanceStats';
+import { TeamProductionSummary } from './summaries/TeamProductionSummary';
+
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -9,19 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
-import { Loader2 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { TeamProductionSummary } from './summaries/TeamProductionSummary';
-import { TeamGroupBreakdown } from './breakdowns/TeamGroupBreakdown';
-import { OutputByBagChart } from './charts/OutputByBagChart';
-import { OutputByProcessChart } from './charts/OutputByProcessChart';
-import { HourlyOutputChart } from './charts/HourlyOutputChart';
-import { DailyOutputChart } from './charts/DailyOutputChart';
-import { AttendanceStats } from './stats/AttendanceStats';
-import { ProductionIssuesChart } from './charts/ProductionIssuesChart';
 import { ReportService } from '@/services/reportService';
 
 interface TeamReportProps {
@@ -65,14 +66,17 @@ export function TeamReport({
         const response = await ReportService.getTeams();
 
         if (response.success) {
-          setTeams(response.data.map(team => ({
-            id: team.id,
-            name: team.name
-          })));
+          setTeams(
+            response.data.map(team => ({
+              id: team.id,
+              name: team.name,
+            })),
+          );
         } else {
           setError('Không thể tải danh sách tổ');
         }
       } catch (err) {
+        console.error(err);
         setError('Lỗi kết nối đến máy chủ');
       }
     }
@@ -92,17 +96,12 @@ export function TeamReport({
         const dateFromStr = dateFrom.toISOString().split('T')[0];
         const dateToStr = dateTo.toISOString().split('T')[0];
 
-        const response = await ReportService.getTeamReport(
-          teamId,
-          dateFromStr,
-          dateToStr,
-          {
-            includeGroups,
-            includeWorkers,
-            groupByBag,
-            groupByProcess
-          }
-        );
+        const response = await ReportService.getTeamReport(teamId, dateFromStr, dateToStr, {
+          includeGroups,
+          includeWorkers,
+          groupByBag,
+          groupByProcess,
+        });
 
         if (response.success) {
           setReport(response.data);
@@ -110,6 +109,7 @@ export function TeamReport({
           setError(response.error || 'Không thể tải báo cáo');
         }
       } catch (err) {
+        console.error(err);
         setError('Lỗi kết nối đến máy chủ');
       } finally {
         setLoading(false);

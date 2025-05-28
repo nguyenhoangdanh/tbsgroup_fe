@@ -1,4 +1,3 @@
-// components/digital-forms/DigitalFormTable.tsx (modified)
 'use client';
 
 import { format } from 'date-fns';
@@ -99,10 +98,10 @@ export function DigitalFormTable() {
     setItemsPerPage,
   } = useDigitalFormPagination();
 
-  // Track expanded filter state
+  //Track expanded filter state
   const [isFilterExpanded, setIsFilterExpanded] = useState(false);
 
-  // Form to delete (for confirmation dialog)
+  //Form to delete (for confirmation dialog)
   const [formToDelete, setFormToDelete] = useState<string | null>(null);
 
   // Get list query hook
@@ -117,10 +116,10 @@ export function DigitalFormTable() {
       ...pagination,
     },
     {
-      // When this query succeeds, update our pagination state
+      //When this query succeeds, update our pagination state
       onSuccess: (data: any) => {
         if (data.total !== totalItems) {
-          setTotalItems(data.total);
+          setTotalItems(Number(data.total));
         }
       },
     },
@@ -142,12 +141,12 @@ export function DigitalFormTable() {
     [router],
   );
 
-  // Callback to handle form deletion
+  //Callback to handle form deletion
   const handleDeleteClick = useCallback((formId: string) => {
     setFormToDelete(formId);
   }, []);
 
-  // Confirm deletion
+  //Confirm deletion
   const confirmDelete = useCallback(async () => {
     if (!formToDelete) return;
 
@@ -165,7 +164,7 @@ export function DigitalFormTable() {
     router.push('/digital-forms/new');
   }, [router]);
 
-  // Handle status badge styling
+  //Handle status badge styling
   const getStatusBadge = (status: RecordStatus) => {
     switch (status) {
       case RecordStatus.DRAFT:
@@ -197,11 +196,12 @@ export function DigitalFormTable() {
     }
   };
 
-  // Format date for display
+  //Format date for display
   const formatDisplayDate = (dateString: string) => {
     try {
       return format(new Date(dateString), 'dd/MM/yyyy', { locale: vi });
     } catch (error) {
+      console.error('Error formatting date:', error);
       return 'Không hợp lệ';
     }
   };

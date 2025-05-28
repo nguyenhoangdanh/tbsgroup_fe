@@ -1,4 +1,3 @@
-// components/MultiBagTimeSlotDialog.tsx
 'use client';
 
 import { Loader2, PlusCircle, Trash2, Edit } from 'lucide-react';

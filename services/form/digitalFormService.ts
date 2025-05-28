@@ -1,19 +1,18 @@
-// services/digitalFormService.ts
-import { fetchWithAuth } from '@/lib/fetcher';
-import { 
-  DigitalForm, 
+import {
+  DigitalForm,
   DigitalFormEntry,
   ShiftType,
-  RecordStatus
+  RecordStatus,
 } from '@/common/types/digital-form';
-import { 
-  TDigitalFormCreate, 
-  TDigitalFormUpdate, 
-  TDigitalFormSubmit, 
-  TDigitalFormEntry 
+import { fetchWithAuth } from '@/lib/fetcher';
+import {
+  TDigitalFormCreate,
+  TDigitalFormUpdate,
+  TDigitalFormSubmit,
+  TDigitalFormEntry,
 } from '@/schemas/digital-form.schema';
 
-// Improved API response types
+// API response types
 export interface ApiResponse<T> {
   success: boolean;
   data: T;
@@ -65,21 +64,22 @@ export const DigitalFormService = {
   /**
    * List forms with filtering and pagination
    */
-  async listForms(params: DigitalFormCondition & PaginationParams = {}): Promise<ListApiResponse<DigitalForm>> {
+  async listForms(
+    params: DigitalFormCondition & PaginationParams = {},
+  ): Promise<ListApiResponse<DigitalForm>> {
     try {
-      
       const queryParams = new URLSearchParams();
-      
+
       Object.entries(params).forEach(([key, value]) => {
         if (value !== undefined && value !== null && value !== '') {
           queryParams.append(key, String(value));
         }
       });
-      
+
       const fullUrl = `/digital-forms?${queryParams.toString()}`;
-      
+
       const response = await fetchWithAuth(fullUrl);
-      
+
       return response as ListApiResponse<DigitalForm>;
     } catch (error) {
       console.error('Complete Error Details:', error);
@@ -89,7 +89,7 @@ export const DigitalFormService = {
         total: 0,
         page: params.page || 1,
         limit: params.limit || 10,
-        error: JSON.stringify(error)
+        error: JSON.stringify(error),
       };
     }
   },
@@ -99,13 +99,13 @@ export const DigitalFormService = {
    */
   async getForm(id: string): Promise<ApiResponse<DigitalForm>> {
     try {
-      return await fetchWithAuth(`/digital-forms/${id}`);
+      return (await fetchWithAuth(`/digital-forms/${id}`)) as ApiResponse<DigitalForm>;
     } catch (error) {
       console.error(`Error fetching digital form ${id}:`, error);
       return {
         success: false,
         data: null as unknown as DigitalForm,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       };
     }
   },
@@ -113,15 +113,20 @@ export const DigitalFormService = {
   /**
    * Get a form with all entries
    */
-  async getFormWithEntries(id: string): Promise<ApiResponse<{form: DigitalForm; entries: DigitalFormEntry[]}>> {
+  async getFormWithEntries(
+    id: string,
+  ): Promise<ApiResponse<{ form: DigitalForm; entries: DigitalFormEntry[] }>> {
     try {
-      return await fetchWithAuth(`/digital-forms/${id}/entries`);
+      return (await fetchWithAuth(`/digital-forms/${id}/entries`)) as ApiResponse<{
+        form: DigitalForm;
+        entries: DigitalFormEntry[];
+      }>;
     } catch (error) {
       console.error(`Error fetching digital form with entries ${id}:`, error);
       return {
         success: false,
         data: { form: null as unknown as DigitalForm, entries: [] },
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       };
     }
   },
@@ -129,12 +134,12 @@ export const DigitalFormService = {
   /**
    * Create a new form
    */
-  async createForm(data: TDigitalFormCreate): Promise<ApiResponse<{id: string}>> {
+  async createForm(data: TDigitalFormCreate): Promise<ApiResponse<{ id: string }>> {
     try {
-      return await fetchWithAuth('/digital-forms', {
+      return (await fetchWithAuth('/digital-forms', {
         method: 'POST',
         body: JSON.stringify(data),
-      });
+      })) as ApiResponse<{ id: string }>;
     } catch (error) {
       console.error('Error creating digital form:', error);
       throw error; // Rethrow to allow mutation handling
@@ -146,10 +151,10 @@ export const DigitalFormService = {
    */
   async updateForm(id: string, data: TDigitalFormUpdate): Promise<ApiResponse<void>> {
     try {
-      return await fetchWithAuth(`/digital-forms/${id}`, {
+      return (await fetchWithAuth(`/digital-forms/${id}`, {
         method: 'PATCH',
         body: JSON.stringify(data),
-      });
+      })) as ApiResponse<void>;
     } catch (error) {
       console.error(`Error updating digital form ${id}:`, error);
       throw error; // Rethrow to allow mutation handling
@@ -161,9 +166,10 @@ export const DigitalFormService = {
    */
   async deleteForm(id: string): Promise<ApiResponse<void>> {
     try {
-      return await fetchWithAuth(`/digital-forms/${id}`, {
+      const response = await fetchWithAuth(`/digital-forms/${id}`, {
         method: 'DELETE',
       });
+      return response as ApiResponse<void>;
     } catch (error) {
       console.error(`Error deleting digital form ${id}:`, error);
       throw error; // Rethrow to allow mutation handling
@@ -173,12 +179,12 @@ export const DigitalFormService = {
   /**
    * Batch delete multiple forms
    */
-  async batchDeleteForms(data: BatchOperation): Promise<ApiResponse<{count: number}>> {
+  async batchDeleteForms(data: BatchOperation): Promise<ApiResponse<{ count: number }>> {
     try {
-      return await fetchWithAuth(`/digital-forms/batch-delete`, {
+      return (await fetchWithAuth(`/digital-forms/batch-delete`, {
         method: 'POST',
         body: JSON.stringify(data),
-      });
+      })) as ApiResponse<{ count: number }>;
     } catch (error) {
       console.error('Error batch deleting digital forms:', error);
       throw error; // Rethrow to allow mutation handling
@@ -188,12 +194,15 @@ export const DigitalFormService = {
   /**
    * Add a new entry to a form
    */
-  async addFormEntry(formId: string, data: TDigitalFormEntry): Promise<ApiResponse<{id: string}>> {
+  async addFormEntry(
+    formId: string,
+    data: TDigitalFormEntry,
+  ): Promise<ApiResponse<{ id: string }>> {
     try {
-      return await fetchWithAuth(`/digital-forms/${formId}/entries`, {
+      return (await fetchWithAuth(`/digital-forms/${formId}/entries`, {
         method: 'POST',
         body: JSON.stringify(data),
-      });
+      })) as ApiResponse<{ id: string }>;
     } catch (error) {
       console.error(`Error adding entry to form ${formId}:`, error);
       throw error; // Rethrow to allow mutation handling
@@ -205,9 +214,9 @@ export const DigitalFormService = {
    */
   async deleteFormEntry(formId: string, entryId: string): Promise<ApiResponse<void>> {
     try {
-      return await fetchWithAuth(`/digital-forms/${formId}/entries/${entryId}`, {
+      return (await fetchWithAuth(`/digital-forms/${formId}/entries/${entryId}`, {
         method: 'DELETE',
-      });
+      })) as ApiResponse<void>;
     } catch (error) {
       console.error(`Error deleting entry ${entryId} from form ${formId}:`, error);
       throw error; // Rethrow to allow mutation handling
@@ -219,10 +228,10 @@ export const DigitalFormService = {
    */
   async submitForm(formId: string, data: TDigitalFormSubmit = {}): Promise<ApiResponse<void>> {
     try {
-      return await fetchWithAuth(`/digital-forms/${formId}/submit`, {
+      return (await fetchWithAuth(`/digital-forms/${formId}/submit`, {
         method: 'POST',
         body: JSON.stringify(data),
-      });
+      })) as ApiResponse<void>;
     } catch (error) {
       console.error(`Error submitting form ${formId}:`, error);
       throw error; // Rethrow to allow mutation handling
@@ -234,9 +243,9 @@ export const DigitalFormService = {
    */
   async approveForm(formId: string): Promise<ApiResponse<void>> {
     try {
-      return await fetchWithAuth(`/digital-forms/${formId}/approve`, {
+      return (await fetchWithAuth(`/digital-forms/${formId}/approve`, {
         method: 'POST',
-      });
+      })) as ApiResponse<void>;
     } catch (error) {
       console.error(`Error approving form ${formId}:`, error);
       throw error; // Rethrow to allow mutation handling
@@ -248,9 +257,9 @@ export const DigitalFormService = {
    */
   async rejectForm(formId: string): Promise<ApiResponse<void>> {
     try {
-      return await fetchWithAuth(`/digital-forms/${formId}/reject`, {
+      return (await fetchWithAuth(`/digital-forms/${formId}/reject`, {
         method: 'POST',
-      });
+      })) as ApiResponse<void>;
     } catch (error) {
       console.error(`Error rejecting form ${formId}:`, error);
       throw error; // Rethrow to allow mutation handling
@@ -260,15 +269,20 @@ export const DigitalFormService = {
   /**
    * Get the print version of a form
    */
-  async getPrintVersion(formId: string): Promise<ApiResponse<{form: DigitalForm; entries: DigitalFormEntry[]}>> {
+  async getPrintVersion(
+    formId: string,
+  ): Promise<ApiResponse<{ form: DigitalForm; entries: DigitalFormEntry[] }>> {
     try {
-      return await fetchWithAuth(`/digital-forms/${formId}/print`);
+      return (await fetchWithAuth(`/digital-forms/${formId}/print`)) as ApiResponse<{
+        form: DigitalForm;
+        entries: DigitalFormEntry[];
+      }>;
     } catch (error) {
       console.error(`Error getting print version of form ${formId}:`, error);
       return {
         success: false,
         data: { form: null as unknown as DigitalForm, entries: [] },
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       };
     }
   },
@@ -276,20 +290,24 @@ export const DigitalFormService = {
   /**
    * Get form statistics (for dashboards)
    */
-  async getFormStats(params: { period?: 'day' | 'week' | 'month' | 'year' } = {}): Promise<ApiResponse<any>> {
+  async getFormStats(
+    params: { period?: 'day' | 'week' | 'month' | 'year' } = {},
+  ): Promise<ApiResponse<any>> {
     try {
       const queryParams = new URLSearchParams();
       if (params.period) {
         queryParams.append('period', params.period);
       }
-      
-      return await fetchWithAuth(`/digital-forms/stats?${queryParams.toString()}`);
+
+      return (await fetchWithAuth(
+        `/digital-forms/stats?${queryParams.toString()}`,
+      )) as ApiResponse<any>;
     } catch (error) {
       console.error('Error fetching form statistics:', error);
       return {
         success: false,
         data: {},
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       };
     }
   },
@@ -297,15 +315,15 @@ export const DigitalFormService = {
   /**
    * Batch export forms to Excel (server-side generation)
    */
-  async exportFormsToExcel(formIds: string[]): Promise<ApiResponse<{url: string}>> {
+  async exportFormsToExcel(formIds: string[]): Promise<ApiResponse<{ url: string }>> {
     try {
-      return await fetchWithAuth(`/digital-forms/export`, {
+      return (await fetchWithAuth(`/digital-forms/export`, {
         method: 'POST',
         body: JSON.stringify({ formIds }),
-      });
+      })) as ApiResponse<{ url: string }>;
     } catch (error) {
       console.error('Error exporting forms to Excel:', error);
       throw error; // Rethrow to allow handling
     }
-  }
+  },
 };

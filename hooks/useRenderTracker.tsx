@@ -1,17 +1,21 @@
-"use client";
+'use client';
 
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect } from 'react';
 
 // Hook này có thể sử dụng để theo dõi khi nào một component re-render và nguyên nhân
-export function useRenderTracker(componentName: string, props: any, onlyWarnIfChanged = true) {
+export function useRenderTracker(
+  componentName: string,
+  props: Record<string, any>,
+  onlyWarnIfChanged = true,
+) {
   const renderCount = useRef(0);
-  const prevProps = useRef<any>(props);
+  const prevProps = useRef<Record<string, any>>(props);
 
   useEffect(() => {
     renderCount.current += 1;
 
     if (renderCount.current > 1) {
-      const changedProps: Record<string, { from: any, to: any }> = {};
+      const changedProps: Record<string, { from: any; to: any }> = {};
       let hasChanged = false;
 
       // So sánh các props để xác định cái nào đã thay đổi
@@ -19,7 +23,7 @@ export function useRenderTracker(componentName: string, props: any, onlyWarnIfCh
         if (props[key] !== prevProps.current[key]) {
           changedProps[key] = {
             from: prevProps.current[key],
-            to: props[key]
+            to: props[key],
           };
           hasChanged = true;
         }
@@ -30,7 +34,7 @@ export function useRenderTracker(componentName: string, props: any, onlyWarnIfCh
         if (!(key in prevProps.current)) {
           changedProps[key] = {
             from: 'undefined',
-            to: props[key]
+            to: props[key],
           };
           hasChanged = true;
         }
@@ -41,7 +45,7 @@ export function useRenderTracker(componentName: string, props: any, onlyWarnIfCh
         if (!(key in props)) {
           changedProps[key] = {
             from: prevProps.current[key],
-            to: 'undefined'
+            to: 'undefined',
           };
           hasChanged = true;
         }
@@ -64,15 +68,16 @@ export function useRenderTracker(componentName: string, props: any, onlyWarnIfCh
 // HOC để gói component trong một Profiler để theo dõi thời gian render
 export function withRenderProfiler<P extends object>(
   Component: React.ComponentType<P>,
-  id: string
+  id: string,
 ) {
   const ProfiledComponent = (props: P) => (
     <React.Profiler
       id={id}
       onRender={(id, phase, actualDuration) => {
-        if (actualDuration > 5) { // Chỉ log nếu thời gian render > 5ms
+        if (actualDuration > 5) {
+          // Chỉ log nếu thời gian render > 5ms
           console.log(
-            `[RenderProfiler] ${id} (${phase}) took ${actualDuration.toFixed(2)}ms to render`
+            `[RenderProfiler] ${id} (${phase}) took ${actualDuration.toFixed(2)}ms to render`,
           );
         }
       }}
@@ -85,13 +90,14 @@ export function withRenderProfiler<P extends object>(
   return ProfiledComponent;
 }
 
-// Utility để tạo một custom comparator cho React.memo
+//Utility để tạo một custom comparator cho React.memo
 export function createShallowEqualsMemoComparator<T extends Record<string, any>>(
-  propsToCompare: (keyof T)[] = []
+  propsToCompare: (keyof T)[] = [],
 ) {
   return (prevProps: T, nextProps: T) => {
     // Nếu không chỉ định props cụ thể, so sánh tất cả các props
-    const keys = propsToCompare.length > 0 ? propsToCompare : Object.keys(prevProps) as (keyof T)[];
+    const keys =
+      propsToCompare.length > 0 ? propsToCompare : (Object.keys(prevProps) as (keyof T)[]);
 
     for (const key of keys) {
       if (prevProps[key] !== nextProps[key]) {

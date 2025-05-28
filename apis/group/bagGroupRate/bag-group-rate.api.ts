@@ -52,16 +52,16 @@ export interface ProductivityAnalysisResponse {
  * Lấy danh sách năng suất túi theo nhóm với bộ lọc và phân trang
  */
 export const getBagGroupRatesList = async (
-  params: BagGroupRateCondDTO
+  params: BagGroupRateCondDTO,
 ): Promise<BaseResponseData<BagGroupRate>> => {
   // Build query params
   const queryParams = new URLSearchParams();
-  
+
   if (params.page) queryParams.append('page', params.page.toString());
   if (params.limit) queryParams.append('limit', params.limit.toString());
   if (params.sortBy) queryParams.append('sortBy', params.sortBy);
   if (params.sortOrder) queryParams.append('sortOrder', params.sortOrder);
-  
+
   if (params.handBagId) queryParams.append('handBagId', params.handBagId);
   if (params.groupId) queryParams.append('groupId', params.groupId);
   if (params.active !== undefined) queryParams.append('active', params.active.toString());
@@ -103,31 +103,36 @@ export const createBagGroupRate = async (data: BagGroupRateCreateDTO): Promise<{
     method: 'POST',
     body: JSON.stringify(data),
   });
-  
+
   return { id: response.data.id };
 };
 
 /**
  * Tạo hoặc cập nhật hàng loạt năng suất túi theo nhóm
  */
-export const batchCreateBagGroupRates = async (data: BatchCreateBagGroupRateDTO): Promise<string[]> => {
+export const batchCreateBagGroupRates = async (
+  data: BatchCreateBagGroupRateDTO,
+): Promise<string[]> => {
   const response = await fetchWithAuth('/bag-group-rates/batch', {
     method: 'POST',
     body: JSON.stringify(data),
   });
-  
+
   return response.data.ids;
 };
 
 /**
  * Cập nhật năng suất túi theo nhóm
  */
-export const updateBagGroupRate = async (id: string, data: BagGroupRateUpdateDTO): Promise<void> => {
+export const updateBagGroupRate = async (
+  id: string,
+  data: BagGroupRateUpdateDTO,
+): Promise<void> => {
   const response = await fetchWithAuth(`/bag-group-rates/${id}`, {
     method: 'PATCH',
     body: JSON.stringify(data),
   });
-  
+
   return response.data;
 };
 
@@ -138,14 +143,16 @@ export const deleteBagGroupRate = async (id: string): Promise<void> => {
   const response = await fetchWithAuth(`/bag-group-rates/${id}`, {
     method: 'DELETE',
   });
-  
+
   return response.data;
 };
 
 /**
  * Lấy phân tích năng suất cho một túi xách cụ thể
  */
-export const getProductivityAnalysisForHandBag = async (handBagId: string): Promise<ProductivityAnalysisResponse> => {
+export const getProductivityAnalysisForHandBag = async (
+  handBagId: string,
+): Promise<ProductivityAnalysisResponse> => {
   const response = await fetchWithAuth(`/bag-group-rates/analysis/hand-bag/${handBagId}`);
   return response.data;
 };
@@ -156,11 +163,6 @@ export const getProductivityAnalysisForHandBag = async (handBagId: string): Prom
 export const batchDeleteBagGroupRatesParallel = async (ids: string[]): Promise<void> => {
   await Promise.all(ids.map(id => deleteBagGroupRate(id)));
 };
-
-
-
-
-
 
 /**
  * Lấy danh sách túi đã được nhóm theo handBag
@@ -173,7 +175,9 @@ export const getGroupedBagGroupRates = async (): Promise<{ handBags: HandBagWith
 /**
  * Lấy chi tiết tất cả các nhóm cho một handBag
  */
-export const getHandBagGroupRatesDetailsApi = async (handBagId: string): Promise<HandBagDetailsResponse> => {
+export const getHandBagGroupRatesDetailsApi = async (
+  handBagId: string,
+): Promise<HandBagDetailsResponse> => {
   const response = await fetchWithAuth(`/bag-group-rates/hand-bag/${handBagId}/details`);
   return response.data;
 };

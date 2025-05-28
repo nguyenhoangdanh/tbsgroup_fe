@@ -1,4 +1,3 @@
-// components/worker-status-badge.tsx
 import { CheckCircle2, Clock, XCircle, AlertTriangle, LogOut } from 'lucide-react';
 
 import { AttendanceStatus } from '@/common/types/digital-form';
@@ -10,7 +9,7 @@ interface WorkerStatusBadgeProps {
 }
 
 export function WorkerStatusBadge({ status, size = 'md' }: WorkerStatusBadgeProps) {
-  // Determine icon size based on badge size
+  //  Determine icon size based on badge size
   const iconSize = {
     sm: 'h-2.5 w-2.5',
     md: 'h-3 w-3',

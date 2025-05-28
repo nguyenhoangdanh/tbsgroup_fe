@@ -1,4 +1,3 @@
-// components/FilterSheet.tsx
 'use client';
 
 import { AttendanceStatus } from '@/common/types/digital-form';
@@ -50,14 +49,24 @@ export function FilterSheet({ open, onOpenChange, filters, onFilterChange }: Fil
                 <Button
                   variant={filters.status === AttendanceStatus.PRESENT ? 'default' : 'outline'}
                   size="sm"
-                  onClick={() => onFilterChange({ ...filters, status: AttendanceStatus.PRESENT })}
+                  onClick={() =>
+                    onFilterChange({
+                      ...filters,
+                      status: AttendanceStatus.PRESENT,
+                    })
+                  }
                 >
                   Có mặt
                 </Button>
                 <Button
                   variant={filters.status === AttendanceStatus.ABSENT ? 'default' : 'outline'}
                   size="sm"
-                  onClick={() => onFilterChange({ ...filters, status: AttendanceStatus.ABSENT })}
+                  onClick={() =>
+                    onFilterChange({
+                      ...filters,
+                      status: AttendanceStatus.ABSENT,
+                    })
+                  }
                 >
                   Vắng mặt
                 </Button>
@@ -72,7 +81,10 @@ export function FilterSheet({ open, onOpenChange, filters, onFilterChange }: Fil
                   variant={filters.status === AttendanceStatus.EARLY_LEAVE ? 'default' : 'outline'}
                   size="sm"
                   onClick={() =>
-                    onFilterChange({ ...filters, status: AttendanceStatus.EARLY_LEAVE })
+                    onFilterChange({
+                      ...filters,
+                      status: AttendanceStatus.EARLY_LEAVE,
+                    })
                   }
                 >
                   Về sớm
@@ -83,7 +95,10 @@ export function FilterSheet({ open, onOpenChange, filters, onFilterChange }: Fil
                   }
                   size="sm"
                   onClick={() =>
-                    onFilterChange({ ...filters, status: AttendanceStatus.LEAVE_APPROVED })
+                    onFilterChange({
+                      ...filters,
+                      status: AttendanceStatus.LEAVE_APPROVED,
+                    })
                   }
                 >
                   Nghỉ phép

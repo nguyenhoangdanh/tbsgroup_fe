@@ -1,8 +1,8 @@
-// components/CustomProgress.tsx
 'use client';
 
-import { cn } from '@/lib/utils';
-import { CSSProperties } from 'react';
+import {CSSProperties} from 'react';
+
+import {cn} from '@/lib/utils';
 
 interface CustomProgressProps {
   /**
@@ -44,16 +44,22 @@ export function Progress({
   showValue = false,
   animate = false,
 }: CustomProgressProps) {
-  // Đảm bảo giá trị nằm trong khoảng 0-100
   const safeValue = Math.max(0, Math.min(100, value));
 
   return (
-    <div className={cn('w-full overflow-hidden rounded-full', backgroundColor, height, className)}>
+    <div
+      className={cn(
+        'w-full overflow-hidden rounded-full',
+        backgroundColor,
+        height,
+        className,
+      )}
+    >
       <div
         className={cn(foregroundColor, 'h-full transition-all duration-300', {
           'animate-pulse': animate,
         })}
-        style={{ width: `${safeValue}%` } as CSSProperties}
+        style={{width: `${safeValue}%`} as CSSProperties}
       >
         {showValue && (
           <span className="absolute inset-0 flex items-center justify-center text-xs font-medium text-white">

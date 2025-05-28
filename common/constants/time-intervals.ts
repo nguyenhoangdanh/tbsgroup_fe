@@ -1,43 +1,97 @@
-// common/constants/time-intervals.ts
+import { TimeInterval } from '../types/digital-form';
 
-// Interface for time interval definition
-export interface TimeInterval {
-  start: string; // e.g., "07:30"
-  end: string; // e.g., "08:30"
-  label: string; // e.g., "07:30-08:30"
-}
+/**
+ * Standard time intervals used throughout the application
+ * These match the backend's STANDARD_TIME_INTERVALS constant
+ */
 
-// Standard time intervals for digital forms
-export const STANDARD_TIME_INTERVALS: TimeInterval[] = [
-  {start: '07:30', end: '08:30', label: '07:30-08:30'},
-  {start: '08:30', end: '09:30', label: '08:30-09:30'},
-  {start: '09:30', end: '10:30', label: '09:30-10:30'},
-  {start: '10:30', end: '11:30', label: '10:30-11:30'},
-  {start: '12:30', end: '13:30', label: '12:30-13:30'},
-  {start: '13:30', end: '14:30', label: '13:30-14:30'},
-  {start: '14:30', end: '15:30', label: '14:30-15:30'},
-  {start: '15:30', end: '16:30', label: '15:30-16:30'},
-  {start: '16:30', end: '17:00', label: '16:30-17:00'},
-  {start: '17:00', end: '18:00', label: '17:00-18:00'},
-  {start: '18:00', end: '19:00', label: '18:00-19:00'},
-  {start: '19:00', end: '20:00', label: '19:00-20:00'},
+export const REGULAR_TIME_INTERVALS: TimeInterval[] = [
+  { start: '07:30', end: '08:30', label: '07:30-08:30' },
+  { start: '08:30', end: '09:30', label: '08:30-09:30' },
+  { start: '09:30', end: '10:30', label: '09:30-10:30' },
+  { start: '10:30', end: '11:30', label: '10:30-11:30' },
+  { start: '12:30', end: '13:30', label: '12:30-13:30' },
+  { start: '13:30', end: '14:30', label: '13:30-14:30' },
+  { start: '14:30', end: '15:30', label: '14:30-15:30' },
+  { start: '15:30', end: '16:30', label: '15:30-16:30' },
 ];
 
-// Helper function to find a time interval by label
-export const findTimeIntervalByLabel = (label: string): TimeInterval | undefined => {
-  return STANDARD_TIME_INTERVALS.find(interval => interval.label === label);
+export const EXTENDED_TIME_INTERVALS: TimeInterval[] = [
+  { start: '16:30', end: '17:00', label: '16:30-17:00' },
+  { start: '17:00', end: '18:00', label: '17:00-18:00' },
+];
+
+export const OVERTIME_TIME_INTERVALS: TimeInterval[] = [
+  { start: '18:00', end: '19:00', label: '18:00-19:00' },
+  { start: '19:00', end: '20:00', label: '19:00-20:00' },
+];
+
+// All time intervals combined
+export const ALL_TIME_INTERVALS: TimeInterval[] = [
+  ...REGULAR_TIME_INTERVALS,
+  ...EXTENDED_TIME_INTERVALS,
+  ...OVERTIME_TIME_INTERVALS,
+];
+
+// Helper functions
+export const getTimeIntervalsByShiftType = (shiftType: string): TimeInterval[] => {
+  switch (shiftType) {
+    case 'REGULAR':
+      return REGULAR_TIME_INTERVALS;
+    case 'EXTENDED':
+      return [...REGULAR_TIME_INTERVALS, ...EXTENDED_TIME_INTERVALS];
+    case 'OVERTIME':
+      return [...REGULAR_TIME_INTERVALS, ...EXTENDED_TIME_INTERVALS, ...OVERTIME_TIME_INTERVALS];
+    default:
+      return REGULAR_TIME_INTERVALS;
+  }
 };
 
-// Helper function to get all time interval labels
-export const getAllTimeIntervalLabels = (): string[] => {
-  return STANDARD_TIME_INTERVALS.map(interval => interval.label);
+export const getTimeSlotLabels = (intervals: TimeInterval[]): string[] => {
+  return intervals.map(interval => interval.label);
 };
 
-// Get list of regular shift hours (7:30 - 16:30)
-export const REGULAR_SHIFT_INTERVALS = STANDARD_TIME_INTERVALS.slice(0, 8);
+export const formatTimeRange = (start: string, end: string): string => {
+  return `${start}-${end}`;
+};
 
-// Get list of extended shift hours (16:30 - 18:00)
-export const EXTENDED_SHIFT_INTERVALS = STANDARD_TIME_INTERVALS.slice(8, 10);
+/**
+ * Get the current time interval based on the current time
+ * Returns null if the current time is not within any interval (e.g., lunch break)
+ */
+export const getCurrentInterval = (): TimeInterval | null => {
+  const now = new Date();
+  const currentHour = now.getHours();
+  const currentMinute = now.getMinutes();
+  const currentTimeValue = currentHour + currentMinute / 60;
 
-// Get list of overtime shift hours (18:00 - 20:00)
-export const OVERTIME_SHIFT_INTERVALS = STANDARD_TIME_INTERVALS.slice(10, 12);
+  return (
+    ALL_TIME_INTERVALS.find(interval => {
+      const [startHour, startMinute] = interval.start.split(':').map(Number);
+      const [endHour, endMinute] = interval.end.split(':').map(Number);
+
+      const intervalStartValue = startHour + startMinute / 60;
+      const intervalEndValue = endHour + endMinute / 60;
+
+      return currentTimeValue >= intervalStartValue && currentTimeValue < intervalEndValue;
+    }) || null
+  );
+};
+
+/**
+ * Check if a time falls within a time interval
+ */
+export const isTimeInInterval = (time: string, interval: TimeInterval): boolean => {
+  const [hours, minutes] = time.split(':').map(Number);
+  const timeValue = hours + minutes / 60;
+
+  const [startHour, startMinute] = interval.start.split(':').map(Number);
+  const [endHour, endMinute] = interval.end.split(':').map(Number);
+
+  const intervalStartValue = startHour + startMinute / 60;
+  const intervalEndValue = endHour + endMinute / 60;
+
+  return timeValue >= intervalStartValue && timeValue < intervalEndValue;
+};
+
+export default ALL_TIME_INTERVALS;

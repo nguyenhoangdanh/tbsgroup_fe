@@ -1,4 +1,3 @@
-// components/TimeSlotTable.tsx
 import { Edit } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';

@@ -1,490 +1,203 @@
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
-import { useProtectedResource } from '@/hooks/permission/useProtectedResource';
-import { useLoading } from '@/components/common/loading/LoadingProvider';
+
 import AccessDeniedMessage from '@/components/common/notifications/AccessDeniedMessage';
+import { useLoading } from '@/components/common/loading/LoadingProvider';
+import { useProtectedResource } from '@/hooks/permission/useProtectedResource';
 
 type PermissionGuardProps = {
-    permissionCode?: string;
-    pageCode?: string;
-    featureCode?: string;
-    anyOf?: string[];
-    allOf?: string[];
-    children: React.ReactNode;
-    fallback?: React.ReactNode;
-    renderNull?: boolean;
-    loadingMessage?: string;
-    loadingDelay?: number;
-    useDefaultAccessDenied?: boolean;
+  permissionCode?: string;
+  pageCode?: string;
+  featureCode?: string;
+  anyOf?: string[];
+  allOf?: string[];
+  children: React.ReactNode;
+  fallback?: React.ReactNode;
+  renderNull?: boolean;
+  loadingMessage?: string;
+  loadingDelay?: number;
 };
 
 /**
  * Component that conditionally renders children based on user permissions
+ * Optimized for performance with memoization and reduced state updates
  */
-export const PermissionGuard: React.FC<PermissionGuardProps> = React.memo(({
+export const PermissionGuard: React.FC<PermissionGuardProps> = ({
+  permissionCode,
+  pageCode,
+  featureCode,
+  anyOf,
+  allOf,
+  children,
+  fallback = null,
+  renderNull = true,
+  loadingMessage = 'Đang tải...',
+  loadingDelay = 300, // Reduced from 800ms for better UX
+}) => {
+  const {
+    hasPermission,
+    hasPageAccess,
+    hasFeatureAccess,
+    hasAnyPermission,
+    hasAllPermissions,
+    userPermissions,
+  } = useProtectedResource();
+
+  const { startLoading, stopLoading } = useLoading();
+  const [isReady, setIsReady] = useState(false);
+  const [accessGranted, setAccessGranted] = useState<boolean | null>(null);
+
+  // Generate a unique loading key once using useMemo to avoid rerenders
+  const loadingKey = useMemo(() => 
+    `permission-guard-${pageCode || permissionCode || featureCode || Math.random().toString(36).substring(2, 9)}`,
+    [pageCode, permissionCode, featureCode]
+  );
+
+  // Memoize access check function to prevent recreating on each render
+  const checkAccess = useMemo(() => {
+    return () => {
+      // Skip check if already determined
+      if (accessGranted !== null) return accessGranted;
+
+      // Evaluate access based on prop priority
+      if (permissionCode) {
+        return hasPermission(permissionCode);
+      } else if (pageCode) {
+        return hasPageAccess(pageCode);
+      } else if (featureCode) {
+        return hasFeatureAccess(featureCode);
+      } else if (allOf && allOf.length > 0) {
+        return hasAllPermissions(allOf);
+      } else if (anyOf && anyOf.length > 0) {
+        return hasAnyPermission(anyOf);
+      }
+      
+      // If no permission criteria provided, default to true
+      return true;
+    };
+  }, [
+    accessGranted,
+    hasPermission, 
+    hasPageAccess, 
+    hasFeatureAccess, 
+    hasAnyPermission, 
+    hasAllPermissions,
     permissionCode,
     pageCode,
     featureCode,
     anyOf,
-    allOf,
-    children,
-    fallback = null,
-    renderNull = true,
-    loadingMessage,
-    loadingDelay = 1500,
-    useDefaultAccessDenied = false,
+    allOf
+  ]);
 
-}) => {
-    const { hasPermission, hasPageAccess, hasFeatureAccess, hasAnyPermission, hasAllPermissions, userPermissions } = useProtectedResource();
-    const { startLoading, stopLoading } = useLoading();
-    const [hasAccess, setHasAccess] = useState<boolean | null>(null);
+  useEffect(() => {
+    let mounted = true;
+    let timer: NodeJS.Timeout | null = null;
 
-    // Tạo stable loadingKey theo cách tối ưu hơn
-    const loadingKey = useMemo(() => {
-        const keyParts = [];
-        if (permissionCode) keyParts.push(`perm-${permissionCode}`);
-        if (pageCode) keyParts.push(`page-${pageCode}`);
-        if (featureCode) keyParts.push(`feat-${featureCode}`);
-        if (anyOf?.length) keyParts.push(`any-${anyOf.join('-')}`);
-        if (allOf?.length) keyParts.push(`all-${allOf.join('-')}`);
-        return `permission-pg-${keyParts.join('-') || 'default'}`;
-    }, [permissionCode, pageCode, featureCode, anyOf, allOf]);
+    // Skip loading if we're still waiting for permissions
+    if (userPermissions.isLoading) {
+      return () => {
+        mounted = false;
+        if (timer) clearTimeout(timer);
+      };
+    }
 
-    // Cải thiện checkAccess để không phụ thuộc vào các hàm trong useEffect
-    const checkAccess = useMemo(() => {
-        let result = false;
-        if (permissionCode) result = hasPermission(permissionCode);
-        else if (pageCode) result = hasPageAccess(pageCode);
-        else if (featureCode) result = hasFeatureAccess(featureCode);
-        else if (allOf?.length) result = hasAllPermissions(allOf);
-        else if (anyOf?.length) result = hasAnyPermission(anyOf);
-        return result;
-    }, [
-        permissionCode, pageCode, featureCode, anyOf, allOf,
-        hasPermission, hasPageAccess, hasFeatureAccess, hasAnyPermission, hasAllPermissions
-    ]);
+    // Start loading animation with debounce
+    startLoading(loadingKey, {
+      variant: 'fullscreen',
+      message: loadingMessage,
+      delay: loadingDelay > 100 ? 100 : loadingDelay, // Start loading indicator quickly but debounce completion
+    });
 
-    // Tách biệt useEffect cho việc khởi tạo loading và kiểm tra quyền
-    useEffect(() => {
-        // startLoading(loadingKey, { variant: 'fullscreen', message: loadingMessage, delay: 0 });
-        startLoading(loadingKey, {
-            variant: 'fullscreen',
-            message: loadingMessage,
-            delay: 0,
-            customClass: 'permission-guard-loader' // Add a custom class
+    // Set a timer to check access after delay
+    timer = setTimeout(() => {
+      if (mounted) {
+        const hasAccess = checkAccess();
+        console.log('PermissionGuard access check:', {
+          permissionCode,
+          pageCode,
+          featureCode,
+          anyOf,
+          allOf,
+          hasAccess,
         });
-        const timer = setTimeout(() => {
-            setHasAccess(checkAccess);
-            stopLoading(loadingKey);
-        }, loadingDelay);
+        setAccessGranted(hasAccess);
+        setIsReady(true);
+        stopLoading(loadingKey);
+      }
+    }, loadingDelay);
 
-        return () => {
-            clearTimeout(timer);
-            stopLoading(loadingKey);
-        };
-    }, [loadingKey, checkAccess, loadingMessage, loadingDelay, startLoading, stopLoading]);
+    return () => {
+      mounted = false;
+      if (timer) clearTimeout(timer);
+      stopLoading(loadingKey);
+    };
+  }, [
+    startLoading,
+    stopLoading,
+    checkAccess,
+    loadingKey,
+    loadingDelay,
+    loadingMessage,
+    userPermissions.isLoading
+  ]);
 
-    // console.log('hasAccess:', userPermissions.isLoading); // Giữ lại để debug, có thể xóa sau
+  // While loading or checking permissions, return nothing
+  // The loading animation is handled by LoadingProvider
+  if (!isReady) {
+    return null;
+  }
 
-    // Xử lý fallback khi không có quyền truy cập
-    const accessDeniedContent = useMemo(() => {
-        if (useDefaultAccessDenied) return <AccessDeniedMessage />;
-        return fallback;
-    }, [fallback, useDefaultAccessDenied]);
+  // After checking, show appropriate content based on permission result
+  if (accessGranted) {
+    return <>{children}</>;
+  }
 
-    // Chỉ render khi đã kiểm tra quyền xong
-    if (hasAccess === null) return null;
-    if (hasAccess) return <>{children}</>;
-    if (!renderNull) return null;
-    return <>{accessDeniedContent}</>;
-});
+  // If access denied and renderNull is true, but no fallback provided, show AccessDeniedMessage
+  if (renderNull) {
+    return <>{fallback || <AccessDeniedMessage />}</>;
+  }
+
+  // Otherwise render nothing
+  return null;
+};
 
 type FeatureGuardProps = Omit<PermissionGuardProps, 'featureCode'> & {
-    featureCode: string;
+  featureCode: string;
 };
 
 /**
  * Specialized guard for feature access permissions
  */
-export const FeatureGuard: React.FC<FeatureGuardProps> = React.memo(({
-    featureCode,
-    children,
-    fallback,
-    ...rest
+export const FeatureGuard: React.FC<FeatureGuardProps> = ({
+  featureCode,
+  children,
+  ...rest
 }) => {
-    return (
-        <PermissionGuard featureCode={featureCode} fallback={fallback} {...rest}>
-            {children}
-        </PermissionGuard>
-    );
-});
+  return (
+    <PermissionGuard featureCode={featureCode} {...rest}>
+      {children}
+    </PermissionGuard>
+  );
+};
 
 type PageGuardProps = Omit<PermissionGuardProps, 'pageCode'> & {
-    pageCode: string;
+  pageCode: string;
 };
 
 /**
  * Specialized guard for page access permissions
  */
-export const PageGuard: React.FC<PageGuardProps> = React.memo(({
-    pageCode,
-    children,
-    fallback,
-    ...rest
+export const PageGuard: React.FC<PageGuardProps> = ({ 
+  pageCode, 
+  children, 
+  ...rest 
 }) => {
-    return (
-        <PermissionGuard pageCode={pageCode} fallback={fallback} {...rest}>
-            {children}
-        </PermissionGuard>
-    );
-});
+  return (
+    <PermissionGuard pageCode={pageCode} {...rest}>
+      {children}
+    </PermissionGuard>
+  );
+};
 
 export default PermissionGuard;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// 'use client';
-
-// import React, { useEffect, useState, useCallback, useMemo } from 'react';
-// import { useProtectedResource } from '@/hooks/permission/useProtectedResource';
-// import { useLoading } from '@/components/common/loading/LoadingProvider';
-
-// type PermissionGuardProps = {
-//     permissionCode?: string;
-//     pageCode?: string;
-//     featureCode?: string;
-//     anyOf?: string[];
-//     allOf?: string[];
-//     children: React.ReactNode;
-//     fallback?: React.ReactNode;
-//     renderNull?: boolean;
-//     loadingMessage?: string;
-//     loadingDelay?: number;
-// };
-
-// /**
-//  * Component that conditionally renders children based on user permissions
-//  */
-
-// export const PermissionGuard: React.FC<PermissionGuardProps> = React.memo(({
-//     permissionCode,
-//     pageCode,
-//     featureCode,
-//     anyOf,
-//     allOf,
-//     children,
-//     fallback = null,
-//     renderNull = true,
-//     loadingMessage = 'Đang tải...',
-//     loadingDelay = 800,
-// }) => {
-//     const { hasPermission, hasPageAccess, hasFeatureAccess, hasAnyPermission, hasAllPermissions } = useProtectedResource();
-//     const { startLoading, stopLoading } = useLoading();
-//     const [hasAccess, setHasAccess] = useState<boolean | null>(null);
-
-//     const loadingKey = useMemo(() =>
-//         `pg-${permissionCode || pageCode || featureCode || (anyOf?.join('-') || '') || (allOf?.join('-') || '')}`,
-//         [permissionCode, pageCode, featureCode, anyOf, allOf]
-//     );
-
-//     useEffect(() => {
-//         startLoading(loadingKey, { variant: 'fullscreen', message: loadingMessage, delay: 0 });
-//         const timer = setTimeout(() => {
-//             let result = false;
-//             if (permissionCode) result = hasPermission(permissionCode);
-//             else if (pageCode) result = hasPageAccess(pageCode);
-//             else if (featureCode) result = hasFeatureAccess(featureCode);
-//             else if (allOf?.length) result = hasAllPermissions(allOf);
-//             else if (anyOf?.length) result = hasAnyPermission(anyOf);
-
-//             setHasAccess(result);
-//             stopLoading(loadingKey);
-//         }, loadingDelay);
-
-//         return () => {
-//             clearTimeout(timer);
-//             stopLoading(loadingKey);
-//         };
-//     }, [permissionCode, pageCode, featureCode, anyOf, allOf, hasPermission, hasPageAccess, hasFeatureAccess, hasAnyPermission, hasAllPermissions, loadingKey, loadingMessage, loadingDelay]);
-
-//     if (hasAccess !== null) {
-//         console.log('PermissionGuard:', hasAccess); // Giữ lại để debug, có thể xóa sau
-//     }
-
-//     if (hasAccess === null) return null;
-//     if (hasAccess) return <>{children}</>;
-//     if (!renderNull) return null;
-//     return <>{fallback}</>;
-// });
-
-// type FeatureGuardProps = Omit<PermissionGuardProps, 'featureCode'> & {
-//     featureCode: string;
-// };
-
-// /**
-//  * Specialized guard for feature access permissions
-//  */
-// export const FeatureGuard: React.FC<FeatureGuardProps> = ({
-//     featureCode,
-//     children,
-//     fallback,
-//     ...rest
-// }) => {
-//     return (
-//         <PermissionGuard featureCode={featureCode} fallback={fallback} {...rest}>
-//             {children}
-//         </PermissionGuard>
-//     );
-// };
-
-// type PageGuardProps = Omit<PermissionGuardProps, 'pageCode'> & {
-//     pageCode: string;
-// };
-
-// /**
-//  * Specialized guard for page access permissions
-//  */
-// export const PageGuard: React.FC<PageGuardProps> = ({
-//     pageCode,
-//     children,
-//     fallback,
-//     ...rest
-// }) => {
-//     return (
-//         <PermissionGuard pageCode={pageCode} fallback={fallback} {...rest}>
-//             {children}
-//         </PermissionGuard>
-//     );
-// };
-
-// export default PermissionGuard;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// 'use client';
-
-// import React, { useState, useEffect } from 'react';
-// import { useProtectedResource } from '@/hooks/permission/useProtectedResource';
-// import { useLoading } from '@/components/common/loading/LoadingProvider';
-
-// type PermissionGuardProps = {
-//     permissionCode?: string;
-//     pageCode?: string;
-//     featureCode?: string;
-//     anyOf?: string[];
-//     allOf?: string[];
-//     children: React.ReactNode;
-//     fallback?: React.ReactNode;
-//     renderNull?: boolean;
-//     loadingMessage?: string;
-//     loadingDelay?: number;
-// };
-
-// /**
-//  * Component that conditionally renders children based on user permissions
-//  */
-// export const PermissionGuard: React.FC<PermissionGuardProps> = ({
-//     permissionCode,
-//     pageCode,
-//     featureCode,
-//     anyOf,
-//     allOf,
-//     children,
-//     fallback = null,
-//     renderNull = true,
-//     loadingMessage = 'Đang tải...',
-//     loadingDelay = 800,
-// }) => {
-//     const {
-//         hasPermission,
-//         hasPageAccess,
-//         hasFeatureAccess,
-//         hasAnyPermission,
-//         hasAllPermissions,
-//         userPermissions
-//     } = useProtectedResource();
-
-//     const { startLoading, stopLoading } = useLoading();
-//     const [isReady, setIsReady] = useState(false);
-//     const [accessGranted, setAccessGranted] = useState<boolean | null>(null);
-
-//     // Generate a unique loading key for this guard instance
-//     const loadingKey = `permission-guard-${pageCode || permissionCode || featureCode || 'check'}`;
-
-//     useEffect(() => {
-//         let mounted = true;
-
-//         // Start loading animation
-//         startLoading(loadingKey, {
-//             variant: 'fullscreen',
-//             message: loadingMessage,
-//             delay: 0, // Start immediately
-//         });
-
-//         const checkAccess = () => {
-//             let result = false;
-
-//             // Evaluate access based on prop priority
-//             if (permissionCode) {
-//                 result = hasPermission(permissionCode);
-//             } else if (pageCode) {
-//                 result = hasPageAccess(pageCode);
-//             } else if (featureCode) {
-//                 result = hasFeatureAccess(featureCode);
-//             } else if (allOf && allOf.length > 0) {
-//                 result = hasAllPermissions(allOf);
-//             } else if (anyOf && anyOf.length > 0) {
-//                 result = hasAnyPermission(anyOf);
-//             }
-
-//             return result;
-//         };
-
-//         // Only perform the permission check once we have user permissions data
-//         if (!userPermissions.isLoading) {
-//             const timer = setTimeout(() => {
-//                 if (mounted) {
-//                     const hasAccess = checkAccess();
-//                     setAccessGranted(hasAccess);
-//                     setIsReady(true);
-//                     stopLoading(loadingKey);
-//                 }
-//             }, loadingDelay);
-
-//             return () => {
-//                 mounted = false;
-//                 clearTimeout(timer);
-//                 stopLoading(loadingKey);
-//             };
-//         }
-
-//         return () => {
-//             mounted = false;
-//             // Don't stop loading if we're still waiting for permissions
-//             if (!userPermissions.isLoading) {
-//                 stopLoading(loadingKey);
-//             }
-//         };
-//     }, [
-//         startLoading,
-//         stopLoading,
-//         hasPermission,
-//         hasPageAccess,
-//         hasFeatureAccess,
-//         hasAnyPermission,
-//         hasAllPermissions,
-//         permissionCode,
-//         pageCode,
-//         featureCode,
-//         anyOf,
-//         allOf,
-//         loadingKey,
-//         loadingDelay,
-//         loadingMessage,
-//         userPermissions.isLoading
-//     ]);
-
-//     // While loading or checking permissions, return nothing
-//     // The loading animation is handled by LoadingProvider
-//     if (!isReady) {
-//         return null;
-//     }
-
-//     // After checking, show appropriate content based on permission result
-//     if (accessGranted) {
-//         return <>{children}</>;
-//     }
-
-//     if (!renderNull) {
-//         return null;
-//     }
-
-//     return <>{fallback}</>;
-// };
-
-// type FeatureGuardProps = Omit<PermissionGuardProps, 'featureCode'> & {
-//     featureCode: string;
-// };
-
-// /**
-//  * Specialized guard for feature access permissions
-//  */
-// export const FeatureGuard: React.FC<FeatureGuardProps> = ({
-//     featureCode,
-//     children,
-//     fallback,
-//     ...rest
-// }) => {
-//     return (
-//         <PermissionGuard featureCode={featureCode} fallback={fallback} {...rest}>
-//             {children}
-//         </PermissionGuard>
-//     );
-// };
-
-// type PageGuardProps = Omit<PermissionGuardProps, 'pageCode'> & {
-//     pageCode: string;
-// };
-
-// /**
-//  * Specialized guard for page access permissions
-//  */
-// export const PageGuard: React.FC<PageGuardProps> = ({
-//     pageCode,
-//     children,
-//     fallback,
-//     ...rest
-// }) => {
-//     return (
-//         <PermissionGuard pageCode={pageCode} fallback={fallback} {...rest}>
-//             {children}
-//         </PermissionGuard>
-//     );
-// };
-
-// export default PermissionGuard;

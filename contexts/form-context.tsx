@@ -1,136 +1,313 @@
-// contexts/form-context.tsx
-"use client"
-import React, { createContext, useContext, ReactNode, useEffect, useState } from 'react';
-import { FormData } from '@/common/types/worker';
-import { AttendanceStatus, DigitalFormEntry, ProductionIssueType, ShiftType } from '@/common/types/digital-form';
-// import { useRouter, useParams } from 'next/navigation';
-import useOptimizedDigitalForm from '@/hooks/digital-form/useOptimizedDigitalForm';
-import { bagColorCondDTOSchema } from '../../TBS Group/bento-nestjs/daily_performance_be/src/modules/handbag/handbag.dto';
+'use client';
 
-interface FormContextProps {
-    formData: FormData | null;
-    // loading: boolean;
-    error: string | null;
-    currentTimeSlot: string | null;
-    stats: any;
-    refreshData: () => Promise<void>;
-    submitFormData: () => Promise<boolean>;
-    updateHourlyData: (workerId: string, timeSlot: string, quantity: number) => Promise<boolean>;
-    updateAttendanceStatus: (workerId: string, status: AttendanceStatus) => Promise<boolean>;
-    updateShiftType: (workerId: string, shiftType: ShiftType) => Promise<boolean>;
-    addIssue: (workerId: string, issueData: {
-        type: ProductionIssueType;
-        hour: number;
-        impact: number;
-        description?: string;
-    }) => Promise<boolean>;
-    removeIssue: (workerId: string, issueIndex: number) => Promise<boolean>;
+import { createContext, useContext, useState, ReactNode, useMemo, useCallback } from 'react';
 
-    // Multi-bag time slot functionality
-    addBagForTimeSlot: (workerId: string, bagData: {
-        bagId: string;
-        bagName: string;
-        processId: string;
-        processName: string;
-        colorId: string;
-        colorName: string;
-        timeSlot: string;
-        quantity: number;
-    }) => Promise<boolean>;
+import { getIntervalsByShiftType, getCurrentTimeInterval } from '@/common/constants/time-intervals';
+import {
+  DigitalForm,
+  DigitalFormEntry,
+  ShiftType,
+  AttendanceStatus,
+  RecordStatus,
+} from '@/common/types/digital-form';
+import useDigitalFormMutations from '@/hooks/digital-form/useDigitalFormMutations';
+import useDigitalFormQueries from '@/hooks/digital-form/useDigitalFormQueries';
+import { useMultiBagTimeSlot } from '@/hooks/digital-form/useMultiBagTimeSlot';
 
-    updateBagTimeSlotOutput: (entryId: string, timeSlot: string, quantity: number) => Promise<boolean>;
+// Context interface
+interface FormContextType {
+  // Form data
+  form: DigitalForm | null;
+  entries: DigitalFormEntry[];
+  loading: boolean;
+  error: string | null;
 
-    getBagsForTimeSlot: (workerId: string, timeSlot: string) => Array<{
-        entryId: string;
-        bagId: string;
-        bagName: string;
-        processId: string;
-        processName: string;
-        colorId: string;
-        colorName: string;
-        output: number;
-    }>;
+  // Time intervals
+  timeIntervals: any[];
+  currentInterval: ReturnType<typeof getCurrentTimeInterval>;
+  getTimeIntervalsByShiftType: typeof getIntervalsByShiftType;
 
-    getHourlyDataByTimeSlot: (workerId: string) => Record<string, {
-        totalOutput: number;
-        bags: Array<{
-            entryId: string;
-            bagId: string;
-            bagName: string;
-            processId: string;
-            processName: string;
-            colorId: string;
-            colorName: string;
-            output: number;
-        }>;
-    }>;
+  // Form state
+  isEditable: boolean;
+  isSubmittable: boolean;
+  isApprovable: boolean;
+
+  // Multi-bag operations
+  multiBag: ReturnType<typeof useMultiBagTimeSlot> | null;
+
+  // Actions
+  loadForm: (formId: string) => Promise<void>;
+  updateEntry: (entryId: string, updates: Partial<DigitalFormEntry>) => Promise<boolean>;
+  updateHourlyData: (entryId: string, timeInterval: string, quantity: number) => Promise<boolean>;
+  updateAttendanceStatus: (entryId: string, status: AttendanceStatus) => Promise<boolean>;
+  submitForm: () => Promise<boolean>;
+  approveForm: () => Promise<boolean>;
+  rejectForm: () => Promise<boolean>;
 }
 
-const FormContext = createContext<FormContextProps | undefined>(undefined);
+// Create the context with default values
+const FormContext = createContext<FormContextType>({
+  form: null,
+  entries: [],
+  loading: false,
+  error: null,
 
-export function FormProvider({ children, initialFormId }: { children: ReactNode, initialFormId?: string }) {
-    const [formId, setFormId] = useState<string | undefined>(initialFormId);
+  timeIntervals: [],
+  currentInterval: null,
+  getTimeIntervalsByShiftType: getIntervalsByShiftType,
 
-    const {
-        formData,
-        // loading,
-        error,
-        currentTimeSlot,
-        stats,
-        refreshData,
-        submitFormData,
-        updateHourlyData,
-        updateAttendanceStatus,
-        updateShiftType,
-        addIssue,
-        removeIssue,
-        addBagForTimeSlot,
-        updateBagTimeSlotOutput,
-        getBagsForTimeSlot,
-        getHourlyDataByTimeSlot,
-    } = useOptimizedDigitalForm(formId);
+  isEditable: false,
+  isSubmittable: false,
+  isApprovable: false,
 
-    // Cập nhật formId nếu initialFormId thay đổi
-    useEffect(() => {
-        if (initialFormId !== formId) {
-            setFormId(initialFormId);
-        }
-    }, [initialFormId]);
+  multiBag: null,
 
-    const contextValue: FormContextProps = {
-        formData,
-        // loading,
-        error,
-        currentTimeSlot,
-        stats,
-        refreshData,
-        submitFormData,
-        updateHourlyData,
-        updateAttendanceStatus,
-        updateShiftType,
-        addIssue,
-        removeIssue,
+  loadForm: async () => {},
+  updateEntry: async () => false,
+  updateHourlyData: async () => false,
+  updateAttendanceStatus: async () => false,
+  submitForm: async () => false,
+  approveForm: async () => false,
+  rejectForm: async () => false,
+});
 
-        //multi bag time slot
-        addBagForTimeSlot,
-        updateBagTimeSlotOutput,
-        getBagsForTimeSlot,
-        getHourlyDataByTimeSlot
+// Provider props
+interface FormProviderProps {
+  children: ReactNode;
+}
+
+// Create the provider component
+export const FormProvider = ({ children }: FormProviderProps) => {
+  // State
+  const [formId, setFormId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  // Get queries and mutations
+  const queries = useDigitalFormQueries(handleError);
+  const mutations = useDigitalFormMutations(handleError);
+
+  // Handle errors
+  function handleError(err: any, operationName: string) {
+    console.error(`Error in ${operationName}:`, err);
+    setError(`Operation ${operationName} failed: ${err.message || 'Unknown error'}`);
+  }
+
+  // Get form data with entries
+  const {
+    data: formWithEntries,
+    isLoading,
+    isError,
+  } = queries.useDigitalFormWithEntries(formId || '', {
+    enabled: !!formId,
+  });
+
+  // Extract form and entries from data
+  const form = formWithEntries?.data?.form || null;
+  const entries = formWithEntries?.data?.entries || [];
+
+  // Calculate form state flags
+  const isEditable = useMemo(() => {
+    return form?.status === RecordStatus.DRAFT || form?.status === RecordStatus.REJECTED;
+  }, [form]);
+
+  const isSubmittable = useMemo(() => {
+    return form?.status === RecordStatus.DRAFT;
+  }, [form]);
+
+  const isApprovable = useMemo(() => {
+    return form?.status === RecordStatus.PENDING;
+  }, [form]);
+
+  // Initialize multi-bag hook when form loaded
+  const multiBag = useMultiBagTimeSlot(formId || '', entries, !isEditable);
+
+  // Current time interval
+  const currentInterval = useMemo(() => getCurrentTimeInterval(), []);
+
+  // Get time intervals
+  const timeIntervals = useMemo(() => {
+    const shiftType = form?.shiftType || ShiftType.REGULAR;
+    const shiftTypeMapping = {
+      [ShiftType.REGULAR]: 'standard',
+      [ShiftType.EXTENDED]: 'extended',
+      [ShiftType.OVERTIME]: 'overtime',
     };
-
-    return (
-        <FormContext.Provider value={contextValue}>
-            {children}
-        </FormContext.Provider>
+    return getIntervalsByShiftType(
+      shiftTypeMapping[shiftType] as 'standard' | 'extended' | 'overtime',
     );
-}
+  }, [form?.shiftType]);
 
-export function useForm() {
-    const context = useContext(FormContext);
-
-    if (context === undefined) {
-        throw new Error('useForm must be used within a FormProvider');
+  // Load form function
+  const loadForm = useCallback(async (id: string) => {
+    try {
+      setFormId(id);
+      setError(null);
+    } catch (err) {
+      console.error('Error loading form:', err);
+      setError('Failed to load form data');
     }
+  }, []);
 
-    return context;
-}
+  // Update entry function
+  const updateEntry = useCallback(
+    async (entryId: string, updates: Partial<DigitalFormEntry>) => {
+      if (!formId || !isEditable) return false;
+
+      try {
+        const result = await mutations.updateFormEntryMutation.mutateAsync({
+          formId,
+          entryId,
+          data: updates,
+        });
+
+        return result.success;
+      } catch (err) {
+        console.error('Error updating entry:', err);
+        return false;
+      }
+    },
+    [formId, isEditable, mutations.updateFormEntryMutation],
+  );
+
+  // Update hourly data function
+  const updateHourlyData = useCallback(
+    async (entryId: string, timeInterval: string, quantity: number) => {
+      if (!formId || !isEditable) return false;
+
+      try {
+        const result = await mutations.updateHourlyDataMutation.mutateAsync({
+          formId,
+          entryId,
+          timeSlot: timeInterval,
+          quantity,
+        });
+
+        return result.success;
+      } catch (err) {
+        console.error('Error updating hourly data:', err);
+        return false;
+      }
+    },
+    [formId, isEditable, mutations.updateHourlyDataMutation],
+  );
+
+  // Update attendance status function
+  const updateAttendanceStatus = useCallback(
+    async (entryId: string, status: AttendanceStatus) => {
+      if (!formId || !isEditable) return false;
+
+      try {
+        const result = await mutations.updateFormEntryMutation.mutateAsync({
+          formId,
+          entryId,
+          data: { attendanceStatus: status },
+        });
+
+        return result.success;
+      } catch (err) {
+        console.error('Error updating attendance status:', err);
+        return false;
+      }
+    },
+    [formId, isEditable, mutations.updateFormEntryMutation],
+  );
+
+  // Submit form function
+  const submitForm = useCallback(async () => {
+    if (!formId || !isSubmittable) return false;
+
+    try {
+      const result = await mutations.submitFormMutation.mutateAsync({ formId });
+
+      return result.success;
+    } catch (err) {
+      console.error('Error submitting form:', err);
+      return false;
+    }
+  }, [formId, isSubmittable, mutations.submitFormMutation]);
+
+  // Approve form function
+  const approveForm = useCallback(async () => {
+    if (!formId || !isApprovable) return false;
+
+    try {
+      const result = await mutations.approveFormMutation.mutateAsync(formId);
+
+      return result.success;
+    } catch (err) {
+      console.error('Error approving form:', err);
+      return false;
+    }
+  }, [formId, isApprovable, mutations.approveFormMutation]);
+
+  // Reject form function
+  const rejectForm = useCallback(async () => {
+    if (!formId || !isApprovable) return false;
+
+    try {
+      const result = await mutations.rejectFormMutation.mutateAsync(formId);
+
+      return result.success;
+    } catch (err) {
+      console.error('Error rejecting form:', err);
+      return false;
+    }
+  }, [formId, isApprovable, mutations.rejectFormMutation]);
+
+  // Create context value
+  const contextValue = {
+    form,
+    entries,
+    loading: isLoading,
+    error: isError ? 'Failed to load form data' : error,
+
+    timeIntervals,
+    currentInterval,
+    getTimeIntervalsByShiftType: getIntervalsByShiftType,
+
+    isEditable,
+    isSubmittable,
+    isApprovable,
+
+    multiBag,
+
+    loadForm,
+    updateEntry,
+    updateHourlyData,
+    updateAttendanceStatus,
+    submitForm,
+    approveForm,
+    rejectForm,
+  };
+
+  return <FormContext.Provider value={contextValue}>{children}</FormContext.Provider>;
+};
+
+// Hook for using the form context
+export const useForm = () => {
+  const context = useContext(FormContext);
+
+  if (context === undefined) {
+    throw new Error('useForm must be used within a FormProvider');
+  }
+
+  return context;
+};
+
+// Specialized hook that focuses just on time intervals
+export const useTimeIntervals = () => {
+  const { timeIntervals, currentInterval, getTimeIntervalsByShiftType } = useContext(FormContext);
+
+  return { timeIntervals, currentInterval, getTimeIntervalsByShiftType };
+};
+
+// Specialized hook for multi-bag operations
+export const useFormMultiBag = () => {
+  const { multiBag } = useContext(FormContext);
+
+  if (!multiBag) {
+    throw new Error('useFormMultiBag must be used within a FormProvider with a loaded form');
+  }
+
+  return multiBag;
+};

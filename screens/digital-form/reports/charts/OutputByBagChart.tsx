@@ -1,8 +1,8 @@
-// components/digital-form/reports/charts/OutputByBagChart.tsx
 'use client';
 
-import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card';
-import {PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend} from 'recharts';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface OutputByBagChartProps {
   data: Array<{
@@ -14,7 +14,7 @@ interface OutputByBagChartProps {
   }>;
 }
 
-export function OutputByBagChart({data}: OutputByBagChartProps) {
+export function OutputByBagChart({ data }: OutputByBagChartProps) {
   // Generate colors
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
 
@@ -32,7 +32,7 @@ export function OutputByBagChart({data}: OutputByBagChartProps) {
         <CardTitle className="text-lg">Phân bố sản lượng theo túi</CardTitle>
       </CardHeader>
       <CardContent>
-        <div style={{width: '100%', height: 400}}>
+        <div style={{ width: '100%', height: 400 }}>
           {data.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -44,7 +44,7 @@ export function OutputByBagChart({data}: OutputByBagChartProps) {
                   outerRadius={80}
                   fill="#8884d8"
                   dataKey="value"
-                  label={({name, percent}) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                 >
                   {chartData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />

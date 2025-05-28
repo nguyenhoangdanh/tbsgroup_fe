@@ -1,25 +1,26 @@
-import { useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { toast } from '@/hooks/use-toast';
-import { useBaseQueries } from '@/hooks/base/useBaseQueries';
-import { 
-  getBagGroupRateById, 
-  getBagGroupRatesList, 
+import { useCallback } from 'react';
+
+import {
+  getBagGroupRateById,
+  getBagGroupRatesList,
   getBagGroupRatesForHandBag,
   getBagGroupRatesForGroup,
   getProductivityAnalysisForHandBag,
-  BagGroupRateCondDTO, 
+  BagGroupRateCondDTO,
   getGroupedBagGroupRates,
-  getHandBagGroupRatesDetailsApi
+  getHandBagGroupRatesDetailsApi,
 } from '@/apis/group/bagGroupRate/bag-group-rate.api';
 import { BagGroupRate } from '@/common/interface/bag-group-rate';
+import { toast } from 'react-toast-kit';
+import { useBaseQueries } from '@/hooks/base/useBaseQueries';
 
 /**
  * Hook cho BagGroupRate queries
  */
 export const useBagGroupRateQueries = () => {
   const queryClient = useQueryClient();
-  
+
   /**
    * Xử lý lỗi truy vấn với thông báo toast
    */
@@ -31,23 +32,23 @@ export const useBagGroupRateQueries = () => {
     } else if (typeof error === 'object' && error !== null && 'message' in error) {
       errorMessage = error.message as string;
     }
-    
-    // Hiển thị toast với thông báo an toàn
+
+    //  Hiển thị toast với thông báo an toàn
     toast({
       title: `Không thể tải dữ liệu ${queryName}`,
       description: errorMessage || 'Vui lòng thử lại sau',
-      variant: 'destructive',
+      variant: 'error',
       duration: 3000,
     });
   }, []);
 
-  // Sử dụng hook truy vấn cơ sở cho BagGroupRate
+  //  Sử dụng hook truy vấn cơ sở cho BagGroupRate
   const bagGroupRateQueries = useBaseQueries<BagGroupRate, BagGroupRateCondDTO>(
     'bag-group-rate',
     getBagGroupRatesList,
     getBagGroupRateById,
     undefined,
-    handleQueryError
+    handleQueryError,
   );
 
   /**
@@ -71,7 +72,7 @@ export const useBagGroupRateQueries = () => {
         console.error(`Không thể tải trước thông tin BagGroupRate với ID ${id}:`, error);
       }
     },
-    [queryClient]
+    [queryClient],
   );
 
   /**
@@ -91,10 +92,10 @@ export const useBagGroupRateQueries = () => {
           }
         },
         staleTime: 5 * 60 * 1000, // 5 phút
-        ...options
+        ...options,
       });
     },
-    [handleQueryError]
+    [handleQueryError],
   );
 
   /**
@@ -114,10 +115,10 @@ export const useBagGroupRateQueries = () => {
           }
         },
         staleTime: 5 * 60 * 1000, // 5 phút
-        ...options
+        ...options,
       });
     },
-    [handleQueryError]
+    [handleQueryError],
   );
 
   /**
@@ -137,10 +138,10 @@ export const useBagGroupRateQueries = () => {
           }
         },
         staleTime: 5 * 60 * 1000, // 5 phút
-        ...options
+        ...options,
       });
     },
-    [queryClient, handleQueryError]
+    [queryClient, handleQueryError],
   );
 
   /**
@@ -159,7 +160,7 @@ export const useBagGroupRateQueries = () => {
         console.error(`Không thể vô hiệu hóa bộ nhớ cache BagGroupRate cho ID ${id}:`, error);
       }
     },
-    [queryClient]
+    [queryClient],
   );
 
   /**
@@ -191,34 +192,36 @@ export const useBagGroupRateQueries = () => {
         console.error('Không thể vô hiệu hóa bộ nhớ cache danh sách BagGroupRate:', error);
       }
     },
-    [queryClient]
+    [queryClient],
   );
 
-  // Thêm vào useBagGroupRateQueries.ts
-const getGroupedBagGroupRatesQuery = useCallback(() => {
-  return queryClient.fetchQuery({
-    queryKey: ['grouped-bag-group-rates'],
-    queryFn: () => getGroupedBagGroupRates(),
-    staleTime: 5 * 60 * 1000, // 5 phút
-  });
-}, [queryClient]);
+  const getGroupedBagGroupRatesQuery = useCallback(() => {
+    return queryClient.fetchQuery({
+      queryKey: ['grouped-bag-group-rates'],
+      queryFn: () => getGroupedBagGroupRates(),
+      staleTime: 5 * 60 * 1000, // 5 phút
+    });
+  }, [queryClient]);
 
-const getHandBagGroupRatesDetailsQuery = useCallback((handBagId: string) => {
-  return queryClient.fetchQuery({
-    queryKey: ['handbag-details', handBagId],
-    queryFn: () => getHandBagGroupRatesDetailsApi(handBagId),
-    staleTime: 5 * 60 * 1000, // 5 phút
-  });
-}, [queryClient]);
+  const getHandBagGroupRatesDetailsQuery = useCallback(
+    (handBagId: string) => {
+      return queryClient.fetchQuery({
+        queryKey: ['handbag-details', handBagId],
+        queryFn: () => getHandBagGroupRatesDetailsApi(handBagId),
+        staleTime: 5 * 60 * 1000, // 5 phút
+      });
+    },
+    [queryClient],
+  );
 
   return {
     ...bagGroupRateQueries,
     prefetchBagGroupRateById,
     getBagGroupRatesForHandBag: (handBagId: string) => ({
-      refetch: () => getBagGroupRatesForHandBagQuery(handBagId)
+      refetch: () => getBagGroupRatesForHandBagQuery(handBagId),
     }),
     getBagGroupRatesForGroup: (groupId: string) => ({
-      refetch: () => getBagGroupRatesForGroupQuery(groupId)
+      refetch: () => getBagGroupRatesForGroupQuery(groupId),
     }),
     getProductivityAnalysis,
     invalidateBagGroupRateCache,

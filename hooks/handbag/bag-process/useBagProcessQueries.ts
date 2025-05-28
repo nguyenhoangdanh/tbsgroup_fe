@@ -1,12 +1,13 @@
-import { useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { BagProcess } from '@/common/interface/handbag';
-import { 
-  getBagProcessesList, 
+import { useCallback } from 'react';
+
+import {
+  getBagProcessesList,
   getBagProcessById,
-  BagProcessCondDTO
+  BagProcessCondDTO,
 } from '@/apis/handbag/bagProcess.api';
-import { toast } from '@/hooks/use-toast';
+import { BagProcess } from '@/common/interface/handbag';
+import { toast } from 'react-toast-kit';
 import { useBaseQueries } from '@/hooks/base/useBaseQueries';
 
 /**
@@ -14,7 +15,7 @@ import { useBaseQueries } from '@/hooks/base/useBaseQueries';
  */
 export const useBagProcessQueries = () => {
   const queryClient = useQueryClient();
-  
+
   /**
    * Handle query errors with toast notifications
    */
@@ -26,23 +27,21 @@ export const useBagProcessQueries = () => {
     } else if (typeof error === 'object' && error !== null && 'message' in error) {
       errorMessage = error.message as string;
     }
-    
-    // Show toast with safe message
+
     toast({
       title: `Không thể tải dữ liệu ${queryName}`,
       description: errorMessage || 'Vui lòng thử lại sau',
-      variant: 'destructive',
+      variant: 'error',
       duration: 3000,
     });
   }, []);
 
-  // Use base queries hook for BagProcess queries
   const bagProcessQueries = useBaseQueries<BagProcess, BagProcessCondDTO>(
     'bagProcess',
     getBagProcessesList,
     getBagProcessById,
     undefined,
-    handleQueryError
+    handleQueryError,
   );
 
   /**
@@ -66,7 +65,7 @@ export const useBagProcessQueries = () => {
         console.error(`Failed to prefetch BagProcess with ID ${id}:`, error);
       }
     },
-    [queryClient]
+    [queryClient],
   );
 
   /**
@@ -85,7 +84,7 @@ export const useBagProcessQueries = () => {
         console.error(`Failed to invalidate BagProcess cache for ID ${id}:`, error);
       }
     },
-    [queryClient]
+    [queryClient],
   );
 
   /**
@@ -102,7 +101,7 @@ export const useBagProcessQueries = () => {
         console.error('Failed to invalidate BagProcesses list cache:', error);
       }
     },
-    [queryClient]
+    [queryClient],
   );
 
   return {
@@ -111,6 +110,6 @@ export const useBagProcessQueries = () => {
     invalidateBagProcessCache,
     invalidateBagProcessesCache,
     listBagProcesses: bagProcessQueries.listItems,
-    getBagProcessById: bagProcessQueries.getById
+    getBagProcessById: bagProcessQueries.getById,
   };
 };

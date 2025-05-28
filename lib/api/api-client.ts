@@ -1,16 +1,13 @@
-// Enhanced api-client.ts with better network error handling and fixed type safety
-
-import {ApiResponse} from '../types/auth';
+import { ApiResponse } from '../types/auth';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000/api/v1';
 
-// Maximum number of retries for network errors
 const MAX_NETWORK_RETRIES = 2;
 
 /**
  * Enhanced API request function with better network resilience and type safety
  */
-export async function apiRequest<T = any>(
+export async function apiRequest<T>(
   endpoint: string,
   options: RequestInit = {},
   retryWithRefresh = true,
@@ -43,12 +40,12 @@ export async function apiRequest<T = any>(
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       // Add cache control to prevent caching of auth requests
-      // ...(endpoint.includes('/auth/')
-        // ? {
-        //     'Cache-Control': 'no-cache, no-store, must-revalidate',
-        //     Pragma: 'no-cache',
-        //   }
-        // : {}),
+      ...(endpoint.includes('/auth/')
+        ? {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            Pragma: 'no-cache',
+          }
+        : {}),
       ...((options.headers as Record<string, string>) || {}),
     };
 
@@ -69,7 +66,7 @@ export async function apiRequest<T = any>(
     const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
     finalOptions.signal = controller.signal;
 
-    console.log(`Sending ${finalOptions} request to ${url}`);
+    console.log(`Sending ${finalOptions.method} request to ${url}`);
 
     try {
       const response = await fetch(url, finalOptions);
@@ -152,7 +149,7 @@ export async function apiRequest<T = any>(
             await new Promise(resolve => setTimeout(resolve, 500));
 
             // Token refreshed successfully, retry the original request
-            return apiRequest(endpoint, options, false); // No more retries
+            return apiRequest<T>(endpoint, options, false); // No more retries
           }
 
           console.log('Token refresh failed');
@@ -185,13 +182,13 @@ export async function apiRequest<T = any>(
       }
 
       // Improved response parsing
-      let data;
+      let data: any;
       const contentType = response.headers.get('content-type');
       if (contentType && contentType.includes('application/json')) {
         data = await response.json();
       } else {
         const text = await response.text();
-        data = {message: text};
+        data = { message: text };
       }
 
       if (!response.ok) {
@@ -207,9 +204,9 @@ export async function apiRequest<T = any>(
 
       return {
         success: true,
-        data,
+        data: data as T,
       };
-    } catch (fetchError) {
+    } catch (fetchError: unknown) {
       clearTimeout(timeoutId);
 
       // Handle network errors with automatic retry
@@ -217,7 +214,10 @@ export async function apiRequest<T = any>(
         (fetchError instanceof TypeError && fetchError.message.includes('Failed to fetch')) ||
         (fetchError instanceof DOMException && fetchError.name === 'AbortError')
       ) {
-        console.error(`Network error (${endpoint}):`, fetchError.message);
+        console.error(
+          `Network error (${endpoint}):`,
+          fetchError instanceof Error ? fetchError.message : String(fetchError),
+        );
 
         // If we have retries left, try again after a delay
         if (networkRetries > 0) {
@@ -230,7 +230,7 @@ export async function apiRequest<T = any>(
 
           await new Promise(resolve => setTimeout(resolve, delay));
 
-          return apiRequest(endpoint, options, retryWithRefresh, networkRetries - 1);
+          return apiRequest<T>(endpoint, options, retryWithRefresh, networkRetries - 1);
         }
 
         // Enhanced network error messaging
@@ -254,7 +254,7 @@ export async function apiRequest<T = any>(
         error: fetchError instanceof Error ? fetchError.message : 'An unknown error occurred',
       };
     }
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('API request failed:', error);
     return {
       success: false,
@@ -282,17 +282,18 @@ const hasValidToken = async (): Promise<boolean> => {
 // Enhanced API helper functions
 export const api = {
   // Standard GET request
-  get: <T = any>(endpoint: string, customHeaders?: Record<string, string>) =>
+  get: <T>(endpoint: string, customHeaders?: Record<string, string>): Promise<ApiResponse<T>> =>
     apiRequest<T>(endpoint, {
       method: 'GET',
       headers: customHeaders,
     }),
 
   // GET request with no automatic refresh
-  getWithoutRefresh: <T = any>(endpoint: string) => apiRequest<T>(endpoint, {method: 'GET'}, false),
+  getWithoutRefresh: <T>(endpoint: string): Promise<ApiResponse<T>> =>
+    apiRequest<T>(endpoint, { method: 'GET' }, false),
 
   // POST request with retry options
-  post: <T = any>(endpoint: string, data: any, retryOnNetworkError = true) =>
+  post: <T>(endpoint: string, data: any, retryOnNetworkError = true): Promise<ApiResponse<T>> =>
     apiRequest<T>(
       endpoint,
       {
@@ -304,7 +305,7 @@ export const api = {
     ),
 
   // PUT request with retry options
-  put: <T = any>(endpoint: string, data: any, retryOnNetworkError = true) =>
+  put: <T>(endpoint: string, data: any, retryOnNetworkError = true): Promise<ApiResponse<T>> =>
     apiRequest<T>(
       endpoint,
       {
@@ -316,7 +317,7 @@ export const api = {
     ),
 
   // PATCH request with retry options
-  patch: <T = any>(endpoint: string, data: any, retryOnNetworkError = true) =>
+  patch: <T>(endpoint: string, data: any, retryOnNetworkError = true): Promise<ApiResponse<T>> =>
     apiRequest<T>(
       endpoint,
       {
@@ -328,7 +329,8 @@ export const api = {
     ),
 
   // DELETE request
-  delete: <T = any>(endpoint: string) => apiRequest<T>(endpoint, {method: 'DELETE'}),
+  delete: <T>(endpoint: string): Promise<ApiResponse<T>> =>
+    apiRequest<T>(endpoint, { method: 'DELETE' }),
 
   // Method to check if we have a valid token
   hasValidToken,
@@ -364,9 +366,11 @@ export const api = {
     }
   },
 
-  resetPassword: <T = any>(token: string, password: string, securityData?: any) => {
-    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
-
+  resetPassword: <T>(
+    token: string,
+    password: string,
+    securityData?: any,
+  ): Promise<ApiResponse<T>> => {
     return new Promise<ApiResponse<T>>(async resolve => {
       try {
         // Add timeout to fetch requests
@@ -392,12 +396,12 @@ export const api = {
         clearTimeout(timeoutId);
 
         // Parse response
-        let data;
+        let data: any;
         try {
           data = await response.json();
         } catch (e) {
           console.error('Failed to parse response:', e);
-          data = {message: 'Failed to parse response'};
+          data = { message: 'Failed to parse response' };
         }
 
         if (!response.ok) {
@@ -413,7 +417,7 @@ export const api = {
           success: true,
           data,
         });
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Password reset request failed:', error);
 
         // Handle timeout errors specifically
@@ -433,3 +437,5 @@ export const api = {
     });
   },
 };
+
+export default api;

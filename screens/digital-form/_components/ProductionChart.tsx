@@ -1,4 +1,3 @@
-// components/ProductionChart.tsx
 import { LineChart } from 'lucide-react';
 
 interface TimeSlotData {

@@ -1,14 +1,8 @@
-"use client";
-import SubmitButton from "@/components/SubmitButton";
-import { DialogClose } from "@/components/ui/dialog";
-import React from "react";
-import {
-  FormProvider,
-  SubmitHandler,
-  useForm,
-  Resolver,
-  FieldValues,
-} from "react-hook-form";
+'use client';
+import React from 'react';
+import { FormProvider, SubmitHandler, useForm, FieldValues } from 'react-hook-form';
+
+import SubmitButton from '@/components/SubmitButton';
 
 interface IProps<TForm extends FieldValues> {
   children: React.ReactNode;

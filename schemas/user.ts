@@ -1,5 +1,6 @@
+import { z } from 'zod';
+
 import { UserStatusEnum } from '@/common/enum';
-import {z} from 'zod';
 
 export const userSchema = z.object({
   id: z.string(),
@@ -11,13 +12,15 @@ export const userSchema = z.object({
   password: z.string().min(6, {
     message: 'Mật khẩu phải có ít  nhất 6 ký tự',
   }),
-  status: z.enum([
-    UserStatusEnum.PENDING_ACTIVATION,
-    UserStatusEnum.ACTIVE,
-    UserStatusEnum.INACTIVE,
-    UserStatusEnum.BANNED,
-    UserStatusEnum.DELETED,
-  ]).optional(),
+  status: z
+    .enum([
+      UserStatusEnum.PENDING_ACTIVATION,
+      UserStatusEnum.ACTIVE,
+      UserStatusEnum.INACTIVE,
+      UserStatusEnum.BANNED,
+      UserStatusEnum.DELETED,
+    ])
+    .optional(),
   fullName: z.string().min(2, {
     message: 'Ten phai co it nhat 2 ky tu',
   }),

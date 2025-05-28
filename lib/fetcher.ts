@@ -212,14 +212,14 @@ export const fetchWithAuth = async (url: string, options?: RequestInit) => {
       const errorData = await error.json();
       if (error instanceof Error && 'status' in error && error.status === 401) {
         try {
-          await fetcher('/auth/refresh', {method: 'POST'}); // Gọi refresh token
+          await fetcher('/auth/refresh', { method: 'POST' }); // Gọi refresh token
           return await fetcher(url, options); // Gọi lại request gốc
         } catch (refreshError) {
           window.location.href = '/'; // Redirect về login nếu refresh token thất bại
           throw refreshError;
         }
       }
-      throw new Error(errorData.message || 'Unknown error');
+      throw new Error(errorData || 'Unknown error');
     }
 
     throw error; // Ném lại lỗi nếu không phải lỗi từ Response
@@ -252,7 +252,7 @@ function getCsrfToken(): string | null {
 
 // Các hàm tiện ích cho các phương thức HTTP phổ biến
 export const get = (url: string, options?: RequestInit) =>
-  fetchWithAuth(url, {...options, method: 'GET'});
+  fetchWithAuth(url, { ...options, method: 'GET' });
 
 export const post = (url: string, data: any, options?: RequestInit) =>
   fetchWithAuth(url, {
@@ -269,7 +269,7 @@ export const put = (url: string, data: any, options?: RequestInit) =>
   });
 
 export const del = (url: string, options?: RequestInit) =>
-  fetchWithAuth(url, {...options, method: 'DELETE'});
+  fetchWithAuth(url, { ...options, method: 'DELETE' });
 
 export default fetcher;
 

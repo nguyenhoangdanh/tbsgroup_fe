@@ -1,7 +1,12 @@
-// hooks/useDigitalFormEntries-fixed.ts
-import {useState, useCallback, useMemo} from 'react';
-import {DigitalFormEntry, AttendanceStatus, ProductionIssueType} from '@/common/types/digital-form';
-import {TDigitalFormEntry} from '@/schemas/digital-form.schema';
+'use client';
+import { useState, useCallback, useMemo } from 'react';
+
+import {
+  DigitalFormEntry,
+  AttendanceStatus,
+  ProductionIssueType,
+} from '@/common/types/digital-form';
+import { TDigitalFormEntry } from '@/schemas/digital-form.schema';
 
 /**
  * Hook for managing digital form entries with validation and preprocessing
@@ -14,7 +19,7 @@ export const useDigitalFormEntries = (formId: string, initialEntries: DigitalFor
   // State for currently selected entry
   const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null);
 
-  // Loading state for operations
+  //// Loading state for operations
   const [loading, setLoading] = useState(false);
 
   // Error state
@@ -60,11 +65,11 @@ export const useDigitalFormEntries = (formId: string, initialEntries: DigitalFor
     };
   }, [entries]);
 
-  // Add a new entry, updating if entry with same key fields already exists
+  //  Add a new entry, updating if entry with same key fields already exists
   // Fixed to avoid dependency on entries state
   const addOrUpdateEntry = useCallback(
     (entry: TDigitalFormEntry) => {
-      // Calculate total output from hourly data
+      //  Calculate total output from hourly data
       const totalOutput = Object.values(entry.hourlyData || {}).reduce(
         (sum, output) => sum + (output || 0),
         0,
@@ -97,9 +102,9 @@ export const useDigitalFormEntries = (formId: string, initialEntries: DigitalFor
         updatedAt: new Date().toISOString(),
       } as DigitalFormEntry;
 
-      // Use functional update pattern to avoid entries dependency
+      //  Use functional update pattern to avoid entries dependency
       setEntries(prevEntries => {
-        // Check if an entry already exists with the same key fields
+        //  Check if an entry already exists with the same key fields
         const existingEntryIndex = prevEntries.findIndex(
           e =>
             e.userId === entry.userId &&
@@ -109,7 +114,7 @@ export const useDigitalFormEntries = (formId: string, initialEntries: DigitalFor
         );
 
         if (existingEntryIndex >= 0) {
-          // Update existing entry
+          //  Update existing entry
           const updatedEntries = [...prevEntries];
           updatedEntries[existingEntryIndex] = {
             ...updatedEntries[existingEntryIndex],
@@ -119,7 +124,7 @@ export const useDigitalFormEntries = (formId: string, initialEntries: DigitalFor
           };
           return updatedEntries;
         } else {
-          // Add new entry
+          //   Add new entry
           return [...prevEntries, formattedEntry];
         }
       });
@@ -136,7 +141,7 @@ export const useDigitalFormEntries = (formId: string, initialEntries: DigitalFor
     (entryId: string) => {
       setEntries(prev => prev.filter(entry => entry.id !== entryId));
 
-      // Clear selected entry if it was removed
+      //  Clear selected entry if it was removed
       if (selectedEntryId === entryId) {
         setSelectedEntryId(null);
       }
@@ -165,8 +170,8 @@ export const useDigitalFormEntries = (formId: string, initialEntries: DigitalFor
       prev.map(entry => {
         if (entry.id !== entryId) return entry;
 
-        // Update hourly data
-        const hourlyData = {...(entry.hourlyData || {})};
+        //  Update hourly data
+        const hourlyData = { ...(entry.hourlyData || {}) };
         hourlyData[hour] = output;
 
         // Recalculate total output
@@ -182,15 +187,15 @@ export const useDigitalFormEntries = (formId: string, initialEntries: DigitalFor
     );
   }, []);
 
-  // Update attendance status for an entry
+  //  Update attendance status for an entry
   const updateAttendanceStatus = useCallback(
     (entryId: string, status: AttendanceStatus) => {
-      updateEntry(entryId, {attendanceStatus: status});
+      updateEntry(entryId, { attendanceStatus: status });
     },
     [updateEntry],
   );
 
-  // Add an issue to an entry
+  //  Add an issue to an entry
   const addIssue = useCallback(
     (
       entryId: string,
@@ -219,7 +224,7 @@ export const useDigitalFormEntries = (formId: string, initialEntries: DigitalFor
     [],
   );
 
-  // Remove an issue from an entry
+  //Remove an issue from an entry
   const removeIssue = useCallback((entryId: string, issueIndex: number) => {
     setEntries(prev =>
       prev.map(entry => {
@@ -258,7 +263,7 @@ export const useDigitalFormEntries = (formId: string, initialEntries: DigitalFor
       };
     }
 
-    return {valid: true, message: ''};
+    return { valid: true, message: '' };
   }, [entries]);
 
   // Reset all data

@@ -1,37 +1,40 @@
-"use client"
+'use client';
 
-import * as React from "react"
-import { format, parseISO, isValid } from "date-fns"
-import { CalendarIcon } from "lucide-react"
+import * as React from 'react';
 
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import {format, parseISO, isValid} from 'date-fns';
+
+import {CalendarIcon} from 'lucide-react';
+
+import {Button} from '@/components/ui/button';
+import {Calendar} from '@/components/ui/calendar';
+import {Popover, PopoverContent, PopoverTrigger} from '@/components/ui/popover';
+
+import {cn} from '@/lib/utils';
 
 interface DatePickerProps {
-  value?: Date | string | null
-  onChange?: (date: Date | null) => void
-  placeholder?: string
-  className?: string
-  id?: string
-  disabled?: boolean
-  label?: string
-  required?: boolean
-  error?: string
-  minDate?: Date
-  maxDate?: Date
-  readOnly?: boolean
-  name?: string
-  onBlur?: () => void
-  ["aria-invalid"]?: boolean
-  ["aria-describedby"]?: string
+  value?: Date | string | null;
+  onChange?: (date: Date | null) => void;
+  placeholder?: string;
+  className?: string;
+  id?: string;
+  disabled?: boolean;
+  label?: string;
+  required?: boolean;
+  error?: string;
+  minDate?: Date;
+  maxDate?: Date;
+  readOnly?: boolean;
+  name?: string;
+  onBlur?: () => void;
+  ['aria-invalid']?: boolean;
+  ['aria-describedby']?: string;
 }
 
 export function DatePickerComponent({
   value,
   onChange,
-  placeholder = "Select date",
+  placeholder = 'Select date',
   className,
   id,
   disabled = false,
@@ -43,40 +46,40 @@ export function DatePickerComponent({
   readOnly = false,
   name,
   onBlur,
-  ["aria-invalid"]: ariaInvalid,
-  ["aria-describedby"]: ariaDescribedBy,
+  ['aria-invalid']: ariaInvalid,
+  ['aria-describedby']: ariaDescribedBy,
 }: DatePickerProps) {
-  const [open, setOpen] = React.useState(false)
+  const [open, setOpen] = React.useState(false);
 
-  // Convert value to Date object, handling string and Date inputs
+  Convert value to Date object, handling string and Date inputs
   const parseDate = (val: Date | string | null | undefined): Date | null => {
-    if (!val) return null
+    if (!val) return null;
 
-    // If already a Date object and valid
+    If already a Date object and valid
     if (val instanceof Date && !isNaN(val.getTime())) {
-      return val
+      return val;
     }
 
-    // If string, try to parse
+    If string, try to parse
     if (typeof val === 'string') {
       try {
-        const parsedDate = parseISO(val)
-        return isValid(parsedDate) ? parsedDate : null
+        const parsedDate = parseISO(val);
+        return isValid(parsedDate) ? parsedDate : null;
       } catch {
-        return null
+        return null;
       }
     }
 
-    return null
-  }
+    return null;
+  };
 
-  const dateValue = parseDate(value)
+  const dateValue = parseDate(value);
 
   const handleSelect = (date: Date | undefined) => {
-    if (readOnly) return
-    onChange?.(date || null)
-    setOpen(false) // Close the popover after selection
-  }
+    if (readOnly) return;
+    onChange?.(date || null);
+    setOpen(false); // Close the popover after selection
+  };
 
   return (
     <div className="flex flex-col gap-1">
@@ -91,12 +94,12 @@ export function DatePickerComponent({
           <Button
             id={id}
             name={name}
-            variant={"outline"}
+            variant={'outline'}
             className={cn(
-              "w-full justify-start text-left font-normal",
-              !dateValue && "text-muted-foreground",
-              disabled && "opacity-50 cursor-not-allowed",
-              error && "border-red-500",
+              'w-full justify-start text-left font-normal',
+              !dateValue && 'text-muted-foreground',
+              disabled && 'opacity-50 cursor-not-allowed',
+              error && 'border-red-500',
               className,
             )}
             disabled={disabled || readOnly}
@@ -105,7 +108,7 @@ export function DatePickerComponent({
             aria-describedby={ariaDescribedBy}
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
-            {dateValue ? format(dateValue, "PP") : <span>{placeholder}</span>}
+            {dateValue ? format(dateValue, 'PP') : <span>{placeholder}</span>}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
@@ -122,8 +125,8 @@ export function DatePickerComponent({
       </Popover>
       {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
     </div>
-  )
+  );
 }
 
-// For backward compatibility with any code using DatePickerDemo
-export const DatePicker = DatePickerComponent
+For backward compatibility with any code using DatePickerDemo
+export const DatePicker = DatePickerComponent;

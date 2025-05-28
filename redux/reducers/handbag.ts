@@ -1,8 +1,4 @@
-import {
-  FETCH_PO_HANDBAG,
-  FETCH_PO_HANDBAG_FAILURE,
-  FETCH_PO_HANDBAG_SUCCESS,
-} from "../actions";
+import { FETCH_PO_HANDBAG, FETCH_PO_HANDBAG_FAILURE, FETCH_PO_HANDBAG_SUCCESS } from '../actions';
 
 interface HandbagState {
   loading: boolean;
@@ -37,7 +33,7 @@ const initialState: HandbagState = {
 
 export const handbagReducer = (
   state: HandbagState = initialState,
-  action: THandbagActions
+  action: THandbagActions,
 ): HandbagState => {
   switch (action.type) {
     case FETCH_PO_HANDBAG:

@@ -1,87 +1,110 @@
-import { RecordStatus, ShiftType } from './digital-form';
-import { BagColor, BagProcess, HandBag } from '../interface/handbag';
-import { UserItemType } from '../interface/user';
+// src/types/worker.ts
 
-export enum AttendanceStatus {
-  PRESENT = 'PRESENT',
-  ABSENT = 'ABSENT',
-  LATE = 'LATE',
-  EARLY_LEAVE = 'EARLY_LEAVE',
-  LEAVE_APPROVED = 'LEAVE_APPROVED',
-}
+import { AttendanceStatus, ProductionIssue } from './digital-form';
 
-export enum ProductionIssueType {
-  ABSENT = 'ABSENT',
-  LATE = 'LATE',
-  WAITING_MATERIALS = 'WAITING_MATERIALS',
-  QUALITY_ISSUES = 'QUALITY_ISSUES',
-  LOST_MATERIALS = 'LOST_MATERIALS',
-  OTHER = 'OTHER',
-}
-
-export interface ProductionIssue {
-  type: ProductionIssueType;
-  hour: number;
-  impact: number; // percentage impact 0-100
-  description?: string;
-}
-
-export interface TimeSlot {
-  id: string;
-  start: string;
-  end: string;
-  label: string;
-}
-
-// Bag metadata that can change per time slot
-export interface BagMetadata {
-  bagId: string;
-  bagName: string;
-  processId: string;
-  processName: string;
-  colorId: string;
-  colorName: string;
-}
-
+/**
+ * Worker interface representing a factory worker in the system
+ */
 export interface Worker {
   id: string;
-  name: string;
-  employeeId: string;
-  bagId: string;
-  bagName: string;
-  processId: string;
-  processName: string;
-  colorId: string;
-  colorName: string;
-  attendanceStatus: AttendanceStatus;
-  attendanceNote: string;
-  shiftType: ShiftType;
-  hourlyData: Record<string, number>;
-
-  // Maps time slots to bag metadata
-  hourlyBagData?: Record<string, BagMetadata>;
-  totalOutput: number;
-  issues: ProductionIssue[];
-  qualityScore: number;
-  user?: UserItemType;
-  handBag?: HandBag;
-  process?: BagProcess;
-  bagColor?: BagColor;
+  employeeId: string; // Employee ID/code in the company system
+  fullName: string;
+  status?: 'ACTIVE' | 'INACTIVE' | 'ON_LEAVE';
+  groupId?: string;
+  groupName?: string;
+  teamId?: string;
+  teamName?: string;
+  lineId?: string;
+  lineName?: string;
+  factoryId?: string;
+  factoryName?: string;
+  position?: string;
+  phone?: string;
+  email?: string;
+  avatar?: string;
+  joinDate?: string;
+  birthDate?: string;
+  
+  // Additional fields when worker is associated with form entry
+  entryId?: string;
+  bagId?: string;
+  bagName?: string;
+  processId?: string;
+  processName?: string;
+  colorId?: string;
+  colorName?: string;
+  attendanceStatus?: AttendanceStatus;
+  totalOutput?: number;
+  hourlyData?: Record<string, number>;
+  plannedOutput?: number;
+  qualityScore?: number;
+  efficiency?: number; // Calculated as percentage of target
 }
 
-export interface FormData {
+/**
+ * WorkerProductionData interface for tracking daily production stats
+ */
+export interface WorkerProductionData {
+  id: string; // Entry ID
+  name: string; // Worker name
+  employeeId: string; // Worker employee ID
+  bagId: string; // HandBag ID
+  bagName: string; // HandBag name
+  processId: string; // Production process ID
+  processName: string; // Production process name
+  colorId: string; // Bag color ID
+  colorName: string; // Bag color name
+  attendanceStatus: AttendanceStatus;
+  hourlyData: Record<string, number>; // Map hour intervals to output count
+  totalOutput: number; // Total output for the day
+  issues: ProductionIssue[]; // Any issues encountered
+  qualityScore: number; // Quality rating 0-100
+  plannedOutput?: number; // Target output for the day
+}
+
+/**
+ * TimeSlot interface representing a time slot for production
+ */
+export interface TimeSlot {
+  start: string; // "07:30"
+  end: string; // "08:30"
+  label: string; // "07:30-08:30"
+  isBreak?: boolean; // Whether this is a break time
+}
+
+export interface WorkerGroup {
   id: string;
-  formCode: string;
-  formName: string;
-  date: string;
-  factoryId: string;
-  factoryName: string;
-  lineId: string;
-  lineName: string;
+  name: string;
+  code: string;
   teamId: string;
-  teamName: string;
-  groupId: string;
-  groupName: string;
-  status: RecordStatus;
-  workers: Worker[];
+  teamName?: string;
+  workerCount?: number;
+}
+
+export interface Team {
+  id: string;
+  name: string;
+  code: string;
+  lineId: string;
+  lineName?: string;
+  groupCount?: number;
+  workerCount?: number;
+}
+
+export interface Line {
+  id: string;
+  name: string;
+  code: string;
+  factoryId: string;
+  factoryName?: string;
+  teamCount?: number;
+  workerCount?: number;
+}
+
+export interface Factory {
+  id: string;
+  name: string;
+  code: string;
+  lineCount?: number;
+  workerCount?: number;
 }

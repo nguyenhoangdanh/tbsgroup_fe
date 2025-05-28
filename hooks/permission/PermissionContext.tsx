@@ -9,11 +9,11 @@ import {
   PermissionDTO,
   UpdatePermissionDTO,
 } from '@/common/types/permission';
-import { useAuthContext } from '@/contexts/auth/AuthProvider';
 import { usePermissionMutations } from '@/hooks/permission/usePermissionMutations';
 import { usePermissionQueries } from '@/hooks/permission/usePermissionQueries';
+import { useAuthManager } from '../auth/useAuthManager';
 
-// Define wrapper type for user permissions response
+//Define wrapper type for user permissions response
 type UserPermissionsResponseWrapper = {
   success: boolean;
   data: {
@@ -24,9 +24,8 @@ type UserPermissionsResponseWrapper = {
   };
 };
 
-// Define context type
+//Define context type
 interface PermissionContextType {
-  // State
   userPermissions: {
     permissions: PermissionDTO[];
     pageAccess: string[];
@@ -50,7 +49,7 @@ interface PermissionContextType {
   assignPermissionsToRole: (roleId: string, permissionIds: string[]) => Promise<boolean>;
   removePermissionsFromRole: (roleId: string, permissionIds: string[]) => Promise<boolean>;
 
-  // Refetch operations
+  //Refetch operations
   refetchUserPermissions: (
     options?: RefetchOptions,
   ) => Promise<QueryObserverResult<UserPermissionsResponseWrapper, Error>>;
@@ -60,17 +59,16 @@ interface PermissionContextType {
   hasAllPermissions: (codes: string[]) => boolean;
 }
 
-// Create the Permission context
+//Create the Permission context
 const PermissionContext = createContext<PermissionContextType | undefined>(undefined);
 
-// Permission Provider component
+//Permission Provider component
 export const PermissionProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user } = useAuthContext();
+  const { user } = useAuthManager();
   const userId = user?.id;
 
   // Get queries and mutations
-  const { getUserPermissions, checkUserHasPermission, getClientAccessPermissions, showErrorToast } =
-    usePermissionQueries();
+  const { getUserPermissions, getClientAccessPermissions, showErrorToast } = usePermissionQueries();
 
   const {
     createPermissionMutation,
@@ -109,15 +107,13 @@ export const PermissionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   }, [userPermissionsError, showErrorToast]);
 
   // Get client access permissions (for navigation)
-  const {
-    data: clientAccessData,
-    isLoading: isLoadingClientAccess,
-    error: clientAccessError,
-  } = getClientAccessPermissions({
-    enabled: !!userId,
-    refetchOnWindowFocus: false,
-    staleTime: 5 * 60 * 1000,
-  });
+  const { isLoading: isLoadingClientAccess, error: clientAccessError } = getClientAccessPermissions(
+    {
+      enabled: !!userId,
+      refetchOnWindowFocus: false,
+      staleTime: 5 * 60 * 1000,
+    },
+  );
 
   // Show error toast if client access fetch fails
   useEffect(() => {
@@ -300,7 +296,7 @@ export const PermissionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   return <PermissionContext.Provider value={contextValue}>{children}</PermissionContext.Provider>;
 };
 
-// Hook to use the Permission context
+//Hook to use the Permission context
 export const usePermissionContext = (): PermissionContextType => {
   const context = useContext(PermissionContext);
   if (context === undefined) {
