@@ -1,4 +1,5 @@
 import { UserStatusEnum } from '../enum';
+import { RoleType } from './role';
 
 // Base user interface matching backend User model
 export interface UserType {
@@ -19,7 +20,7 @@ export interface UserType {
   groupId?: string;
   positionId?: string;
   roleId?: string;
-  role?: string; // Role code from backend
+  role?: RoleType;
   passwordResetToken?: string;
   passwordResetExpiry?: Date;
   lastLogin?: Date;

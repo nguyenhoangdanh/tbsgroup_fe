@@ -21,7 +21,7 @@ interface FormActionsProps {
   submitButtonClass?: string;
 }
 
-const FormActions: React.FC<FormActionsProps> = ({
+export const FormActions: React.FC<FormActionsProps> = ({
   isSubmitting,
   isReadOnly = false,
   isEdit = false,
@@ -70,5 +70,3 @@ const FormActions: React.FC<FormActionsProps> = ({
     </div>
   );
 };
-
-export default FormActions;

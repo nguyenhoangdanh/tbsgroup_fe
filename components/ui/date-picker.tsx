@@ -51,16 +51,16 @@ export function DatePickerComponent({
 }: DatePickerProps) {
   const [open, setOpen] = React.useState(false);
 
-  Convert value to Date object, handling string and Date inputs
+  //Convert value to Date object, handling string and Date inputs
   const parseDate = (val: Date | string | null | undefined): Date | null => {
     if (!val) return null;
 
-    If already a Date object and valid
+   // If already a Date object and valid
     if (val instanceof Date && !isNaN(val.getTime())) {
       return val;
     }
 
-    If string, try to parse
+   // If string, try to parse
     if (typeof val === 'string') {
       try {
         const parsedDate = parseISO(val);
@@ -128,5 +128,5 @@ export function DatePickerComponent({
   );
 }
 
-For backward compatibility with any code using DatePickerDemo
+//For backward compatibility with any code using DatePickerDemo
 export const DatePicker = DatePickerComponent;

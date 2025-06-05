@@ -18,6 +18,9 @@ export interface User {
   role: string;
   roleId: string;
   avatar: string;
+  lastLogin: string | null; // ISO string for serialization
+  passwordResetToken: string | null; // Token for password reset
+  passwordResetExpiry: string | null; // ISO string for expiry
 }
 
 // Updated AuthState type with all possible status values
@@ -43,6 +46,13 @@ export interface AuthState {
     | 'session_expired'
     | null;
   error: string | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  resetPasswordData: ApiResponse<{
+    resetToken?: string;
+    username: string;
+    message: string;
+  }> | null;
 }
 
 // Update LoginCredentials in auth.ts

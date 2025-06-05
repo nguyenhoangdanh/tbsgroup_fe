@@ -5,6 +5,8 @@ import {
   verifyAccountRequest,
   refreshTokenRequest,
   updateUserRequest,
+  requestPasswordResetRequest,
+  resetPasswordRequest,
 } from '../slices/authSlice';
 import { AppDispatch } from '../store';
 import type {
@@ -12,6 +14,8 @@ import type {
   RegisterCredentials,
   VerifyRegistration,
   User,
+  RequestResetParams,
+  ResetPasswordParams,
 } from '../types/auth';
 
 /**
@@ -96,6 +100,20 @@ export const updateUser = (userData: Partial<User>) => (dispatch: AppDispatch) =
 };
 
 /**
+ * Request password reset with employee ID and card ID
+ */
+export const requestPasswordReset = (params: RequestResetParams) => (dispatch: AppDispatch) => {
+  dispatch(requestPasswordResetRequest(params));
+};
+
+/**
+ * Reset password with token or username
+ */
+export const resetPassword = (params: ResetPasswordParams) => (dispatch: AppDispatch) => {
+  dispatch(resetPasswordRequest(params));
+};
+
+/**
  * Send magic link for passwordless authentication
  */
 export const sendMagicLink = (email: string) => ({
@@ -125,7 +143,7 @@ export const forgotPassword = (email: string) => ({
  * @param password New password
  * @param securityData Additional security information
  */
-export const resetPassword = (token: string, password: string, securityData?: any) => ({
+export const resetPasswordOld = (token: string, password: string, securityData?: any) => ({
   type: 'RESET_PASSWORD_REQUEST',
   payload: {
     token,

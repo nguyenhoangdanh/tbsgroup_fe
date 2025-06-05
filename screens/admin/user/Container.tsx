@@ -1,18 +1,29 @@
 'use client';
 
-import { ColumnDef } from '@tanstack/react-table';
 import React, { useState, useCallback, useEffect, useRef } from 'react';
+import {
+  DataTable,
+  BaseTableData,
+  TableColumn,
+  PaginationConfig,
+  SortConfig,
+  FilterConfig,
+  ActionConfig,
+  DialogConfig,
+  TableThemeConfig
+} from 'react-table-power';
 
 import UserForm from './_components/UserForm';
+import { UserTableColumns } from './_components/UserTableColumns';
 
 import { UserStatusEnum } from '@/common/enum';
 import { UserType } from '@/common/interface/user';
-import { DataTable } from '@/components/common/table/data-table';
 import { Badge } from '@/components/ui/badge';
 import { DialogType, useDialog } from '@/contexts/DialogProvider';
 import { useRoleContext } from '@/hooks/roles/roleContext';
 import { useUserContext } from '@/hooks/users/userContext';
 import { TUserSchema } from '@/schemas/user';
+import { useTheme } from 'next-themes';
 
 const UserContainer = () => {
   // Sử dụng context
@@ -28,6 +39,8 @@ const UserContainer = () => {
     resetError,
     updatePagination,
   } = useUserContext();
+
+  const { theme } = useTheme();
 
   // Lấy context của role để có thể hiển thị danh sách role trong form
   const { getAllRoles } = useRoleContext();
@@ -50,6 +63,13 @@ const UserContainer = () => {
     currentPage: 1,
     pageSize: activeFilters.limit || 10,
   });
+
+  // State cho sorting và filtering
+  const [currentSorting, setCurrentSorting] = useState<SortConfig[]>([
+    { field: 'createdAt', direction: 'desc' }
+  ]);
+
+  const [currentFilters, setCurrentFilters] = useState<Record<string, any>>({});
 
   // Thêm effect để cập nhật dialog khi selectedUser thay đổi
   useEffect(() => {
@@ -98,32 +118,24 @@ const UserContainer = () => {
     }, 300);
   }, [refetchUsers]);
 
-  // Thêm hàm xử lý thay đổi trang/limit được tối ưu
+  // Xử lý thay đổi trang/limit được tối ưu
   const handlePageChange = useCallback(
-    (pageIndex: number, pageSize: number) => {
-      // pageIndex từ TanStack Table bắt đầu từ 0, API bắt đầu từ 1
-      const apiPage = pageIndex + 1;
-
+    (page: number, pageSize: number) => {
       // Nếu không thay đổi, không cần trigger API call
-      if (paginationMeta.currentPage === apiPage && paginationMeta.pageSize === pageSize) {
+      if (paginationMeta.currentPage === page && paginationMeta.pageSize === pageSize) {
         return;
       }
 
       // Cập nhật trong context
-      updatePagination(apiPage, pageSize);
+      updatePagination(page, pageSize);
 
       // Kích hoạt refetch sau khi cập nhật state
       setTimeout(() => {
         safeRefetch();
       }, 0);
     },
-    [updatePagination, safeRefetch, paginationMeta.currentPage, paginationMeta.pageSize],
+    [updatePagination, safeRefetch, paginationMeta],
   );
-
-  // Reset user data với useCallback để tránh re-render không cần thiết
-  // const resetUserData = useCallback(() => {
-  //   setSelectedUser(null);
-  // }, [setSelectedUser]);
 
   // Chuẩn bị danh sách roles để truyền vào form
   const roleOptions = React.useMemo(() => {
@@ -199,16 +211,46 @@ const UserContainer = () => {
 
   // Xử lý khi chọn edit user
   const handleEditUser = useCallback(
-    async (user: UserType): Promise<boolean> => {
+    (user: UserType): void => {
       setSelectedUser(user);
       showDialog({
         type: DialogType.EDIT,
         data: user,
       });
-      return true;
     },
     [setSelectedUser, showDialog],
   );
+
+  // Xử lý khi chọn xem user
+  const handleViewUser = useCallback(
+    (user: UserType): void => {
+      setSelectedUser(user);
+      showDialog({
+        type: DialogType.VIEW,
+        data: user,
+      });
+    },
+    [setSelectedUser, showDialog],
+  );
+
+  // Xử lý khi sort thay đổi
+  const handleSortChange = useCallback((sorting: SortConfig[]) => {
+    setCurrentSorting(sorting);
+  }, []);
+
+  // Xử lý khi filter thay đổi
+  const handleFilterChange = useCallback((filters: Record<string, any>) => {
+    setCurrentFilters(filters);
+    // Cập nhật filters vào context nếu cần
+  }, []);
+
+  // Xử lý create user
+  const handleCreateUserAction = useCallback(() => {
+    showDialog({
+      type: DialogType.CREATE,
+      data: null,
+    });
+  }, [showDialog]);
 
   // Đảm bảo cleanup khi unmount
   useEffect(() => {
@@ -227,79 +269,109 @@ const UserContainer = () => {
     };
   }, [setSelectedUser, resetError]);
 
-  // Define table columns
-  const columns: ColumnDef<UserType>[] = [
-    {
-      id: 'fullName',
-      header: 'Tên người dùng',
-      cell: ({ row }) => {
-        const user = row.original;
-        return (
-          <div className="flex items-center gap-2">
-            <div className="font-medium">{user.fullName}</div>
-          </div>
-        );
+  // Chuyển đổi columns từ ColumnDef sang TableColumn
+  const tableColumns: TableColumn<UserType>[] = React.useMemo(() => {
+    return [
+      {
+        accessorKey: 'fullName',
+        header: 'Tên người dùng',
+        cell: ({ row }) => {
+          const user = row;
+          return (
+            <div className="flex items-center gap-2">
+              <div className="font-medium">{user.fullName}</div>
+            </div>
+          );
+        },
       },
-      accessorKey: 'fullName',
-    },
-    {
-      id: 'username',
-      header: 'Tên đăng nhập',
-      cell: ({ row }) => row.original.username,
-      accessorKey: 'username',
-    },
-    {
-      id: 'role',
-      header: 'Vai trò',
-      cell: ({ row }) => {
-        const role = row.original.role;
-        return role.name;
+      {
+        accessorKey: 'username',
+        header: 'Tên đăng nhập',
+        enableSorting: true,
       },
-      accessorKey: 'role',
-    },
-    {
-      id: 'status',
-      header: 'Trạng thái',
-      cell: ({ row }) => {
-        const status = row.original.status;
-        return (
-          <Badge
-            className={
-              status === 'ACTIVE'
-                ? 'bg-green-100 text-green-800 border-green-200'
+      {
+        accessorKey: 'role',
+        header: 'Vai trò',
+        cell: ({ row }) => {
+          return row.role?.code || 'Chưa có vai trò';
+        },
+      },
+      {
+        accessorKey: 'status',
+        header: 'Trạng thái',
+        filterType: 'select',
+        filterOptions: [
+          { label: 'Hoạt động', value: 'ACTIVE' },
+          { label: 'Không hoạt động', value: 'INACTIVE' },
+          { label: 'Chờ duyệt', value: 'PENDING_ACTIVATION' },
+        ],
+        cell: ({ row }) => {
+          const status = row.status;
+          return (
+            <Badge
+              className={
+                status === 'ACTIVE'
+                  ? 'bg-green-100 text-green-800 border-green-200'
+                  : status === 'INACTIVE'
+                    ? 'bg-red-500 text-white dark:text-gray-900 border-red-200'
+                    : 'bg-gray-100 border-yellow-200 text-gray-900 dark:text-gray-800'
+              }
+            >
+              {status === 'ACTIVE'
+                ? 'Hoạt động'
                 : status === 'INACTIVE'
-                  ? 'bg-red-500 text-white dark:text-gray-900 border-red-200'
-                  : 'bg-gray-100  border-yellow-200 text-gray-900 dark:text-gray-800'
-            }
-          >
-            {status === 'ACTIVE'
-              ? 'Hoạt động'
-              : status === 'INACTIVE'
-                ? 'Không hoạt động'
-                : 'Chờ duyệt'}
-          </Badge>
-        );
+                  ? 'Không hoạt động'
+                  : 'Chờ duyệt'}
+            </Badge>
+          );
+        },
       },
-      accessorKey: 'status',
+      {
+        accessorKey: 'lastLogin',
+        header: 'Đăng nhập cuối',
+        cell: ({ row }) => {
+          const lastLogin = row.lastLogin;
+          if (!lastLogin) return 'Chưa đăng nhập';
+          return new Date(lastLogin).toLocaleString('vi-VN');
+        },
+      },
+      {
+        accessorKey: 'createdAt',
+        header: 'Ngày tạo',
+        cell: ({ row }) => {
+          return new Date(row.createdAt).toLocaleString('vi-VN');
+        },
+        enableSorting: true,
+      },
+    ];
+  }, []);
+
+  // Định nghĩa filter configs
+  const filterConfigs: FilterConfig[] = [
+    {
+      key: 'status',
+      label: 'Trạng thái',
+      type: 'select',
+      options: [
+        { label: 'Hoạt động', value: 'ACTIVE' },
+        { label: 'Không hoạt động', value: 'INACTIVE' },
+        { label: 'Chờ duyệt', value: 'PENDING_ACTIVATION' },
+      ],
     },
     {
-      id: 'lastLogin',
-      header: 'Đăng nhập cuối',
-      cell: ({ row }) => {
-        const lastLogin = row.original.lastLogin;
-        if (!lastLogin) return 'Chưa đăng nhập';
-        return new Date(lastLogin).toLocaleString('vi-VN');
-      },
-    },
-    {
-      id: 'createdAt',
-      header: 'Ngày tạo',
-      cell: ({ row }) => {
-        return new Date(row.original.createdAt).toLocaleString('vi-VN');
-      },
-      accessorKey: 'createdAt',
+      key: 'roleId',
+      label: 'Vai trò',
+      type: 'select',
+      options: roleOptions,
     },
   ];
+
+  // Cấu hình dialog
+  const dialogConfig: DialogConfig = {
+    closeOnClickOutside: true,
+    closeOnEsc: true,
+    width: '600px',
+  };
 
   const users = usersData?.data || [];
   const isLoading = loading || isLoadingUsers || isRefetching;
@@ -316,36 +388,74 @@ const UserContainer = () => {
     }
   }, [usersData]);
 
-  const initialPageIndex = Math.max(0, (paginationMeta.currentPage || 1) - 1);
+  // Cấu hình phân trang
+  const paginationConfig: PaginationConfig = {
+    current: paginationMeta.currentPage,
+    pageSize: paginationMeta.pageSize,
+    total: paginationMeta.totalItems,
+    pageSizeOptions: [10, 20, 50, 100],
+    showSizeChanger: true,
+    showQuickJumper: true,
+    showTotal: (total, range) => `Hiển thị ${range[0]}-${range[1]} trong ${total} người dùng`,
+  };
 
-  console.log('UserContainer rendered with users:', users);
+  // Cấu hình global search
+  const globalSearchConfig = {
+    enabled: true,
+    placeholder: 'Tìm kiếm tên, email, số điện thoại...',
+    fields: ['fullName', 'username', 'email', 'phone'],
+  };
+
+  const themConfig: TableThemeConfig = {
+    theme: theme || 'light',
+    header: {
+      backgroundColor: 'bg-gray-100 dark:bg-gray-800',
+      textColor: 'text-gray-900 dark:text-gray-100',
+    },
+    row: {
+      hoverBackgroundColor: 'hover:bg-gray-50 dark:hover:bg-gray-700',
+      selectedBackgroundColor: 'bg-blue-50 dark:bg-blue-800',
+    },
+  };
 
   return (
     <div className="space-y-6">
-      <DataTable
-        columns={columns}
+      <DataTable<UserType>
         data={users}
+        columns={tableColumns}
         title="Danh sách người dùng"
-        pagination={{
-          pageIndex: initialPageIndex,
-          pageSize: paginationMeta.pageSize,
-        }}
-        manualPagination={true}
-        pageCount={paginationMeta.totalPages}
-        onPaginationChange={({ pageIndex, pageSize }) => {
-          handlePageChange(pageIndex, pageSize);
-        }}
-        onRowEdit={handleEditUser}
-        onRowDelete={handleUserDelete}
-        enableRowActions={true}
-        searchable={true}
-        filterable={true}
-      />
-
-      <UserForm
-        onSubmit={handleUserFormSubmit}
-        roleOptions={roleOptions}
+        description="Quản lý tất cả người dùng trong hệ thống"
         loading={isLoading}
+        pagination={paginationConfig}
+        sorting={currentSorting}
+        filters={filterConfigs}
+        globalSearch={globalSearchConfig}
+        theme={themConfig}
+        builtInActions={{
+          create: true,
+          edit: true,
+          view: true,
+          delete: true,
+          tooltips: true,
+          createFormComponent: (props) => <UserForm {...props} roles={roleOptions} />,
+          editFormComponent: (props) => <UserForm {...props} roles={roleOptions} />,
+          viewFormComponent: (props) => <UserForm {...props} roles={roleOptions} isReadOnly={true} />,
+        }}
+        dialog={dialogConfig}
+        size="medium"
+        striped
+        hover
+        responsive
+        eventHandlers={{
+          onCreate: handleUserFormSubmit,
+          onUpdate: handleUserFormSubmit,
+          onDelete: handleUserDelete,
+          onRefresh: safeRefetch,
+          onSortChange: handleSortChange,
+          onFilterChange: handleFilterChange,
+          onPageChange: (page) => handlePageChange(page, paginationMeta.pageSize),
+          onPageSizeChange: (size) => handlePageChange(paginationMeta.currentPage, size),
+        }}
       />
     </div>
   );

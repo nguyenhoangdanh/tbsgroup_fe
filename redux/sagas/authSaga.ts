@@ -46,7 +46,7 @@ const selectExpiresAt = (state: RootState) => state.auth.expiresAt;
 /**
  * Login saga that handles user authentication
  */
-function* loginSaga(action: PayloadAction<LoginCredentials>) {
+function* loginSaga(action: PayloadAction<LoginCredentials>): Generator {
   try {
     const response: ApiResponse<AuthResponse> = yield call(
       authService.login.bind(authService),
@@ -54,25 +54,68 @@ function* loginSaga(action: PayloadAction<LoginCredentials>) {
     );
 
     if (response.success && response.data) {
-      // Token is stored in localStorage by the auth service
+      // Token is stored in cookies by the auth service
 
       // Record login time for security monitoring
       yield call(authService.recordLoginTime);
 
-      // Update Redux state
-      yield put(
-        loginSuccess({
-          user: response.data.user,
-          accessToken: response.data.token,
-          expiresAt: new Date(Date.now() + response.data.expiresIn * 1000).toISOString(),
-          requiredResetPassword: response.data.user.status === 'PENDING_ACTIVATION',
-        }),
-      );
+      // Fetch session data to get user info
+      const sessionResponse = yield call(fetchSessionData);
+      
+      if (sessionResponse.success && sessionResponse.data.status === 'authenticated') {
+        // Update Redux state with user info from session
+        yield put(
+          loginSuccess({
+            user: sessionResponse.data.user,
+            accessToken: 'cookie-managed', // Just a placeholder, real token is in HTTP-only cookie
+            expiresAt: sessionResponse.data.expiresAt || new Date(Date.now() + 3600 * 1000).toISOString(),
+            requiredResetPassword: sessionResponse.data.user?.status === 'PENDING_ACTIVATION',
+          }),
+        );
+      } else {
+        // If session fetch failed but login succeeded, use data from login response
+        yield put(
+          loginSuccess({
+            user: response.data.user,
+            accessToken: 'cookie-managed', 
+            expiresAt: new Date(Date.now() + response.data.expiresIn * 1000).toISOString(),
+            requiredResetPassword: response.data.user?.status === 'PENDING_ACTIVATION',
+          }),
+        );
+      }
     } else {
       yield put(loginFailure(response.error || 'Đăng nhập thất bại'));
     }
   } catch (error: any) {
     yield put(loginFailure((error.message as string) || 'Đã xảy ra lỗi không mong muốn'));
+  }
+}
+
+/**
+ * Fetch current session data from server
+ */
+function* fetchSessionData(): Generator<any, any, any> {
+  try {
+    // Call the new API endpoint to get current session
+    const response = yield call(fetch, '/api/auth/session', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache',
+      },
+      credentials: 'same-origin',
+    });
+
+    if (!response.ok) {
+      console.error('Session fetch failed:', response.status);
+      return { success: false, error: `HTTP error! status: ${response.status}` };
+    }
+
+    const data = yield response.json();
+    return { success: true, data };
+  } catch (error) {
+    console.error('Error fetching session:', error);
+    return { success: false, error: 'Failed to fetch session data' };
   }
 }
 
@@ -190,12 +233,25 @@ function* refreshTokenSaga() {
     );
 
     if (response.success && response.data) {
-      yield put(
-        refreshTokenSuccess({
-          accessToken: response.data.token,
-          expiresAt: new Date(Date.now() + response.data.expiresIn * 1000).toISOString(),
-        }),
-      );
+      // Fetch updated session data after token refresh
+      const sessionResponse = yield call(fetchSessionData);
+      
+      if (sessionResponse.success && sessionResponse.data.status === 'authenticated') {
+        yield put(
+          refreshTokenSuccess({
+            accessToken: 'cookie-managed', // Placeholder, token managed by cookie
+            expiresAt: sessionResponse.data.expiresAt || new Date(Date.now() + 3600 * 1000).toISOString(),
+          }),
+        );
+      } else {
+        // Fallback if session fetch fails
+        yield put(
+          refreshTokenSuccess({
+            accessToken: 'cookie-managed',
+            expiresAt: new Date(Date.now() + response.data.expiresIn * 1000).toISOString(),
+          }),
+        );
+      }
 
       return true;
     } else {
@@ -292,97 +348,70 @@ function* getTimeUntilExpiry() {
 /**
  * Saga to refresh token before it expires with improved throttling
  */
+
 function* refreshTokenWatcher(): Generator {
   let lastRefreshTime = Date.now();
-  const MIN_REFRESH_INTERVAL = 10 * 60 * 1000; // 10 phút tối thiểu giữa các lần làm mới
+  const MIN_REFRESH_INTERVAL = 10 * 60 * 1000; // 10 phút tối thiểu
 
   while (true) {
     try {
       const timeUntilExpiry: number = yield call(getTimeUntilExpiry);
-
+      const authState = yield select(selectAuth);
+      
+      // Thoát nếu người dùng không còn xác thực
+      if (authState.status !== 'authenticated') {
+        console.log('Người dùng không còn được xác thực, dừng chu kỳ làm mới');
+        break;
+      }
+      
       // Không làm mới nếu còn quá nhiều thời gian (> 45 phút)
       if (timeUntilExpiry > 45 * 60 * 1000) {
-        // Đợi và kiểm tra lại sau 30 phút
+        // Đợi và kiểm tra lại sau một thời gian dài hơn
         const { logout } = yield race({
-          timeout: delay(30 * 60 * 1000),
+          timeout: delay(30 * 60 * 1000), // Chờ 30 phút
           logout: take(logoutRequest.type),
         });
-
-        if (logout) {
-          console.log('Người dùng đã đăng xuất, dừng chu kỳ làm mới');
-          break;
-        }
-
-        continue; // Bỏ qua phần còn lại của vòng lặp và kiểm tra lại
+        
+        if (logout) break;
+        continue;
       }
-
-      // Cải thiện thời gian làm mới token - nhắm đến 80% thời gian sống
-      // Nhưng đảm bảo khoảng thời gian tối thiểu giữa các lần làm mới
+      
+      // Kiểm tra khoảng cách giữa các lần làm mới
       const now = Date.now();
       const timeSinceLastRefresh = now - lastRefreshTime;
-
+      
       if (timeSinceLastRefresh < MIN_REFRESH_INTERVAL) {
-        console.log(
-          `Bỏ qua làm mới token, lần làm mới cuối cách đây ${Math.floor(timeSinceLastRefresh / 1000 / 60)} phút`,
-        );
-
-        // Đợi cho đến khi có thể làm mới lại
         const waitTime = MIN_REFRESH_INTERVAL - timeSinceLastRefresh;
-
         const { logout } = yield race({
           timeout: delay(waitTime),
           logout: take(logoutRequest.type),
         });
-
-        if (logout) {
-          console.log('Người dùng đã đăng xuất, dừng chu kỳ làm mới');
-          break;
-        }
-
+        
+        if (logout) break;
         continue;
       }
-
-      // Tính toán thời gian làm mới với jitter để trải đều các yêu cầu làm mới
-      const refreshTime = Math.min(timeUntilExpiry * 0.8, 30 * 60 * 1000); // tối đa 30 phút
-      const jitter = Math.random() * 60000; // Độ trễ ngẫu nhiên lên đến 1 phút
-
-      console.log(`Token sẽ được làm mới sau ${(refreshTime - jitter) / 1000 / 60} phút`);
-
-      const { logout } = yield race({
-        timeout: delay(refreshTime - jitter),
-        logout: take(logoutRequest.type),
-      });
-
-      if (logout) {
-        console.log('Người dùng đã đăng xuất, dừng chu kỳ làm mới');
-        break;
-      }
-
-      // Ghi lại thời gian thử ngay cả trước khi chúng tôi gửi
+      
+      // Ghi lại thời gian làm mới trước khi thực hiện
       lastRefreshTime = Date.now();
-
-      // Yêu cầu làm mới
+      
+      // Thực hiện làm mới token
       yield put(refreshTokenRequest());
       const refreshed: boolean = yield call(refreshTokenSaga);
-
+      
+      // Nếu làm mới thất bại, đợi một thời gian trước khi thử lại
       if (!refreshed) {
-        console.log('Làm mới token thất bại');
-
-        // Thêm độ trễ trước khi thử lại để tránh thử lại nhanh chóng
-        yield delay(5 * 60 * 1000); // 5 phút độ trễ khi thất bại
-
-        // Kiểm tra xem người dùng đã đăng xuất trong thời gian chờ chưa
-        const authState = yield select(selectAuth);
-        if (authState.status !== 'authenticated') {
-          console.log('Người dùng không còn được xác thực, dừng chu kỳ làm mới');
-          break;
-        }
+        yield delay(5 * 60 * 1000); // Đợi 5 phút
+      } else {
+        // Nếu thành công, đợi một lượng thời gian phù hợp trước lần làm mới tiếp theo
+        const refreshTimeWithBuffer = Math.max(
+          timeUntilExpiry * 0.8,
+          MIN_REFRESH_INTERVAL
+        );
+        yield delay(refreshTimeWithBuffer);
       }
     } catch (error) {
       console.error('Lỗi watcher làm mới token:', error);
-
-      // Thêm độ trễ trước khi thử lại vòng lặp watcher khi có lỗi
-      yield delay(10 * 60 * 1000); // 10 phút độ trễ khi có lỗi
+      yield delay(10 * 60 * 1000); // Đợi 10 phút khi có lỗi
     }
   }
 }
@@ -401,39 +430,34 @@ function* initAuthSaga(): Generator {
       return;
     }
 
-    // Kiểm tra token trong localStorage trước khi gọi API
-    const token: string | null = yield call(authService.getStoredToken.bind(authService));
-
-    // Nếu không có token, không cần gọi API /auth/me
-    if (!token) {
-      console.log('Không có token khả dụng, bỏ qua khởi tạo xác thực');
-      yield put(logoutSuccess());
-      return;
-    }
-
-    // Chỉ gọi API để lấy thông tin người dùng hiện tại nếu token tồn tại
-    const response: ApiResponse<User> = yield call(authService.getCurrentUser.bind(authService));
-
-    if (response.success && response.data) {
-      const expiresAtStr = localStorage.getItem('tokenExpiresAt');
-      const expiresAt = expiresAtStr
-        ? new Date(expiresAtStr).toISOString()
-        : new Date(Date.now() + 3600 * 1000).toISOString();
-
-      yield put(
-        loginSuccess({
-          user: response.data,
-          accessToken: token,
-          expiresAt,
-          requiredResetPassword: response.data.status === 'PENDING_ACTIVATION',
-        }),
-      );
-
-      // Bắt đầu chu kỳ làm mới token
-      yield fork(refreshTokenWatcher);
+    console.log('Initializing auth state from session API');
+    
+    // Get session data from server
+    const sessionResponse = yield call(fetchSessionData);
+    
+    if (sessionResponse.success) {
+      const { status, user, expiresAt } = sessionResponse.data;
+      
+      if (status === 'authenticated' && user) {
+        console.log('Session authenticated, setting user state');
+        
+        yield put(
+          loginSuccess({
+            user,
+            accessToken: 'cookie-managed', // Placeholder since actual token is in HTTP-only cookie
+            expiresAt: expiresAt || new Date(Date.now() + 3600 * 1000).toISOString(),
+            requiredResetPassword: user.status === 'PENDING_ACTIVATION',
+          }),
+        );
+        
+        // Start token refresh cycle
+        yield fork(refreshTokenWatcher);
+      } else {
+        console.log('Session not authenticated');
+        yield put(logoutSuccess());
+      }
     } else {
-      // Xóa bất kỳ token hiện có
-      yield call(authService.clearStoredToken.bind(authService));
+      console.log('Failed to fetch session data, logging out');
       yield put(logoutSuccess());
     }
   } catch (error) {
@@ -461,6 +485,48 @@ function* initAuthSaga(): Generator {
 }
 
 /**
+ * Force auth check after store hydration
+ */
+function* forceAuthCheckSaga(): Generator {
+  try {
+    console.log('Forcing auth check via session API');
+    
+    // Get session data from server
+    const sessionResponse = yield call(fetchSessionData);
+    
+    if (sessionResponse.success) {
+      const { status, user, expiresAt } = sessionResponse.data;
+      
+      if (status === 'authenticated' && user) {
+        console.log('Session is authenticated, updating user state');
+        
+        yield put(
+          loginSuccess({
+            user,
+            accessToken: 'cookie-managed', // Placeholder since actual token is in HTTP-only cookie
+            expiresAt: expiresAt || new Date(Date.now() + 3600 * 1000).toISOString(),
+            requiredResetPassword: user.status === 'PENDING_ACTIVATION',
+          }),
+        );
+        
+        // Start token refresh cycle
+        yield fork(refreshTokenWatcher);
+      } else {
+        console.log('Session not authenticated, logging out');
+        yield put(logoutSuccess());
+      }
+    } else {
+      console.log('Failed to fetch session data, logging out');
+      yield put(logoutSuccess());
+    }
+  } catch (error) {
+    console.error('Error during forced auth check:', error);
+    yield call(authService.clearStoredToken.bind(authService));
+    yield put(logoutSuccess());
+  }
+}
+
+/**
  * Handle the auth initialization action
  */
 function* handleAuthInit() {
@@ -474,7 +540,8 @@ export function* authSaga() {
   yield all([
     // Khi ứng dụng bắt đầu, theo dõi hành động khởi tạo
     takeLatest('AUTH_INIT', handleAuthInit),
-
+    // Theo dõi kiểm tra xác thực bắt buộc (sau khi hoàn thành hydration)
+    takeLatest('AUTH_FORCE_CHECK', forceAuthCheckSaga),
     // Theo dõi hành động xác thực
     takeLatest(loginRequest.type, loginSaga),
     takeLatest(registerRequest.type, registerSaga),

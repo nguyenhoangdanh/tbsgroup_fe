@@ -8,9 +8,9 @@ import { toast } from 'react-toast-kit';
 import { z } from 'zod';
 
 import { BatchCreateBagGroupRateDTO } from '@/apis/group/bagGroupRate/bag-group-rate.api';
-import { FieldCombobox } from '@/components/common/Form/FieldCombobox';
-import { FieldInput } from '@/components/common/Form/FieldInput';
-import { FieldTextarea } from '@/components/common/Form/FieldTextarea';
+import { FieldCombobox } from '@/components/common/fields/FieldCombobox';
+import { FieldInput } from '@/components/common/fields/FieldInput';
+import { FieldTextarea } from '@/components/common/fields/FieldTextarea';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Form } from '@/components/ui/form';

@@ -1,5 +1,6 @@
 // lib/api/api.ts - Fixed version with better error parsing
 import { ApiResponse, ApiConfig, Logger, ConsoleLogger } from './types';
+import Cookies from 'js-cookie';
 
 /**
  * Enhanced API configuration with environment-specific settings
@@ -470,14 +471,23 @@ export const createApiClient = (config: Partial<ApiConfig> = {}) => {
     hasValidToken: (): boolean => {
       if (typeof window === 'undefined') return false;
 
-      const token = localStorage.getItem('auth-token');
-      const expiresAtStr = localStorage.getItem('tokenExpiresAt');
+      // Kiểm tra accessToken trong cookie thay vì localStorage
+      const token = Cookies.get('accessToken');
 
-      if (!token || !expiresAtStr) return false;
+      // Kiểm tra token-expires-at trong cookie nếu có
+      const expiresAtStr = Cookies.get('token-expires-at');
 
-      // Check if token has expired
-      const expiresAt = new Date(expiresAtStr);
-      return expiresAt > new Date();
+      if (!token) return false;
+
+      // Nếu có thời gian hết hạn, kiểm tra xem token có còn hợp lệ không
+      if (expiresAtStr) {
+        const expiresAt = new Date(expiresAtStr);
+        return expiresAt > new Date();
+      }
+
+      // Nếu không có thông tin về thời gian hết hạn nhưng có token,
+      // chúng ta giả định token còn hợp lệ (backend sẽ từ chối nếu không hợp lệ)
+      return true;
     },
 
     /**

@@ -16,6 +16,7 @@ interface ClientToastProviderProps {
   rightOffset?: number;
   enableAccessibleAnnouncements?: boolean;
   enableDevMode?: boolean;
+  defaultDuration?: number;
 }
 
 export function ClientToastProvider({
@@ -30,7 +31,8 @@ export function ClientToastProvider({
   leftOffset,
   rightOffset,
   enableAccessibleAnnouncements =false,
-  enableDevMode = false
+  enableDevMode = false,
+  defaultDuration = 3000, // Default duration for toasts
 }: ClientToastProviderProps) {
   return (
     <ToastProvider
@@ -46,6 +48,7 @@ export function ClientToastProvider({
       enableAccessibleAnnouncements={enableAccessibleAnnouncements}
       enableDevMode={enableDevMode}
       suppressHydrationWarning={true}
+      defaultDuration={defaultDuration}
     >
       {children}
     </ToastProvider>

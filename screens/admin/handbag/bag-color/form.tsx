@@ -5,11 +5,11 @@ import React, { useState, useCallback, memo, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
-import { FieldCheckbox } from '@/components/common/Form/FieldCheckbox';
-import { FieldInput } from '@/components/common/Form/FieldInput';
-import { FieldSelect } from '@/components/common/Form/FieldSelect';
-import { FieldTextarea } from '@/components/common/Form/FieldTextarea';
-import FormActions from '@/components/common/Form/FormAction';
+import { FieldCheckbox } from '@/components/common/fields/FieldCheckbox';
+import { FieldInput } from '@/components/common/fields/FieldInput';
+import { FieldSelect } from '@/components/common/fields/FieldSelect';
+import { FieldTextarea } from '@/components/common/fields/FieldTextarea';
+import FormActions from '@/components/common/fields/FormActions';
 import { Form } from '@/components/ui/form';
 import { useDialog } from '@/contexts/DialogProvider';
 

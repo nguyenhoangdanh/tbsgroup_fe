@@ -4,13 +4,19 @@ import React, { useState, useEffect } from 'react';
 import { Matcher } from 'react-day-picker';
 import { Controller, FieldValues, Control, Path } from 'react-hook-form';
 
-import StyledRangeCalendar from './StyledRangeCalendar';
+import {  StyledRangeCalendar }  from './StyledRangeCalendar';
 import { TimeRangePicker } from './TimeRangePicker';
 
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
+
+// Interface for the date-time range value
+export interface DateTimeRange {
+  startDateTime: Date;
+  endDateTime: Date;
+}
 
 interface FieldRangeDateTimePickerProps<T extends FieldValues> {
   name: Path<T>;
@@ -24,13 +30,14 @@ interface FieldRangeDateTimePickerProps<T extends FieldValues> {
   maxDate?: Date;
   allowSameDateTime?: boolean;
   accentColor?: string;
+  description?: string;
 }
 
 export const FieldRangeDateTimePicker = <T extends FieldValues>({
   name,
   label,
   control,
-  // placeholder = 'Chọn ngày và giờ',
+  placeholder = 'Chọn ngày và giờ',
   className,
   disabled = false,
   required = false,
@@ -38,12 +45,13 @@ export const FieldRangeDateTimePicker = <T extends FieldValues>({
   maxDate,
   allowSameDateTime = false,
   accentColor = '#0284c7',
+  description,
 }: FieldRangeDateTimePickerProps<T>) => {
   const [dateOpen, setDateOpen] = useState(false);
   const [timeOpen, setTimeOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
-  //Responsive handler
+  // Responsive handler
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth <= 768);
@@ -67,14 +75,19 @@ export const FieldRangeDateTimePicker = <T extends FieldValues>({
       name={name}
       render={({ field, fieldState: { error } }) => {
         // Ensure field value exists with default dates
-        const currentValue = field.value || {
+        const currentValue = field.value as DateTimeRange || {
           startDateTime: dayjs().toDate(),
           endDateTime: dayjs().add(1, 'day').toDate(), // Default to next day
         };
 
-        // Convert to dayjs for easier manipulation
-        const startDate = dayjs(currentValue.startDateTime);
-        const endDate = dayjs(currentValue.endDateTime);
+        // Create safe references to the date objects
+        const startDate = currentValue?.startDateTime 
+          ? dayjs(currentValue.startDateTime) 
+          : dayjs();
+        
+        const endDate = currentValue?.endDateTime 
+          ? dayjs(currentValue.endDateTime) 
+          : dayjs().add(1, 'day');
 
         // Create disabled date matcher
         const disabledDates: Matcher[] = [];
@@ -85,15 +98,19 @@ export const FieldRangeDateTimePicker = <T extends FieldValues>({
           disabledDates.push({ after: maxDate });
         }
 
-        //  Handle date selection - FIXED VERSION
+        // Handle date selection - FIXED VERSION
         const handleDateSelect = (range?: { from?: Date; to?: Date }) => {
-          //   If no date selected, do nothing
+          // If no date selected, do nothing
           if (!range || !range.from) return;
 
-          //  Start with the existing value to avoid any issues
-          const updatedValue = { ...currentValue };
+          // Start with the existing value or create new one
+          const updatedValue: DateTimeRange = { ...currentValue };
+          
+          // Ensure we have valid dates to start with
+          if (!updatedValue.startDateTime) updatedValue.startDateTime = new Date();
+          if (!updatedValue.endDateTime) updatedValue.endDateTime = new Date();
 
-          //  Update start date preserving the time part
+          // Update start date preserving the time part
           updatedValue.startDateTime = new Date(
             range.from.getFullYear(),
             range.from.getMonth(),
@@ -115,14 +132,14 @@ export const FieldRangeDateTimePicker = <T extends FieldValues>({
 
           // Don't auto-close if the user only selected the start date
           if (range.from && !range.to) {
-            //   Keep popover open to allow selecting the end date
+            // Keep popover open to allow selecting the end date
           } else {
-            //    Close the popover since both dates are selected
+            // Close the popover since both dates are selected
             setDateOpen(false);
           }
 
           // Update the field value
-          field.onChange(updatedValue);
+          field.onChange(updatedValue as any);
         };
 
         // Handle time range selection
@@ -133,8 +150,14 @@ export const FieldRangeDateTimePicker = <T extends FieldValues>({
           endMinutes: number,
         ) => {
           // Create copies of the current dates
-          const start = new Date(currentValue.startDateTime);
-          const end = new Date(currentValue.endDateTime);
+          const updatedValue: DateTimeRange = { ...currentValue };
+          
+          // Ensure we have valid dates
+          if (!updatedValue.startDateTime) updatedValue.startDateTime = new Date();
+          if (!updatedValue.endDateTime) updatedValue.endDateTime = new Date();
+          
+          const start = new Date(updatedValue.startDateTime);
+          const end = new Date(updatedValue.endDateTime);
 
           // Update hours and minutes
           start.setHours(startHours);
@@ -143,17 +166,18 @@ export const FieldRangeDateTimePicker = <T extends FieldValues>({
           end.setHours(endHours);
           end.setMinutes(endMinutes);
 
-          //  Update the field value
-          field.onChange({
-            startDateTime: start,
-            endDateTime: end,
-          });
+          // Update the field value
+          updatedValue.startDateTime = start;
+          updatedValue.endDateTime = end;
+          field.onChange(updatedValue as any);
 
           setTimeOpen(false);
         };
 
-        //  Validate time range
+        // Validate time range
         const isValidDateTime = () => {
+          if (!currentValue?.startDateTime || !currentValue?.endDateTime) return true;
+          
           const start = new Date(currentValue.startDateTime);
           const end = new Date(currentValue.endDateTime);
 
@@ -170,10 +194,14 @@ export const FieldRangeDateTimePicker = <T extends FieldValues>({
               {label}
               {required && <span className="text-red-500">*</span>}
             </Label>
+            
+            {description && (
+              <p className="text-sm text-muted-foreground -mt-1 mb-1">{description}</p>
+            )}
 
             <div className="flex gap-2">
               {/* Date Selection */}
-              <Popover open={dateOpen} onOpenChange={setDateOpen}>
+              <Popover open={dateOpen} onOpenChange={disabled ? undefined : setDateOpen}>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
@@ -186,7 +214,11 @@ export const FieldRangeDateTimePicker = <T extends FieldValues>({
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {`${startDate.format('DD/MM/YYYY')} - ${endDate.format('DD/MM/YYYY')}`}
+                    {currentValue?.startDateTime && currentValue?.endDateTime ? (
+                      `${startDate.format('DD/MM/YYYY')} - ${endDate.format('DD/MM/YYYY')}`
+                    ) : (
+                      <span>{placeholder}</span>
+                    )}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent
@@ -196,8 +228,8 @@ export const FieldRangeDateTimePicker = <T extends FieldValues>({
                 >
                   <StyledRangeCalendar
                     selected={{
-                      from: startDate.toDate(),
-                      to: endDate.toDate(),
+                      from: currentValue?.startDateTime || undefined,
+                      to: currentValue?.endDateTime || undefined,
                     }}
                     onSelect={handleDateSelect}
                     disabled={disabledDates}
@@ -210,7 +242,7 @@ export const FieldRangeDateTimePicker = <T extends FieldValues>({
               </Popover>
 
               {/* Time Selection */}
-              <Popover open={timeOpen} onOpenChange={setTimeOpen}>
+              <Popover open={timeOpen} onOpenChange={disabled ? undefined : setTimeOpen}>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
@@ -223,7 +255,11 @@ export const FieldRangeDateTimePicker = <T extends FieldValues>({
                     )}
                   >
                     <ClockIcon className="mr-2 h-4 w-4" />
-                    {`${startDate.format('HH:mm')} - ${endDate.format('HH:mm')}`}
+                    {currentValue?.startDateTime && currentValue?.endDateTime ? (
+                      `${startDate.format('HH:mm')} - ${endDate.format('HH:mm')}`
+                    ) : (
+                      <span>Chọn giờ</span>
+                    )}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start" side="bottom">
@@ -254,3 +290,5 @@ export const FieldRangeDateTimePicker = <T extends FieldValues>({
     />
   );
 };
+
+export default FieldRangeDateTimePicker;

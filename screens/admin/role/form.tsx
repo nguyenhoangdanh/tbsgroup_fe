@@ -4,10 +4,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import React, { useState, useCallback, memo } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { FieldCheckbox } from '@/components/common/Form/FieldCheckbox';
-import { FieldInput } from '@/components/common/Form/FieldInput';
-import { FieldTextarea } from '@/components/common/Form/FieldTextarea';
-import FormActions from '@/components/common/Form/FormAction';
+import { FieldCheckbox } from '@/components/common/fields/FieldCheckbox';
+import { FieldInput } from '@/components/common/fields/FieldInput';
+import { FieldTextarea } from '@/components/common/fields/FieldTextarea';
+import FormActions from '@/components/common/fields/FormActions';
 import { Form } from '@/components/ui/form';
 import { useDialog } from '@/contexts/DialogProvider';
 import { TRoleSchema, roleSchema, defaultRoleValues } from '@/schemas/role';

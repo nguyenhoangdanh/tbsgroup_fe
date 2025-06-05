@@ -9,7 +9,7 @@ import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { useRouter } from 'next/navigation';
 
 import { UserStatusEnum } from '@/common/enum';
-import { FieldInput } from '@/components/common/Form/FieldInput';
+import { FieldInput } from '@/components/common/fields/FieldInput';
 import { toast } from 'react-toast-kit';
 import SubmitButton from '@/components/SubmitButton';
 import { defaultResetPasswordValues, resetPasswordSchema, ResetPasswordType } from '@/schemas/auth';
@@ -59,7 +59,7 @@ const ResetPasswordForm = () => {
     else if (verified && data.password && data.confirmPassword) {
       try {
         // Build reset params based on available data
-        const resetParams = resetPasswordData?.data?.resetToken
+        const resetParams = resetPasswordData?.data?.resetToken && !isAuthenticated
           ? {
             resetToken: resetPasswordData.data.resetToken,
             password: data.password,
@@ -70,7 +70,7 @@ const ResetPasswordForm = () => {
             password: data.password,
             confirmPassword: data.confirmPassword,
           };
-        
+        console.log('Reset params:', resetParams);
         await resetPassword(resetParams);
 
         toast({
@@ -139,6 +139,8 @@ const ResetPasswordForm = () => {
       methods.setValue('confirmPassword', '');
     }
   }, [user, isAuthenticated, methods]);
+
+  console.log('user', user, 'isAuthenticated', isAuthenticated, 'resetPasswordData', resetPasswordData);
 
   // Handle errors
   React.useEffect(() => {

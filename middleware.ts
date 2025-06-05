@@ -120,65 +120,49 @@ function validateCSRFToken(request: NextRequest): boolean {
 
 /**
  * Enhanced token validation with better error handling
+ * Chỉ kiểm tra tính hợp lệ của token trên server - không cố truy cập token từ cookie
  */
 async function validateToken(
   request: NextRequest,
-): Promise<{ isValid: boolean; shouldRefresh: boolean }> {
+): Promise<{ isValid: boolean; shouldRefresh: boolean; userData?: any }> {
   const token = request.cookies.get('accessToken')?.value;
+
+  // Ghi log để debug (có thể bỏ đi sau khi hoàn tất)
+  console.log(`[Middleware] Kiểm tra token: ${token ? 'Có' : 'Không'}`);
 
   if (!token) {
     return { isValid: false, shouldRefresh: false };
   }
 
   try {
-    // For development, we can do basic JWT validation
-    if (!config.production) {
-      // Simple expiry check (assuming JWT format)
-      const parts = token.split('.');
-      if (parts.length === 3) {
-        try {
-          const payload = JSON.parse(atob(parts[1]));
-          const exp = payload.exp * 1000; // Convert to milliseconds
-          const now = Date.now();
-
-          if (exp < now) {
-            return { isValid: false, shouldRefresh: true };
-          }
-
-          // Check if token expires in next 5 minutes
-          const fiveMinutes = 5 * 60 * 1000;
-          if (exp - now < fiveMinutes) {
-            return { isValid: true, shouldRefresh: true };
-          }
-
-          return { isValid: true, shouldRefresh: false };
-        } catch (e) {
-          return { isValid: false, shouldRefresh: false };
-        }
-      }
-    }
-
-    // For production, make a request to verify token
-    const verifyResponse = await fetch(`${config.apiBaseUrl}/auth/verify`, {
+    // QUAN TRỌNG: Gọi API endpoint từ server để xác thực token
+    // Endpoint này sẽ trả về thông tin người dùng nếu token hợp lệ
+    const verifyResponse = await fetch(`${config.apiBaseUrl}/users/profile`, {
       method: 'GET',
       headers: {
+        // Gửi cookie token để xác thực
         Cookie: `accessToken=${token}`,
         'Cache-Control': 'no-cache',
       },
+      credentials: 'include',
       signal: AbortSignal.timeout(3000), // 3 second timeout
     });
 
     if (verifyResponse.ok) {
-      return { isValid: true, shouldRefresh: false };
+      // Nếu token hợp lệ, lấy thông tin người dùng để truyền cho client-side
+      const userData = await verifyResponse.json();
+      return { isValid: true, shouldRefresh: false, userData };
     } else if (verifyResponse.status === 401) {
+      // Token không hợp lệ hoặc hết hạn
+      console.log('[Middleware] Token không hợp lệ hoặc hết hạn');
       return { isValid: false, shouldRefresh: true };
     }
 
     return { isValid: false, shouldRefresh: false };
   } catch (error) {
-    console.error('Token validation error:', error);
-    // If validation fails due to network issues, assume token is valid
-    // to avoid blocking user unnecessarily
+    console.error('[Middleware] Lỗi khi xác thực token:', error);
+    // Nếu lỗi do mạng, tạm thời để người dùng truy cập
+    // Lưu ý: Trong môi trường production, có thể xem xét chiến lược khác
     return { isValid: true, shouldRefresh: false };
   }
 }
@@ -210,6 +194,7 @@ export async function middleware(request: NextRequest) {
     return new NextResponse('CSRF token mismatch', { status: 403 });
   }
 
+  // Tạo response ban đầu
   let response = NextResponse.next();
 
   // Skip auth check for public routes
@@ -224,7 +209,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Check authentication for protected routes
-  const { isValid, shouldRefresh } = await validateToken(request);
+  const { isValid, shouldRefresh, userData } = await validateToken(request);
 
   if (!isValid) {
     // Redirect to login with return URL
@@ -240,6 +225,16 @@ export async function middleware(request: NextRequest) {
   // If token should be refreshed, add header to indicate this to the client
   if (shouldRefresh) {
     response.headers.set('X-Token-Refresh-Required', 'true');
+  }
+
+  // Quan trọng: Nếu token hợp lệ và có thông tin người dùng,
+  // thêm thông tin người dùng vào header để client-side có thể sử dụng
+  if (userData) {
+    // Chỉ thêm thông tin không nhạy cảm vào header
+    response.headers.set('X-Auth-Status', 'authenticated');
+    
+    // Thông tin người dùng sẽ được lấy thông qua API /api/auth/session
+    // để tránh vượt quá giới hạn kích thước header
   }
 
   // Add security headers

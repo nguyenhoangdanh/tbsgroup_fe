@@ -1,6 +1,5 @@
 import { Metadata } from 'next';
 import Script from 'next/script';
-import { Suspense } from 'react';
 
 import RootLayoutWrapper from '@/components/common/layouts/admin/RootLayoutWrapper';
 import { LoadingProvider } from '@/components/common/loading/LoadingProvider';
@@ -145,19 +144,19 @@ export default function RootLayout({
         <SecurityScript />
         <AnalyticsScript />
 
-        <Suspense fallback={<AppLoadingFallback />}>
+        {/* <Suspense fallback={<AppLoadingFallback />}> */}
           <ClientToastProvider>
             <MainProviders>
               <RootLayoutWrapper>
                 <LoadingProvider>
-                  <Suspense fallback={<AppLoadingFallback />}>
+                  {/* <Suspense fallback={<AppLoadingFallback />}> */}
                     {children}
-                  </Suspense>
+                  {/* </Suspense> */}
                 </LoadingProvider>
               </RootLayoutWrapper>
             </MainProviders>
           </ClientToastProvider>
-        </Suspense>
+        {/* </Suspense> */}
 
         {isDevelopment && (
           <Script

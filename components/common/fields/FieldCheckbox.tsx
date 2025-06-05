@@ -1,7 +1,6 @@
-import clsx from 'clsx';
 import { Controller, FieldValues, Control, Path } from 'react-hook-form';
-
 import { Checkbox } from '@/components/ui/checkbox';
+import { cn } from '@/lib/utils';
 
 interface FieldCheckboxProps<T extends FieldValues> {
   name: Path<T>;
@@ -11,6 +10,8 @@ interface FieldCheckboxProps<T extends FieldValues> {
   className?: string;
   disabled?: boolean;
   required?: boolean;
+  indeterminate?: boolean;
+  onIndeterminateChange?: (indeterminate: boolean) => void;
 }
 
 export const FieldCheckbox = <T extends FieldValues>({
@@ -21,6 +22,8 @@ export const FieldCheckbox = <T extends FieldValues>({
   className,
   disabled = false,
   required = false,
+  indeterminate = false,
+  onIndeterminateChange,
 }: FieldCheckboxProps<T>) => {
   return (
     <Controller
@@ -29,7 +32,7 @@ export const FieldCheckbox = <T extends FieldValues>({
       render={({ field, fieldState: { error } }) => {
         return (
           <div
-            className={clsx(
+            className={cn(
               'flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4',
               className,
             )}
@@ -39,12 +42,22 @@ export const FieldCheckbox = <T extends FieldValues>({
               checked={field.value}
               onCheckedChange={field.onChange}
               disabled={disabled}
-              className={clsx(error ? 'border-red-500' : 'border-gray-300')}
+              className={cn(error ? 'border-red-500' : 'border-gray-300')}
+              aria-invalid={!!error}
+              aria-describedby={error ? `${name}-error` : undefined}
+              ref={(ref) => {
+                if (ref) {
+                  // Apply indeterminate state
+                  if ('indeterminate' in ref) {
+                    (ref as HTMLInputElement).indeterminate = indeterminate;
+                  }
+                }
+              }}
             />
             <div className="space-y-1 leading-none">
               <label
                 htmlFor={name}
-                className={clsx(
+                className={cn(
                   'font-medium cursor-pointer',
                   disabled && 'cursor-not-allowed opacity-70',
                 )}
@@ -53,7 +66,7 @@ export const FieldCheckbox = <T extends FieldValues>({
                 {required && <span className="text-red-500">*</span>}
               </label>
               {description && <p className="text-sm text-muted-foreground">{description}</p>}
-              {error?.message && <p className="text-sm text-red-500">{error.message}</p>}
+              {error?.message && <p className="text-sm text-red-500" id={`${name}-error`}>{error.message}</p>}
             </div>
           </div>
         );
@@ -61,3 +74,5 @@ export const FieldCheckbox = <T extends FieldValues>({
     />
   );
 };
+
+export default FieldCheckbox;

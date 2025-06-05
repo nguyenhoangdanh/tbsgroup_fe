@@ -16,7 +16,7 @@ interface StyledRangeCalendarProps {
   accentColor?: string;
 }
 
-const StyledRangeCalendar: React.FC<StyledRangeCalendarProps> = ({
+export const StyledRangeCalendar: React.FC<StyledRangeCalendarProps> = ({
   selected,
   onSelect,
   disabled,
@@ -25,12 +25,7 @@ const StyledRangeCalendar: React.FC<StyledRangeCalendarProps> = ({
   className,
   accentColor = '#0284c7', // Default to darker blue for better contrast
 }) => {
-  // Log selected value to debug
-  useEffect(() => {
-    console.log('Calendar selected value:', selected);
-  }, [selected]);
-
-  // Tính toán các màu phụ thuộc từ màu accent
+  // Generate colors based on accent color
   const generateColors = React.useMemo(() => {
     // Convert hex to rgba for hover states
     const hexToRgba = (hex: string, alpha: number) => {
@@ -48,7 +43,7 @@ const StyledRangeCalendar: React.FC<StyledRangeCalendarProps> = ({
     };
   }, [accentColor]);
 
-  //  CSS variables cho theming
+  //  CSS variables for theming
   const styles = React.useMemo(
     () =>
       ({
@@ -60,20 +55,12 @@ const StyledRangeCalendar: React.FC<StyledRangeCalendarProps> = ({
     [generateColors],
   );
 
-  // Custom handler for selection to ensure correct behavior
-  const handleSelect = (range: DateRange | undefined) => {
-    console.log('Calendar range selected:', range);
-    if (onSelect) {
-      onSelect(range);
-    }
-  };
-
   return (
     <div className={cn('high-contrast-calendar rounded-lg', className)} style={styles}>
       <Calendar
         mode="range"
         selected={selected}
-        onSelect={handleSelect}
+        onSelect={onSelect}
         disabled={disabled}
         initialFocus={initialFocus}
         numberOfMonths={numberOfMonths}
@@ -174,5 +161,3 @@ const StyledRangeCalendar: React.FC<StyledRangeCalendarProps> = ({
     </div>
   );
 };
-
-export default StyledRangeCalendar;

@@ -31,6 +31,7 @@ export const TimeRangePicker: React.FC<TimeRangeProps> = ({
   className,
   label = 'Chọn khoảng thời gian',
   allowSameTime = false,
+  disabled = false,
 }) => {
   const [startHours, setStartHours] = useState(initialStartHours);
   const [startMinutes, setStartMinutes] = useState(initialStartMinutes);
@@ -108,10 +109,9 @@ export const TimeRangePicker: React.FC<TimeRangeProps> = ({
       }
     };
 
-  // Render time display or input
+  // Render time display or input based on edit mode
   const renderTimeDisplay = (
-    hours: number,
-    minutes: number,
+    value: number,
     type: 'start-hours' | 'start-minutes' | 'end-hours' | 'end-minutes',
   ) => {
     const isEditing = editMode === type;
@@ -123,9 +123,9 @@ export const TimeRangePicker: React.FC<TimeRangeProps> = ({
           type="number"
           inputMode="numeric" // Optimize for numeric input on mobile
           pattern="[0-9]*" // Improve numeric keyboard on iOS
-          min={type.includes('hours') ? '0' : undefined}
-          max={type.includes('hours') ? '23' : '59'}
-          value={hours.toString().padStart(2, '0')}
+          min={type.includes('hours') ? 0 : 0}
+          max={type.includes('hours') ? 23 : 59}
+          value={value.toString()}
           onChange={createInputChangeHandler(
             type,
             type === 'start-hours'
@@ -144,16 +144,20 @@ export const TimeRangePicker: React.FC<TimeRangeProps> = ({
             }
           }}
           className="w-16 text-center text-2xl h-12 appearance-none [-moz-appearance:_textfield] [&::-webkit-inner-spin-button]:m-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:m-0 [&::-webkit-outer-spin-button]:appearance-none"
+          disabled={disabled}
         />
       );
     }
 
     return (
       <div
-        className="text-2xl font-bold w-12 text-center cursor-pointer select-none"
-        onClick={() => setEditMode(type)}
+        className={cn(
+          "text-2xl font-bold w-12 text-center select-none",
+          !disabled && "cursor-pointer"
+        )}
+        onClick={() => !disabled && setEditMode(type)}
       >
-        {hours.toString().padStart(2, '0')}
+        {value.toString().padStart(2, '0')}
       </div>
     );
   };
@@ -162,6 +166,7 @@ export const TimeRangePicker: React.FC<TimeRangeProps> = ({
   const renderTimeColumn = (hours: number, minutes: number, type: 'start' | 'end') => (
     <div className="flex flex-col items-center">
       <Button
+        type="button"
         variant="ghost"
         size="icon"
         onClick={() =>
@@ -175,17 +180,19 @@ export const TimeRangePicker: React.FC<TimeRangeProps> = ({
           )
         }
         className="mb-2 active:bg-gray-200 dark:active:bg-gray-700 touch-manipulation"
+        disabled={disabled}
       >
         <ChevronUp className="h-4 w-4" />
       </Button>
 
       <div className="flex items-center">
-        {renderTimeDisplay(hours, minutes, `${type}-hours`)}
+        {renderTimeDisplay(hours, `${type}-hours` as 'start-hours' | 'end-hours')}
         <span className="text-xl mx-1">:</span>
-        {renderTimeDisplay(minutes, hours, `${type}-minutes`)}
+        {renderTimeDisplay(minutes, `${type}-minutes` as 'start-minutes' | 'end-minutes')}
       </div>
 
       <Button
+        type="button"
         variant="ghost"
         size="icon"
         onClick={() =>
@@ -199,6 +206,7 @@ export const TimeRangePicker: React.FC<TimeRangeProps> = ({
           )
         }
         className="mt-2 active:bg-gray-200 dark:active:bg-gray-700 touch-manipulation"
+        disabled={disabled}
       >
         <ChevronDown className="h-4 w-4" />
       </Button>
@@ -210,7 +218,8 @@ export const TimeRangePicker: React.FC<TimeRangeProps> = ({
     if (isValidTimeRange()) {
       onSelect(startHours, startMinutes, endHours, endMinutes);
     } else {
-      alert('Thời gian kết thúc phải sau thời gian bắt đầu');
+      // Just show error UI instead of alert for better UX
+      // alert('Thời gian kết thúc phải sau thời gian bắt đầu');
     }
   };
 
@@ -246,8 +255,9 @@ export const TimeRangePicker: React.FC<TimeRangeProps> = ({
       {/* Select Button */}
       <div className="mt-4 flex justify-end">
         <Button
+          type="button"
           onClick={handleSelect}
-          disabled={!isValidTimeRange()}
+          disabled={!isValidTimeRange() || disabled}
           className="w-full active:bg-primary/90 touch-manipulation"
         >
           Chọn khoảng thời gian

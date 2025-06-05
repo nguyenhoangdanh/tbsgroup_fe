@@ -6,7 +6,11 @@ import { useForm } from 'react-hook-form';
 
 import { PermissionType } from '@/common/enum';
 import { PermissionDTO } from '@/common/types/permission';
-import UnifiedFormField from '@/components/common/Form/custom/UnifiedFormField';
+import FormController from '@/components/common/fields/FormController';
+import { FieldInput } from '@/components/common/fields/FieldInput';
+import { FieldSelect } from '@/components/common/fields/FieldSelect';
+import { FieldTextarea } from '@/components/common/fields/FieldTextarea';
+import { FieldCheckbox } from '@/components/common/fields/FieldCheckbox';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -38,7 +42,6 @@ export function PermissionFormContent({
   onClose, 
   type 
 }: DialogChildrenProps<PermissionDTO>) {
-  console.log("PermissionFormContent rendering with data:", data);
   const { createPermission, updatePermission } = usePermissionContext();
   const isEditing = type === DialogType.EDIT || !!data?.id;
   
@@ -77,7 +80,7 @@ export function PermissionFormContent({
   }, [data, isEditing, form]);
 
   const handleFormSubmit = useCallback(
-    form.handleSubmit(async formData => {
+    async (formData: CreatePermissionFormData | UpdatePermissionFormData) => {
       try {
         if (isEditing && data?.id) {
           await updatePermission(data.id, formData as UpdatePermissionFormData);
@@ -94,8 +97,8 @@ export function PermissionFormContent({
         console.error('Error submitting permission form:', error);
         throw error;
       }
-    }),
-    [form, isEditing, data, updatePermission, createPermission, onSubmit],
+    },
+    [isEditing, data, updatePermission, createPermission, onSubmit],
   );
 
   const permissionTypeOptions = useMemo(
@@ -109,63 +112,59 @@ export function PermissionFormContent({
 
   return (
     <div className="space-y-4 p-2">
-      <form onSubmit={handleFormSubmit} className="grid gap-4 py-2">
-        <UnifiedFormField
+      <FormController methods={form} onSubmit={handleFormSubmit}>
+        <FieldInput
+          control={form.control}
           name="code"
           label="Mã quyền"
-          control={form.control}
-          type="text"
           placeholder="Nhập mã quyền"
-          disabled={isEditing}
+          disabled={isEditing || isSubmitting}
           required
-        />
-        <UnifiedFormField
-          name="name"
-          label="Tên quyền"
-          control={form.control}
-          type="text"
-          placeholder="Nhập tên quyền"
-          required
-        />
-        <UnifiedFormField
-          name="description"
-          label="Mô tả"
-          control={form.control}
-          type="textarea"
-          placeholder="Nhập mô tả (tùy chọn)"
-        />
-        <UnifiedFormField
-          name="type"
-          label="Loại quyền"
-          control={form.control}
-          type="select"
-          options={permissionTypeOptions}
-          placeholder="Chọn loại quyền"
-        />
-        <UnifiedFormField
-          name="module"
-          label="Module"
-          control={form.control}
-          type="text"
-          placeholder="Nhập module (tùy chọn)"
-        />
-        <UnifiedFormField
-          name="isActive"
-          label="Trạng thái"
-          control={form.control}
-          type="switch"
-          description="Kích hoạt hoặc vô hiệu hóa quyền"
         />
         
-        <div className="flex justify-end gap-2 mt-4">
-          <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
-            Hủy
-          </Button>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Đang xử lý...' : isEditing ? 'Cập nhật' : 'Tạo mới'}
-          </Button>
-        </div>
-      </form>
+        <FieldInput
+          control={form.control}
+          name="name"
+          label="Tên quyền"
+          placeholder="Nhập tên quyền"
+          disabled={isSubmitting}
+          required
+        />
+        
+        <FieldTextarea
+          control={form.control}
+          name="description"
+          label="Mô tả"
+          placeholder="Nhập mô tả (tùy chọn)"
+          disabled={isSubmitting}
+          rows={3}
+        />
+        
+        <FieldSelect
+          control={form.control}
+          name="type"
+          label="Loại quyền"
+          placeholder="Chọn loại quyền"
+          options={permissionTypeOptions}
+          disabled={isSubmitting}
+        />
+        
+        <FieldInput
+          control={form.control}
+          name="module"
+          label="Module"
+          placeholder="Nhập module (tùy chọn)"
+          disabled={isSubmitting}
+        />
+        
+        <FieldCheckbox
+          control={form.control}
+          name="isActive"
+          label="Trạng thái"
+          description="Kích hoạt hoặc vô hiệu hóa quyền"
+          disabled={isSubmitting}
+        />
+      </FormController>
     </div>
   );
 }
@@ -219,15 +218,15 @@ export function PermissionForm({ isOpen, initialData, isEditing }: PermissionFor
   }, [initialData, isEditing, form]);
 
   const handleFormSubmit = useCallback(
-    form.handleSubmit(async data => {
+    async (data: CreatePermissionFormData | UpdatePermissionFormData) => {
       if (isEditing && initialData?.id) {
         await updatePermission(initialData.id, data as UpdatePermissionFormData);
       } else {
         await createPermission(data as CreatePermissionFormData);
       }
       hideDialog();
-    }),
-    [form, isEditing, initialData, updatePermission, createPermission, hideDialog],
+    },
+    [isEditing, initialData, updatePermission, createPermission, hideDialog],
   );
 
   const permissionTypeOptions = useMemo(
@@ -245,59 +244,64 @@ export function PermissionForm({ isOpen, initialData, isEditing }: PermissionFor
         <DialogHeader>
           <DialogTitle>{isEditing ? 'Cập nhật quyền' : 'Tạo quyền mới'}</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleFormSubmit} className="grid gap-4 py-4">
-          <UnifiedFormField
+        <FormController methods={form} onSubmit={handleFormSubmit}>
+          <FieldInput
+            control={form.control}
             name="code"
             label="Mã quyền"
-            control={form.control}
-            type="text"
-            placeholder="Nhập mã quyền"
-            disabled={isEditing}
+            placeholder="Nhập mã quyền" 
+            disabled={isEditing || form.formState.isSubmitting}
             required
           />
-          <UnifiedFormField
+          
+          <FieldInput
+            control={form.control}
             name="name"
             label="Tên quyền"
-            control={form.control}
-            type="text"
             placeholder="Nhập tên quyền"
+            disabled={form.formState.isSubmitting}
             required
           />
-          <UnifiedFormField
+          
+          <FieldTextarea
+            control={form.control}
             name="description"
             label="Mô tả"
-            control={form.control}
-            type="textarea"
             placeholder="Nhập mô tả (tùy chọn)"
+            rows={3}
+            disabled={form.formState.isSubmitting}
           />
-          <UnifiedFormField
+          
+          <FieldSelect
+            control={form.control}
             name="type"
             label="Loại quyền"
-            control={form.control}
-            type="select"
-            options={permissionTypeOptions}
             placeholder="Chọn loại quyền"
+            options={permissionTypeOptions}
+            disabled={form.formState.isSubmitting}
           />
-          <UnifiedFormField
+          
+          <FieldInput
+            control={form.control}
             name="module"
             label="Module"
-            control={form.control}
-            type="text"
             placeholder="Nhập module (tùy chọn)"
+            disabled={form.formState.isSubmitting}
           />
-          <UnifiedFormField
+          
+          <FieldCheckbox
+            control={form.control}
             name="isActive"
             label="Trạng thái"
-            control={form.control}
-            type="switch"
             description="Kích hoạt hoặc vô hiệu hóa quyền"
+            disabled={form.formState.isSubmitting}
           />
-        </form>
+        </FormController>
         <DialogFooter>
           <Button type="button" variant="outline" onClick={hideDialog}>
             Hủy
           </Button>
-          <Button type="submit" onClick={handleFormSubmit} disabled={form.formState.isSubmitting}>
+          <Button type="submit" onClick={form.handleSubmit(handleFormSubmit)} disabled={form.formState.isSubmitting}>
             {form.formState.isSubmitting ? 'Đang xử lý...' : isEditing ? 'Cập nhật' : 'Tạo mới'}
           </Button>
         </DialogFooter>

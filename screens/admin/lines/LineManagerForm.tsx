@@ -6,10 +6,10 @@ import { z } from 'zod';
 
 import { LineManager, LineManagerDTO } from '@/common/interface/line';
 import { UserType } from '@/common/interface/user';
-import UnifiedFormField from '@/components/common/Form/custom/UnifiedFormField';
-import { FieldSelect } from '@/components/common/Form/FieldSelect';
-import FormActions from '@/components/common/Form/FormAction';
-import { Form } from '@/components/ui/form';
+import FormController from '@/components/common/fields/FormController';
+import { FieldCombobox } from '@/components/common/fields/FieldCombobox';
+import { FieldDatePicker } from '@/components/common/fields/FieldDatePicker';
+import { FieldSelect } from '@/components/common/fields/FieldSelect';
 import { useDialog } from '@/contexts/DialogProvider';
 import { useLine } from '@/hooks/line/LineContext';
 
@@ -134,53 +134,48 @@ const LineManagerForm: React.FC<LineManagerFormProps> = ({
   }));
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-        {/* Form fields */}
-        <UnifiedFormField
-          control={form.control}
-          name="userId"
-          label="Người quản lý"
-          placeholder="Nhập ID người dùng"
-          disabled={!!manager || isSubmitting}
-          required
-          options={userOptions}
-          type="combobox"
-        />
+    <FormController methods={form} onSubmit={handleSubmit}>
+      {/* Form fields */}
+      <FieldCombobox
+        control={form.control}
+        name="userId"
+        label="Người quản lý"
+        placeholder="Chọn người quản lý"
+        options={userOptions}
+        disabled={!!manager || isSubmitting}
+        required
+      />
 
-        <div className="flex items-center gap-2">
-          <UnifiedFormField
-            control={form.control}
-            name="startDate"
-            label="Ngày bắt đầu"
-            disabled={isSubmitting}
-            required
-            type="date"
-          />
-          <UnifiedFormField
-            control={form.control}
-            name="endDate"
-            label="Ngày kết thúc"
-            disabled={isSubmitting}
-            type="date"
-          />
-        </div>
-
-        <FieldSelect
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <FieldDatePicker
           control={form.control}
-          name="isPrimary"
-          label="Quản lý chính"
+          name="startDate"
+          label="Ngày bắt đầu"
+          placeholder="Chọn ngày bắt đầu"
           disabled={isSubmitting}
-          options={[
-            { value: true, label: 'Có' },
-            { value: false, label: 'Không' },
-          ]}
+          required
         />
+        
+        <FieldDatePicker
+          control={form.control}
+          name="endDate"
+          label="Ngày kết thúc"
+          placeholder="Chọn ngày kết thúc"
+          disabled={isSubmitting}
+        />
+      </div>
 
-        {/* Form actions */}
-        <FormActions isSubmitting={isSubmitting} isEdit={!!manager} onCancel={onCancel} />
-      </form>
-    </Form>
+      <FieldSelect
+        control={form.control}
+        name="isPrimary"
+        label="Quản lý chính"
+        disabled={isSubmitting}
+        options={[
+          { value: true, label: 'Có' },
+          { value: false, label: 'Không' },
+        ]}
+      />
+    </FormController>
   );
 };
 

@@ -4,9 +4,9 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'react-toast-kit';
 import { z } from 'zod';
 
-import UnifiedFormField from '@/components/common/Form/custom/UnifiedFormField';
-import FormActions from '@/components/common/Form/FormAction';
-import { Form } from '@/components/ui/form';
+import FormController from '@/components/common/fields/FormController';
+import { FieldInput } from '@/components/common/fields/FieldInput';
+import { FieldTextarea } from '@/components/common/fields/FieldTextarea';
 import { useDialog } from '@/contexts/DialogProvider';
 import { useTeam } from '@/hooks/teams/TeamContext';
 
@@ -36,8 +36,6 @@ export const TeamForm: React.FC<TeamFormProps> = ({ teamId, lineId, onSuccess, o
   const { createTeam, updateTeam, getTeam, isCreating, isUpdating } = useTeam();
   const [isLoading, setIsLoading] = useState(false);
   const { hideDialog } = useDialog();
-
-  // const isInDialog = !!dialog.open;
 
   //Determine if this is a create or update form
   const isEditForm = !!teamId;
@@ -137,61 +135,52 @@ export const TeamForm: React.FC<TeamFormProps> = ({ teamId, lineId, onSuccess, o
   const isProcessing = isLoading || isCreating || isUpdating;
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-        {/* Only show code field in create mode */}
-        {!isEditForm && (
-          <UnifiedFormField
-            control={form.control}
-            name="code"
-            label="Mã tổ"
-            placeholder="Nhập mã tổ"
-            disabled={isProcessing}
-            required
-            type="text"
-          />
-        )}
-
-        {/* Name field - required in both modes */}
-        <UnifiedFormField
+    <FormController methods={form} onSubmit={handleSubmit}>
+      {/* Only show code field in create mode */}
+      {!isEditForm && (
+        <FieldInput
           control={form.control}
-          name="name"
-          label="Tên tổ"
-          placeholder="Nhập tên tổ"
+          name="code"
+          label="Mã tổ"
+          placeholder="Nhập mã tổ"
           disabled={isProcessing}
           required
-          type="text"
         />
+      )}
 
-        {/* Line ID field - hidden in edit mode */}
-        {!isEditForm && (
-          <UnifiedFormField
-            control={form.control}
-            name="lineId"
-            label="Dây chuyền"
-            placeholder="Chọn dây chuyền"
-            disabled={true} // Usually this would be a select, but we're forcing the lineId from props
-            required
-            type="text"
-            description="ID dây chuyền được tự động thiết lập"
-          />
-        )}
+      {/* Name field - required in both modes */}
+      <FieldInput
+        control={form.control}
+        name="name"
+        label="Tên tổ"
+        placeholder="Nhập tên tổ"
+        disabled={isProcessing}
+        required
+      />
 
-        {/* Description field - optional in both modes */}
-        <UnifiedFormField
+      {/* Line ID field - hidden in edit mode */}
+      {!isEditForm && (
+        <FieldInput
           control={form.control}
-          name="description"
-          label="Mô tả"
-          placeholder="Nhập mô tả tổ"
-          disabled={isProcessing}
-          type="textarea"
-          rows={3}
+          name="lineId"
+          label="Dây chuyền"
+          placeholder="Chọn dây chuyền"
+          disabled={true}
+          required
+          // description="ID dây chuyền được tự động thiết lập"
         />
+      )}
 
-        {/* Form actions */}
-        <FormActions isSubmitting={isProcessing} isEdit={isEditForm} onCancel={onCancel} />
-      </form>
-    </Form>
+      {/* Description field - optional in both modes */}
+      <FieldTextarea
+        control={form.control}
+        name="description"
+        label="Mô tả"
+        placeholder="Nhập mô tả tổ"
+        disabled={isProcessing}
+        rows={3}
+      />
+    </FormController>
   );
 };
 

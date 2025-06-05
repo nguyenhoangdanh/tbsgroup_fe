@@ -9,12 +9,12 @@ import UserContainer from '@/screens/admin/user/Container';
 
 export default function UserPage() {
   return (
-    <PermissionGuard pageCode="PAGE">
+    // <PermissionGuard pageCode="PAGE">
       <UserProvider>
         <RoleProvider>
           <UserContainer />
         </RoleProvider>
       </UserProvider>
-    </PermissionGuard>
+    // </PermissionGuard>
   );
 }

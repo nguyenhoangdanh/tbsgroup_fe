@@ -7,9 +7,9 @@ import { z } from 'zod';
 
 import DialogFormWrapper from './DialogFormWrapper';
 
-import { FieldInput } from '@/components/common/Form/FieldInput';
-import { FieldTextarea } from '@/components/common/Form/FieldTextarea';
-import FormActions from '@/components/common/Form/FormAction';
+import { FieldInput } from '@/components/common/fields/FieldInput';
+import { FieldTextarea } from '@/components/common/fields/FieldTextarea';
+import FormActions from '@/components/common/fields/FormActions';
 import { Form } from '@/components/ui/form';
 import { useDialog } from '@/contexts/DialogProvider';
 

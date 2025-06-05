@@ -1,57 +1,81 @@
-// AuthManager.ts - Fixed version with correct types
-
+"use client"
+import { store } from '@/redux/store';
+import { 
+  loginRequest, 
+  logoutRequest, 
+  registerRequest, 
+  refreshTokenRequest,
+  updateUserRequest,
+  requestPasswordResetRequest,
+  resetPasswordRequest,
+  clearErrors, // Thay đổi từ clearResetPasswordData sang clearErrors
+} from '@/redux/slices/authSlice';
+import type { AuthState, LoginCredentials, RequestResetParams, ResetPasswordParams } from '@/redux/types/auth';
 import { authService } from './auth.service';
-import type { LoginCredentials, RequestResetParams, ResetPasswordParams, User } from '@/redux/types/auth';
-import type { ApiResponse } from '@/lib/api/types';
 
-// Updated AuthState interface to match ApiResponse structure
-export interface AuthState {
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  user: User | null;
-  error: string | null;
-  resetPasswordData: ApiResponse<{
-    resetToken?: string;
-    username: string;
-    message: string;
-  }> | null;
-}
-
-export interface ResetPasswordType {
-  employeeId: string;
-  cardId: string;
-  password: string;
-  confirmPassword: string;
-}
-
-type AuthSubscriber = (state: AuthState) => void;
-
+/**
+ * AuthManager class handles auth state management and communicates with Redux
+ */
 class AuthManager {
+  private subscribers: Array<(state: AuthState) => void> = [];
+  private initialized = false;
   private state: AuthState = {
-    isAuthenticated: false,
-    isLoading: false,
+    status: 'idle',
     user: null,
+    accessToken: null,
+    isAuthenticated: false,
     error: null,
-    resetPasswordData: null,
+    loading: false,
+    expiresAt: null,
+    resetPassword: {
+      resetToken: null,
+      expiryDate: null,
+      username: null,
+      loading: false,
+      error: null,
+    },
   };
 
-  private subscribers: AuthSubscriber[] = [];
-
   constructor() {
+    this.initializeFromReduxStore();
     this.initialize();
   }
 
   /**
-   * Get current auth state
+   * Initialize from Redux store - prefer Redux store state over local
    */
-  getState(): AuthState {
-    return this.state;
+  private initializeFromReduxStore(): void {
+    const state = store.getState();
+    this.state = { ...this.state, ...state.auth };
+  }
+
+  /**
+   * Initialize auth state from cookies/session
+   * Giữ phương thức này đồng bộ để tránh lỗi trong quá trình khởi tạo
+   */
+  private initialize(): void {
+    try {
+      if (this.initialized) return;
+      
+      // Chỉ kiểm tra cơ bản qua cookie để không gây lỗi trong quá trình khởi tạo
+      const isAuthenticated = authService.isAuthenticated();
+      
+      if (isAuthenticated) {
+        console.log('Initial check: Có thể đã xác thực, sẽ kiểm tra session sau');
+      } else {
+        console.log('Initial check: Không tìm thấy dấu hiệu xác thực');
+      }
+      
+      this.initialized = true;
+    } catch (error) {
+      console.error('Error initializing auth state:', error);
+    }
   }
 
   /**
    * Subscribe to auth state changes
    */
-  subscribe(callback: AuthSubscriber): () => void {
+  subscribe(callback: (state: AuthState) => void): () => void {
     this.subscribers.push(callback);
     
     // Return unsubscribe function
@@ -61,282 +85,137 @@ class AuthManager {
   }
 
   /**
-   * Update state and notify subscribers
+   * Notify all subscribers of state change
    */
-  private setState(newState: Partial<AuthState>): void {
+  private notifySubscribers(): void {
+    const currentState = this.getState();
+    this.subscribers.forEach(callback => callback(currentState));
+  }
+
+  /**
+   * Update internal state and notify subscribers
+   */
+  private updateState(newState: Partial<AuthState>): void {
     this.state = { ...this.state, ...newState };
-    this.subscribers.forEach(callback => callback(this.state));
+    this.notifySubscribers();
   }
 
   /**
-   * Initialize auth state on app start
+   * Get current auth state
    */
-  async initialize(): Promise<void> {
-    try {
-      this.setState({ isLoading: true, error: null });
-
-      // Check if user has valid token
-      const isAuth = authService.isAuthenticated();
-      
-      if (isAuth) {
-        // Verify token with backend and get user data
-        const userResponse = await authService.getCurrentUser();
-        
-        if (userResponse.success && userResponse.data) {
-          this.setState({
-            isAuthenticated: true,
-            user: userResponse.data,
-            isLoading: false,
-          });
-        } else {
-          // Token might be invalid, clear it
-          authService.clearStoredToken();
-          this.setState({
-            isAuthenticated: false,
-            user: null,
-            isLoading: false,
-          });
-        }
-      } else {
-        this.setState({
-          isAuthenticated: false,
-          user: null,
-          isLoading: false,
-        });
-      }
-    } catch (error) {
-      console.error('Auth initialization error:', error);
-      this.setState({
-        isAuthenticated: false,
-        user: null,
-        isLoading: false,
-        error: 'Failed to initialize authentication',
-      });
-    }
+  getState(): AuthState {
+    return { ...this.state };
   }
 
   /**
-   * Login with credentials
+   * Login with username and password
    */
-  async login(credentials: LoginCredentials): Promise<void> {
+  async login(credentials: LoginCredentials): Promise<boolean> {
+    store.dispatch(loginRequest(credentials));
+    const unsubscribe = store.subscribe(() => {
+      const state = store.getState();
+      this.updateState(state.auth);
+      this.notifySubscribers();
+    });
+    
     try {
-      this.setState({ isLoading: true, error: null });
-
       const response = await authService.login(credentials);
-
-      if (response.success && response.data) {
-        // Get user profile after successful login
-        const userResponse = await authService.getCurrentUser();
-
-        console.log('User response:', userResponse);
-        
-        if (userResponse.success && userResponse.data) {
-          authService.recordLoginTime();
-          this.setState({
-            isAuthenticated: true,
-            user: userResponse.data,
-            isLoading: false,
-          });
-        } else {
-          this.setState({
-            isLoading: false,
-            error: 'Failed to get user profile',
-          });
-        }
-      } else {
-        this.setState({
-          isLoading: false,
-          error: this.extractErrorMessage(response.error) || 'Login failed',
-        });
-      }
+      unsubscribe();
+      return response.success;
     } catch (error) {
-      console.error('Login error:', error);
-      this.setState({
-        isLoading: false,
-        error: 'An unexpected error occurred during login',
-      });
+      unsubscribe();
+      return false;
     }
   }
 
   /**
-   * Logout user
+   * Register a new user
    */
-  async logout(reason?: string): Promise<void> {
-    try {
-      this.setState({ isLoading: true });
-
-      await authService.logout();
-
-      this.setState({
-        isAuthenticated: false,
-        user: null,
-        isLoading: false,
-        error: null,
-        resetPasswordData: null, // Clear reset data on logout
-      });
-
-      if (reason) {
-        console.log('Logout reason:', reason);
-      }
-    } catch (error) {
-      console.error('Logout error:', error);
-      // Even if logout fails, clear local state
-      this.setState({
-        isAuthenticated: false,
-        user: null,
-        isLoading: false,
-        error: null,
-        resetPasswordData: null,
-      });
-    }
+  register(userData: any): void {
+    store.dispatch(registerRequest(userData));
+    this.subscribeToStoreChanges();
   }
 
   /**
-   * Refresh authentication token
+   * Logout current user
    */
-  async refreshToken(): Promise<void> {
-    try {
-      this.setState({ isLoading: true, error: null });
-
-      const response = await authService.refreshToken();
-
-      if (response.success) {
-        // Token refreshed successfully, get updated user data
-        const userResponse = await authService.getCurrentUser();
-        
-        if (userResponse.success && userResponse.data) {
-          this.setState({
-            isAuthenticated: true,
-            user: userResponse.data,
-            isLoading: false,
-          });
-        }
-      } else {
-        // Refresh failed, logout user
-        await this.logout('Token refresh failed');
-      }
-    } catch (error) {
-      console.error('Token refresh error:', error);
-      await this.logout('Token refresh error');
-    }
+  logout(reason?: string): void {
+    store.dispatch(logoutRequest({ reason }));
+    this.subscribeToStoreChanges();
   }
 
   /**
-   * Update user profile
+   * Refresh auth token
    */
-  async updateProfile(userData: Partial<User>): Promise<void> {
-    try {
-      this.setState({ isLoading: true, error: null });
-
-      const response = await authService.updateUserProfile(userData);
-
-      if (response.success && response.data) {
-        this.setState({
-          user: response.data,
-          isLoading: false,
-        });
-      } else {
-        this.setState({
-          isLoading: false,
-          error: this.extractErrorMessage(response.error) || 'Failed to update profile',
-        });
-      }
-    } catch (error) {
-      console.error('Profile update error:', error);
-      this.setState({
-        isLoading: false,
-        error: 'An unexpected error occurred while updating profile',
-      });
-    }
+  refreshToken(): void {
+    store.dispatch(refreshTokenRequest());
+    this.subscribeToStoreChanges();
   }
 
   /**
    * Request password reset
    */
-  async requestPasswordReset(params: RequestResetParams): Promise<void> {
-    try {
-      this.setState({ isLoading: true, error: null });
-
-      const response = await authService.requestPasswordReset(params);
-
-      this.setState({
-        isLoading: false,
-        resetPasswordData: response
-      });
-
-      if (!response.success) {
-        this.setState({
-          error: this.extractErrorMessage(response.error) || 'Không thể yêu cầu đặt lại mật khẩu',
-        });
-      }
-    } catch (error) {
-      console.error('Request password reset error:', error);
-      this.setState({
-        isLoading: false,
-        error: 'Có lỗi xảy ra khi yêu cầu đặt lại mật khẩu',
-        resetPasswordData: null,
-      });
-    }
+  requestPasswordReset(params: RequestResetParams): void {
+    store.dispatch(requestPasswordResetRequest(params));
+    this.subscribeToStoreChanges();
   }
 
   /**
-   * Reset password
+   * Reset password with token
    */
-  async resetPassword(params: ResetPasswordParams): Promise<void> {
-    try {
-      this.setState({ isLoading: true, error: null });
-
-      const response = await authService.resetPassword(params);
-
-      if (response.success) {
-        this.setState({
-          isLoading: false,
-          resetPasswordData: null, // Clear reset data after successful reset
-        });
-      } else {
-        const errorMessage = this.extractErrorMessage(response.error) || 'Không thể đặt lại mật khẩu';
-        this.setState({
-          isLoading: false,
-          error: errorMessage,
-        });
-        throw new Error(errorMessage);
-      }
-    } catch (error: any) {
-      console.error('Reset password error:', error);
-      this.setState({
-        isLoading: false,
-        error: error.message || 'Có lỗi xảy ra khi đặt lại mật khẩu',
-      });
-      throw error;
-    }
+  resetPassword(params: ResetPasswordParams): void {
+    store.dispatch(resetPasswordRequest(params));
+    this.subscribeToStoreChanges();
   }
 
   /**
    * Clear reset password data
    */
   clearResetPasswordData(): void {
-    this.setState({
-      resetPasswordData: null,
-      error: null,
+    store.dispatch(clearErrors()); // Thay đổi từ clearResetPasswordAction sang clearErrors
+    this.subscribeToStoreChanges();
+  }
+
+  /**
+   * Update user profile
+   */
+  updateProfile(userData: any): void {
+    store.dispatch(updateUserRequest(userData));
+    this.subscribeToStoreChanges();
+  }
+
+  /**
+   * Subscribe to Redux store changes temporarily
+   */
+  private subscribeToStoreChanges(): void {
+    const unsubscribe = store.subscribe(() => {
+      const state = store.getState();
+      const authState = state.auth;
+      
+      // Check if auth state has changed with a deep comparison
+      if (JSON.stringify(authState) !== JSON.stringify(this.state)) {
+        this.updateState(authState);
+        
+        // Unsubscribe after state update
+        setTimeout(() => {
+          unsubscribe();
+        }, 100);
+      }
     });
   }
 
   /**
-   * Helper method to extract error message from ApiResponse error
-   * Handles both string and object error formats
+   * Force check of current session status
    */
-  private extractErrorMessage(error: string | { error: string; message: string; statusCode: number } | undefined): string | null {
-    if (!error) return null;
-    
-    if (typeof error === 'string') {
-      return error;
+  async checkSession(): Promise<boolean> {
+    try {
+      // Gọi API session để kiểm tra
+      const sessionData = await authService.checkSession();
+      return sessionData.isAuthenticated;
+    } catch (error) {
+      console.error('Error checking session:', error);
+      return false;
     }
-    
-    if (typeof error === 'object' && 'message' in error) {
-      return error.message;
-    }
-    
-    return 'An unknown error occurred';
   }
 }
 

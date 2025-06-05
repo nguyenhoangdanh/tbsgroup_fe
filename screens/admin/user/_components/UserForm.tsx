@@ -4,12 +4,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import React, { useState, useCallback, memo, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { FieldInput } from '@/components/common/Form/FieldInput';
-import { FieldSelect } from '@/components/common/Form/FieldSelect';
-import FormActions from '@/components/common/Form/FormAction';
 import { Form } from '@/components/ui/form';
 import { useDialog } from '@/contexts/DialogProvider';
 import { TUserSchema, userSchema, defaultUserValues } from '@/schemas/user';
+import { FieldInput, FieldSelect, FormActions } from '@/components/common/fields';
 
 interface UserFormProps {
   onSubmit?: (data: TUserSchema) => Promise<void | boolean>; // Function to handle form submission
@@ -98,7 +96,7 @@ const UserForm = memo(({ onSubmit, refetchData, isReadOnly = false, roles }: Use
     { value: 'PENDING_ACTIVATION', label: 'Chờ duyệt' },
   ];
 
-  console.log('UserForm rendered errors', form.formState.errors);
+  console.log('UserForm rendered errors', roles);
 
   return (
     <Form {...form}>

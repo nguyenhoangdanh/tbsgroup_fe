@@ -22,7 +22,6 @@ import {
   RequestResetParams,
   ResetPasswordParams,
 } from '@/redux/types/auth';
-import { SecurityService } from '@/services/common/security.service';
 
 type AuthError = {
   message: string;
@@ -78,12 +77,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const handleResetPassword = useCallback(
     (params: ResetPasswordParams) => {
-      dispatch(
-        resetPassword(params.resetToken || '', params.password, {
-          timestamp: new Date().toISOString(),
-          confirmPassword: params.confirmPassword,
-        }),
-      );
+      dispatch(resetPassword(params));
     },
     [dispatch],
   );
@@ -115,7 +109,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!auth.user) return;
 
     const checkSessionTimeout = setInterval(() => {
-      if (SecurityService.checkSessionTimeout(lastActivity, securityLevel)) {
+      const timeoutThreshold = securityLevel === 'high' 
+        ? 15 * 60 * 1000  // 15 minutes for high security
+        : 30 * 60 * 1000; // 30 minutes for normal security
+        
+      const now = Date.now();
+      const inactiveTime = now - lastActivity;
+      
+      if (inactiveTime > timeoutThreshold) {
         handleLogout({
           reason: 'session_timeout',
           silent: false,
@@ -136,8 +137,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const events = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'];
 
+    let activityTimeout: NodeJS.Timeout | null = null;
+
     const handleUserActivity = () => {
-      recordActivity();
+      if (activityTimeout) {
+        clearTimeout(activityTimeout);
+      }
+
+      activityTimeout = setTimeout(() => {
+        recordActivity();
+      }, 300); // 300ms debounce
     };
 
     events.forEach(event => {
@@ -147,7 +156,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => {
       events.forEach(event => {
         window.removeEventListener(event, handleUserActivity);
-      });
+      })
+      if (activityTimeout) {
+        clearTimeout(activityTimeout);
+      };
     };
   }, [recordActivity]);
 
@@ -155,19 +167,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     // Public routes that don't require authentication
     const publicRoutes = ['/login', '/reset-password', '/forgot-password', '/'];
+    const adminRoutes = ['/admin', '/admin/users', '/admin/users/all']; // Thêm các route admin
 
+    // Nếu đang tải, đừng điều hướng
+    if (auth.status === 'loading' || auth.status === 'refreshing_token') {
+      return;
+    }
+
+    // Cần đặt lại mật khẩu
     if (auth.status === 'needs_password_reset' && pathname !== '/reset-password') {
       router.replace('/reset-password');
-    } else if (
-      auth.status !== 'authenticated' &&
-      auth.status !== 'loading' &&
-      !publicRoutes.includes(pathname)
-    ) {
-      // Add a small delay to prevent flickering during navigation
+      return;
+    }
+
+    // Không xác thực và không ở trang công khai
+    if (auth.status !== 'authenticated' && !publicRoutes.includes(pathname)) {
+      console.log('Chưa xác thực, điều hướng đến /login từ:', pathname);
+
+      // Kiểm tra điều hướng
       const timer = setTimeout(() => {
-        router.replace('/login');
+        router.replace('/login?returnPath=' + encodeURIComponent(pathname));
       }, 100);
       return () => clearTimeout(timer);
+    }
+
+    // Đã xác thực, đang ở trang đăng nhập, điều hướng đến trang chính
+    if (auth.status === 'authenticated' && pathname === '/login') {
+      router.replace('/admin/users/all');
     }
   }, [auth.status, router, pathname]);
 

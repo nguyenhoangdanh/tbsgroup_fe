@@ -5,10 +5,10 @@ import React, { useState, useCallback, memo, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
-import { FieldCombobox } from '@/components/common/Form/FieldCombobox';
-import { FieldInput } from '@/components/common/Form/FieldInput';
-import { FieldTextarea } from '@/components/common/Form/FieldTextarea';
-import FormActions from '@/components/common/Form/FormAction';
+import { FieldCombobox } from '@/components/common/fields/FieldCombobox';
+import { FieldInput } from '@/components/common/fields/FieldInput';
+import { FieldTextarea } from '@/components/common/fields/FieldTextarea';
+import FormActions from '@/components/common/fields/FormActions';
 import { Form } from '@/components/ui/form';
 import { useDialog } from '@/contexts/DialogProvider';
 import { useTeam } from '@/hooks/teams/TeamContext';

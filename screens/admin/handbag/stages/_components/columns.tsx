@@ -47,12 +47,12 @@ export const columns: ColumnDef<HandbagProductionProcess>[] = [
     header: '',
     cell: ({ row }) => {
       const id = row.original.id;
-      return (
-        <ButtonGroupAction
-          onEdit={() => console.log('update', id)}
-          onDelete={() => deleteProductionProcess(Number(id))}
-        />
-      );
+      // return (
+      //   <ButtonGroupAction
+      //     onEdit={() => console.log('update', id)}
+      //     onDelete={() => deleteProductionProcess(Number(id))}
+      //   />
+      // );
     },
   },
 ];

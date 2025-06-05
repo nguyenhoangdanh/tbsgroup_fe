@@ -4,13 +4,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useEffect } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
-
-import { FieldCheckbox } from '@/components/common/Form/FieldCheckbox';
-import { FieldInput } from '@/components/common/Form/FieldInput';
 import { toast } from 'react-toast-kit';
 import SubmitButton from '@/components/SubmitButton';
 import { defaultLoginValues, loginSchema, TLoginSchema } from '@/schemas/auth';
 import { useAuthManager } from '@/hooks/auth/useAuthManager';
+import FieldInput from '@/components/common/fields/FieldInput';
+import { FieldCheckbox } from '@/components/common/fields';
 
 const LoginForm = () => {
   const router = useRouter();

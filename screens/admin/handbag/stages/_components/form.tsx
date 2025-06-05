@@ -4,8 +4,6 @@ import React from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { toast } from 'react-toast-kit';
 
-import { createProductionProcess } from '@/actions/admin/handbag';
-import FormController from '@/components/common/form/FormController';
 import { FormField } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,6 +13,7 @@ import {
   handbagStageFormSchema,
   THandbagStageForm,
 } from '@/schemas/handbag';
+import { FormController } from '@/components/common/fields';
 
 interface HandbagStageFormProps {
   action: 'create' | 'update';
@@ -28,23 +27,23 @@ const HandbagStageForm: React.FC<HandbagStageFormProps> = ({ action }) => {
   });
 
   const onSubmit: SubmitHandler<THandbagStageForm> = async data => {
-    const rs = await createProductionProcess({
-      code: data.code,
-      name: data.name,
-    });
+    // const rs = await createProductionProcess({
+    //   code: data.code,
+    //   name: data.name,
+    // });
 
-    if (rs.success) {
-      dispatch('FETCH_PO_HANDBAG');
-      toast.success({
-        title: 'Thành công',
-        description: 'Đã tạo quy trình sản xuất',
-      });
-    } else {
-      toast.error({
-        title: 'Lỗi',
-        description: rs.message || 'Có lỗi xảy ra',
-      });
-    }
+    // if (rs.success) {
+    //   dispatch('FETCH_PO_HANDBAG');
+    //   toast.success({
+    //     title: 'Thành công',
+    //     description: 'Đã tạo quy trình sản xuất',
+    //   });
+    // } else {
+    //   toast.error({
+    //     title: 'Lỗi',
+    //     description: rs.message || 'Có lỗi xảy ra',
+    //   });
+    // }
   };
   return (
     <FormController methods={methods} onSubmit={onSubmit}>

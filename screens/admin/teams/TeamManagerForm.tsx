@@ -6,9 +6,10 @@ import { z } from 'zod';
 
 import { TeamLeader, TeamLeaderDTO } from '@/common/interface/team';
 import { UserType } from '@/common/interface/user';
-import UnifiedFormField from '@/components/common/Form/custom/UnifiedFormField';
-import FormActions from '@/components/common/Form/FormAction';
-import { Form } from '@/components/ui/form';
+import FormController from '@/components/common/fields/FormController';
+import { FieldCombobox } from '@/components/common/fields/FieldCombobox';
+import { FieldDatePicker } from '@/components/common/fields/FieldDatePicker';
+import { FieldSelect } from '@/components/common/fields/FieldSelect';
 import { useDialog } from '@/contexts/DialogProvider';
 import { useTeam } from '@/hooks/teams/TeamContext';
 
@@ -144,63 +145,53 @@ const TeamManagerForm: React.FC<TeamManagerFormProps> = ({
     ],
   );
 
-  // Prepare user options for the combobox
   const userOptions = users.map(user => ({
     value: user.id,
-    label: `${user.fullName || user.email || user.id}`,
+    label: user.fullName || user.email || user.id
   }));
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-        {/* User selection field */}
-        <UnifiedFormField
-          control={form.control}
-          name="userId"
-          label="Người quản lý"
-          placeholder="Chọn người quản lý"
-          disabled={!!manager || isSubmitting}
-          required
-          options={userOptions}
-          type="combobox"
-        />
+    <FormController methods={form} onSubmit={handleSubmit}>
+      <FieldCombobox
+        control={form.control}
+        name="userId"
+        label="Người quản lý"
+        placeholder="Chọn người quản lý"
+        options={userOptions}
+        disabled={!!manager || isSubmitting}
+        required
+      />
 
-        {/* Date fields */}
-        <div className="flex items-center gap-2">
-          <UnifiedFormField
-            control={form.control}
-            name="startDate"
-            label="Ngày bắt đầu"
-            disabled={isSubmitting}
-            required
-            type="date"
-          />
-          <UnifiedFormField
-            control={form.control}
-            name="endDate"
-            label="Ngày kết thúc"
-            disabled={isSubmitting}
-            type="date"
-          />
-        </div>
-
-        {/* Primary leader toggle */}
-        <UnifiedFormField
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <FieldDatePicker
           control={form.control}
-          name="isPrimary"
-          label="Trưởng nhóm"
+          name="startDate"
+          label="Ngày bắt đầu"
+          placeholder="Chọn ngày"
           disabled={isSubmitting}
-          type="select"
-          options={[
-            { value: true, label: 'Có' },
-            { value: false, label: 'Không' },
-          ]}
+          required
         />
+        
+        <FieldDatePicker
+          control={form.control}
+          name="endDate"
+          label="Ngày kết thúc"
+          placeholder="Chọn ngày"
+          disabled={isSubmitting}
+        />
+      </div>
 
-        {/* Form actions */}
-        <FormActions isSubmitting={isSubmitting} isEdit={!!manager} onCancel={onCancel} />
-      </form>
-    </Form>
+      <FieldSelect
+        control={form.control}
+        name="isPrimary"
+        label="Trưởng nhóm"
+        disabled={isSubmitting}
+        options={[
+          { value: true, label: 'Có' },
+          { value: false, label: 'Không' },
+        ]}
+      />
+    </FormController>
   );
 };
 

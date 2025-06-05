@@ -8,6 +8,9 @@ const initialState: AuthState = {
   expiresAt: null,
   status: null,
   error: null,
+  isAuthenticated: false,
+  isLoading: false,
+  resetPasswordData: null,
 };
 
 const authSlice = createSlice({

@@ -1,5 +1,5 @@
-import { Check, ChevronsUpDown } from 'lucide-react';
-import React, { useState, useMemo } from 'react';
+import { Check, ChevronsUpDown, PlusCircle } from 'lucide-react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Controller, FieldValues, Control, Path } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,7 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
+  CommandSeparator,
 } from '@/components/ui/command';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -19,6 +20,7 @@ import { cn } from '@/lib/utils';
 export interface ComboboxOption {
   value: string;
   label: string;
+  disabled?: boolean;
 }
 
 interface FieldComboboxProps<T extends FieldValues> {
@@ -31,6 +33,11 @@ interface FieldComboboxProps<T extends FieldValues> {
   disabled?: boolean;
   required?: boolean;
   searchPlaceholder?: string;
+  emptyMessage?: string;
+  allowCreate?: boolean;
+  onCreateOption?: (value: string) => void | Promise<void>;
+  createOptionLabel?: string;
+  description?: string;
 }
 
 export const FieldCombobox = <T extends FieldValues>({
@@ -43,15 +50,36 @@ export const FieldCombobox = <T extends FieldValues>({
   disabled = false,
   required = false,
   searchPlaceholder = 'Tìm kiếm...',
+  emptyMessage = 'Không tìm thấy kết quả',
+  allowCreate = false,
+  onCreateOption,
+  createOptionLabel = 'Tạo mới',
+  description,
 }: FieldComboboxProps<T>) => {
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Memoized filtered options
+  // Memoized filtered options for better performance
   const filteredOptions = useMemo(() => {
     if (!searchTerm) return options;
-    return options.filter(option => option.label.toLowerCase().includes(searchTerm.toLowerCase()));
+    const lowerSearchTerm = searchTerm.toLowerCase();
+    return options.filter(option => 
+      option.label.toLowerCase().includes(lowerSearchTerm) || 
+      option.value.toLowerCase().includes(lowerSearchTerm)
+    );
   }, [options, searchTerm]);
+
+  // Handle creating new option
+  const handleCreateOption = useCallback(async () => {
+    if (!searchTerm || !onCreateOption) return;
+    
+    try {
+      await onCreateOption(searchTerm);
+      setSearchTerm('');
+    } catch (error) {
+      console.error('Failed to create option:', error);
+    }
+  }, [searchTerm, onCreateOption]);
 
   return (
     <Controller
@@ -63,10 +91,17 @@ export const FieldCombobox = <T extends FieldValues>({
 
         return (
           <div className={cn('flex flex-col gap-1 default-theme', className)}>
-            <Label htmlFor={name} className="text-left font-medium">
-              {label}
-              {required && <span className="text-red-500">*</span>}
-            </Label>
+            <div className="flex justify-between items-center">
+              <Label htmlFor={name} className="text-left font-medium">
+                {label}
+                {required && <span className="text-red-500">*</span>}
+              </Label>
+            </div>
+            
+            {description && (
+              <p className="text-sm text-muted-foreground -mt-1">{description}</p>
+            )}
+            
             <Popover open={open} onOpenChange={setOpen}>
               <PopoverTrigger asChild>
                 <Button
@@ -93,20 +128,37 @@ export const FieldCombobox = <T extends FieldValues>({
                     className="h-9"
                   />
                   <CommandList>
-                    <CommandEmpty>Không tìm thấy kết quả</CommandEmpty>
+                    <CommandEmpty>
+                      <div className="py-2 px-2 text-sm">{emptyMessage}</div>
+                      
+                      {allowCreate && searchTerm && (
+                        <CommandItem 
+                          onSelect={() => handleCreateOption()}
+                          className="flex items-center gap-2 text-green-600 hover:text-green-700"
+                        >
+                          <PlusCircle className="h-4 w-4" />
+                          <span>{createOptionLabel}: "{searchTerm}"</span>
+                        </CommandItem>
+                      )}
+                    </CommandEmpty>
+                    
                     <CommandGroup>
                       {filteredOptions.map(option => (
                         <CommandItem
                           key={option.value}
                           value={option.value}
+                          disabled={option.disabled}
                           onSelect={currentValue => {
                             // Update field value and close popover
                             field.onChange(currentValue === field.value ? '' : currentValue);
                             setOpen(false);
                             setSearchTerm(''); // Reset search term
                           }}
+                          className={cn(
+                            option.disabled && 'opacity-50 cursor-not-allowed',
+                          )}
                         >
-                          {option.label}
+                          <span className="flex-1 truncate">{option.label}</span>
                           <Check
                             className={cn(
                               'ml-auto h-4 w-4',
@@ -116,11 +168,24 @@ export const FieldCombobox = <T extends FieldValues>({
                         </CommandItem>
                       ))}
                     </CommandGroup>
+                    
+                    {allowCreate && searchTerm && filteredOptions.length > 0 && (
+                      <>
+                        <CommandSeparator />
+                        <CommandItem 
+                          onSelect={() => handleCreateOption()}
+                          className="flex items-center gap-2 text-green-600 hover:text-green-700"
+                        >
+                          <PlusCircle className="h-4 w-4" />
+                          <span>{createOptionLabel}: "{searchTerm}"</span>
+                        </CommandItem>
+                      </>
+                    )}
                   </CommandList>
                 </Command>
               </PopoverContent>
             </Popover>
-            {error?.message && <p className="h-5 text-red-500 text-sm">{error.message}</p>}
+            {error?.message && <p className="text-red-500 text-sm">{error.message}</p>}
           </div>
         );
       }}

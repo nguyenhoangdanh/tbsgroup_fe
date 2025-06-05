@@ -6,12 +6,12 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 import { BagGroupRateContextBridge } from './BagGroupRateContextBridge';
-import UnifiedFormField from '../../../components/common/Form/custom/UnifiedFormField';
 
-import { FieldCombobox } from '@/components/common/Form/FieldCombobox';
-import { FieldInput } from '@/components/common/Form/FieldInput';
-import { FieldTextarea } from '@/components/common/Form/FieldTextarea';
-import FormActions from '@/components/common/Form/FormAction';
+import { FieldCombobox } from '@/components/common/fields/FieldCombobox';
+import { FieldInput } from '@/components/common/fields/FieldInput';
+import { FieldSwitch } from '@/components/common/fields/FieldSwitch';
+import { FieldTextarea } from '@/components/common/fields/FieldTextarea';
+import FormActions from '@/components/common/fields/FormActions';
 import { Form } from '@/components/ui/form';
 import { useDialog } from '@/contexts/DialogProvider';
 import { useBagGroupRateContext } from '@/hooks/group/bag-group-rate/BagGroupRateContext';
@@ -140,21 +140,21 @@ const BagGroupRateFormContent = memo(
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FieldCombobox
-              control={form.control}
               name="handBagId"
               label="Mã túi xách"
               placeholder="Chọn mã túi xách"
               options={handBagOptions}
+              control={form.control}
               disabled={isDialogSubmitting || isReadOnly || !!currentData?.id}
               required
             />
 
             <FieldCombobox
-              control={form.control}
               name="groupId"
               label="Nhóm"
               placeholder="Chọn nhóm"
               options={groupOptions}
+              control={form.control}
               disabled={isDialogSubmitting || isReadOnly || !!currentData?.id}
               required
             />
@@ -162,32 +162,32 @@ const BagGroupRateFormContent = memo(
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FieldInput
-              control={form.control}
               name="outputRate"
               label="Năng suất (sản phẩm/giờ)"
               placeholder="Nhập năng suất"
               type="number"
               min={0}
               step={0.1}
+              control={form.control}
               disabled={isDialogSubmitting || isReadOnly}
               required
+              showNumberControls={true}
             />
 
-            <UnifiedFormField
-              type="switch"
-              control={form.control}
+            <FieldSwitch
               name="active"
               label="Trạng thái"
               description="Kích hoạt / Vô hiệu hóa năng suất này"
+              control={form.control}
               disabled={isDialogSubmitting || isReadOnly}
             />
           </div>
 
           <FieldTextarea
-            control={form.control}
             name="notes"
             label="Ghi chú"
             placeholder="Nhập ghi chú về năng suất này"
+            control={form.control}
             disabled={isDialogSubmitting || isReadOnly}
             rows={4}
           />

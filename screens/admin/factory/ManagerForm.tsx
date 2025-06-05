@@ -9,9 +9,10 @@ import { z } from 'zod';
 
 import { FactoryManager } from '@/common/interface/factory';
 import { UserType } from '@/common/interface/user';
-import UnifiedFormField from '@/components/common/Form/custom/UnifiedFormField';
-import FormActions from '@/components/common/Form/FormAction';
-import { Form } from '@/components/ui/form';
+import FormController from '@/components/common/fields/FormController';
+import { FieldCombobox } from '@/components/common/fields/FieldCombobox';
+import { FieldDatePicker } from '@/components/common/fields/FieldDatePicker';
+import { FieldCheckbox } from '@/components/common/fields/FieldCheckbox';
 import { useDialog } from '@/contexts/DialogProvider';
 import { useFactoryMutations } from '@/hooks/factory/useFactoryMutations';
 
@@ -193,21 +194,20 @@ const ManagerForm: React.FC<ManagerFormProps> = ({
   }));
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-        <div className="mb-4">
-          <h2 className="text-lg font-medium">
-            {mode === ManagerFormMode.CREATE ? 'Thêm quản lý cho nhà máy' : 'Cập nhật quản lý'}
-          </h2>
-          <p className="text-sm text-muted-foreground">{factoryData?.factoryName || ''}</p>
-        </div>
-
+    <div>
+      <div className="mb-4">
+        <h2 className="text-lg font-medium">
+          {mode === ManagerFormMode.CREATE ? 'Thêm quản lý cho nhà máy' : 'Cập nhật quản lý'}
+        </h2>
+        <p className="text-sm text-muted-foreground">{factoryData?.factoryName || ''}</p>
+      </div>
+      
+      <FormController methods={form} onSubmit={handleSubmit}>
         {mode === ManagerFormMode.CREATE && (
-          <UnifiedFormField
+          <FieldCombobox
+            control={form.control}
             name="userId"
             label="Người quản lý"
-            control={form.control}
-            type="combobox"
             placeholder="Chọn người quản lý"
             options={userOptions}
             required
@@ -216,38 +216,33 @@ const ManagerForm: React.FC<ManagerFormProps> = ({
         )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <UnifiedFormField
+          <FieldDatePicker
+            control={form.control}
             name="startDate"
             label="Ngày bắt đầu"
-            control={form.control}
-            type="date"
             placeholder="Chọn ngày bắt đầu"
             disabled={isSubmitting || mode === ManagerFormMode.UPDATE}
             required
           />
 
-          <UnifiedFormField
+          <FieldDatePicker
+            control={form.control}
             name="endDate"
             label="Ngày kết thúc (tùy chọn)"
-            control={form.control}
-            type="date"
             placeholder="Chọn ngày kết thúc"
             disabled={isSubmitting}
           />
         </div>
 
-        <UnifiedFormField
+        <FieldCheckbox
+          control={form.control}
           name="isPrimary"
           label="Quản lý chính"
-          control={form.control}
-          type="checkbox"
           description="Đây là người quản lý chính của nhà máy"
           disabled={isSubmitting}
         />
-
-        <FormActions isSubmitting={isSubmitting} isReadOnly={false} />
-      </form>
-    </Form>
+      </FormController>
+    </div>
   );
 };
 
