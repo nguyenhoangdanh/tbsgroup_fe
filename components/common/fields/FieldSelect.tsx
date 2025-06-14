@@ -44,10 +44,16 @@ export const FieldSelect = <T extends FieldValues>({
       control={control}
       name={name}
       render={({ field, fieldState: { error } }) => {
-        // Convert field value to string for Select component
-        const stringValue = field.value !== undefined && field.value !== null 
-          ? String(field.value) 
-          : '';
+        // Luôn chuyển đổi giá trị thành string để hoạt động với Select component
+        const stringValue =
+          field.value !== undefined && field.value !== null
+            ? String(field.value)
+            : '';
+
+        // Tìm option hiện tại để hiển thị label
+        const selectedOption = options.find(
+          (opt) => String(opt.value) === stringValue || opt.value === field.value,
+        );
 
         return (
           <div className={clsx('flex flex-col gap-1', className)}>
@@ -57,11 +63,16 @@ export const FieldSelect = <T extends FieldValues>({
             <div className="relative">
               <Select
                 disabled={disabled}
-                value={stringValue} 
-                onValueChange={(selectedValue) => {
-                  // Find the matching option and use its original value
-                  const option = options.find(opt => String(opt.value) === selectedValue);
-                  field.onChange(option ? option.value : selectedValue);
+                value={stringValue || undefined}
+                onValueChange={(value) => {
+                  // Tìm option tương ứng để lấy giá trị gốc (có thể là string, number, boolean)
+                  const option = options.find(
+                    (opt) => String(opt.value) === value,
+                  );
+                  // Sử dụng giá trị gốc nếu tìm thấy option, ngược lại dùng string value
+                  const finalValue = option ? option.value : value;
+                  field.onChange(finalValue);
+                  field.onBlur(); // Kích hoạt validation
                 }}
               >
                 <SelectTrigger
@@ -69,21 +80,28 @@ export const FieldSelect = <T extends FieldValues>({
                   className={clsx(
                     'w-full border rounded-md px-3 py-2 transition-all focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none',
                     disabled && 'bg-gray-100 cursor-not-allowed',
-                    error ? 'border-red-500 focus:ring-red-500' : 'border-gray-300',
+                    error
+                      ? 'border-red-500 focus:ring-red-500'
+                      : 'border-gray-300',
                   )}
                 >
-                  <SelectValue placeholder={placeholder} />
+                  {selectedOption ? (
+                    <span className="block truncate">{selectedOption.label}</span>
+                  ) : (
+                    <SelectValue placeholder={placeholder} />
+                  )}
                 </SelectTrigger>
                 <SelectContent
                   position="popper"
-                  className="z-50 max-h-60"
+                  className="z-[9999] max-h-60 min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md"
                   align="start"
+                  sideOffset={4}
                 >
                   {options.map((option) => (
-                    <SelectItem 
-                      key={`${String(option.value)}-${option.label}`} 
+                    <SelectItem
+                      key={`${String(option.value)}-${option.label}`}
                       value={String(option.value)}
-                      className="cursor-pointer hover:bg-gray-100"
+                      className="relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-2 pr-8 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
                     >
                       {option.label}
                     </SelectItem>
@@ -91,7 +109,9 @@ export const FieldSelect = <T extends FieldValues>({
                 </SelectContent>
               </Select>
             </div>
-            {error?.message && <p className="h-5 text-red-500 text-sm">{error.message}</p>}
+            {error?.message && (
+              <p className="h-5 text-red-500 text-sm">{error.message}</p>
+            )}
           </div>
         );
       }}

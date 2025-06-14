@@ -2,6 +2,178 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Import our color system */
+@import '../styles/colors.css';
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 221.2 83.2% 53.3%; /* Blue from brand */
+    --primary-foreground: 210 40% 98%;
+    --secondary: 262.1 83.3% 57.8%; /* Purple from brand */
+    --secondary-foreground: 222.2 84% 4.9%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222.2 84% 4.9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 222.2 84% 4.9%;
+    --secondary: 262.1 83.3% 57.8%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 221.2 83.2% 53.3%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer components {
+  /* Daily Performance brand components */
+  .dp-gradient-text {
+    @apply bg-dp-gradient bg-clip-text text-transparent;
+  }
+
+  .dp-gradient-border {
+    background: var(--dp-gradient-primary);
+    padding: 1px;
+    border-radius: inherit;
+  }
+
+  .dp-glass {
+    @apply backdrop-blur-md bg-white/80 dark:bg-gray-900/80;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .dp-card {
+    @apply bg-white dark:bg-gray-900 border border-dp-primary-200 dark:border-dp-primary-700 rounded-lg shadow-sm;
+  }
+
+  .dp-button-primary {
+    @apply bg-dp-gradient text-white font-medium px-4 py-2 rounded-md transition-all duration-200;
+    @apply hover:shadow-lg hover:scale-105 active:scale-95;
+  }
+
+  .dp-button-secondary {
+    @apply bg-dp-primary-50 dark:bg-dp-primary-900/20 text-dp-primary-700 dark:text-dp-primary-300;
+    @apply border border-dp-primary-200 dark:border-dp-primary-700 font-medium px-4 py-2 rounded-md;
+    @apply hover:bg-dp-primary-100 dark:hover:bg-dp-primary-900/40 transition-all duration-200;
+  }
+
+  .dp-input {
+    @apply border-dp-primary-200 dark:border-dp-primary-700 rounded-md;
+    @apply focus:border-dp-primary-500 focus:ring-2 focus:ring-dp-primary-500/20;
+    @apply transition-all duration-200;
+  }
+
+  .dp-table-header {
+    @apply bg-dp-primary-25 dark:bg-dp-primary-950/20 text-dp-primary-800 dark:text-dp-primary-200;
+    @apply border-b border-dp-primary-200 dark:border-dp-primary-700;
+  }
+
+  .dp-status-active {
+    @apply bg-dp-success-100 text-dp-success-700 px-2 py-1 rounded-full text-xs font-medium;
+  }
+
+  .dp-status-inactive {
+    @apply bg-dp-error-100 text-dp-error-700 px-2 py-1 rounded-full text-xs font-medium;
+  }
+
+  .dp-status-pending {
+    @apply bg-dp-warning-100 text-dp-warning-700 px-2 py-1 rounded-full text-xs font-medium;
+  }
+}
+
+@layer utilities {
+  .dp-text-gradient {
+    background: var(--dp-gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .dp-shadow-brand {
+    box-shadow: 0 4px 20px rgba(59, 130, 246, 0.15), 0 1px 3px rgba(168, 85, 247, 0.1);
+  }
+
+  .dp-ring-brand {
+    @apply ring-2 ring-dp-primary-500/20 ring-offset-2 ring-offset-background;
+  }
+}
+
+/* Scrollbar styling with brand colors */
+.dp-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.dp-scrollbar::-webkit-scrollbar-track {
+  @apply bg-dp-primary-50 dark:bg-dp-primary-950/20;
+}
+
+.dp-scrollbar::-webkit-scrollbar-thumb {
+  @apply bg-dp-primary-300 dark:bg-dp-primary-600 rounded-full;
+}
+
+.dp-scrollbar::-webkit-scrollbar-thumb:hover {
+  @apply bg-dp-primary-400 dark:bg-dp-primary-500;
+}
+
+/* Animation với brand colors */
+@keyframes dp-shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+.dp-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--dp-primary-100) 0px,
+    var(--dp-secondary-100) 40px,
+    var(--dp-primary-100) 80px
+  );
+  background-size: 200px;
+  animation: dp-shimmer 1.5s ease-in-out infinite;
+}
+
 /* Đảm bảo root chiếm toàn bộ màn hình */
 :root {
   --foreground-rgb: 0, 0, 0;
@@ -29,17 +201,17 @@ body {
   background-color: hsl(var(--background)) !important;
   color: hsl(var(--foreground)) !important;
 }
-
+/* 
 .default-hover {
   transition:
-    backgrounda-color 0.2s ease,
+    background-color 0.2s ease,
     color 0.2s ease;
 }
 
 .default-hover:hover {
   background-color: hsl(var(--hover-background)) !important;
   color: hsl(var(--hover-foreground)) !important;
-}
+} */
 
 /* Thêm class mới chỉ áp dụng hover cho text */
 .text-hover {
@@ -547,4 +719,713 @@ aside {
   100% {
     background-position: -100% 0;
   }
+}
+
+/* Thêm vào cuối file */
+
+/* Z-index fixes for dialogs */
+.rpt-dialog-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999 !important;
+  pointer-events: auto !important;
+}
+
+.rpt-dialog-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 10000 !important;
+  pointer-events: auto !important;
+}
+
+.rpt-dialog {
+  position: relative;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  width: 500px;
+  max-width: 95vw;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  z-index: 10001 !important;
+  pointer-events: auto !important;
+}
+
+/* Đảm bảo các phần của dialog có z-index tương ứng */
+.rpt-dialog-header {
+  z-index: 10002 !important;
+  pointer-events: auto !important;
+}
+
+.rpt-dialog-content {
+  z-index: 10002 !important;
+  pointer-events: auto !important;
+}
+
+.rpt-dialog-footer {
+  z-index: 10002 !important;
+  pointer-events: auto !important;
+}
+
+/* Đảm bảo dialog buttons có pointer-events hoạt động */
+.rpt-dialog button {
+  pointer-events: auto !important;
+}
+
+/* Thêm debugging để thấy và click được các button */
+.rpt-button {
+  position: relative;
+  z-index: 10003 !important;
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
+
+.rpt-dialog-close {
+  position: relative;
+  z-index: 10003 !important;
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
+
+.rpt-add-button {
+  z-index: 50 !important;
+  position: relative;
+}
+
+/* Đảm bảo buttons trong table rows cũng hoạt động */
+.rpt-action-cell button {
+  pointer-events: auto !important;
+  z-index: 50;
+}
+
+/* Khắc phục pointer-events cho table */
+.rpt-table-wrapper {
+  pointer-events: auto !important;
+}
+
+/* CRITICAL FIX: Responsive sidebar utilities */
+@layer utilities {
+  /* Prevent body scroll when mobile sidebar is open */
+  .sidebar-open {
+    overflow: hidden;
+  }
+  
+  /* Ensure content doesn't get cut off on smaller screens */
+  .main-content {
+    min-width: 0;
+    width: 100%;
+  }
+  
+  /* Mobile sidebar overlay */
+  .mobile-sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 40;
+  }
+  
+  /* Sidebar responsive breakpoints */
+  @media (max-width: 1023px) {
+    .sidebar-desktop {
+      display: none;
+    }
+  }
+  
+  @media (min-width: 1024px) {
+    .sidebar-mobile {
+      display: none;
+    }
+    
+    .main-content-desktop {
+      margin-left: 0; /* Sidebar sẽ tự động điều chỉnh */
+    }
+  }
+  
+  /* Fix for devtools responsive issue */
+  @media (max-width: 1200px) and (min-width: 1024px) {
+    .sidebar-collapsed {
+      width: 4rem; /* 64px - collapsed width */
+    }
+    
+    .sidebar-expanded {
+      width: 16rem; /* 256px - expanded width */
+    }
+  }
+}
+
+/* Smooth transitions for sidebar */
+.sidebar-transition {
+  transition: width 300ms cubic-bezier(0.4, 0, 0.2, 1),
+              transform 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Ensure proper stacking context */
+.sidebar-container {
+  position: relative;
+  z-index: 30;
+}
+
+.main-container {
+  position: relative;
+  z-index: 10;
+}
+
+/* Landing page specific styles */
+@layer utilities {
+  .text-shadow {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .text-shadow-lg {
+    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  }
+  
+  .bg-mesh {
+    background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.1) 1px, transparent 0);
+    background-size: 20px 20px;
+  }
+  
+  .animate-sparkle {
+    animation: sparkle 3s ease-in-out infinite;
+  }
+  
+  @keyframes sparkle {
+    0%, 100% { 
+      background-position: 0% 50%; 
+    }
+    50% { 
+      background-position: 100% 50%; 
+    }
+  }
+}
+
+/* CRITICAL FIX: Remove ALL scroll-behavior and smooth scrolling that might interfere */
+html {
+  /* Remove smooth scrolling that might interfere */
+  /* scroll-behavior: smooth; */
+}
+
+/* CRITICAL FIX: Ensure no CSS is blocking scroll functionality */
+body, html {
+  /* ...existing code... */
+  /* Remove any scroll-related CSS that might interfere */
+}
+
+/* Custom scrollbar for webkit browsers */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: #1e293b;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+/* CRITICAL FIX: Header and scroll improvements */
+.header-backdrop {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Smooth header transitions */
+.header-transition {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Logo sizing fixes */
+.logo-container {
+  display: flex;
+  align-items: center;
+  min-height: 0;
+}
+
+.logo-container img {
+  object-fit: contain;
+  max-width: 100%;
+  height: auto;
+}
+
+/* CRITICAL FIX: Better scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #16a34a;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #15803d;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: #1e293b;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #22c55e;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #16a34a;
+}
+
+/* CRITICAL FIX: Fixed header z-index issues */
+.landing-header {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 1000; /* Reduced from 9999 to allow ScrollToTop to show */
+}
+
+/* Navigation hover effects for light mode */
+.nav-link-light:hover {
+  background-color: rgba(34, 197, 94, 0.1);
+  color: rgb(34, 197, 94);
+}
+
+.nav-link-dark:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+/* Mobile menu backdrop */
+.mobile-menu-backdrop {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.dark .mobile-menu-backdrop {
+  background: rgba(15, 23, 42, 0.95);
+}
+
+/* CRITICAL FIX: Better text shadow utilities */
+@layer utilities {
+  .text-shadow {
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  }
+  
+  .text-shadow-lg {
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  }
+  
+  .text-shadow-xl {
+    text-shadow: 0 3px 8px rgba(0, 0, 0, 0.5);
+  }
+  
+  /* Better backdrop blur for header */
+  .header-backdrop {
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+  
+  /* Scroll to top z-index fix */
+  .scroll-to-top {
+    z-index: 999 !important;
+  }
+  
+  .bg-mesh {
+    background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.1) 1px, transparent 0);
+    background-size: 20px 20px;
+  }
+  
+  .animate-sparkle {
+    animation: sparkle 4s ease-in-out infinite;
+  }
+  
+  @keyframes sparkle {
+    0%, 100% { 
+      background-position: 0% 50%; 
+      opacity: 0.8;
+    }
+    50% { 
+      background-position: 100% 50%; 
+      opacity: 1;
+    }
+  }
+
+  /* Better shadow for floating elements */
+  .shadow-3xl {
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  }
+}
+
+/* CRITICAL FIX: Header contrast improvements */
+.landing-header-scrolled {
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(229, 231, 235, 0.8);
+}
+
+.dark .landing-header-scrolled {
+  background: rgba(15, 23, 42, 0.98);
+  border-bottom: 1px solid rgba(51, 65, 85, 0.8);
+}
+
+.landing-header-transparent {
+  background: transparent;
+}
+
+/* Better navigation contrast */
+.nav-item-scrolled {
+  color: rgb(55, 65, 81);
+  transition: all 0.2s ease;
+}
+
+.nav-item-scrolled:hover {
+  color: rgb(34, 197, 94);
+  background-color: rgba(34, 197, 94, 0.1);
+}
+
+.dark .nav-item-scrolled {
+  color: rgb(209, 213, 219);
+}
+
+.dark .nav-item-scrolled:hover {
+  color: rgb(74, 222, 128);
+  background-color: rgba(34, 197, 94, 0.2);
+}
+
+.nav-item-transparent {
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(4px);
+  transition: all 0.2s ease;
+}
+
+.nav-item-transparent:hover {
+  color: white;
+  background-color: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(8px);
+}
+
+/* CRITICAL FIX: Enhanced landing page styles */
+@layer utilities {
+  /* Text shadows - designed for light backgrounds primarily */
+  .text-shadow {
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+  }
+  
+  .text-shadow-lg {
+    text-shadow: 0 4px 12px rgba(0, 0, 0, 0.7);
+  }
+  
+  .text-shadow-xl {
+    text-shadow: 0 6px 16px rgba(0, 0, 0, 0.8);
+  }
+  
+  /* Extra strong text shadows for header transparency on hero backgrounds */
+  .text-shadow-strong {
+    text-shadow: 
+      0 2px 8px rgba(0, 0, 0, 0.9),
+      0 1px 4px rgba(0, 0, 0, 0.7),
+      0 0 2px rgba(0, 0, 0, 0.5);
+  }
+  
+  /* Light theme primary color variants */
+  .text-light-primary {
+    @apply text-slate-900;
+  }
+  
+  .text-light-secondary {
+    @apply text-slate-700;
+  }
+  
+  .text-light-muted {
+    @apply text-slate-600;
+  }
+  
+  .bg-light-primary {
+    @apply bg-white;
+  }
+  
+  .bg-light-secondary {
+    @apply bg-slate-50;
+  }
+  
+  .bg-light-muted {
+    @apply bg-gray-100;
+  }
+  
+  /* Dark theme variants */
+  .dark .text-light-primary {
+    @apply text-white;
+  }
+  
+  .dark .text-light-secondary {
+    @apply text-slate-300;
+  }
+  
+  .dark .text-light-muted {
+    @apply text-slate-400;
+  }
+  
+  .dark .bg-light-primary {
+    @apply bg-slate-900;
+  }
+  
+  .dark .bg-light-secondary {
+    @apply bg-slate-800;
+  }
+  
+  .dark .bg-light-muted {
+    @apply bg-slate-700;
+  }
+  
+  /* Enhanced backdrop blur for better browser support */
+  .backdrop-blur-xl {
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+  }
+  
+  /* Better shadow utilities */
+  .shadow-3xl {
+    box-shadow: 0 35px 60px -12px rgba(0, 0, 0, 0.25), 
+                0 0 0 1px rgba(255, 255, 255, 0.05);
+  }
+}
+
+/* Enhanced header styles with light theme primary */
+.landing-header {
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.landing-header-scrolled {
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-bottom: 1px solid rgba(229, 231, 235, 0.8);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.dark .landing-header-scrolled {
+  background: rgba(15, 23, 42, 0.98);
+  border-bottom: 1px solid rgba(51, 65, 85, 0.8);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Header initial background for better visibility */
+.landing-header-initial {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.dark .landing-header-initial {
+  background: rgba(15, 23, 42, 0.1);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Better navigation contrast - light theme primary with dark text */
+.nav-item-scrolled {
+  color: rgb(30, 41, 59); /* Dark text for light scrolled state */
+  transition: all 0.2s ease;
+}
+
+.nav-item-scrolled:hover {
+  color: rgb(34, 197, 94);
+  background-color: rgba(34, 197, 94, 0.1);
+}
+
+.dark .nav-item-scrolled {
+  color: rgb(226, 232, 240); /* Light text for dark scrolled state */
+}
+
+.dark .nav-item-scrolled:hover {
+  color: rgb(74, 222, 128);
+  background-color: rgba(34, 197, 94, 0.2);
+}
+
+/* Navigation for transparent header */
+.nav-item-transparent-dark {
+  color: rgba(255, 255, 255, 0.98); /* White on dark hero backgrounds */
+  text-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.9),
+    0 1px 4px rgba(0, 0, 0, 0.7),
+    0 0 2px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  transition: all 0.2s ease;
+}
+
+.nav-item-transparent-dark:hover {
+  color: white;
+  background-color: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(8px);
+  text-shadow: 
+    0 2px 10px rgba(0, 0, 0, 0.95),
+    0 1px 5px rgba(0, 0, 0, 0.8),
+    0 0 3px rgba(0, 0, 0, 0.6);
+}
+
+/* Navigation for transparent header on light backgrounds */
+.nav-item-transparent-light {
+  color: rgb(30, 41, 59); /* Dark text on light hero backgrounds */
+  backdrop-filter: blur(4px);
+  transition: all 0.2s ease;
+}
+
+.nav-item-transparent-light:hover {
+  color: rgb(34, 197, 94);
+  background-color: rgba(34, 197, 94, 0.1);
+  backdrop-filter: blur(8px);
+}
+
+/* CRITICAL FIX: ScrollToTop z-index and positioning */
+.scroll-to-top-container {
+  position: fixed !important;
+  bottom: 1.5rem !important;
+  right: 1.5rem !important;
+  z-index: 9999 !important;
+  pointer-events: auto !important;
+}
+
+.scroll-to-top-button {
+  position: relative !important;
+  z-index: 10000 !important;
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
+
+/* --- REMOVE/COMMENT ALL SCROLL TO TOP BUTTON CSS OVERRIDES --- */
+/*
+.scroll-to-top-container,
+.scroll-to-top-button,
+[class*="scroll"] {
+  z-index: 9999 !important;
+}
+.scroll-to-top-fixed {
+  position: fixed !important;
+  bottom: 1.5rem !important;
+  right: 1.5rem !important;
+  z-index: 9999 !important;
+  pointer-events: auto !important;
+}
+.scroll-to-top-button-urgent {
+  position: fixed !important;
+  bottom: 20px !important;
+  right: 20px !important;
+  z-index: 99999 !important;
+  pointer-events: auto !important;
+  user-select: none !important;
+  cursor: pointer !important;
+  width: 50px !important;
+  height: 50px !important;
+  border-radius: 50% !important;
+  background-color: #22c55e !important;
+  color: white !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
+}
+.scroll-to-top-button-urgent * {
+  pointer-events: auto !important;
+  user-select: none !important;
+  cursor: pointer !important;
+}
+*/
+/* --- END REMOVE/COMMENT --- */
+
+/* Enhanced scrollbar with green theme */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #16a34a, #15803d);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #15803d, #166534);
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: #1e293b;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #22c55e, #16a34a);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #16a34a, #15803d);
+}
+
+/* CRITICAL FIX: Header z-index issues */
+.landing-header {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 1000; /* Reduced from 9999 to allow ScrollToTop to show */
+}
+
+/* CRITICAL FIXES FOR SCROLL TO TOP */
+/* Đảm bảo nút ScrollToTop luôn hiển thị trên cùng */
+.scroll-to-top-button-urgent {
+  position: fixed !important;
+  bottom: 20px !important;
+  right: 20px !important;
+  z-index: 99999 !important; /* Z-index cực cao */
+  pointer-events: auto !important;
+  user-select: none !important;
+  cursor: pointer !important;
+}
+
+/* Xóa bất kỳ quy tắc CSS nào có thể ẩn button */
+.scroll-to-top-button-urgent * {
+  pointer-events: auto !important;
+  user-select: none !important;
+  cursor: pointer !important;
+}
+
+/* Đảm bảo button không bị che bởi các element khác */
+[id="top"] {
+  scroll-margin-top: 100px;
 }

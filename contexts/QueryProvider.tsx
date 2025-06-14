@@ -66,9 +66,9 @@ export default function QueryProvider({ children }: Props) {
       }}
     >
       {children}
-      <Suspense fallback={null}>
+      {/* <Suspense fallback={null}>
         <ReactQueryDevtoolsProduction />
-      </Suspense>
+      </Suspense> */}
     </PersistQueryClientProvider>
   );
 }

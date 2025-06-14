@@ -1,673 +1,275 @@
-import { useQuery, UseQueryResult } from '@tanstack/react-query';
-import React, { createContext, useContext, useState, ReactNode, useCallback, useMemo } from 'react';
-
-import { useTeamMutations } from './useTeamMutations';
-import { useTeamQueries } from './useTeamQueries';
-
-import { getTeamById, getTeamsList } from '@/apis/team/team.api';
-import {
-  Team,
-  TeamCreateDTO,
-  TeamUpdateDTO,
-  TeamLeader,
-  TeamLeaderDTO,
-  TeamCondDTO,
-} from '@/common/interface/team';
-import { toast } from 'react-toast-kit';
-import { BasePaginationParams, BaseResponseData } from '@/hooks/base/useBaseQueries';
-
-// Define the context shape
-interface TeamContextType {
-  selectedTeam: Team | null;
-  selectedTeamId: string | null;
-  isLoading: boolean;
-  isCreating: boolean;
-  isUpdating: boolean;
-  isDeleting: boolean;
-
-  selectTeam: (team: Team | null) => void;
-  selectTeamById: (id: string | null) => Promise<void>;
-  createTeam: (data: TeamCreateDTO) => Promise<string | null>;
-  updateTeam: (id: string, data: TeamUpdateDTO) => Promise<boolean>;
-  deleteTeam: (id: string) => Promise<boolean>;
-  batchDeleteTeams: (ids: string[]) => Promise<boolean>;
-
-  //Team data fetching
-  getTeam: (id: string) => Promise<Team | null>;
-  getTeamWithDetails: (id: string, includeLeaders?: boolean) => Promise<Team | null>;
-  getTeamsByLine: (lineId: string) => Promise<Team[]>;
-  listTeams: (
-    params: TeamCondDTO & BasePaginationParams,
-  ) => Promise<BaseResponseData<Team> | undefined>;
-  getAccessibleTeams: () => Promise<Team[]>;
-  getAllTeams: () => UseQueryResult<Team[], Error>;
-
-  // Team leaders management
-  getTeamLeaders: (teamId: string) => Promise<TeamLeader[]>;
-  addTeamLeader: (teamId: string, leaderDTO: TeamLeaderDTO) => Promise<boolean>;
-  updateTeamLeader: (
-    teamId: string,
-    userId: string,
-    data: { isPrimary?: boolean; endDate?: Date | null },
-  ) => Promise<boolean>;
-  removeTeamLeader: (teamId: string, userId: string) => Promise<boolean>;
-
-  // Cache management
-  invalidateTeamCache: (teamId: string, forceRefetch?: boolean) => Promise<void>;
-  prefetchTeamDetails: (teamId: string, includeLeaders?: boolean) => Promise<void>;
-
-  // Direct access to queries for more complex use cases
-  queries: ReturnType<typeof useTeamQueries>;
-  mutations: ReturnType<typeof useTeamMutations>;
-}
-
-//Create the context
-const TeamContext = createContext<TeamContextType | undefined>(undefined);
-
-//Provider component
-interface TeamProviderProps {
-  children: ReactNode;
-}
-
-export const TeamProvider: React.FC<TeamProviderProps> = ({ children }) => {
-  const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
-  const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
-
-  // Initialize hooks
-  const teamQueries = useTeamQueries();
-  const teamMutations = useTeamMutations();
-
-  // Destructure the needed queries and mutations
-  const {
-    listTeams,
-    getTeamWithDetails,
-    getTeamsByLineId,
-    getLeadersByTeamId,
-    getAccessibleTeamsForUser,
-    prefetchTeamDetails: prefetchDetails,
-    queries, // QueryClient exposed by useTeamQueries
-    fetchQuery,
-  } = teamQueries;
-
-  const {
-    createTeamMutation,
-    updateTeamMutation,
-    deleteTeamMutation,
-    batchDeleteTeamsMutation,
-    addLeaderMutation,
-    updateLeaderMutation,
-    removeLeaderMutation,
-    invalidateTeamCaches,
-  } = teamMutations;
-
-  //Mutation loading states
-  const isCreating = createTeamMutation.isPending;
-  const isUpdating = updateTeamMutation.isPending;
-  const isDeleting = deleteTeamMutation.isPending || batchDeleteTeamsMutation.isPending;
-  const isLoading = isCreating || isUpdating || isDeleting;
-
-  // Team selection
-  const selectTeam = useCallback((team: Team | null) => {
-    setSelectedTeam(team);
-    setSelectedTeamId(team?.id || null);
-  }, []);
-
-  //Get a single team by ID
-  const getTeam = useCallback(
-    async (id: string): Promise<Team | null> => {
-      try {
-        // Use the queryClient directly through teamQueries to get cached data or fetch if needed
-        const queryKey = ['team', id];
-        const cachedTeam = queries.getQueryData<Team>(queryKey);
-
-        if (cachedTeam) {
-          return cachedTeam;
-        }
-
-        // Fetch the team data directly using the imported API function
-        const team = await fetchQuery({
-          queryKey,
-          queryFn: () => getTeamById(id),
-        });
-
-        return team || null;
-      } catch (error) {
-        console.error('Error fetching team:', error);
-        toast({
-          title: 'Không thể tải thông tin tổ',
-          description:
-            error instanceof Error ? error.message : 'Đã xảy ra lỗi khi tải thông tin tổ',
-          variant: 'error',
-        });
-        return null;
-      }
-    },
-    [queries, fetchQuery],
-  );
-
-  const selectTeamById = useCallback(
-    async (id: string | null) => {
-      if (!id) {
-        setSelectedTeam(null);
-        setSelectedTeamId(null);
-        return;
-      }
-
-      setSelectedTeamId(id);
-      try {
-        const team = await getTeam(id);
-        setSelectedTeam(team);
-      } catch (error) {
-        console.error('Error selecting team by ID:', error);
-        toast({
-          title: 'Không thể tải thông tin tổ',
-          description: 'Đã xảy ra lỗi khi tải thông tin tổ',
-          variant: 'error',
-        });
-      }
-    },
-    [getTeam],
-  );
-
-  // Team mutations with error handling
-  const createTeam = useCallback(
-    async (data: TeamCreateDTO): Promise<string | null> => {
-      try {
-        const result = await createTeamMutation.mutateAsync(data);
-        if (result?.id) {
-          toast({
-            title: 'Thành công',
-            description: 'Đã tạo tổ mới thành công',
-            variant: 'default',
-          });
-          return result.id;
-        }
-        return null;
-      } catch (error) {
-        console.error('Error creating team:', error);
-        toast({
-          title: 'Không thể tạo tổ',
-          description: error instanceof Error ? error.message : 'Đã xảy ra lỗi khi tạo tổ mới',
-          variant: 'error',
-        });
-        return null;
-      }
-    },
-    [createTeamMutation],
-  );
-
-  const updateTeam = useCallback(
-    async (id: string, data: TeamUpdateDTO): Promise<boolean> => {
-      try {
-        await updateTeamMutation.mutateAsync({ id, ...data });
-        toast({
-          title: 'Thành công',
-          description: 'Đã cập nhật thông tin tổ thành công',
-          variant: 'default',
-        });
-
-        //  Update selected team if it's the one being updated
-        if (selectedTeamId === id) {
-          const updated = await getTeam(id);
-          setSelectedTeam(updated);
-        }
-
-        return true;
-      } catch (error) {
-        console.error('Error updating team:', error);
-        toast({
-          title: 'Không thể cập nhật tổ',
-          description:
-            error instanceof Error ? error.message : 'Đã xảy ra lỗi khi cập nhật thông tin tổ',
-          variant: 'error',
-        });
-        return false;
-      }
-    },
-    [updateTeamMutation, selectedTeamId, getTeam],
-  );
-
-  const deleteTeam = useCallback(
-    async (id: string): Promise<boolean> => {
-      try {
-        await deleteTeamMutation.mutateAsync(id);
-        toast({
-          title: 'Thành công',
-          description: 'Đã xóa tổ thành công',
-          variant: 'default',
-        });
-
-        // Clear selected team if it's the one being deleted
-        if (selectedTeamId === id) {
-          setSelectedTeam(null);
-          setSelectedTeamId(null);
-        }
-
-        return true;
-      } catch (error) {
-        console.error('Error deleting team:', error);
-        toast({
-          title: 'Không thể xóa tổ',
-          description: error instanceof Error ? error.message : 'Đã xảy ra lỗi khi xóa tổ',
-          variant: 'error',
-        });
-        return false;
-      }
-    },
-    [deleteTeamMutation, selectedTeamId],
-  );
-
-  const batchDeleteTeams = useCallback(
-    async (ids: string[]): Promise<boolean> => {
-      try {
-        await batchDeleteTeamsMutation.mutateAsync(ids);
-        toast({
-          title: 'Thành công',
-          description: `Đã xóa ${ids.length} tổ thành công`,
-          variant: 'default',
-        });
-
-        // Clear selected team if it's among those being deleted
-        if (selectedTeamId && ids.includes(selectedTeamId)) {
-          setSelectedTeam(null);
-          setSelectedTeamId(null);
-        }
-
-        return true;
-      } catch (error) {
-        console.error('Error batch deleting teams:', error);
-        toast({
-          title: 'Không thể xóa các tổ',
-          description: error instanceof Error ? error.message : 'Đã xảy ra lỗi khi xóa các tổ',
-          variant: 'error',
-        });
-        return false;
-      }
-    },
-    [batchDeleteTeamsMutation, selectedTeamId],
-  );
-
-  // Team leader mutations
-  const getTeamLeaders = useCallback(
-    async (teamId: string): Promise<TeamLeader[]> => {
-      try {
-        //  Use the queryClient directly through teamQueries
-        const queryKey = ['team', teamId, 'leaders'];
-        const cachedLeaders = queries.getQueryData<TeamLeader[]>(queryKey);
-
-        if (cachedLeaders) {
-          return cachedLeaders;
-        }
-
-        // Fetch leaders data
-        const leaders = await fetchQuery({
-          queryKey,
-          queryFn: () => getLeadersByTeamId(teamId).data,
-        });
-
-        return leaders || [];
-      } catch (error) {
-        console.error('Error fetching team leaders:', error);
-        toast({
-          title: 'Không thể tải danh sách tổ trưởng',
-          description:
-            error instanceof Error ? error.message : 'Đã xảy ra lỗi khi tải danh sách tổ trưởng',
-          variant: 'error',
-        });
-        return [];
-      }
-    },
-    [queries, fetchQuery, getLeadersByTeamId],
-  );
-
-  const addTeamLeader = useCallback(
-    async (teamId: string, leaderDTO: TeamLeaderDTO): Promise<boolean> => {
-      try {
-        await addLeaderMutation.mutateAsync({ teamId, leaderDTO });
-        toast({
-          title: 'Thành công',
-          description: 'Đã thêm tổ trưởng thành công',
-          variant: 'default',
-        });
-        return true;
-      } catch (error) {
-        console.error('Error adding team leader:', error);
-        toast({
-          title: 'Không thể thêm tổ trưởng',
-          description: error instanceof Error ? error.message : 'Đã xảy ra lỗi khi thêm tổ trưởng',
-          variant: 'error',
-        });
-        return false;
-      }
-    },
-    [addLeaderMutation],
-  );
-
-  const updateTeamLeader = useCallback(
-    async (
-      teamId: string,
-      userId: string,
-      data: { isPrimary?: boolean; endDate?: Date | null },
-    ): Promise<boolean> => {
-      try {
-        await updateLeaderMutation.mutateAsync({ teamId, userId, data });
-        toast({
-          title: 'Thành công',
-          description: 'Đã cập nhật thông tin tổ trưởng thành công',
-          variant: 'default',
-        });
-        return true;
-      } catch (error) {
-        console.error('Error updating team leader:', error);
-        toast({
-          title: 'Không thể cập nhật tổ trưởng',
-          description:
-            error instanceof Error
-              ? error.message
-              : 'Đã xảy ra lỗi khi cập nhật thông tin tổ trưởng',
-          variant: 'error',
-        });
-        return false;
-      }
-    },
-    [updateLeaderMutation],
-  );
-
-  const removeTeamLeader = useCallback(
-    async (teamId: string, userId: string): Promise<boolean> => {
-      try {
-        await removeLeaderMutation.mutateAsync({ teamId, userId });
-        toast({
-          title: 'Thành công',
-          description: 'Đã xóa tổ trưởng thành công',
-          variant: 'default',
-        });
-        return true;
-      } catch (error) {
-        console.error('Error removing team leader:', error);
-        toast({
-          title: 'Không thể xóa tổ trưởng',
-          description: error instanceof Error ? error.message : 'Đã xảy ra lỗi khi xóa tổ trưởng',
-          variant: 'error',
-        });
-        return false;
-      }
-    },
-    [removeLeaderMutation],
-  );
-
-  // Data fetching helpers that avoid hook usage outside of component body
-  const getTeamWithDetailsAsync = useCallback(
-    async (id: string, includeLeaders = true) => {
-      try {
-        // Use the queryClient directly to get or fetch data
-        const queryKey = ['team', id, 'details', { includeLeaders }];
-        const cachedTeamDetails = queries.getQueryData(queryKey);
-
-        if (cachedTeamDetails) {
-          return cachedTeamDetails as Team | null;
-        }
-
-        // Fetch team details
-        const teamDetails = await fetchQuery({
-          queryKey,
-          queryFn: () => getTeamWithDetails(id, { includeLeaders }).data,
-        });
-
-        return teamDetails as Team | null;
-      } catch (error) {
-        console.error('Error fetching team with details:', error);
-        toast({
-          title: 'Không thể tải chi tiết tổ',
-          description: error instanceof Error ? error.message : 'Đã xảy ra lỗi khi tải chi tiết tổ',
-          variant: 'error',
-        });
-        return null;
-      }
-    },
-    [queries, fetchQuery, getTeamWithDetails],
-  );
-
-  const getTeamsByLine = useCallback(
-    async (lineId: string): Promise<Team[]> => {
-      try {
-        // Use the queryClient directly
-        const queryKey = ['line', lineId, 'teams'];
-        const cachedTeams = queries.getQueryData<Team[]>(queryKey);
-
-        if (cachedTeams) {
-          return cachedTeams;
-        }
-
-        // Fetch teams for this line
-        const teams = await fetchQuery({
-          queryKey,
-          queryFn: () => getTeamsByLineId(lineId).data,
-        });
-
-        return teams || [];
-      } catch (error) {
-        console.error('Error fetching teams by line:', error);
-        toast({
-          title: 'Không thể tải danh sách tổ',
-          description:
-            error instanceof Error
-              ? error.message
-              : 'Đã xảy ra lỗi khi tải danh sách tổ theo dây chuyền',
-          variant: 'error',
-        });
-        return [];
-      }
-    },
-    [queries, fetchQuery, getTeamsByLineId],
-  );
-
-  const getAccessibleTeams = useCallback(async (): Promise<Team[]> => {
-    try {
-      // Use the queryClient directly
-      const queryKey = ['teams', 'accessible'];
-      const cachedTeams = queries.getQueryData<Team[]>(queryKey);
-
-      if (cachedTeams) {
-        return cachedTeams;
-      }
-
-      // Fetch accessible teams
-      const teams = await fetchQuery({
-        queryKey,
-        queryFn: () => getAccessibleTeamsForUser().data,
-      });
-
-      return teams || [];
-    } catch (error) {
-      console.error('Error fetching accessible teams:', error);
-      toast({
-        title: 'Không thể tải danh sách tổ có quyền truy cập',
-        description:
-          error instanceof Error
-            ? error.message
-            : 'Đã xảy ra lỗi khi tải danh sách tổ có quyền truy cập',
-        variant: 'error',
-      });
-      return [];
-    }
-  }, [queries, fetchQuery, getAccessibleTeamsForUser]);
-
-  const listTeamsAsync = useCallback(
-    async (
-      params: TeamCondDTO & BasePaginationParams,
-    ): Promise<BaseResponseData<Team> | undefined> => {
-      try {
-        // Use the queryClient directly
-        const queryKey = ['team-list', params];
-        const cachedTeamList = queries.getQueryData<BaseResponseData<Team>>(queryKey);
-
-        if (cachedTeamList) {
-          return cachedTeamList;
-        }
-
-        // Fetch team list with params
-        const teamsList = await fetchQuery({
-          queryKey,
-          queryFn: () => listTeams(params).data,
-        });
-
-        return teamsList;
-      } catch (error) {
-        console.error('Error listing teams:', error);
-        toast({
-          title: 'Không thể tải danh sách tổ',
-          description:
-            error instanceof Error ? error.message : 'Đã xảy ra lỗi khi tải danh sách tổ',
-          variant: 'error',
-        });
-        return undefined;
-      }
-    },
-    [queries, fetchQuery, listTeams],
-  );
-
-  // Cache management
-  const invalidateTeamCache = useCallback(
-    async (teamId: string, forceRefetch = false) => {
-      await invalidateTeamCaches(teamId, { forceRefetch });
-    },
-    [invalidateTeamCaches],
-  );
-
-  const prefetchTeamDetails = useCallback(
-    async (teamId: string, includeLeaders = true) => {
-      await prefetchDetails(teamId, { includeLeaders });
-    },
-    [prefetchDetails],
-  );
-
-  /**
-   * Get all teams as a simple array
-   */
-  /**
-   * Get all teams as a simple array
-   */
-  /**
-   * Get all teams as a simple array
-   */
-  const getAllTeams = useCallback(
-    (options?: {
-      enabled?: boolean;
-      refetchOnWindowFocus?: boolean;
-      staleTime?: number;
-    }): UseQueryResult<Team[], Error> => {
-      return useQuery<Team[], Error>({
-        queryKey: ['teams', 'all'],
-        queryFn: async (): Promise<Team[]> => {
-          try {
-            // Use your existing API function
-            const response = await getTeamsList({
-              page: 1,
-              limit: 1000, // Set a high limit to get all teams
-            });
-
-            //  Return just the teams array from the response
-            return response.data || [];
-          } catch (error) {
-            console.error('Error fetching all teams:', error);
-            toast({
-              title: 'Không thể tải danh sách tổ',
-              description:
-                error instanceof Error ? error.message : 'Đã xảy ra lỗi khi tải danh sách tổ',
-              variant: 'error',
-            });
-            return []; // Return empty array on error
-          }
-        },
-        enabled: options?.enabled !== false,
-        staleTime: options?.staleTime || 10 * 60 * 1000, // 10 minutes
-        gcTime: 30 * 60 * 1000, // 30 minutes
-        refetchOnWindowFocus: options?.refetchOnWindowFocus ?? false,
-      });
-    },
-    [getTeamsList],
-  );
-
-  // Context value
-  const contextValue = useMemo(
-    () => ({
-      //  State
-      selectedTeam,
-      selectedTeamId,
-      isLoading,
-      isCreating,
-      isUpdating,
-      isDeleting,
-
-      // Team actions
-      selectTeam,
-      selectTeamById,
-      createTeam,
-      updateTeam,
-      deleteTeam,
-      batchDeleteTeams,
-
-      // Team data fetching
-      getTeam,
-      getTeamWithDetails: getTeamWithDetailsAsync,
-      getTeamsByLine,
-      listTeams: listTeamsAsync,
-      getAccessibleTeams,
-      getAllTeams,
-
-      // Team leaders management
-      getTeamLeaders,
-      addTeamLeader,
-      updateTeamLeader,
-      removeTeamLeader,
-
-      // Cache management
-      invalidateTeamCache,
-      prefetchTeamDetails,
-
-      // Direct access to hooks for more complex use cases
-      queries: teamQueries,
-      mutations: teamMutations,
-    }),
-    [
-      selectedTeam,
-      selectedTeamId,
-      isLoading,
-      isCreating,
-      isUpdating,
-      isDeleting,
-      selectTeam,
-      selectTeamById,
-      createTeam,
-      updateTeam,
-      deleteTeam,
-      batchDeleteTeams,
-      getTeam,
-      getTeamWithDetailsAsync,
-      getTeamsByLine,
-      listTeamsAsync,
-      getAllTeams,
-      getAccessibleTeams,
-      getTeamLeaders,
-      addTeamLeader,
-      updateTeamLeader,
-      removeTeamLeader,
-      invalidateTeamCache,
-      prefetchTeamDetails,
-      teamQueries,
-      teamMutations,
-    ],
-  );
-
-  return <TeamContext.Provider value={contextValue}>{children}</TeamContext.Provider>;
+'use client';
+
+import React, { createContext, useContext, ReactNode, useMemo, useEffect, useState } from 'react';
+import { useTeam } from './useTeam';
+import { userService } from '@/services/user/user.service';
+import { lineService } from '@/services/line/line.service';
+import { useSharedData } from '@/hooks/shared/SharedDataContext';
+
+// Create team context with type definitions
+export type TeamContextType = ReturnType<typeof useTeam> & {
+    config?: TeamProviderConfig;
+    relatedData?: {
+        lines: any[];
+        leaders: any[];
+        users: any[];
+    };
+    loadingStates?: {
+        lines: boolean;
+        leaders: boolean;
+        users: boolean;
+    };
 };
 
-//Custom hook to use the team context
-export const useTeam = () => {
-  const context = useContext(TeamContext);
-  if (context === undefined) {
-    throw new Error('useTeam must be used within a TeamProvider');
-  }
-  return context;
+const TeamContext = createContext<TeamContextType | null>(null);
+
+// Enhanced props for the provider component
+export interface TeamProviderConfig {
+    enableAutoRefresh?: boolean;
+    prefetchRelatedData?: boolean;
+    cacheStrategy?: 'aggressive' | 'conservative' | 'minimal';
+}
+
+export interface TeamProviderProps {
+    children: ReactNode;
+    config?: TeamProviderConfig;
+}
+
+/**
+ * Enhanced Provider component with performance optimizations and related data loading
+ */
+export const TeamProvider: React.FC<TeamProviderProps> = ({
+    children,
+    config = {
+        enableAutoRefresh: true,
+        prefetchRelatedData: true,
+        cacheStrategy: 'conservative'
+    }
+}) => {
+    // Initialize the team context state
+    const teamState = useTeam();
+    
+    // Use shared data context for users
+    const { sharedData, loadingStates: sharedLoadingStates } = useSharedData();
+
+    // State for other related data
+    const [relatedData, setRelatedData] = useState({
+        lines: [],
+        leaders: [],
+        users: [],
+    });
+
+    const [loadingStates, setLoadingStates] = useState({
+        lines: false,
+        leaders: false,
+        users: false,
+    });
+
+    // Sync users from shared context
+    useEffect(() => {
+        setRelatedData(prev => ({
+            ...prev,
+            users: sharedData.users
+        }));
+        setLoadingStates(prev => ({
+            ...prev,
+            users: sharedLoadingStates.users
+        }));
+    }, [sharedData.users, sharedLoadingStates.users]);
+
+    // Add ref to prevent multiple simultaneous API calls
+    const loadingRef = React.useRef({
+        isLoadingLines: false,
+        isLoadingLeaders: false,
+        isLoadingUsers: false,
+    });
+
+    // Load other related data based on configuration  
+    useEffect(() => {
+        if (config.prefetchRelatedData) {
+            const loadRelatedData = async () => {
+                try {
+                    console.log('[TeamContext] Starting to load related data...');
+                    console.log('[TeamContext] Using shared user data, no need to load separately');
+
+                    // Load lines (high priority)
+                    if (!loadingRef.current.isLoadingLines) {
+                        loadingRef.current.isLoadingLines = true;
+
+                        setTimeout(async () => {
+                            setLoadingStates(prev => ({ ...prev, lines: true }));
+                            try {
+                                console.log('[TeamContext] Loading lines...');
+                                const linesResponse = await lineService.getList();
+                                console.log('[TeamContext] Lines API response:', linesResponse);
+
+                                const lines = linesResponse?.data || [];
+                                setRelatedData(prev => ({ ...prev, lines }));
+                                console.log('[TeamContext] Lines loaded successfully:', lines.length);
+                            } catch (error) {
+                                console.error('[TeamContext] Failed to load lines:', error);
+                                setRelatedData(prev => ({ ...prev, lines: [] }));
+                            } finally {
+                                setLoadingStates(prev => ({ ...prev, lines: false }));
+                                loadingRef.current.isLoadingLines = false;
+                            }
+                        }, 100);
+                    }
+
+                } catch (error) {
+                    console.error('[TeamContext] Failed to load related data:', error);
+                }
+            };
+
+            console.log('[TeamContext] prefetchRelatedData is enabled, starting load...');
+            loadRelatedData();
+        } else {
+            console.log('[TeamContext] prefetchRelatedData is disabled, skipping load');
+        }
+    }, [config.prefetchRelatedData]);
+
+    // Cleanup function to reset loading refs
+    useEffect(() => {
+        return () => {
+            loadingRef.current.isLoadingLines = false;
+            loadingRef.current.isLoadingLeaders = false;
+            loadingRef.current.isLoadingUsers = false;
+        };
+    }, []);
+
+    // Memoize the context value to prevent unnecessary re-renders
+    const contextValue = useMemo(() => ({
+        ...teamState,
+        config,
+        relatedData,
+        loadingStates,
+    }), [teamState, config, relatedData, loadingStates]);
+
+    return (
+        <TeamContext.Provider value={contextValue}>
+            {children}
+        </TeamContext.Provider>
+    );
+};
+
+/**
+ * Enhanced hook to access the team context with selective subscription
+ */
+export const useTeamContext = (): TeamContextType => {
+    const context = useContext(TeamContext);
+
+    if (!context) {
+        throw new Error('useTeamContext must be used within a TeamProvider');
+    }
+
+    return context;
+};
+
+/**
+ * Selective hook for components that only need specific team data
+ */
+export const useTeamData = () => {
+    const context = useTeamContext();
+    return useMemo(() => ({
+        getList: context.getList,
+        loading: context.loading,
+        error: context.error,
+        activeFilters: context.activeFilters,
+    }), [context.getList, context.loading, context.error, context.activeFilters]);
+};
+
+/**
+ * Selective hook for components that only need team actions
+ */
+export const useTeamActions = () => {
+    const context = useTeamContext();
+    return useMemo(() => ({
+        handleCreate: context.handleCreate,
+        handleUpdate: context.handleUpdate,
+        handleDelete: context.handleDelete,
+    }), [context.handleCreate, context.handleUpdate, context.handleDelete]);
+};
+
+/**
+ * Enhanced team form hook with better performance
+ */
+export const useTeamForm = () => {
+    const [formData, setFormData] = React.useState(() => ({
+        code: '',
+        name: '',
+        description: '',
+        lineId: '',
+    }));
+
+    // Optimized update function that prevents unnecessary re-renders
+    const updateFormField = React.useCallback((field: string, value: any) => {
+        setFormData(prev => {
+            // Skip update if value hasn't changed
+            if (prev[field as keyof typeof prev] === value) return prev;
+            return { ...prev, [field]: value };
+        });
+    }, []);
+
+    // Function to reset the form
+    const resetForm = React.useCallback(() => {
+        setFormData({
+            code: '',
+            name: '',
+            description: '',
+            lineId: '',
+        });
+    }, []);
+
+    // Function to load data into the form for editing
+    const loadTeamData = React.useCallback((team: any) => {
+        if (team) {
+            setFormData({
+                code: team.code || '',
+                name: team.name || '',
+                description: team.description || '',
+                lineId: team.lineId || '',
+            });
+        }
+    }, []);
+
+    return {
+        formData,
+        updateFormField,
+        resetForm,
+        loadTeamData,
+    };
+};
+
+export const useTeamFormWithDefaults = () => useTeamForm();
+
+/**
+ * Custom hook to access line teams data
+ */
+export const useLineTeams = (lineId?: string) => {
+    const context = useTeamContext();
+    
+    // Use the existing getList with line filter
+    const listQuery = context.getList({ lineId });
+    
+    return {
+        teams: listQuery.data?.data || [],
+        isLoading: listQuery.isLoading,
+        error: listQuery.error,
+        refetch: listQuery.refetch,
+    };
+};
+
+/**
+ * Custom hook to access detailed team data with options
+ */
+export const useTeamDetails = (teamId?: string) => {
+    const context = useTeamContext();
+    
+    const detailQuery = context.getById(teamId);
+    
+    return {
+        teamDetails: detailQuery.data,
+        isLoading: detailQuery.isLoading,
+        error: detailQuery.error,
+    };
 };

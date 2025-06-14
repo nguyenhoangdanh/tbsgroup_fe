@@ -1,10 +1,14 @@
 import { all, fork } from 'redux-saga/effects';
-
-import { apiSaga } from './apiSaga';
 import { authSaga } from './authSaga';
-// import { sagas } from './sagas';
 
+/**
+ * Root saga that combines all application sagas
+ */
 export default function* rootSaga() {
-  // yield spawn(reduxSaga);
-  yield all([fork(authSaga), fork(apiSaga)]);
+  yield all([
+    fork(authSaga),
+    // Add other sagas here as needed
+    // fork(userSaga),
+    // fork(appSaga),
+  ]);
 }

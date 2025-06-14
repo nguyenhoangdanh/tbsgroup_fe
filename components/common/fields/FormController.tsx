@@ -6,8 +6,8 @@ import SubmitButton from '@/components/SubmitButton';
 
 interface IProps<TForm extends FieldValues> {
   children: React.ReactNode;
-  methods: ReturnType<typeof useForm<TForm>>;
-  onSubmit: SubmitHandler<TForm>;
+  form: ReturnType<typeof useForm<TForm>>;
+  onSubmit: SubmitHandler<TForm> | ((data: TForm) => Promise<any> | any);
   className?: string;
   showSubmitButton?: boolean;
   submitLabel?: string;
@@ -15,11 +15,11 @@ interface IProps<TForm extends FieldValues> {
 }
 
 export const FormController = <TForm extends FieldValues>({
-  methods,
+  form,
   onSubmit,
   children,
   className = '',
-  showSubmitButton = true,
+  showSubmitButton = false,
   submitLabel = 'Lưu',
   spacing = 'default',
 }: IProps<TForm>) => {
@@ -41,8 +41,8 @@ export const FormController = <TForm extends FieldValues>({
   };
 
   return (
-    <FormProvider {...methods}>
-      <form onSubmit={methods.handleSubmit(onSubmit)}>
+    <FormProvider {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)}>
         <div className={`flex flex-col ${getSpacingClass()} ${className}`}>
           {children}
           {showSubmitButton && <SubmitButton name={submitLabel} />}

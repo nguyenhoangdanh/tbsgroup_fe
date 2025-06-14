@@ -59,6 +59,63 @@ export const APP_CONFIG = {
   },
 } as const;
 
+export const PUBLICROUTES = [
+  '/login',
+  '/reset-password',
+  '/forgot-password',
+  '/register',
+  '/verify-email',
+  '/',
+];
+
+export const PROTECTECTED_ROUTES = [
+  '/dashboard',
+  '/profile',
+  '/settings',
+  '/users',
+];
+
+export const ADMIN_ROUTES = [
+  '/admin',
+  '/admin/users',
+  '/admin/roles',
+  '/admin/handbags',
+  '/admin/factories',
+  '/admin/lines',
+  '/admin/teams',
+  '/admin/groups',
+  '/admin/departments',
+  '/admin/permissions',
+  '/admin/audit-logs',
+  '/admin/system-settings',
+  '/admin/health',
+  '/admin/metrics',
+  '/admin/logs',
+  '/admin/notifications',
+  '/admin/reports',
+  '/admin/analytics',
+  '/admin/integrations',
+  '/admin/backup',
+  '/admin/security',
+  '/admin/maintenance',
+  '/admin/support',
+  '/admin/feedback',
+  '/admin/updates',
+  '/admin/notifications/settings',
+  '/admin/notifications/logs',
+  '/admin/notifications/alerts',
+  '/admin/notifications/subscriptions',
+  '/admin/notifications/templates',
+  '/admin/notifications/queues',
+  '/admin/notifications/senders',
+  '/admin/notifications/receivers',
+  '/admin/notifications/history',
+]
+
+const apiRoutes = ['/api/'];
+const staticRoutes = ['/_next', '/favicon.ico', '/images', '/icons'];
+
+
 export const API_ENDPOINTS = {
   AUTH: {
     LOGIN: '/auth/login',

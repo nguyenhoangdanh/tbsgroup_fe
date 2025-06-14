@@ -2,7 +2,6 @@ import { Loader2 } from 'lucide-react';
 import React from 'react';
 
 import { Button } from '@/components/ui/button';
-import { useDialog } from '@/contexts/DialogProvider';
 
 interface FormActionsProps {
   isSubmitting: boolean;
@@ -37,13 +36,10 @@ export const FormActions: React.FC<FormActionsProps> = ({
   },
   submitButtonClass = 'bg-green-800 hover:bg-green-700',
 }) => {
-  const { hideDialog } = useDialog();
 
   const handleCancel = () => {
     if (onCancel) {
       onCancel();
-    } else {
-      hideDialog();
     }
   };
 

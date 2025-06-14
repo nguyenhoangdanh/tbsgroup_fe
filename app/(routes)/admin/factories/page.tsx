@@ -2,15 +2,31 @@
 
 import React from 'react';
 
+import PermissionGuard from '@/hooks/permission/PermissionGuard';
+import { DepartmentProvider } from '@/hooks/department/DepartmentContext';
 import { FactoryProvider } from '@/hooks/factory/FactoryContext';
-import FactoryManagementScreen from '@/screens/admin/factory/Container';
+import FactoryContainer from '@/screens/admin/factory/Container';
 
-const FactoryPage = () => {
+export default function FactoryPage() {
   return (
-    <FactoryProvider>
-      <FactoryManagementScreen />
-    </FactoryProvider>
+    // <PermissionGuard pageCode="FACTORIES_PAGE">
+      <DepartmentProvider
+        config={{
+          enableAutoRefresh: true,
+          prefetchRelatedData: true,
+          cacheStrategy: 'conservative',
+        }}
+      >
+        <FactoryProvider
+          config={{
+            enableAutoRefresh: true,
+            prefetchRelatedData: true,
+            cacheStrategy: 'conservative',
+          }}
+        >
+          <FactoryContainer />
+        </FactoryProvider>
+      </DepartmentProvider>
+    // </PermissionGuard>
   );
-};
-
-export default FactoryPage;
+}

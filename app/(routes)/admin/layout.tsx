@@ -11,7 +11,9 @@ export default function AdminRootLayout({ children }: { children: React.ReactNod
   return (
     <RootLayoutWrapper>
       <SidebarStateProvider>
-        <AdminLayoutWrapper>{children}</AdminLayoutWrapper>
+        <AdminLayoutWrapper>
+          {children}
+        </AdminLayoutWrapper>
       </SidebarStateProvider>
     </RootLayoutWrapper>
   );

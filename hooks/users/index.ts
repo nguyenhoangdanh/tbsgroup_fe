@@ -1,16 +1,28 @@
-export * from './useUserQueries';
-export * from './userMutations';
-export * from './useUserHelpers';
-export * from './useUser';
-export * from './userContext';
+// Export user hooks
+export {
+  useUserQueries,
+  useUserMutations,
+  useUserHelpers,
+  useUser,
+  initializeUserContext
+} from './useUser';
 
-// Export mặc định hook chính
+// Export user context and related hooks
+export {
+  UserProvider,
+  useUserContext,
+  useUserData,
+  useUserActions,
+  useUserForm,
+  useUserFormWithDefaults
+} from './UserContext';
 
-export { useUserQueries } from './useUserQueries';
-export { useUserMutations } from './userMutations';
-export { useUserHelpers } from './useUserHelpers';
-export { useUser, initializeUserContext } from './useUser';
-export { useUserContext, useUserForm, UserProvider } from './userContext';
+// Export types if needed (you can add these if you have shared types)
+export type {
+  UserContextType,
+  UserProviderConfig,
+  UserProviderProps
+} from './UserContext';
 
-// Export default hook
+// Re-export useUser as default for backward compatibility
 export { useUser as default } from './useUser';

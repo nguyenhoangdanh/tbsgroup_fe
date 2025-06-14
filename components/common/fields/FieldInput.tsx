@@ -2,7 +2,7 @@
 
 import { Eye, EyeOff, Plus, Minus } from 'lucide-react';
 import { useState, memo, useId, useMemo } from 'react';
-import { Controller, FieldValues, Control, Path } from 'react-hook-form';
+import { Controller, FieldValues, Control, Path, useController } from 'react-hook-form';
 
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -77,11 +77,19 @@ export const FieldInput = <T extends FieldValues>({
     onChange(newValue);
   };
 
+  const { field, fieldState: { error } } = useController({
+    name,
+    control,
+  });
+
+  // FieldState already provides isTouched and error based on form mode
+  const hasError = !!error;
+
   return (
     <Controller
       control={control}
       name={name}
-      render={({ field, fieldState: { error } }) => {
+      render={() => {
         const effectiveValue = 
           typeof field.value === 'number' && field.value === 0 
             ? '0' // Hiển thị 0 thay vì chuỗi rỗng cho giá trị 0
@@ -100,9 +108,9 @@ export const FieldInput = <T extends FieldValues>({
           return cn(
             'relative flex w-full',
             (prefixAddon || suffixAddon || (isNumber && showNumberControls)) && 'flex items-center',
-            error ? 'has-error' : ''
+            hasError ? 'has-error' : ''
           );
-        }, [prefixAddon, suffixAddon, isNumber, showNumberControls, error]);
+        }, [prefixAddon, suffixAddon, isNumber, showNumberControls, hasError]);
 
         // Calculate the actual input type based on the isPassword flag and showPassword state
         const inputType = isPassword ? (showPassword ? 'text' : 'password') : type;
@@ -110,7 +118,7 @@ export const FieldInput = <T extends FieldValues>({
         return (
           <div className={wrapperClass}>
             {label && (
-              <Label htmlFor={`${id}-${name}`} className="text-left font-medium">
+              <Label htmlFor={`${id}-${name}`} className="text-left font-medium bg-transparent">
                 {label}
                 {required && <span className="text-red-500 ml-1">*</span>}
               </Label>
@@ -149,10 +157,10 @@ export const FieldInput = <T extends FieldValues>({
                   (isNumber && showNumberControls) && 'rounded-none',
                   disabled && 'bg-gray-100 cursor-not-allowed dark:bg-gray-800',
                   readOnly && 'bg-gray-50 cursor-default dark:bg-gray-900',
-                  error ? 'border-red-500 focus:ring-red-500' : 'border-gray-300',
+                  hasError ? 'border-red-500 focus:ring-red-500' : 'border-gray-300',
                 )}
-                aria-invalid={!!error}
-                aria-describedby={error ? `${id}-${name}-error` : undefined}
+                aria-invalid={hasError}
+                aria-describedby={hasError ? `${id}-${name}-error` : undefined}
               />
               
               {isNumber && showNumberControls && (
@@ -193,7 +201,7 @@ export const FieldInput = <T extends FieldValues>({
               )}
             </div>
             
-            {error?.message && <p className="h-5 text-red-500 text-sm" id={`${id}-${name}-error`}>{error.message}</p>}
+            {hasError && <p className="h-5 text-red-500 text-sm" id={`${id}-${name}-error`}>{error.message}</p>}
           </div>
         );
       }}

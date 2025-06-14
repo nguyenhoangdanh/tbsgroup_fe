@@ -59,7 +59,7 @@ const Footer = () => {
           {/* Footer text - always visible */}
           <div className="text-center mb-3 sm:mb-0 sm:text-left">
             <p className="text-gray-500 dark:text-gray-300 text-xs sm:text-sm">
-              © {dayjs().format('YYYY')} TBS Group. Thoai Son Handbag Factory
+              © {dayjs().format('YYYY')} Thoại Sơn Handbag Factory. All rights reserved.
             </p>
           </div>
 

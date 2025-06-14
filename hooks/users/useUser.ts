@@ -1,53 +1,32 @@
-'use client';
+import { createEntityHooks } from '@/lib/core/hook-factory';
+import { userService } from '@/services/user/user.service';
+import { UserProfileType, UserListParams, UserUpdateRequest } from '@/common/interface/user';
+import { TUserSchema } from '@/schemas/user';
+import { UserStatusEnum } from '@/common/enum';
 
-import { useMemo } from 'react';
+const defaultUserValues = (): Omit<TUserSchema, 'id'> => ({
+  username: '',
+  password: 'Abc@123',
+  fullName: '',
+  employeeId: '',
+  cardId: '',
+  roleId: '',
+  status: UserStatusEnum.PENDING_ACTIVATION,
+});
 
-import { useUserMutations } from './userMutations';
-import { useUserHelpers } from './useUserHelpers';
-import { useUserQueries } from './useUserQueries';
+export const {
+  useQueries: useUserQueries,
+  useMutations: useUserMutations,
+  useHelpers: useUserHelpers,
+  useEntity: useUser,
+} = createEntityHooks<
+  UserProfileType,
+  UserListParams,
+  Omit<TUserSchema, 'id'>,
+  UserUpdateRequest
+>('user', userService, defaultUserValues);
 
-/**
- * Main hook for user management
- * Combines queries, mutations, and helpers into a single hook with optimized performance
- */
-export const useUser = () => {
-  // Get all hooks
-  const queries = useUserQueries();
-  const mutations = useUserMutations();
-  const helpers = useUserHelpers();
-
-  //  Memoized exports to prevent unnecessary rerenders
-  const combinedHooks = useMemo(
-    () => ({
-      //Spreading everything for convenience
-      ...queries,
-      ...mutations,
-      ...helpers,
-
-      // Re-exporting the individual hooks for more granular access if needed
-      queries,
-      mutations,
-      helpers,
-    }),
-    [queries, mutations, helpers],
-  );
-
-  return combinedHooks;
-};
-
-/**
- * Context provider initialization function for global state
- * This will be used in userContext.tsx
- */
+// Initialize user context function
 export const initializeUserContext = () => {
-  const userState = useUser();
-  return userState;
+  return useUser();
 };
-
-/**
- * Export individual hooks for more granular usage
- */
-export { useUserQueries, useUserMutations, useUserHelpers };
-
-//Default export for convenience
-export default useUser;

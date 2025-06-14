@@ -1,12 +1,12 @@
 'use client';
 
+import { useTheme } from 'next-themes';
 import React from 'react';
 import { ToastProvider, ToastPosition, ToastTheme, ToastAnimation, ToastStyle } from 'react-toast-kit';
 
 interface ClientToastProviderProps {
   children: React.ReactNode;
   defaultPosition?: ToastPosition;
-  defaultTheme?: ToastTheme;
   defaultAnimation?: ToastAnimation;
   defaultStyle?: ToastStyle;
   maxToasts?: number;
@@ -22,7 +22,6 @@ interface ClientToastProviderProps {
 export function ClientToastProvider({
   children,
   defaultPosition = 'top-right',
-  defaultTheme = 'system',
   defaultAnimation = 'slide',
   defaultStyle = 'solid',
   maxToasts = 3,
@@ -32,12 +31,20 @@ export function ClientToastProvider({
   rightOffset,
   enableAccessibleAnnouncements =false,
   enableDevMode = false,
-  defaultDuration = 3000, // Default duration for toasts
+  defaultDuration = 4000, // Default duration for toasts
 }: ClientToastProviderProps) {
+  const { theme } = useTheme();
+
+  const convertTheme = (theme: string | undefined): ToastTheme => {
+    if (theme === 'dark') return 'dark';
+    if (theme === 'light' || !theme) return 'light';
+    return 'system';
+  };
+
   return (
     <ToastProvider
       position={defaultPosition}
-      theme={defaultTheme}
+      theme={convertTheme(theme)}
       maxToasts={maxToasts}
       defaultAnimation={defaultAnimation}
       defaultStyle={defaultStyle}

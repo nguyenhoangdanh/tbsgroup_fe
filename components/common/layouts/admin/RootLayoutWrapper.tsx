@@ -1,15 +1,22 @@
 'use client';
 
 import React from 'react';
+import { ThemeProvider } from 'next-themes';
+interface RootLayoutWrapperProps {
+  children: React.ReactNode;
+}
 
-import GlobalDialog from '../../table/actions/GlobalDialog';
-
-const RootLayoutWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const RootLayoutWrapper = ({ children }: RootLayoutWrapperProps) => {
   return (
-    <>
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="system"
+      enableSystem
+      disableTransitionOnChange={false}
+      storageKey="daily-performance-theme"
+    >
       {children}
-      <GlobalDialog />
-    </>
+    </ThemeProvider>
   );
 };
 

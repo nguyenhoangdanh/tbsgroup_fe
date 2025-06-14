@@ -12,6 +12,7 @@ interface FieldCheckboxProps<T extends FieldValues> {
   required?: boolean;
   indeterminate?: boolean;
   onIndeterminateChange?: (indeterminate: boolean) => void;
+  noBorder?: boolean;
 }
 
 export const FieldCheckbox = <T extends FieldValues>({
@@ -24,6 +25,7 @@ export const FieldCheckbox = <T extends FieldValues>({
   required = false,
   indeterminate = false,
   onIndeterminateChange,
+  noBorder = false,
 }: FieldCheckboxProps<T>) => {
   return (
     <Controller
@@ -35,6 +37,7 @@ export const FieldCheckbox = <T extends FieldValues>({
             className={cn(
               'flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4',
               className,
+              noBorder && 'border-0',
             )}
           >
             <Checkbox

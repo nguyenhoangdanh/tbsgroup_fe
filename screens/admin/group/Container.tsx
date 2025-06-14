@@ -1,196 +1,146 @@
 'use client';
 
-import { ColumnDef } from '@tanstack/react-table';
-import { List, CheckCircle2, AlertCircle, Settings } from 'lucide-react';
-import { useTheme } from 'next-themes';
-import React, { useMemo } from 'react';
-
-import GroupForm from './form';
-
+import React, { memo, useCallback, useMemo, Suspense } from 'react';
+import { DataTable } from 'react-table-power';
 import { Group } from '@/common/interface/group';
-import { DashboardCardComponent } from '@/components/common/layouts/admin/DashboardCard';
-import { DataTable } from '@/components/common/table/data-table';
-import { Checkbox } from '@/components/ui/checkbox';
-import { useGroup } from '@/hooks/group/GroupProcessContext';
+import { groupTableColumns } from './columns';
+import GroupFormWrapper from './GroupFormWrapper';
+import { useGroupContext } from '@/hooks/group';
 
-const GroupManagementScreen: React.FC = React.memo(() => {
-  // Get dialog context and group context
-  const { theme } = useTheme();
+// GroupContainer component that renders DataTable directly
+export default memo(function GroupContainer() {
   const {
-    groups,
-    isLoading,
-    stats,
-    calculatedPaginationMeta,
-    initialPageIndex,
-    handleDeleteGroup,
-    handleEditGroup,
-    handleGroupFormSubmit,
-    handleBatchDelete,
-    handlePageChange,
-    safeRefetch,
-  } = useGroup();
+    getList,
+    handleCreate,
+    handleUpdate,
+    handleDelete,
+    activeFilters,
+    loading,
+    error,
+    relatedData,
+    loadingStates,
+  } = useGroupContext();
 
-  // Table columns definition
-  const columns: ColumnDef<Group>[] = useMemo(
-    () => [
-      {
-        id: 'select',
-        header: ({ table }) => {
-          const isAllSelected = table.getIsAllPageRowsSelected();
-          const isSomeSelected = table.getIsSomePageRowsSelected();
-          const checkboxState = isAllSelected ? true : isSomeSelected ? 'indeterminate' : false;
+  // Get data from hook
+  const listQuery = getList(activeFilters);
+  const tableData = useMemo(() => {
+    if (!listQuery.data?.data) return [];
+    return listQuery.data.data;
+  }, [listQuery.data?.data]);
 
-          return (
-            <Checkbox
-              checked={checkboxState}
-              onCheckedChange={value => {
-                table.toggleAllPageRowsSelected(!!value);
-              }}
-              aria-label="Select all"
-            />
-          );
-        },
-        cell: ({ row }) => {
-          const isSelected = row.getIsSelected();
-
-          return (
-            <Checkbox
-              checked={isSelected}
-              onCheckedChange={value => {
-                row.toggleSelected(!!value);
-              }}
-              aria-label="Select row"
-            />
-          );
-        },
-        enableSorting: false,
-        enableHiding: false,
-      },
-      {
-        id: 'code',
-        header: 'Mã nhóm',
-        cell: ({ row }) => row.original.code,
-        accessorKey: 'code',
-      },
-      {
-        id: 'name',
-        header: 'Tên nhóm',
-        cell: ({ row }) => row.original.name,
-        accessorKey: 'name',
-      },
-      {
-        id: 'team',
-        header: 'Tổ',
-        cell: ({ row }) => row.original.team?.name || '-',
-        accessorKey: 'team.name',
-      },
-      {
-        id: 'description',
-        header: 'Mô tả',
-        cell: ({ row }) => row.original.description || '-',
-        accessorKey: 'description',
-      },
-      {
-        id: 'leaders',
-        header: 'Số lượng trưởng nhóm',
-        cell: ({ row }) => row.original.leaders?.length || 0,
-        accessorKey: 'leaders.length',
-      },
-    ],
-    [],
+  // CRUD handlers
+  const handleCreateEntity = useCallback(
+    async (formData: any) => {
+      try {
+        const result = await handleCreate(formData);
+        if (result) {
+          return true;
+        }
+        return false;
+      } catch (error) {
+        console.error('Create Group error:', error);
+        return false;
+      }
+    },
+    [handleCreate],
   );
 
-  // Memoized form component to prevent unnecessary re-renders
-  const createFormComponent = useMemo(
-    () => <GroupForm onSubmit={handleGroupFormSubmit} />,
-    [handleGroupFormSubmit],
+  const handleUpdateEntity = useCallback(
+    async (id: string, formData: any) => {
+      try {
+        console.log('Updating Group with ID:', id, 'and data:', formData);
+        await handleUpdate(id, formData);
+        return true;
+      } catch (error) {
+        console.error('Update Group error:', error);
+        return false;
+      }
+    },
+    [handleUpdate],
   );
 
-  const editFormComponent = useMemo(
-    () => <GroupForm onSubmit={handleGroupFormSubmit} />,
-    [handleGroupFormSubmit],
+  const handleDeleteEntity = useCallback(
+    async (id?: string | number) => {
+      try {
+        await handleDelete(String(id));
+        return true;
+      } catch (error) {
+        console.error('Delete Group error:', error);
+        return false;
+      }
+    },
+    [handleDelete],
   );
 
-  const viewFormComponent = useMemo(() => <GroupForm />, []);
-
-  // Define dashboard cards
-  const dashboardCards = useMemo(
-    () => [
-      {
-        title: 'Tổng số nhóm',
-        description: 'Tổng số nhóm trong hệ thống',
-        data: stats.totalGroups.toString(),
-        icon: List,
-        color: 'bg-blue-200',
-        bgdark: 'bg-blue-900',
-      },
-      {
-        title: 'Tổng số tổ',
-        description: 'Số lượng tổ khác nhau',
-        data: stats.totalTeams.toString(),
-        icon: CheckCircle2,
-        color: 'bg-green-200',
-        bgdark: 'bg-green-900',
-      },
-      {
-        title: 'Tổng số trưởng nhóm',
-        description: 'Số lượng trưởng nhóm',
-        data: stats.totalLeaders.toString(),
-        icon: AlertCircle,
-        color: 'bg-red-200',
-        bgdark: 'bg-red-900',
-      },
-      {
-        title: 'Nhóm phân loại',
-        description: 'Số nhóm phân loại khác nhau',
-        data: stats.uniqueCategories.toString(),
-        icon: Settings,
-        color: 'bg-purple-200',
-        bgdark: 'bg-purple-900',
-      },
-    ],
-    [stats],
+  // Event handlers
+  const eventHandlers = useMemo(
+    () => ({
+      onCreate: handleCreateEntity,
+      onUpdate: handleUpdateEntity,
+      onDelete: handleDeleteEntity,
+    }),
+    [handleCreateEntity, handleUpdateEntity, handleDeleteEntity],
   );
+
+  const enhancedFormWrapper = useCallback(
+    (props: any) => (
+      <Suspense fallback={<div>Loading form...</div>}>
+        <GroupFormWrapper
+          {...props}
+          additionalData={{
+            teams: relatedData?.teams || [],
+            leaders: relatedData?.users || [],
+          }}
+          loadingStates={loadingStates || {}}
+        />
+      </Suspense>
+    ),
+    [relatedData, loadingStates],
+  );
+
+  // Built-in actions
+  const builtInActions = useMemo(
+    () => ({
+      create: true,
+      edit: true,
+      delete: true,
+      view: true,
+      createFormComponent: enhancedFormWrapper,
+      editFormComponent: enhancedFormWrapper,
+      viewFormComponent: (props: any) => enhancedFormWrapper({ ...props, isReadOnly: true }),
+      formHandling: {
+        autoHandleFormSubmission: true,
+        skipInitialValidation: true,
+      },
+    }),
+    [enhancedFormWrapper],
+  );
+
+  const isLoading =
+    loading ||
+    listQuery.isLoading ||
+    loadingStates?.teams ||
+    loadingStates?.leaders;
 
   return (
-    <div className="container mx-auto py-6 gap-4 flex flex-col">
-      {/* Dashboard Cards */}
-      <div className="flex flex-wrap gap-4">
-        {dashboardCards.map((card, index) => (
-          <div key={`group-card-${index}`} className="flex-grow basis-60 max-w-xs min-w-60">
-            <DashboardCardComponent {...card} theme={theme} />
-          </div>
-        ))}
-      </div>
-
-      {/* DataTable */}
-      <DataTable
-        columns={columns}
-        data={groups}
-        title="Quản lý nhóm"
-        description="Danh sách các nhóm trong tổ chức"
-        actions={['create', 'edit', 'delete', 'read-only']}
-        searchColumn="name"
-        searchPlaceholder="Tìm kiếm theo tên nhóm..."
-        exportData={true}
-        onDelete={handleDeleteGroup}
-        onEdit={handleEditGroup}
-        refetchData={safeRefetch}
-        isLoading={isLoading}
-        createFormComponent={createFormComponent}
-        editFormComponent={editFormComponent}
-        viewFormComponent={viewFormComponent}
-        serverSidePagination={true}
-        totalItems={calculatedPaginationMeta.totalItems}
-        initialPageIndex={initialPageIndex}
-        initialPageSize={calculatedPaginationMeta.pageSize}
-        onPageChange={handlePageChange}
-        onBatchDelete={handleBatchDelete}
+    <div className="group-container">
+      <DataTable<Group>
+        tableId="groups-table"
+        title="Quản lý nhóm sản xuất"
+        data={tableData}
+        columns={groupTableColumns}
+        loading={isLoading}
+        pagination={true}
+        selection={{ enabled: true }}
+        eventHandlers={eventHandlers}
+        builtInActions={builtInActions}
+        globalSearch={{ enabled: true }}
+        export={{ enabled: true }}
+        dialog={{
+          closeOnClickOutside: false,
+          closeOnEsc: true,
+        }}
       />
     </div>
   );
 });
-
-GroupManagementScreen.displayName = 'GroupManagementScreen';
-
-export default GroupManagementScreen;

@@ -5,8 +5,8 @@ import React, { useMemo } from 'react';
 
 import { columns, Payment } from './_components/columns';
 import { DashboardCardComponent } from '../../../components/common/layouts/admin/DashboardCard';
+import { DataTable } from 'react-table-power';
 
-import { DataTable } from '@/components/common/table/data-table';
 
 const CARD_ITEMS = [
   {
@@ -100,27 +100,18 @@ const AdminDashboardContainer = () => {
     [theme],
   );
 
-  const recentPaymentsTable = useMemo(
-    () => (
-      <DataTable
-        title="Thanh toán gần đây"
-        description="Danh sách các giao dịch thanh toán gần đây trong hệ thống."
-        columns={columns}
-        data={PAYMENT_DATA}
-        actions={['read-only']}
-        searchColumn="fullName"
-        searchPlaceholder="Tìm kiếm email..."
-        exportData={true}
-        initialPageSize={5}
-      />
-    ),
-    [],
-  );
-
   return (
     <div className="flex flex-col gap-6 p-4 md:p-6 pb-8">
       {dashboardCards}
-      {recentPaymentsTable}
+      <DataTable
+        data={PAYMENT_DATA}
+        columns={columns}
+        className="w-full"
+        tableClassName="min-w-full"
+        headerClassName="bg-gray-100 dark:bg-gray-800"
+        rowClassName="hover:bg-gray-50 dark:hover:bg-gray-700"
+        emptyText="Không có dữ liệu"
+      />
     </div>
   );
 };

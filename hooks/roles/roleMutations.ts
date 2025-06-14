@@ -4,8 +4,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRef, useEffect } from 'react';
 
 import { createRole, deleteRole, RoleType, updateRole } from '@/apis/roles/role.api';
-import { toast } from 'react-toast-kit';
 import { TRoleSchema } from '@/schemas/role';
+import stableToast from '@/utils/stableToast';
 
 /**
  * Hook for role-related mutations with optimistic updates
@@ -49,9 +49,6 @@ export const useRoleMutations = () => {
       }
     },
     onMutate: async newRoleData => {
-      // Generate a unique temporary ID
-      const tempId = `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-
       // Cancel any outgoing refetches to avoid overwriting optimistic update
       await queryClient.cancelQueries({ queryKey: ['roles-list'] });
 
@@ -69,91 +66,38 @@ export const useRoleMutations = () => {
       for (const [queryKey, queryData] of queries) {
         // Store original data for potential rollback
         previousRolesListData.push({ queryKey, queryData });
-
-        // Create optimistic role entry with temporary ID
-        const optimisticRole = {
-          ...newRoleData,
-          id: tempId,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        };
-
-        // Update cache with optimistic data
-        queryClient.setQueryData(queryKey, (oldData: any) => {
-          if (!oldData || !oldData.data) return oldData;
-
-          return {
-            ...oldData,
-            data: [optimisticRole, ...oldData.data],
-            meta: oldData.meta
-              ? {
-                  ...oldData.meta,
-                  total: (oldData.meta.total || 0) + 1,
-                }
-              : undefined,
-          };
-        });
       }
 
       return {
-        previousRolesListData,
-        tempId,
-        optimisticRole: {
-          ...newRoleData,
-          id: tempId,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
+        previousRolesListData
       };
     },
     onSuccess: async (result, variables, context) => {
       //  Show success notification
-      toast({
-        title: 'Vai trò đã được tạo thành công',
-        duration: 2000,
+      stableToast.success('Vai trò đã được tạo thành công', {
+        description: undefined
       });
 
-      // Update cache with actual server data
-      // Check if both context and result exist with expected structure before updating cache
-      if (context?.tempId && result && result.id) {
-        queryClient.setQueriesData({ queryKey: ['roles-list'] }, (oldData: any) => {
-          if (!oldData || !oldData.data) return oldData;
-
-          return {
-            ...oldData,
-            data: oldData.data.map((role: RoleType) =>
-              role.id === context.tempId ? { ...role, id: result.id } : role,
-            ),
-          };
-        });
-      } else {
-        //  Handle case where we don't have a valid result.id by still invalidating queries
-        console.log('Role created but missing expected result structure, refreshing queries.');
-      }
-
-      //  Mark queries as stale without triggering immediate refetch
+      // Refresh data from server
       queryClient.invalidateQueries({
         queryKey: ['roles-list'],
-        refetchType: 'none',
+        refetchType: 'active',
       });
 
       queryClient.invalidateQueries({
         queryKey: ['roles'],
-        refetchType: 'none',
+        refetchType: 'active',
       });
 
       queryClient.invalidateQueries({
         queryKey: ['roles-infinite'],
-        refetchType: 'none',
+        refetchType: 'active',
       });
     },
     onError: (error, variables, context) => {
       //  Show error notification
-      toast({
-        title: 'Không thể tạo vai trò',
-        description: (error as Error).message,
-        variant: 'error',
-        duration: 3000,
+      stableToast.error('Không thể tạo vai trò', {
+        description: (error as Error).message
       });
 
       // Rollback optimistic updates
@@ -184,6 +128,11 @@ export const useRoleMutations = () => {
       //   Prevent concurrent updates to the same role
       if (pendingMutationsRef.current.has(`update-${id}`)) {
         throw new Error('Thao tác đang được thực hiện. Vui lòng đợi.');
+      }
+
+      // Validate ID is not temporary or invalid
+      if (!id || typeof id !== 'string' || id.length < 5) {
+        throw new Error('Invalid role ID provided for update');
       }
 
       //  Track this update operation
@@ -272,9 +221,8 @@ export const useRoleMutations = () => {
     onSuccess: async (result, variables) => {
       //  Show success notification with brief delay to ensure UI consistency
       setTimeout(() => {
-        toast({
-          title: 'Vai trò đã được cập nhật thành công',
-          duration: 2000,
+        stableToast.success('Vai trò đã được cập nhật thành công', {
+          description: undefined
         });
       }, 100);
 
@@ -304,11 +252,8 @@ export const useRoleMutations = () => {
     },
     onError: (error, variables, context) => {
       // Show error notification
-      toast({
-        title: 'Không thể cập nhật vai trò',
-        description: (error as Error).message,
-        variant: 'error',
-        duration: 3000,
+      stableToast.error('Không thể cập nhật vai trò', {
+        description: (error as Error).message
       });
 
       // Rollback individual role cache
@@ -338,6 +283,11 @@ export const useRoleMutations = () => {
       //  Prevent concurrent delete operations on the same role
       if (pendingMutationsRef.current.has(`delete-${id}`)) {
         throw new Error('Thao tác đang được thực hiện. Vui lòng đợi.');
+      }
+
+      // Validate ID is not temporary or invalid
+      if (!id || typeof id !== 'string' || id.length < 5) {
+        throw new Error('Invalid role ID provided for delete');
       }
 
       //  Track this delete operation
@@ -394,9 +344,8 @@ export const useRoleMutations = () => {
     },
     onSuccess: async (_, id) => {
       // Show success notification
-      toast({
-        title: 'Vai trò đã được xóa thành công',
-        duration: 2000,
+      stableToast.success('Vai trò đã được xóa thành công', {
+        description: undefined
       });
 
       // Mark queries as stale without forcing immediate refetch
@@ -416,11 +365,8 @@ export const useRoleMutations = () => {
     },
     onError: (error, id, context) => {
       // Show error notification
-      toast({
-        title: 'Không thể xóa vai trò',
-        description: (error as Error).message,
-        variant: 'error',
-        duration: 3000,
+      stableToast.error('Không thể xóa vai trò', {
+        description: (error as Error).message
       });
 
       // Restore individual role data if it existed

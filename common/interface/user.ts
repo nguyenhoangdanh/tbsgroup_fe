@@ -1,3 +1,4 @@
+import { Role } from '@/lib/types/auth';
 import { UserStatusEnum } from '../enum';
 import { RoleType } from './role';
 
@@ -8,7 +9,7 @@ export interface UserType {
   password?: string; // Optional for responses (excluded for security)
   salt?: string; // Optional for responses (excluded for security)
   avatar?: string;
-  fullName?: string;
+  fullName: string;
   email?: string;
   phone?: string;
   cardId?: string;
@@ -19,8 +20,8 @@ export interface UserType {
   teamId?: string;
   groupId?: string;
   positionId?: string;
-  roleId?: string;
-  role?: RoleType;
+  roleId: string;
+  role: RoleType;
   passwordResetToken?: string;
   passwordResetExpiry?: Date;
   lastLogin?: Date;
@@ -48,16 +49,9 @@ export interface UserListParams {
   sortOrder?: 'asc' | 'desc';
   
   // Search conditions
-  username?: string;
-  fullName?: string;
+  search?: string;
   status?: UserStatusEnum;
-  factoryId?: string;
-  lineId?: string;
-  teamId?: string;
-  groupId?: string;
-  positionId?: string;
-  roleId?: string;
-  roleCode?: string;
+  role?: string;
 }
 
 // User list response matching backend response
@@ -84,30 +78,28 @@ export interface UserUpdateRequest {
   groupId?: string;
   positionId?: string;
   roleId?: string;
-  defaultRoleId?: string;
 }
 
 // User profile update DTO matching backend UserUpdateProfileDTO
 export interface UserProfileUpdateRequest {
-  avatar?: string;
   fullName?: string;
   email?: string;
   phone?: string;
+  avatar?: string;
 }
 
 // User role assignment DTO matching backend UserRoleAssignmentDTO
 export interface UserRoleAssignmentRequest {
   roleId: string;
   scope?: string;
-  expiryDate?: Date;
 }
 
 // User role response
 export interface UserRoleResponse {
-  roleId: string;
-  role: string;
+  id: string;
+  name: string;
+  code: string;
   scope?: string;
-  expiryDate?: Date;
 }
 
 // User item type (alias for compatibility)

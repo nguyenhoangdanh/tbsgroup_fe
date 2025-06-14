@@ -1,212 +1,278 @@
-import { useQuery } from '@tanstack/react-query';
-import React, { createContext, useContext, ReactNode, useMemo } from 'react';
+'use client';
 
-import { useLineMutations } from './useLineMutations';
-import { useLineQueries } from './useLineQueries';
+import React, { createContext, useContext, ReactNode, useMemo, useEffect, useState } from 'react';
+import { useLine } from './useLine';
+import { userService } from '@/services/user/user.service';
+import { factoryService } from '@/services/factory/factory.service';
+import { useSharedData } from '@/hooks/shared/SharedDataContext';
 
-import { getLineById } from '@/apis/line/line.api';
-import {
-  Line,
-  LineCondDTO,
-  LineCreateDTO,
-  LineUpdateDTO,
-  LineManagerDTO,
-} from '@/common/interface/line';
-import { BasePaginationParams } from '@/hooks/base/useBaseQueries';
+// Create line context with type definitions
+export type LineContextType = ReturnType<typeof useLine> & {
+    config?: LineProviderConfig;
+    relatedData?: {
+        factories: any[];
+        managers: any[];
+        users: any[];
+    };
+    loadingStates?: {
+        factories: boolean;
+        managers: boolean;
+        users: boolean;
+    };
+};
 
-// Define context type with better organization
-interface LineContextType {
-  // Queries with better naming
-  line: {
-    get: (id: string) => ReturnType<typeof useQuery>;
-    getWithDetails: ReturnType<typeof useLineQueries>['getLineWithDetails'];
-    getByFactory: ReturnType<typeof useLineQueries>['getLinesByFactoryId'];
-    getManagers: ReturnType<typeof useLineQueries>['getManagersByLineId'];
-    getAccessible: ReturnType<typeof useLineQueries>['getAccessibleLinesForUser'];
-    canManage: ReturnType<typeof useLineQueries>['canManageLine'];
-    list: (
-      params?: LineCondDTO & BasePaginationParams,
-    ) => ReturnType<ReturnType<typeof useLineQueries>['listLines']>;
-  };
-
-  // Mutations with simplified interface
-  mutations: {
-    create: (data: LineCreateDTO) => Promise<{ id: string }>;
-    update: (data: LineUpdateDTO & { id: string }) => Promise<void>;
-    delete: (id: string) => Promise<void>;
-    batchDelete: (ids: string[]) => Promise<void>;
-    addManager: (lineId: string, managerDTO: LineManagerDTO) => Promise<void>;
-    updateManager: (
-      lineId: string,
-      userId: string,
-      data: { isPrimary?: boolean; endDate?: Date | null },
-    ) => Promise<void>;
-    removeManager: (lineId: string, userId: string) => Promise<void>;
-  };
-
-  // Simplified cache operations
-  cache: {
-    invalidateDetails: (lineId: string, options?: { forceRefetch?: boolean }) => Promise<void>;
-    invalidateManagers: (lineId: string, forceRefetch?: boolean) => Promise<void>;
-    prefetchDetails: (lineId: string, options?: { includeManagers?: boolean }) => Promise<void>;
-    prefetchManagers: (lineId: string) => Promise<void>;
-    prefetchList: (params?: LineCondDTO & BasePaginationParams) => Promise<void>;
-    updateCache: (lineId: string, updatedData: Partial<Line>) => void;
-    batchPrefetch: (lineIds: string[], includeManagers?: boolean) => Promise<void>;
-    prefetchByFactory: (factoryId: string, options?: { staleTime?: number }) => Promise<void>;
-  };
-
-  // Loading states
-  isLoading: {
-    create: boolean;
-    update: boolean;
-    delete: boolean;
-    batchDelete: boolean;
-    addManager: boolean;
-    updateManager: boolean;
-    removeManager: boolean;
-  };
-}
-
-//Create context with null as initial value
 const LineContext = createContext<LineContextType | null>(null);
 
-//Props for LineProvider
-interface LineProviderProps {
-  children: ReactNode;
+// Enhanced props for the provider component
+export interface LineProviderConfig {
+    enableAutoRefresh?: boolean;
+    prefetchRelatedData?: boolean;
+    cacheStrategy?: 'aggressive' | 'conservative' | 'minimal';
+}
+
+export interface LineProviderProps {
+    children: ReactNode;
+    config?: LineProviderConfig;
 }
 
 /**
- * Provider for line management context with optimized architecture
+ * Enhanced Provider component with performance optimizations and related data loading
  */
-export const LineProvider: React.FC<LineProviderProps> = ({ children }) => {
-  // Use query and mutation hooks
-  const queries = useLineQueries();
-  const mutations = useLineMutations();
+export const LineProvider: React.FC<LineProviderProps> = ({
+    children,
+    config = {
+        enableAutoRefresh: true,
+        prefetchRelatedData: true,
+        cacheStrategy: 'conservative'
+    }
+}) => {
+    // Initialize the line context state
+    const lineState = useLine();
+    
+    // Use shared data context for users
+    const { sharedData, loadingStates: sharedLoadingStates } = useSharedData();
 
-  // Create a function to get line by ID
-  const getLineByIdQuery = (id: string) => {
-    return useQuery({
-      queryKey: ['line', id],
-      queryFn: () => getLineById(id),
-      enabled: !!id,
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      gcTime: 30 * 60 * 1000, // 30 minutes
+    // State for other related data
+    const [relatedData, setRelatedData] = useState({
+        factories: [],
+        managers: [],
+        users: [],
     });
-  };
 
-  // Create memoized context value to prevent unnecessary re-renders
-  const contextValue = useMemo<LineContextType>(
-    () => ({
-      line: {
-        get: getLineByIdQuery,
-        getWithDetails: queries.getLineWithDetails,
-        getByFactory: queries.getLinesByFactoryId,
-        getManagers: queries.getManagersByLineId,
-        getAccessible: queries.getAccessibleLinesForUser,
-        canManage: queries.canManageLine,
-        list: params => queries.listLines(params),
-      },
+    const [loadingStates, setLoadingStates] = useState({
+        factories: false,
+        managers: false,
+        users: false,
+    });
 
-      mutations: {
-        create: (data: LineCreateDTO) => mutations.createLineMutation.mutateAsync(data),
-        update: (data: LineUpdateDTO & { id: string }) =>
-          mutations.updateLineMutation.mutateAsync(data),
-        delete: (id: string) => mutations.deleteLineMutation.mutateAsync(id),
-        batchDelete: (ids: string[]) => mutations.batchDeleteLinesMutation.mutateAsync(ids),
-        addManager: (lineId: string, managerDTO: LineManagerDTO) =>
-          mutations.addManagerMutation.mutateAsync({ lineId, managerDTO }),
-        updateManager: (lineId: string, userId: string, data) =>
-          mutations.updateManagerMutation.mutateAsync({ lineId, userId, data }),
-        removeManager: (lineId: string, userId: string) =>
-          mutations.removeManagerMutation.mutateAsync({ lineId, userId }),
-      },
+    // Add ref to prevent multiple simultaneous API calls
+    const loadingRef = React.useRef({
+        isLoadingFactories: false,
+        isLoadingManagers: false,
+        isLoadingUsers: false,
+    });
 
-      cache: {
-        invalidateDetails: queries.invalidateLineDetailsCache,
-        invalidateManagers: queries.invalidateManagersCache,
-        prefetchDetails: queries.prefetchLineDetails,
-        prefetchManagers: queries.prefetchLineManagers,
-        prefetchList: queries.prefetchLineList,
-        updateCache: queries.updateLineCache,
-        batchPrefetch: queries.batchPrefetchLines,
-        prefetchByFactory: queries.prefetchLinesByFactory,
-      },
+    // Sync users from shared context
+    useEffect(() => {
+        setRelatedData(prev => ({
+            ...prev,
+            users: sharedData.users
+        }));
+        setLoadingStates(prev => ({
+            ...prev,
+            users: sharedLoadingStates.users
+        }));
+    }, [sharedData.users, sharedLoadingStates.users]);
 
-      isLoading: {
-        create: mutations.createLineMutation.isPending,
-        update: mutations.updateLineMutation.isPending,
-        delete: mutations.deleteLineMutation.isPending,
-        batchDelete: mutations.batchDeleteLinesMutation.isPending,
-        addManager: mutations.addManagerMutation.isPending,
-        updateManager: mutations.updateManagerMutation.isPending,
-        removeManager: mutations.removeManagerMutation.isPending,
-      },
-    }),
-    [queries, mutations],
-  );
+    // Load other related data based on configuration
+    useEffect(() => {
+        if (config.prefetchRelatedData) {
+            const loadRelatedData = async () => {
+                try {
+                    console.log('[LineContext] Starting to load related data...');
+                    console.log('[LineContext] Using shared user data, no need to load separately');
 
-  return <LineContext.Provider value={contextValue}>{children}</LineContext.Provider>;
+                    // Load factories (high priority)
+                    if (!loadingRef.current.isLoadingFactories) {
+                        loadingRef.current.isLoadingFactories = true;
+
+                        setTimeout(async () => {
+                            setLoadingStates(prev => ({ ...prev, factories: true }));
+                            try {
+                                console.log('[LineContext] Loading factories...');
+                                const factoriesResponse = await factoryService.getList();
+                                console.log('[LineContext] Factories API response:', factoriesResponse);
+
+                                const factories = factoriesResponse?.data || [];
+                                setRelatedData(prev => ({ ...prev, factories }));
+                                console.log('[LineContext] Factories loaded successfully:', factories.length);
+                            } catch (error) {
+                                console.error('[LineContext] Failed to load factories:', error);
+                                setRelatedData(prev => ({ ...prev, factories: [] }));
+                            } finally {
+                                setLoadingStates(prev => ({ ...prev, factories: false }));
+                                loadingRef.current.isLoadingFactories = false;
+                            }
+                        }, 100);
+                    }
+
+                } catch (error) {
+                    console.error('[LineContext] Failed to load related data:', error);
+                }
+            };
+
+            console.log('[LineContext] prefetchRelatedData is enabled, starting load...');
+            loadRelatedData();
+        } else {
+            console.log('[LineContext] prefetchRelatedData is disabled, skipping load');
+        }
+    }, [config.prefetchRelatedData]);
+
+    // Cleanup function to reset loading refs
+    useEffect(() => {
+        return () => {
+            loadingRef.current.isLoadingFactories = false;
+            loadingRef.current.isLoadingManagers = false;
+            loadingRef.current.isLoadingUsers = false;
+        };
+    }, []);
+
+    // Memoize the context value to prevent unnecessary re-renders
+    const contextValue = useMemo(() => ({
+        ...lineState,
+        config,
+        relatedData,
+        loadingStates,
+    }), [lineState, config, relatedData, loadingStates]);
+
+    return (
+        <LineContext.Provider value={contextValue}>
+            {children}
+        </LineContext.Provider>
+    );
 };
 
 /**
- * Hook to use LineContext with proper error handling
+ * Enhanced hook to access the line context with selective subscription
  */
-export const useLine = () => {
-  const context = useContext(LineContext);
+export const useLineContext = (): LineContextType => {
+    const context = useContext(LineContext);
 
-  if (!context) {
-    throw new Error('useLine must be used within a LineProvider');
-  }
+    if (!context) {
+        throw new Error('useLineContext must be used within a LineProvider');
+    }
 
-  return context;
+    return context;
 };
 
 /**
- * Custom hook to access a specific line's data
+ * Selective hook for components that only need specific line data
  */
-export const useLineData = (lineId?: string) => {
-  const { line } = useLine();
-  const { data, isLoading, error } = line.get(lineId || '');
-
-  return {
-    line: data,
-    isLoading,
-    error,
-  };
+export const useLineData = () => {
+    const context = useLineContext();
+    return useMemo(() => ({
+        getList: context.getList,
+        loading: context.loading,
+        error: context.error,
+        activeFilters: context.activeFilters,
+    }), [context.getList, context.loading, context.error, context.activeFilters]);
 };
 
 /**
- * Custom hook to access detailed line data with options
+ * Selective hook for components that only need line actions
  */
-export const useLineDetails = (lineId?: string, includeManagers = true) => {
-  const { line } = useLine();
-  const { data, isLoading, error } = line.getWithDetails(lineId, {
-    includeManagers,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
-
-  return {
-    lineDetails: data,
-    isLoading,
-    error,
-  };
+export const useLineActions = () => {
+    const context = useLineContext();
+    return useMemo(() => ({
+        handleCreate: context.handleCreate,
+        handleUpdate: context.handleUpdate,
+        handleDelete: context.handleDelete,
+    }), [context.handleCreate, context.handleUpdate, context.handleDelete]);
 };
+
+/**
+ * Enhanced line form hook with better performance
+ */
+export const useLineForm = () => {
+    const [formData, setFormData] = React.useState(() => ({
+        code: '',
+        name: '',
+        description: '',
+        factoryId: '',
+        capacity: 0,
+    }));
+
+    // Optimized update function that prevents unnecessary re-renders
+    const updateFormField = React.useCallback((field: string, value: any) => {
+        setFormData(prev => {
+            // Skip update if value hasn't changed
+            if (prev[field as keyof typeof prev] === value) return prev;
+            return { ...prev, [field]: value };
+        });
+    }, []);
+
+    // Function to reset the form
+    const resetForm = React.useCallback(() => {
+        setFormData({
+            code: '',
+            name: '',
+            description: '',
+            factoryId: '',
+            capacity: 0,
+        });
+    }, []);
+
+    // Function to load data into the form for editing
+    const loadLineData = React.useCallback((line: any) => {
+        if (line) {
+            setFormData({
+                code: line.code || '',
+                name: line.name || '',
+                description: line.description || '',
+                factoryId: line.factoryId || '',
+                capacity: line.capacity || 0,
+            });
+        }
+    }, []);
+
+    return {
+        formData,
+        updateFormField,
+        resetForm,
+        loadLineData,
+    };
+};
+
+export const useLineFormWithDefaults = () => useLineForm();
 
 /**
  * Custom hook to access factory lines data
  */
 export const useFactoryLines = (factoryId?: string) => {
-  const { line } = useLine();
-  const { data, isLoading, error, refetch } = line.getByFactory(factoryId, {
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    refetchOnWindowFocus: false,
-  });
+    const context = useLineContext();
+    
+    // Use the existing getList with factory filter
+    const listQuery = context.getList({ factoryId });
+    
+    return {
+        lines: listQuery.data?.data || [],
+        isLoading: listQuery.isLoading,
+        error: listQuery.error,
+        refetch: listQuery.refetch,
+    };
+};
 
-  return {
-    lines: data || [],
-    isLoading,
-    error,
-    refetch,
-  };
+/**
+ * Custom hook to access detailed line data with options
+ */
+export const useLineDetails = (lineId?: string) => {
+    const context = useLineContext();
+    
+    const detailQuery = context.getById(lineId);
+    
+    return {
+        lineDetails: detailQuery.data,
+        isLoading: detailQuery.isLoading,
+        error: detailQuery.error,
+    };
 };

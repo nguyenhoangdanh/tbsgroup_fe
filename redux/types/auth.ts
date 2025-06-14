@@ -1,126 +1,97 @@
 export interface User {
   id: string;
-  email: string;
-  fullName: string;
   username: string;
-  emailVerified: boolean;
-  roles: string[];
-  avatarUrl?: string;
-  permissions?: string[];
-  cardId: string;
-  employeeId: string;
-  factoryId: string | null;
-  lineId: string | null;
-  teamId: string | null;
-  groupId: string | null;
-  positionId: string | null;
-  status: string;
+  fullName: string;
+  email?: string;
+  phone?: string;
+  avatar?: string;
   role: string;
-  roleId: string;
-  avatar: string;
-  lastLogin: string | null; // ISO string for serialization
-  passwordResetToken: string | null; // Token for password reset
-  passwordResetExpiry: string | null; // ISO string for expiry
+  employeeId?: string;
+  cardId?: string;
+  status: string;
+  createdAt: Date;
+  updatedAt: Date;
+  lastLogin?: Date;
 }
 
-// Updated AuthState type with all possible status values
-export interface AuthState {
-  user: User | null;
-  accessToken: string | null;
-  expiresAt: string | null; // ISO string for serialization
-  status:
-    | 'loading'
-    | 'authenticated'
-    | 'unauthenticated'
-    | 'refreshing_token'
-    | 'refresh_needed'
-    | 'registration_success'
-    | 'requesting_reset'
-    | 'reset_requested'
-    | 'reset_request_failed'
-    | 'resetting_password'
-    | 'password_reset_success'
-    | 'password_reset_failed'
-    | 'updating_profile'
-    | 'needs_password_reset'
-    | 'session_expired'
-    | null;
-  error: string | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  resetPasswordData: ApiResponse<{
-    resetToken?: string;
-    username: string;
-    message: string;
-  }> | null;
-}
-
-// Update LoginCredentials in auth.ts
 export interface LoginCredentials {
   username: string;
   password: string;
-  securityInfo?: {
-    timestamp: string;
-    deviceInfo: {
-      userAgent: string;
-      language: string;
-      screenSize: string;
-      timeZone: string;
-    };
-  };
 }
 
 export interface RegisterCredentials {
-  email: string;
+  username: string;
   password: string;
   fullName: string;
-  redirectTo?: string;
+  email?: string;
+  phone?: string;
+  employeeId?: string;
+  cardId?: string;
 }
 
 export interface VerifyRegistration {
-  email: string;
-  code: string;
-}
-
-export interface AuthResponse {
-  data: User;
   token: string;
-  expiresIn: number;
-  expiresAt?: string; // ISO string
-  requiredResetPassword?: boolean;
+  userId: string;
 }
 
 export interface ApiResponse<T = any> {
   success: boolean;
-  message?: string;
   data?: T;
-  error?:
-    | {
-        error: string;
-        message: string;
-        statusCode: number;
-      }
-    | string;
+  error?: string | { message: string };
+  message?: string;
 }
 
-export interface TwoFactorAuthData {
-  tempToken: string;
-  method: '2fa_app' | '2fa_sms';
+export interface AuthResponse {
+  user: User;
+  accessToken?: string;
+  expiresAt?: string;
+  expiresIn?: number;
 }
 
-export interface VerifyTwoFactorData {
-  tempToken: string;
-  code: string;
+export type AuthStatus = 
+  | 'loading' 
+  | 'checking' 
+  | 'unauthenticated' 
+  | 'authenticated' 
+  | 'refreshing_token' 
+  | 'needs_password_reset' 
+  | 'password_reset_success' 
+  | 'registration_success' 
+  | 'session_expired';
+
+export interface AuthState {
+  status: AuthStatus;
+  user: User | null;
+  accessToken: string | null;
+  isAuthenticated: boolean;
+  error: string | null;
+  isLoading: boolean;
+  expiresAt: Date | null;
+  resetPasswordData: {
+    resetToken: string;
+    username: string;
+    message: string;
+  } | null;
+  isHydrated: boolean;
+  sessionInitialized: boolean;
+  lastSessionCheck: number | null;
 }
 
 export interface RequestResetParams {
-  employeeId: string;
-  cardId: string;
+  email: string;
 }
 
 export interface ResetPasswordParams {
-  resetToken?: string;
-  username?: string;
-  password: string;
-  confirmPassword: string;
+  token?: string;
+  currentPassword?: string;
+  newPassword: string;
 }
+
+// Export default types for easy importing
+export type {
+  User as UserType,
+  AuthState as AuthStateType,
+  LoginCredentials as LoginCredentialsType,
+  RegisterCredentials as RegisterCredentialsType,
+  AuthStatus as AuthStatusType,
+};

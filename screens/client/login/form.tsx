@@ -3,18 +3,18 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useEffect } from 'react';
-import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
+import { SubmitHandler, useForm } from 'react-hook-form';
 import { toast } from 'react-toast-kit';
 import SubmitButton from '@/components/SubmitButton';
 import { defaultLoginValues, loginSchema, TLoginSchema } from '@/schemas/auth';
 import { useAuthManager } from '@/hooks/auth/useAuthManager';
 import FieldInput from '@/components/common/fields/FieldInput';
-import { FieldCheckbox } from '@/components/common/fields';
+import { FieldCheckbox, FormController } from '@/components/common/fields';
 
 const LoginForm = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { login, isLoading, isAuthenticated, error } = useAuthManager();
+  const { login, isLoading, isAuthenticated } = useAuthManager();
   const methods = useForm<TLoginSchema>({
     defaultValues: defaultLoginValues,
     resolver: zodResolver(loginSchema),
@@ -29,35 +29,20 @@ const LoginForm = () => {
   // Handle successful authentication
   useEffect(() => {
     if (isAuthenticated) {
-      toast({
-        title: 'Đăng nhập thành công',
-        variant: 'success',
-      });
+      
       router.push(callbackUrl);
     }
   }, [isAuthenticated, router, callbackUrl]);
 
-  // Handle authentication errors
-  useEffect(() => {
-    if (error) {
-      toast({
-        title: 'Đăng nhập thất bại',
-        description: error || 'Vui lòng kiểm tra lại thông tin đăng nhập của bạn.',
-        variant: 'error',
-      });
-    }
-  }, [error]);
-
   return (
-    <FormProvider {...methods}>
-      <form onSubmit={methods.handleSubmit(onSubmit)}>
-        <div className="flex flex-col gap-5 px-8">
+    <FormController form={methods} onSubmit={onSubmit}>
+        <div className="flex flex-col gap-4 px-8">
           <FieldInput
             control={methods.control}
             name="username"
             label="Mã số nhân viên"
             disabled={isLoading}
-            placeholder="Vui lòng nhập mã số nhân viên của bạn..."
+          placeholder="Vui lòng nhập mã số nhân viên của bạn..."
           />
           <FieldInput
             control={methods.control}
@@ -71,7 +56,8 @@ const LoginForm = () => {
             control={methods.control}
             name="rememberMe"
             label="Ghi nhớ"
-            className="border-none"
+          noBorder
+          className='p-0'
           />
           <SubmitButton
             disabled={isLoading}
@@ -81,17 +67,16 @@ const LoginForm = () => {
           />
         </div>
         {!isLoading && (
-          <div className="flex justify-center mt-4">
+          <div className="flex justify-center">
             <a
               href="/reset-password"
-              className="text-blue-500 hover:underline"
+            className="text-blue-500 hover:underline"
             >
               Quên mật khẩu?
             </a>
           </div>
         )}
-      </form>
-    </FormProvider>
+    </FormController>
   );
 };
 

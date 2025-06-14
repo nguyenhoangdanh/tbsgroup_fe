@@ -8,6 +8,8 @@ interface ImageLogoProps {
   variant?: 'light' | 'dark';
   width?: number;
   height?: number;
+  fallbackText?: string;
+  showGradient?: boolean;
 }
 
 export default function ImageLogo({
@@ -15,15 +17,16 @@ export default function ImageLogo({
   variant = 'light',
   width = 150,
   height = 150,
+  fallbackText = 'TBS',
+  showGradient = true
 }: ImageLogoProps) {
   const [imageSrc, setImageSrc] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    // Chỉ đặt src ở phía client để tránh lỗi hydration
-    const src = variant === 'light' ? '/images/logo-light.png' : '/images/logo-dark.png';
-
+    // CRITICAL FIX: Use actual logo paths
+    const src = '/images/remove-bg-logo.png'; // Sử dụng logo chính từ public/images
     setImageSrc(src);
     setLoading(false);
   }, [variant]);
@@ -34,37 +37,50 @@ export default function ImageLogo({
     setError(true);
   };
 
-  // if (loading) {
-  //     return (
-  //         <div
-  //             className={`${className} flex items-center justify-center bg-gray-100`}
-  //             style={{ width, height }}
-  //         >
-  //             <span className="text-gray-400">Loading...</span>
-  //         </div>
-  //     );
-  // }
+  if (loading) {
+    return (
+      <div
+        className={`${className} flex items-center justify-center bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg animate-pulse`}
+        style={{ width, height }}
+      >
+        <span className="text-white font-bold text-xs">Loading...</span>
+      </div>
+    );
+  }
 
-  // if (error || !imageSrc) {
-  //     return (
-  //         <div
-  //             className={`${className} flex items-center justify-center bg-gray-100`}
-  //             style={{ width, height }}
-  //         >
-  //             <span className="text-gray-500">TBS</span>
-  //         </div>
-  //     );
-  // }
+  if (error || !imageSrc) {
+    return (
+      <div
+        className={`${className} flex items-center justify-center ${
+          showGradient 
+            ? 'bg-gradient-to-r from-green-500 to-emerald-500 shadow-lg' 
+            : 'bg-green-500 dark:bg-green-600'
+        } rounded-lg transition-all duration-300 hover:scale-105`}
+        style={{ width, height }}
+      >
+        <span className="text-white font-bold drop-shadow-sm text-sm">
+          {fallbackText}
+        </span>
+      </div>
+    );
+  }
 
   return (
-    <Image
-      src={imageSrc}
-      alt="logo"
-      width={width}
-      height={height}
-      className={`${className} object-contain`}
-      onError={handleError}
-      priority={false}
-    />
+    <div className={`${className} relative overflow-hidden`}>
+      <Image
+        src={imageSrc}
+        alt="Thoai Son Handbag Factory Logo"
+        width={width}
+        height={height}
+        className="object-contain transition-all duration-300 hover:scale-105"
+        onError={handleError}
+        priority={true}
+        style={{
+          maxWidth: '100%',
+          height: 'auto',
+          aspectRatio: `${width}/${height}`
+        }}
+      />
+    </div>
   );
 }

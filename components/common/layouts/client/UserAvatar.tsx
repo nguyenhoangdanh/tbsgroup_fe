@@ -3,7 +3,7 @@ import { CircleUserRound, KeyRound, LogOut } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useState } from 'react';
 
-import { toast } from 'react-toast-kit';
+import { stableToast } from '@/utils/stableToast';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -21,17 +21,17 @@ const UserAvatar = () => {
   const { logout, user, isAuthenticated } = useAuthManager();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  //Use fullName or username, with fallback for display
+  // Use fullName or username, with fallback for display
   const displayName = user?.fullName || user?.username || 'User';
 
-  //Get the initials for the avatar fallback
-  const getInitials = (name: string) => {
+  // Get the initials for the avatar fallback
+  const getInitials = useCallback((name: string) => {
     return name
       .split(' ')
       .map(n => n[0])
       .join('')
-      .toLocaleUpperCase();
-  };
+      .toUpperCase(); // Fixed typo: toLocaleUpperCase -> toUpperCase
+  }, []);
 
   const handleNavigation = useCallback(
     (path: string) => {
@@ -41,25 +41,22 @@ const UserAvatar = () => {
   );
 
   const handleLogout = useCallback(async () => {
+    if (isLoggingOut) return;
+
     setIsLoggingOut(true);
     try {
       await logout();
-      toast({
-        title: 'Đăng xuất thành công',
-        variant: 'default',
-      });
+      stableToast.success('Đăng xuất thành công');
       handleNavigation('/login');
     } catch (error) {
-      console.error(error);
-      toast({
-        title: 'Đăng xuất thất bại',
-        description: 'Vui lòng thử lại sau',
-        variant: 'error',
+      console.error('Logout error:', error);
+      stableToast.error('Đăng xuất thất bại', {
+        description: 'Vui lòng thử lại sau'
       });
     } finally {
       setIsLoggingOut(false);
     }
-  }, [logout]);
+  }, [logout, isLoggingOut, handleNavigation]);
 
   if (!isAuthenticated)
     return (

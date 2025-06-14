@@ -10,6 +10,15 @@ import {
   KeyRound,
   Building,
   LayoutDashboard,
+  Shield,
+  FileText,
+  BarChart3,
+  GitBranch,
+  Group,
+  Building2,
+  UsersIcon,
+  Network,
+  Layers,
 } from 'lucide-react';
 
 export interface Team {
@@ -32,6 +41,40 @@ export interface Project {
   icon: LucideIcon;
   items?: Project[];
 }
+
+export const BREAKPOINTS = {
+  mobile: 768,
+  tablet: 1024,
+  desktop: 1280,
+} as const;
+
+export const getSidebarState = (windowWidth: number) => {
+  if (windowWidth < BREAKPOINTS.mobile) {
+    return {
+      isMobile: true,
+      isTablet: false,
+      isDesktop: false,
+      defaultCollapsed: true,
+      useOverlay: true,
+    };
+  } else if (windowWidth < BREAKPOINTS.tablet) {
+    return {
+      isMobile: false,
+      isTablet: true,
+      isDesktop: false,
+      defaultCollapsed: true,
+      useOverlay: false,
+    };
+  } else {
+    return {
+      isMobile: false,
+      isTablet: false,
+      isDesktop: true,
+      defaultCollapsed: false,
+      useOverlay: false,
+    };
+  }
+};
 
 export const sidebarData = {
   teams: [
@@ -69,12 +112,35 @@ export const sidebarData = {
           url: '/admin/users/all',
         },
         {
-          title: 'Nhóm người dùng',
-          url: '/admin/users/groups',
-        },
-        {
           title: 'Vai trò người dùng',
           url: '/admin/users/roles',
+        },
+      ],
+    },
+    {
+      title: 'Cơ cấu tổ chức',
+      url: '/admin/organization',
+      icon: Network,
+      items: [
+        {
+          title: 'Phòng ban',
+          url: '/admin/departments',
+        },
+        {
+          title: 'Nhà máy',
+          url: '/admin/factories',
+        },
+        {
+          title: 'Dây chuyền',
+          url: '/admin/lines',
+        },
+        {
+          title: 'Tổ sản xuất',
+          url: '/admin/teams',
+        },
+        {
+          title: 'Nhóm sản xuất',
+          url: '/admin/groups',
         },
       ],
     },
@@ -126,13 +192,44 @@ export const sidebarData = {
       ],
     },
     {
-      title: 'Nhà máy',
-      url: '/admin/factories',
-      icon: Factory,
+      title: 'Báo cáo & Thống kê',
+      url: '/admin/reports',
+      icon: BarChart3,
       items: [
         {
-          title: 'Danh sách nhà máy',
-          url: '/admin/factories',
+          title: 'Báo cáo hiệu suất',
+          url: '/admin/reports/performance',
+        },
+        {
+          title: 'Báo cáo sản xuất',
+          url: '/admin/reports/production',
+        },
+        {
+          title: 'Báo cáo chất lượng',
+          url: '/admin/reports/quality',
+        },
+        {
+          title: 'Báo cáo nhân sự',
+          url: '/admin/reports/hr',
+        },
+      ],
+    },
+    {
+      title: 'Phân quyền',
+      url: '/admin/permissions',
+      icon: Shield,
+      items: [
+        {
+          title: 'Quản lý phân quyền',
+          url: '/admin/permissions',
+        },
+        {
+          title: 'Quản lý trang',
+          url: '/admin/settings/permissions-management',
+        },
+        {
+          title: 'Gán quyền theo vai trò',
+          url: '/admin/settings/role-permissions-assignment',
         },
       ],
     },
@@ -142,20 +239,8 @@ export const sidebarData = {
       icon: Settings,
       items: [
         {
-          title: 'Chung',
+          title: 'Cài đặt chung',
           url: '/admin/settings/general',
-        },
-        {
-          title: 'Phân quyền',
-          url: '/admin/settings/permissions',
-        },
-        {
-          title: 'Quản lý trang',
-          url: '/admin/settings/permissions-management',
-        },
-        {
-          title: 'Quản lý trang và phân quyền',
-          url: '/admin/settings/role-permissions-assignment',
         },
         {
           title: 'Hồ sơ cá nhân',
@@ -197,6 +282,38 @@ export const sidebarData = {
       ],
     },
     {
+      name: 'Cơ cấu tổ chức',
+      url: '/admin/organization',
+      icon: Network,
+      items: [
+        {
+          name: 'Phòng ban',
+          url: '/admin/departments',
+          icon: Building2,
+        },
+        {
+          name: 'Nhà máy',
+          url: '/admin/factories',
+          icon: Factory,
+        },
+        {
+          name: 'Dây chuyền',
+          url: '/admin/lines',
+          icon: GitBranch,
+        },
+        {
+          name: 'Tổ sản xuất',
+          url: '/admin/teams',
+          icon: UsersIcon,
+        },
+        {
+          name: 'Nhóm sản xuất',
+          url: '/admin/groups',
+          icon: Group,
+        },
+      ],
+    },
+    {
       name: 'Túi xách',
       url: '/admin/handbags',
       icon: Briefcase,
@@ -216,17 +333,49 @@ export const sidebarData = {
           url: '/admin/handbags/bag-processes',
           icon: Command,
         },
+        {
+          name: 'Nhóm túi',
+          url: '/admin/handbags/bag-group-rates',
+          icon: Layers,
+        },
       ],
     },
     {
-      name: 'Nhà máy',
-      url: '/admin/factories',
-      icon: Factory,
+      name: 'Báo cáo',
+      url: '/admin/reports',
+      icon: BarChart3,
       items: [
         {
-          name: 'Danh sách nhà máy',
-          url: '/admin/factories',
-          icon: Building,
+          name: 'Báo cáo hiệu suất',
+          url: '/admin/reports/performance',
+          icon: BarChart3,
+        },
+        {
+          name: 'Báo cáo sản xuất',
+          url: '/admin/reports/production',
+          icon: FileText,
+        },
+        {
+          name: 'Báo cáo chất lượng',
+          url: '/admin/reports/quality',
+          icon: PieChart,
+        },
+      ],
+    },
+    {
+      name: 'Phân quyền',
+      url: '/admin/permissions',
+      icon: Shield,
+      items: [
+        {
+          name: 'Quản lý phân quyền',
+          url: '/admin/permissions',
+          icon: Shield,
+        },
+        {
+          name: 'Quản lý trang',
+          url: '/admin/settings/permissions-management',
+          icon: FileText,
         },
       ],
     },
@@ -236,19 +385,19 @@ export const sidebarData = {
       icon: Settings,
       items: [
         {
-          name: 'Chung',
+          name: 'Cài đặt chung',
           url: '/admin/settings/general',
           icon: Settings,
-        },
-        {
-          name: 'Phân quyền',
-          url: '/admin/settings/permissions',
-          icon: KeyRound,
         },
         {
           name: 'Hồ sơ cá nhân',
           url: '/admin/settings/profile',
           icon: UserCog,
+        },
+        {
+          name: 'Đổi mật khẩu',
+          url: '/admin/settings/change-password',
+          icon: KeyRound,
         },
       ],
     },

@@ -1,6 +1,6 @@
 'use client';
 
-import { Component, ReactNode } from 'react';
+import { Component, ReactNode, ErrorInfo } from 'react';
 
 import { logger } from '@/utils/monitoring/logger';
 
@@ -22,6 +22,7 @@ export class AuthErrorBoundary extends Component<Props, State> {
   }
 
   static getDerivedStateFromError(error: Error): State {
+    // Only update state once with the error information
     return {
       hasError: true,
       error,
@@ -29,7 +30,8 @@ export class AuthErrorBoundary extends Component<Props, State> {
     };
   }
 
-  componentDidCatch(error: Error, errorInfo: any) {
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    // Don't update state here to prevent re-renders that could trigger infinite loops
     const errorId = this.state.errorId || 'unknown';
 
     logger.error('Auth Error Boundary caught an error', {
@@ -73,16 +75,18 @@ export class AuthErrorBoundary extends Component<Props, State> {
   }
 
   private handleAuthError() {
-    // Clear auth data
+    // With HTTP-only cookies, we should be less aggressive about clearing auth data
+    // Only clear localStorage items, cookies are managed by the backend
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('auth-token');
+      // Don't clear tokens since they're in HTTP-only cookies
+      // localStorage.removeItem('auth-token');
       localStorage.removeItem('auth-user');
       localStorage.removeItem('auth-user-minimal');
 
-      // Redirect to login after a short delay
+      // Show error for a moment, then redirect - give user time to see what happened
       setTimeout(() => {
         window.location.href = '/login?reason=auth_error';
-      }, 2000);
+      }, 3000); // Increased delay to 3 seconds
     }
   }
 

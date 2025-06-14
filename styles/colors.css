@@ -1,0 +1,131 @@
+:root {
+  /* === BRAND COLORS - Daily Performance (Green Theme) === */
+  /* Primary Green - màu xanh lá chủ đạo */
+  --dp-primary-50: #f0fdf4;
+  --dp-primary-100: #dcfce7;
+  --dp-primary-200: #bbf7d0;
+  --dp-primary-300: #86efac;
+  --dp-primary-400: #4ade80;
+  --dp-primary-500: #22c55e; /* Main green */
+  --dp-primary-600: #16a34a;
+  --dp-primary-700: #15803d;
+  --dp-primary-800: #166534;
+  --dp-primary-900: #14532d;
+  --dp-primary-950: #052e16;
+
+  /* Secondary - Emerald/Teal để kết hợp với green */
+  --dp-secondary-50: #ecfdf5;
+  --dp-secondary-100: #d1fae5;
+  --dp-secondary-200: #a7f3d0;
+  --dp-secondary-300: #6ee7b7;
+  --dp-secondary-400: #34d399;
+  --dp-secondary-500: #10b981; /* Main emerald */
+  --dp-secondary-600: #059669;
+  --dp-secondary-700: #047857;
+  --dp-secondary-800: #065f46;
+  --dp-secondary-900: #064e3b;
+  --dp-secondary-950: #022c22;
+
+  /* Gradients với màu xanh lá */
+  --dp-gradient-primary: linear-gradient(135deg, var(--dp-primary-500) 0%, var(--dp-primary-600) 100%);
+  --dp-gradient-secondary: linear-gradient(135deg, var(--dp-secondary-500) 0%, var(--dp-secondary-600) 100%);
+  --dp-gradient-soft: linear-gradient(135deg, var(--dp-primary-50) 0%, var(--dp-secondary-50) 100%);
+
+  /* === NEUTRAL COLORS === */
+  --dp-gray-50: #f8fafc;
+  --dp-gray-100: #f1f5f9;
+  --dp-gray-200: #e2e8f0;
+  --dp-gray-300: #cbd5e1;
+  --dp-gray-400: #94a3b8;
+  --dp-gray-500: #64748b;
+  --dp-gray-600: #475569;
+  --dp-gray-700: #334155;
+  --dp-gray-800: #1e293b;
+  --dp-gray-900: #0f172a;
+  --dp-gray-950: #020617;
+
+  /* === SEMANTIC COLORS === */
+  --dp-success-50: #f0fdf4;
+  --dp-success-100: #dcfce7;
+  --dp-success-500: #22c55e;
+  --dp-success-600: #16a34a;
+  --dp-success-700: #15803d;
+  
+  --dp-warning-50: #fefce8;
+  --dp-warning-100: #fef3c7;
+  --dp-warning-500: #eab308;
+  --dp-warning-600: #ca8a04;
+  
+  --dp-error-50: #fef2f2;
+  --dp-error-100: #fee2e2;
+  --dp-error-500: #ef4444;
+  --dp-error-600: #dc2626;
+  
+  --dp-info-50: #eff6ff;
+  --dp-info-100: #dbeafe;
+  --dp-info-500: #3b82f6;
+  --dp-info-600: #2563eb;
+
+  /* === THEME COLORS === */
+  --dp-background: #ffffff;
+  --dp-foreground: var(--dp-gray-900);
+  --dp-muted: var(--dp-gray-100);
+  --dp-muted-foreground: var(--dp-gray-500);
+  --dp-border: var(--dp-gray-200);
+  --dp-input: var(--dp-gray-200);
+  --dp-ring: var(--dp-primary-500);
+
+  /* === SIDEBAR SPECIFIC === */
+  --dp-sidebar-bg: var(--dp-background);
+  --dp-sidebar-border: var(--dp-border);
+  --dp-sidebar-header-bg: var(--dp-gray-50);
+  --dp-sidebar-item-hover: var(--dp-primary-50);
+  --dp-sidebar-item-active: var(--dp-primary-100);
+  --dp-sidebar-item-active-border: var(--dp-primary-500);
+
+  /* Header specific colors - Remove z-index interfering variables */
+  --header-bg-light: rgba(255, 255, 255, 0.95);
+  --header-bg-dark: rgba(15, 23, 42, 0.95);
+  --header-border-light: rgba(229, 231, 235, 0.5);
+  --header-border-dark: rgba(51, 65, 85, 0.5);
+  
+  /* Navigation colors */
+  --nav-text-light: rgb(55, 65, 81);
+  --nav-text-dark: rgb(209, 213, 219);
+  --nav-hover-bg-light: rgba(34, 197, 94, 0.1);
+  --nav-hover-bg-dark: rgba(255, 255, 255, 0.1);
+  --nav-hover-text-light: rgb(34, 197, 94);
+  --nav-hover-text-dark: rgb(255, 255, 255);
+}
+
+/* Dark theme với xanh lá */
+[data-theme="dark"] {
+  --dp-background: var(--dp-gray-950);
+  --dp-foreground: var(--dp-gray-50);
+  --dp-muted: var(--dp-gray-800);
+  --dp-muted-foreground: var(--dp-gray-400);
+  --dp-border: var(--dp-gray-800);
+  --dp-input: var(--dp-gray-800);
+
+  /* Sidebar dark theme */
+  --dp-sidebar-bg: var(--dp-gray-900);
+  --dp-sidebar-border: var(--dp-gray-800);
+  --dp-sidebar-header-bg: var(--dp-gray-800);
+  --dp-sidebar-item-hover: var(--dp-gray-800);
+  --dp-sidebar-item-active: var(--dp-primary-900);
+  --dp-sidebar-item-active-border: var(--dp-primary-400);
+
+  /* Header specific colors - Keep same as light theme */
+  --header-bg-light: rgba(255, 255, 255, 0.95);
+  --header-bg-dark: rgba(15, 23, 42, 0.95);
+  --header-border-light: rgba(229, 231, 235, 0.5);
+  --header-border-dark: rgba(51, 65, 85, 0.5);
+  
+  /* Navigation colors - Keep same as light theme */
+  --nav-text-light: rgb(55, 65, 81);
+  --nav-text-dark: rgb(209, 213, 219);
+  --nav-hover-bg-light: rgba(34, 197, 94, 0.1);
+  --nav-hover-bg-dark: rgba(255, 255, 255, 0.1);
+  --nav-hover-text-light: rgb(34, 197, 94);
+  --nav-hover-text-dark: rgb(255, 255, 255);
+}

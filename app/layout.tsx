@@ -6,6 +6,7 @@ import { LoadingProvider } from '@/components/common/loading/LoadingProvider';
 import { MainProviders } from '@/contexts/MainProviders';
 import { beVietnamPro } from '@/lib/fonts';
 import { ClientToastProvider } from '@/contexts/ClientToastProvider';
+  import DataTableProviderWrapper from '@/contexts/DataTableProviderWrapper';
 
 import './globals.css';
 
@@ -147,13 +148,13 @@ export default function RootLayout({
         {/* <Suspense fallback={<AppLoadingFallback />}> */}
           <ClientToastProvider>
             <MainProviders>
-              <RootLayoutWrapper>
+                <RootLayoutWrapper>
                 <LoadingProvider>
-                  {/* <Suspense fallback={<AppLoadingFallback />}> */}
+                  <DataTableProviderWrapper>
                     {children}
-                  {/* </Suspense> */}
-                </LoadingProvider>
-              </RootLayoutWrapper>
+                  </DataTableProviderWrapper>
+                  </LoadingProvider>
+                </RootLayoutWrapper>
             </MainProviders>
           </ClientToastProvider>
         {/* </Suspense> */}

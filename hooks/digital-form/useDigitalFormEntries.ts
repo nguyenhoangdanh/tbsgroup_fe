@@ -88,9 +88,8 @@ export const useDigitalFormEntries = (formId: string, initialEntries: DigitalFor
           : entry.checkOutTime
         : null;
 
-      // Create entry object with calculated values
+      // Create entry object with calculated values - remove temp ID generation
       const formattedEntry: DigitalFormEntry = {
-        id: `temp-${Date.now()}`, // This will be replaced by actual ID from backend
         formId,
         ...entry,
         checkInTime,
@@ -124,13 +123,12 @@ export const useDigitalFormEntries = (formId: string, initialEntries: DigitalFor
           };
           return updatedEntries;
         } else {
-          //   Add new entry
+          //   Add new entry - let backend assign ID
           return [...prevEntries, formattedEntry];
         }
       });
 
       // Since we can't access the updated state immediately, return the formatted entry
-      // This might cause issues if trying to reference the actual entry ID (which would be assigned by the server)
       return formattedEntry;
     },
     [formId],

@@ -115,20 +115,21 @@ function validateCSRFToken(request: NextRequest): boolean {
   const tokenFromHeader = request.headers.get('X-CSRF-Token');
   const tokenFromCookie = request.cookies.get('csrf-token')?.value;
 
-  return tokenFromHeader && tokenFromCookie && tokenFromHeader === tokenFromCookie;
+  const result: boolean = (tokenFromHeader === tokenFromCookie) && (tokenFromHeader !== undefined && tokenFromCookie !== undefined);
+
+  return result;
 }
 
 /**
- * Enhanced token validation with better error handling
- * Chỉ kiểm tra tính hợp lệ của token trên server - không cố truy cập token từ cookie
+ * Enhanced token validation với httpOnly cookies
  */
 async function validateToken(
   request: NextRequest,
 ): Promise<{ isValid: boolean; shouldRefresh: boolean; userData?: any }> {
+  // CRITICAL: Lấy accessToken từ httpOnly cookies
   const token = request.cookies.get('accessToken')?.value;
 
-  // Ghi log để debug (có thể bỏ đi sau khi hoàn tất)
-  console.log(`[Middleware] Kiểm tra token: ${token ? 'Có' : 'Không'}`);
+  console.log(`[Middleware] Kiểm tra httpOnly cookie token: ${token ? 'Có' : 'Không'}`);
 
   if (!token) {
     return { isValid: false, shouldRefresh: false };
@@ -136,33 +137,35 @@ async function validateToken(
 
   try {
     // QUAN TRỌNG: Gọi API endpoint từ server để xác thực token
-    // Endpoint này sẽ trả về thông tin người dùng nếu token hợp lệ
+    // Vì token đã trong cookie, chỉ cần forward toàn bộ cookies
+    const cookieHeader = request.headers.get('cookie') || '';
+    
     const verifyResponse = await fetch(`${config.apiBaseUrl}/users/profile`, {
       method: 'GET',
       headers: {
-        // Gửi cookie token để xác thực
-        Cookie: `accessToken=${token}`,
+        // Forward tất cả cookies từ request gốc
+        'Cookie': cookieHeader,
         'Cache-Control': 'no-cache',
+        'User-Agent': request.headers.get('user-agent') || 'Next.js Middleware',
       },
-      credentials: 'include',
       signal: AbortSignal.timeout(3000), // 3 second timeout
     });
 
     if (verifyResponse.ok) {
-      // Nếu token hợp lệ, lấy thông tin người dùng để truyền cho client-side
+      // Nếu token hợp lệ, lấy thông tin người dùng
       const userData = await verifyResponse.json();
+      console.log('[Middleware] Token valid, user data received');
       return { isValid: true, shouldRefresh: false, userData };
     } else if (verifyResponse.status === 401) {
       // Token không hợp lệ hoặc hết hạn
-      console.log('[Middleware] Token không hợp lệ hoặc hết hạn');
+      console.log('[Middleware] HttpOnly token không hợp lệ hoặc hết hạn');
       return { isValid: false, shouldRefresh: true };
     }
 
     return { isValid: false, shouldRefresh: false };
   } catch (error) {
-    console.error('[Middleware] Lỗi khi xác thực token:', error);
+    console.error('[Middleware] Lỗi khi xác thực httpOnly token:', error);
     // Nếu lỗi do mạng, tạm thời để người dùng truy cập
-    // Lưu ý: Trong môi trường production, có thể xem xét chiến lược khác
     return { isValid: true, shouldRefresh: false };
   }
 }

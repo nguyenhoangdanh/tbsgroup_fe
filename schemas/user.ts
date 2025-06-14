@@ -3,28 +3,40 @@ import { z } from 'zod';
 import { UserStatusEnum } from '@/common/enum';
 
 export const userSchema = z.object({
-  id: z.string(),
-  username: z.string().min(9, {
-    message: 'Tên đăng nhập phải có ít nhất 9 ký tự',
+  id: z.string().optional(),
+  username: z.string().min(3, {
+    message: 'Tên đăng nhập phải có ít nhất 3 ký tự',
   }),
-  employeeId: z.string(),
-  roleId: z.string(),
   password: z.string().min(6, {
-    message: 'Mật khẩu phải có ít  nhất 6 ký tự',
-  }),
-  status: z
-    .enum([
-      UserStatusEnum.PENDING_ACTIVATION,
-      UserStatusEnum.ACTIVE,
-      UserStatusEnum.INACTIVE,
-      UserStatusEnum.BANNED,
-      UserStatusEnum.DELETED,
-    ])
-    .optional(),
+    message: 'Mật khẩu phải có ít nhất 6 ký tự',
+  }).optional(),
   fullName: z.string().min(2, {
-    message: 'Ten phai co it nhat 2 ky tu',
+    message: 'Họ tên phải có ít nhất 2 ký tự',
   }),
-  cardId: z.string(),
+  email: z.string().email('Email không hợp lệ').optional(),
+  phone: z.string().optional(),
+  employeeId: z.string().min(1, {
+    message: 'Mã nhân viên là bắt buộc',
+  }),
+  cardId: z.string().optional(),
+  roleId: z.string({
+    required_error: 'Vai trò là bắt buộc',
+  }).min(1, {
+    message: 'Vui lòng chọn vai trò',
+  }),
+  status: z.nativeEnum(UserStatusEnum).default(UserStatusEnum.PENDING_ACTIVATION),
+  avatar: z.string().optional(),
+  factoryId: z.string().optional(),
+  lineId: z.string().optional(),
+  teamId: z.string().optional(),
+  groupId: z.string().optional(),
+  positionId: z.string().optional(),
+});
+
+// Create a separate schema for edit mode with less strict validation
+export const userEditSchema = userSchema.omit({ password: true }).extend({
+  username: z.string().optional(),
+  employeeId: z.string().optional(),
 });
 
 export type TUserSchema = z.infer<typeof userSchema>;
@@ -34,8 +46,13 @@ export const defaultUserValues: TUserSchema = {
   username: '',
   employeeId: '',
   roleId: '',
-  password: 'Abc@123',
+  password: 'Abcd@123',
   status: UserStatusEnum.PENDING_ACTIVATION,
   fullName: '',
   cardId: '',
+  factoryId: '',
+  lineId: '',
+  teamId: '',
+  groupId: '',
+  positionId: '',
 };

@@ -1,45 +1,38 @@
 'use client';
 import { useMemo } from 'react';
+import { useAuthContext } from '@/contexts/auth/AuthProvider';
 
 import { sidebarData } from './sidebar-data';
-
 import {
   filterNavItemsByRole,
   filterProjectsByRole,
-  defaultPermissions,
   UserRole,
 } from '@/utils/permission-utils';
-import { useAuthManager } from '@/hooks/auth/useAuthManager';
 
 /**
  * Custom hook to get sidebar items filtered by user permissions
  */
 export function useSidebarPermissions() {
-  const { user, isAuthenticated } = useAuthManager();
+  const { user } = useAuthContext();
 
   //Get user role from auth context
-  const userRole = useMemo(() => {
-    if (!user || !isAuthenticated) return null;
-    return user.role as UserRole;
-  }, [user, isAuthenticated]);
+  const userRole = user?.role as UserRole || 'USER';
 
   // Filter navigation items based on user role
-  const navMainItems = useMemo(() => {
-    if (!userRole) return [];
-    return filterNavItemsByRole(sidebarData.navMain, userRole, defaultPermissions);
+  const filteredNavMain = useMemo(() => {
+    return filterNavItemsByRole(sidebarData.navMain, userRole);
   }, [userRole]);
 
   //  Filter project items based on user role
-  const projectItems = useMemo(() => {
-    if (!userRole) return [];
-    return filterProjectsByRole(sidebarData.projects, userRole, defaultPermissions);
+  const filteredProjects = useMemo(() => {
+    return filterProjectsByRole(sidebarData.projects, userRole);
   }, [userRole]);
 
   return {
-    navMainItems,
-    projectItems,
+    navMain: filteredNavMain,
+    projects: filteredProjects,
+    teams: sidebarData.teams,
     userRole,
-    isAuthenticated,
   };
 }
 

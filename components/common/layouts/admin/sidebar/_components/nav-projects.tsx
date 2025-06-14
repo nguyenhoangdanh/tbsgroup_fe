@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import {
   Folder,
@@ -8,26 +8,26 @@ import {
   ChevronRight,
   type LucideIcon,
   Shield,
-} from 'lucide-react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import * as React from 'react';
+} from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import * as React from "react";
 
-import { useSidebarCollapsed, useSidebarIsMobileView } from '../../SidebarStateProvider';
+import { useSidebarCollapsed, useSidebarIsMobileView } from "../../SidebarStateProvider";
 
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/components/ui/popover';
+} from "@/components/ui/popover";
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -38,15 +38,16 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
-} from '@/components/ui/sidebar';
+} from "@/components/ui/sidebar";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { hasRouteAccess, UserRole } from '@/utils/permission-utils';
-import { useAuthManager } from '@/hooks/auth/useAuthManager';
+} from "@/components/ui/tooltip";
+import { hasRouteAccess, UserRole } from "@/utils/permission-utils";
+import { useAuthManager } from "@/hooks/auth/useAuthManager";
+import { Project } from './sidebar-data';
 
 interface ProjectItem {
   name: string;
@@ -308,7 +309,7 @@ const ProjectMenuItem = React.memo(
 
 ProjectMenuItem.displayName = 'ProjectMenuItem';
 
-export const NavProjects = React.memo(({ projects }: { projects: ProjectItem[] }) => {
+export function NavProjects({ projects }: { projects: Project[] }) {
   const isMobile = useSidebarIsMobileView();
   const collapsed = useSidebarCollapsed();
   const { user } = useAuthManager();
@@ -348,6 +349,6 @@ export const NavProjects = React.memo(({ projects }: { projects: ProjectItem[] }
       <SidebarMenu className="space-y-1">{projectItems}</SidebarMenu>
     </SidebarGroup>
   );
-});
+};
 
 NavProjects.displayName = 'NavProjects';

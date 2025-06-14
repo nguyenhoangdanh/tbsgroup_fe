@@ -3,30 +3,25 @@ import { usePathname, useRouter } from 'next/navigation';
 import React, { createContext, useContext, useEffect, useCallback, useMemo } from 'react';
 
 import { SecurityProvider, useSecurityContext } from '../security/SecurityContext';
-
-import { toast } from 'react-toast-kit';
 import { useAppDispatch, useAppSelector } from '@/hooks/redux';
 import {
-  login,
-  logout,
-  refreshToken,
-  initAuth,
-  resetPassword,
-  requestPasswordReset,
-  updateUser,
-} from '@/redux/actions/authAction';
-import { clearErrors } from '@/redux/slices/authSlice';
+  loginRequest,
+  logoutRequest,
+  refreshTokenSuccess,
+  resetPasswordRequest,
+  requestPasswordResetRequest,
+  updateUserRequest,
+  initializeApp,
+  clearErrors,
+} from '@/redux/slices/authSlice';
 import {
   User,
   LoginCredentials,
   RequestResetParams,
   ResetPasswordParams,
 } from '@/redux/types/auth';
-
-type AuthError = {
-  message: string;
-  code?: string;
-};
+import stableToast from '@/utils/stableToast';
+import { PUBLICROUTES } from '@/config/constants';
 
 type AuthContextType = {
   user: User | null;
@@ -51,47 +46,47 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const dispatch = useAppDispatch();
   const auth = useAppSelector(state => state.auth);
 
-  // Security context for session timeout tracking
   const { lastActivity, securityLevel, recordActivity } = useSecurityContext();
 
-  // Initialize auth state when the app loads
+  // Initialize auth state only once
   useEffect(() => {
-    dispatch(initAuth());
-  }, [dispatch]);
+    if (!auth.sessionInitialized) {
+      dispatch(initializeApp());
+    }
+  }, [dispatch, auth.sessionInitialized]);
 
-  // Callback handlers for auth actions
+  // Memoized callback handlers to prevent re-renders
   const handleLogin = useCallback(
     (credentials: LoginCredentials, opts?: { message?: string }) => {
-      dispatch(login(credentials));
-      // Note: Success/error messages are handled by saga
+      dispatch(loginRequest(credentials));
     },
     [dispatch],
   );
 
   const handleLogout = useCallback(
     (options?: { reason?: string; allDevices?: boolean; silent?: boolean }) => {
-      dispatch(logout(options));
+      dispatch(logoutRequest(options));
     },
     [dispatch],
   );
 
   const handleResetPassword = useCallback(
     (params: ResetPasswordParams) => {
-      dispatch(resetPassword(params));
+      dispatch(resetPasswordRequest(params));
     },
     [dispatch],
   );
 
   const handleRequestPasswordReset = useCallback(
     (params: RequestResetParams) => {
-      dispatch(requestPasswordReset(params));
+      dispatch(requestPasswordResetRequest(params));
     },
     [dispatch],
   );
 
   const handleUpdateProfile = useCallback(
     (userData: Partial<User>) => {
-      dispatch(updateUser(userData));
+      dispatch(updateUserRequest(userData));
     },
     [dispatch],
   );
@@ -101,18 +96,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [dispatch]);
 
   const handleRefreshToken = useCallback(() => {
-    dispatch(refreshToken());
-  }, [dispatch]);
+    // For httpOnly cookies, we don't manually refresh - just trigger a session check
+    dispatch(refreshTokenSuccess({
+      user: auth.user!,
+      accessToken: 'cookie-managed',
+    }));
+  }, [dispatch, auth.user]);
 
-  // Session timeout monitoring
+  // Optimized session timeout monitoring
   useEffect(() => {
-    if (!auth.user) return;
+    if (!auth.user || auth.status !== 'authenticated') return;
 
-    const checkSessionTimeout = setInterval(() => {
-      const timeoutThreshold = securityLevel === 'high' 
-        ? 15 * 60 * 1000  // 15 minutes for high security
-        : 30 * 60 * 1000; // 30 minutes for normal security
+    const timeoutThreshold = securityLevel === 'high' 
+      ? 15 * 60 * 1000 
+      : 30 * 60 * 1000;
         
+    const checkSessionTimeout = () => {
       const now = Date.now();
       const inactiveTime = now - lastActivity;
       
@@ -121,22 +120,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           reason: 'session_timeout',
           silent: false,
         });
-        toast({
-          title: 'Phiên đã hết hạn',
-          description: 'Vui lòng đăng nhập lại để tiếp tục',
-          variant: 'error',
-          duration: 4000,
-        });
+        stableToast.error('Phiên đã hết hạn. Vui lòng đăng nhập lại để tiếp tục')
       }
-    }, 60000); // Kiểm tra mỗi phút
+    };
 
-    return () => clearInterval(checkSessionTimeout);
-  }, [lastActivity, securityLevel, auth.user, handleLogout]);
+    const interval = setInterval(checkSessionTimeout, 60000);
+    return () => clearInterval(interval);
+  }, [lastActivity, securityLevel, auth.user, auth.status, handleLogout]);
 
-  // Record user activity to prevent unnecessary session timeout
+  // Optimized user activity tracking
   useEffect(() => {
-    const events = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'];
+    if (!auth.user) return;
 
+    const events = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'];
     let activityTimeout: NodeJS.Timeout | null = null;
 
     const handleUserActivity = () => {
@@ -146,85 +142,53 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       activityTimeout = setTimeout(() => {
         recordActivity();
-      }, 300); // 300ms debounce
+      }, 300);
     };
 
     events.forEach(event => {
-      window.addEventListener(event, handleUserActivity);
+      window.addEventListener(event, handleUserActivity, { passive: true });
     });
 
     return () => {
       events.forEach(event => {
         window.removeEventListener(event, handleUserActivity);
-      })
+      });
       if (activityTimeout) {
         clearTimeout(activityTimeout);
-      };
+      }
     };
-  }, [recordActivity]);
+  }, [recordActivity, auth.user]);
 
-  // Handle authentication state-based routing
+  // Optimized routing logic
   useEffect(() => {
-    // Public routes that don't require authentication
-    const publicRoutes = ['/login', '/reset-password', '/forgot-password', '/'];
-    const adminRoutes = ['/admin', '/admin/users', '/admin/users/all']; // Thêm các route admin
-
-    // Nếu đang tải, đừng điều hướng
     if (auth.status === 'loading' || auth.status === 'refreshing_token') {
       return;
     }
 
-    // Cần đặt lại mật khẩu
     if (auth.status === 'needs_password_reset' && pathname !== '/reset-password') {
       router.replace('/reset-password');
       return;
     }
 
-    // Không xác thực và không ở trang công khai
-    if (auth.status !== 'authenticated' && !publicRoutes.includes(pathname)) {
-      console.log('Chưa xác thực, điều hướng đến /login từ:', pathname);
-
-      // Kiểm tra điều hướng
-      const timer = setTimeout(() => {
-        router.replace('/login?returnPath=' + encodeURIComponent(pathname));
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-
-    // Đã xác thực, đang ở trang đăng nhập, điều hướng đến trang chính
     if (auth.status === 'authenticated' && pathname === '/login') {
       router.replace('/admin/users/all');
     }
   }, [auth.status, router, pathname]);
 
-  // Show toast messages for auth states
+  // Optimized toast messages
   useEffect(() => {
-    if (auth.error) {
-      toast({
-        title: 'Lỗi',
-        description: auth.error,
-        variant: 'error',
-        duration: 4000,
-      });
+    if (auth.error && !PUBLICROUTES.includes(pathname)) {
+      stableToast.error(auth.error);
     }
 
-    // Display success messages
     if (auth.status === 'password_reset_success') {
-      toast({
-        title: 'Thành công',
-        description: 'Mật khẩu đã được đặt lại thành công',
-        duration: 4000,
-      });
+      stableToast.success('Mật khẩu đã được đặt lại thành công');
     } else if (auth.status === 'registration_success') {
-      toast({
-        title: 'Đăng ký thành công',
-        description: 'Tài khoản của bạn đã được tạo',
-        duration: 4000,
-      });
+      stableToast.success('Đăng ký thành công');
     }
   }, [auth.error, auth.status]);
 
-  // Memoize the auth context value to avoid unnecessary re-renders
+  // Heavily memoized context value
   const authContextValue = useMemo(
     () => ({
       user: auth.user,

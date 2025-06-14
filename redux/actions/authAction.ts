@@ -1,117 +1,57 @@
+import { createAction } from '@reduxjs/toolkit';
 import {
   loginRequest,
   logoutRequest,
   registerRequest,
-  verifyAccountRequest,
-  refreshTokenRequest,
   updateUserRequest,
   requestPasswordResetRequest,
   resetPasswordRequest,
+  initializeSession,
+  initializeApp,
 } from '../slices/authSlice';
-import { AppDispatch } from '../store';
 import type {
   LoginCredentials,
-  RegisterCredentials,
-  VerifyRegistration,
-  User,
   RequestResetParams,
   ResetPasswordParams,
+  User,
 } from '../types/auth';
 
 /**
- * Initialize auth state on application start
+ * Initialize auth state on application start - Use plain action
  */
-export const initAuth = () => {
-  return async (dispatch: AppDispatch, getState: any) => {
-    try {
-      // Kiểm tra xem đã có token chưa trước khi gọi API
-      const authState = getState().auth;
-
-      // Bỏ qua kiểm tra nếu không có token
-      if (!authState.accessToken) {
-        console.log('Không có token, bỏ qua khởi tạo auth');
-        dispatch({
-          type: 'AUTH_STATUS_CHANGED',
-          payload: { status: 'unauthenticated' },
-        });
-        return;
-      }
-
-      // Nếu có token, tiếp tục với quá trình khởi tạo
-      dispatch({ type: 'AUTH_INIT' });
-    } catch (error) {
-      console.error('Lỗi khởi tạo auth:', error);
-
-      // Xử lý lỗi phù hợp
-      dispatch({
-        type: 'AUTH_ERROR',
-        payload: {
-          error: error instanceof Error ? error.message : 'Lỗi không xác định',
-          status: 'error',
-        },
-      });
-    }
-  };
-};
+export const initAuth = () => initializeApp();
 
 /**
  * Login a user with email and password
  */
-export const login = (credentials: LoginCredentials) => (dispatch: AppDispatch) => {
-  dispatch(loginRequest(credentials));
-};
+export const login = (credentials: LoginCredentials) => loginRequest(credentials);
 
 /**
  * Register a new user
  */
-export const register = (userData: RegisterCredentials) => (dispatch: AppDispatch) => {
-  dispatch(registerRequest(userData));
-};
+export const register = (userData: any) => registerRequest(userData);
 
 /**
- * Verify user account with verification code
+ * Logout current user - Use plain action
  */
-export const verifyAccount = (verificationData: VerifyRegistration) => (dispatch: AppDispatch) => {
-  dispatch(verifyAccountRequest(verificationData));
-};
-
-/**
- * Logout current user
- * @param options Logout options: reason and whether to log out from all devices
- */
-export const logout =
-  (options?: { reason?: string; allDevices?: boolean; silent?: boolean }) =>
-  (dispatch: AppDispatch) => {
-    dispatch(logoutRequest(options));
-  };
-
-/**
- * Force refresh the auth token
- */
-export const refreshToken = () => (dispatch: AppDispatch) => {
-  dispatch(refreshTokenRequest());
-};
+export const logout = (options?: { reason?: string; allDevices?: boolean; silent?: boolean }) =>
+  logoutRequest(options);
 
 /**
  * Update user information
  */
-export const updateUser = (userData: Partial<User>) => (dispatch: AppDispatch) => {
-  dispatch(updateUserRequest(userData));
-};
+export const updateUser = (userData: Partial<User>) => updateUserRequest(userData);
 
 /**
  * Request password reset with employee ID and card ID
  */
-export const requestPasswordReset = (params: RequestResetParams) => (dispatch: AppDispatch) => {
-  dispatch(requestPasswordResetRequest(params));
-};
+export const requestPasswordReset = (params: RequestResetParams) =>
+  requestPasswordResetRequest(params);
 
 /**
  * Reset password with token or username
  */
-export const resetPassword = (params: ResetPasswordParams) => (dispatch: AppDispatch) => {
-  dispatch(resetPasswordRequest(params));
-};
+export const resetPassword = (params: ResetPasswordParams) => resetPasswordRequest(params);
 
 /**
  * Send magic link for passwordless authentication
@@ -167,3 +107,50 @@ export const resendVerificationCode = (email: string) => ({
   type: 'RESEND_VERIFICATION_CODE_REQUEST',
   payload: { email },
 });
+
+// Login actions
+export const loginAction = createAction<LoginCredentials>('auth/login');
+export const loginSuccess = createAction<{ user: User; accessToken: string }>('auth/loginSuccess');
+export const loginFailure = createAction<string>('auth/loginFailure');
+
+// Logout actions
+export const logoutAction = createAction<{ reason?: string; allDevices?: boolean; silent?: boolean } | undefined>('auth/logout');
+export const logoutSuccess = createAction('auth/logoutSuccess');
+
+// Registration actions
+export const registerAction = createAction<any>('auth/register');
+export const registerSuccess = createAction('auth/registerSuccess');
+export const registerFailure = createAction<string>('auth/registerFailure');
+
+// Token refresh actions
+export const refreshTokenAction = createAction('auth/refreshToken');
+export const refreshTokenSuccess = createAction<{ user: User; accessToken: string }>('auth/refreshTokenSuccess');
+export const refreshTokenFailure = createAction<string>('auth/refreshTokenFailure');
+
+// Password reset actions
+export const requestPasswordResetAction = createAction<RequestResetParams>('auth/requestPasswordReset');
+export const requestPasswordResetSuccess = createAction<any>('auth/requestPasswordResetSuccess');
+export const requestPasswordResetFailure = createAction<string>('auth/requestPasswordResetFailure');
+
+export const resetPasswordAction = createAction<ResetPasswordParams>('auth/resetPassword');
+export const resetPasswordSuccess = createAction('auth/resetPasswordSuccess');
+export const resetPasswordFailure = createAction<string>('auth/resetPasswordFailure');
+
+// User update actions
+export const updateUserAction = createAction<Partial<User>>('auth/updateUser');
+export const updateUserSuccess = createAction<User>('auth/updateUserSuccess');
+export const updateUserFailure = createAction<string>('auth/updateUserFailure');
+
+// Auth initialization
+export const initAuthAction = createAction('auth/init');
+export const checkAuthenticationStatus = createAction('auth/checkStatus');
+
+// Token refresh
+export const refreshToken = createAction('auth/refreshToken');
+
+// Clear actions - create new ones instead of importing conflicting ones
+export const clearAuthErrors = createAction('auth/clearErrors');
+export const clearResetPasswordData = createAction('auth/clearResetPasswordData');
+
+// Legacy exports for backward compatibility
+export const initializeAuth = initAuth;
