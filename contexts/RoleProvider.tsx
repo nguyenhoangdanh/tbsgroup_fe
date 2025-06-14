@@ -2,18 +2,17 @@
 
 import React, { createContext, useContext, useMemo } from 'react';
 
-import { useAuthManager } from '@/hooks/auth/useAuthManager'; // Fixed import path
+import { useAuthManager } from '@/hooks/auth/useAuthManager';
 import {
-  defaultPermissions,
+  routePermissions,
   hasRouteAccess,
-  PermissionConfig,
   UserRole,
 } from '@/utils/permission-utils';
 
 // Define the context type
 interface RoleContextType {
   userRole: UserRole | null;
-  permissions: PermissionConfig;
+  routePermissions: Record<string, UserRole[]>;
   hasAccess: (route: string) => boolean;
   isAdmin: boolean;
   isManager: boolean;
@@ -23,7 +22,7 @@ interface RoleContextType {
 // Create the context with default values
 const RoleContext = createContext<RoleContextType>({
   userRole: null,
-  permissions: defaultPermissions,
+  routePermissions,
   hasAccess: () => false,
   isAdmin: false,
   isManager: false,
@@ -36,21 +35,19 @@ export const useRole = () => useContext(RoleContext);
 // Provider component
 export const RoleProvider: React.FC<{
   children: React.ReactNode;
-  customPermissions?: PermissionConfig;
-}> = ({ children, customPermissions }) => {
+  customRoutePermissions?: Record<string, UserRole[]>;
+}> = ({ children, customRoutePermissions }) => {
   const { user, isAuthenticated } = useAuthManager();
 
-  // Combine default permissions with any custom permissions
+  // Combine default route permissions with any custom permissions
   const permissions = useMemo(() => {
-    if (!customPermissions) return defaultPermissions;
+    if (!customRoutePermissions) return routePermissions;
 
     return {
-      routes: {
-        ...defaultPermissions.routes,
-        ...customPermissions.routes,
-      },
+      ...routePermissions,
+      ...customRoutePermissions,
     };
-  }, [customPermissions]);
+  }, [customRoutePermissions]);
 
   // Extract user role
   const userRole = useMemo<UserRole | null>(() => {
@@ -75,7 +72,7 @@ export const RoleProvider: React.FC<{
   const contextValue = useMemo(
     () => ({
       userRole,
-      permissions,
+      routePermissions: permissions,
       hasAccess,
       isAdmin,
       isManager,

@@ -1,10 +1,3 @@
-// src/utils/permission-utils.ts
-
-import {
-  NavItem,
-  Project,
-} from '../components/common/layouts/admin/sidebar/_components/sidebar-data';
-
 // Define role types based on your application's roles
 export type UserRole = 'SUPER_ADMIN' | 'ADMIN' | 'MANAGER' | 'FACTORY_ADMIN' | 'USER';
 
@@ -88,6 +81,17 @@ export const defaultPermissions: Record<UserRole, string[]> = {
     'ROLES_VIEW',
     'DEPARTMENTS_MANAGE',
     'FACTORIES_MANAGE',
+    'LINES_MANAGE',
+    'TEAMS_MANAGE',
+    'GROUPS_MANAGE',
+    'HANDBAGS_MANAGE',
+    'REPORTS_VIEW',
+    'SETTINGS_VIEW',
+  ],
+  FACTORY_ADMIN: [
+    'DASHBOARD_VIEW',
+    'USERS_VIEW',
+    'FACTORIES_VIEW',
     'LINES_MANAGE',
     'TEAMS_MANAGE',
     'GROUPS_MANAGE',
