@@ -4,7 +4,6 @@ import React from 'react';
 
 import { DepartmentProvider } from '@/hooks/department/DepartmentContext';
 import { FactoryProvider } from '@/hooks/factory/FactoryContext';
-import PermissionGuard from '@/hooks/permission/PermissionGuard';
 import FactoryContainer from '@/screens/admin/factory/Container';
 
 export default function FactoryPage() {
