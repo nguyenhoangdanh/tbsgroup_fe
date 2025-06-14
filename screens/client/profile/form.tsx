@@ -11,7 +11,7 @@ import { FieldInput } from '@/components/common/fields/FieldInput';
 import { useAuthManager } from '@/hooks/auth/useAuthManager';
 import { defaultUserValues, TUserSchema, userSchema } from '@/schemas/user';
 
-import { resetPasswordMutationFn } from '@/apis/user/user.api';
+// import { resetPasswordMutationFn } from '@/apis/user/user.api';
 
 const UserProfileForm = () => {
   const { user } = useAuthManager();
@@ -20,43 +20,43 @@ const UserProfileForm = () => {
     defaultValues: defaultUserValues,
     resolver: zodResolver(userSchema),
   });
-  const { mutate } = useMutation({
-    mutationFn: resetPasswordMutationFn,
-  });
+  // const { mutate } = useMutation({
+  //   mutationFn: resetPasswordMutationFn,
+  // });
 
-  const onSubmit: SubmitHandler<TUserSchema> = async data => {
-    mutate(data, {
-      onSuccess: () => {
-        toast({
-          title: 'Thành công',
-          description: 'Đăng nhập thành công',
-        });
-        router.push('/home');
-      },
-      onError: error => {
-        toast({
-          title: 'Lỗi',
-          description: error.message || 'Có lỗi xảy ra',
-          variant: 'error',
-        });
-      },
-    });
-  };
+  // const onSubmit: SubmitHandler<TUserSchema> = async data => {
+  //   mutate(data, {
+  //     onSuccess: () => {
+  //       toast({
+  //         title: 'Thành công',
+  //         description: 'Đăng nhập thành công',
+  //       });
+  //       router.push('/home');
+  //     },
+  //     onError: error => {
+  //       toast({
+  //         title: 'Lỗi',
+  //         description: error.message || 'Có lỗi xảy ra',
+  //         variant: 'error',
+  //       });
+  //     },
+  //   });
+  // };
 
-  React.useEffect(() => {
-    if (!user) return;
-    if (user) {
-      methods.setValue('username', user.username);
-      methods.setValue('employeeId', user.employeeId);
-      methods.setValue('roleId', user.roleId);
-      methods.setValue('fullName', user.fullName);
-      methods.setValue('cardId', user.cardId);
-    }
-  }, [user, methods]);
+  // React.useEffect(() => {
+  //   if (!user) return;
+  //   if (user) {
+  //     methods.setValue('username', user.username);
+  //     methods.setValue('employeeId', user.employeeId);
+  //     methods.setValue('roleId', user.roleId);
+  //     methods.setValue('fullName', user.fullName);
+  //     methods.setValue('cardId', user.cardId);
+  //   }
+  // }, [user, methods]);
 
   return (
     <FormProvider {...methods}>
-      <form onSubmit={methods.handleSubmit(onSubmit)}>
+      {/* <form onSubmit={methods.handleSubmit(onSubmit)}> */}
         <div className="flex flex-col gap-4 px-8">
           <FieldInput
             control={methods.control}
@@ -88,7 +88,7 @@ const UserProfileForm = () => {
                         name="Xác nhận"
                     /> */}
         </div>
-      </form>
+      {/* </form> */}
     </FormProvider>
   );
 };
