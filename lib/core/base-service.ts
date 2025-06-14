@@ -1,4 +1,4 @@
-import { api, PaginatedResponse } from '@/lib/api/api';
+import { api } from '@/lib/api/api';
 
 export interface BaseEntity {
   id: string;

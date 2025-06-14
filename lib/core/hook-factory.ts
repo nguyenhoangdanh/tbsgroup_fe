@@ -26,7 +26,7 @@ const DEFAULT_RETRY_OPTIONS = {
 
 export interface EntityQueries<T extends BaseEntity, P extends ListParams> {
   getById: (id?: string, options?: { enabled?: boolean }) => UseQueryResult<T, Error>;
-  getList: (params?: P, options?: any) => UseQueryResult<ListResponse<T>, Error>;
+  getList: (params?: P, options?: Record<string, unknown>) => UseQueryResult<ListResponse<T>, Error>;
   getInfinite: (limit?: number, filters?: Omit<P, 'page' | 'limit'>) => UseInfiniteQueryResult<InfiniteData<ListResponse<T>>, Error>;
   prefetchById: (id: string) => Promise<void>;
   prefetchList: (params?: P) => Promise<void>;
@@ -34,10 +34,10 @@ export interface EntityQueries<T extends BaseEntity, P extends ListParams> {
 }
 
 export interface EntityMutations<T extends BaseEntity, CreateData, UpdateData> {
-  create: UseMutationResult<T, Error, CreateData, any>;
-  update: UseMutationResult<void, Error, { id: string; data: UpdateData }, any>;
-  delete: UseMutationResult<void, Error, string, any>;
-  batchDelete?: UseMutationResult<void, Error, string[], any>;
+  create: UseMutationResult<T, Error, CreateData, unknown>;
+  update: UseMutationResult<void, Error, { id: string; data: UpdateData }, unknown>;
+  delete: UseMutationResult<void, Error, string, unknown>;
+  batchDelete?: UseMutationResult<void, Error, string[], unknown>;
 }
 
 export interface EntityHelpers<T extends BaseEntity, P extends ListParams, CreateData, UpdateData> {
@@ -54,7 +54,7 @@ export interface EntityHelpers<T extends BaseEntity, P extends ListParams, Creat
     sortBy: string;
     sortOrder: 'asc' | 'desc';
   };
-  updateFilter: (key: string, value: any) => void;
+  updateFilter: (key: string, value: unknown) => void;
   resetFilters: () => void;
   updatePagination: (page: number, limit: number, sortBy?: string, sortOrder?: 'asc' | 'desc') => void;
   handleCreate: (data: CreateData) => Promise<T>;
@@ -70,11 +70,11 @@ export function createEntityHooks<
 >(
   entityName: string,
   service: BaseService<T, P, CreateData, UpdateData>,
-  defaultValues: () => CreateData
+  _defaultValues: () => CreateData
 ) {
   // Create stable query key
-  const createStableQueryKey = (params: any) => {
-    const sortedParams: Record<string, any> = {};
+  const createStableQueryKey = (params: Record<string, unknown>) => {
+    const sortedParams: Record<string, unknown> = {};
     Object.keys(params)
       .sort()
       .forEach(key => {
@@ -90,19 +90,20 @@ export function createEntityHooks<
     const queryClient = useQueryClient();
     const [queryError, setQueryError] = useState<Error | null>(null);
 
-    const handleQueryError = useCallback((error: any, queryName: string) => {
+    const handleQueryError = useCallback((error: unknown, queryName: string) => {
       let errorMessage = 'Lỗi không xác định';
       try {
         if (error instanceof Error) {
           errorMessage = error.message;
         } else if (typeof error === 'object' && error !== null) {
-          if (error.message) {
-            errorMessage = error.message;
-          } else if (error.status && error.statusText) {
-            errorMessage = `HTTP Error: ${error.status} ${error.statusText}`;
+          const errorObj = error as Record<string, unknown>;
+          if (errorObj.message && typeof errorObj.message === 'string') {
+            errorMessage = errorObj.message;
+          } else if (errorObj.status && errorObj.statusText) {
+            errorMessage = `HTTP Error: ${errorObj.status} ${errorObj.statusText}`;
           }
         }
-      } catch (e) {
+      } catch {
         errorMessage = 'Không thể hiển thị chi tiết lỗi';
       }
 
@@ -132,8 +133,8 @@ export function createEntityHooks<
         ...DEFAULT_RETRY_OPTIONS,
       });
 
-    const getList = (params: P = {} as P, options?: any): UseQueryResult<ListResponse<T>, Error> => {
-      const stableParams = useMemo(() => createStableQueryKey(params), [params]);
+    const getList = (params: P = {} as P, options?: Record<string, unknown>): UseQueryResult<ListResponse<T>, Error> => {
+      const stableParams = useMemo(() => createStableQueryKey(params as Record<string, unknown>), [params]);
 
       return useQuery<ListResponse<T>, Error>({
         queryKey: [`${entityName}-list`, stableParams],
@@ -149,7 +150,6 @@ export function createEntityHooks<
         gcTime: GC_TIME,
         refetchOnWindowFocus: false,
         refetchOnReconnect: false,
-        // CRITICAL FIX: Prevent duplicate queries in development
         refetchOnMount: !options?.skipRefetchOnMount,
         ...DEFAULT_RETRY_OPTIONS,
         ...options,
@@ -160,7 +160,7 @@ export function createEntityHooks<
       limit = 20,
       filters: Omit<P, 'page' | 'limit'> = {} as Omit<P, 'page' | 'limit'>
     ): UseInfiniteQueryResult<InfiniteData<ListResponse<T>>, Error> => {
-      const stableFilters = useMemo(() => createStableQueryKey(filters), [filters]);
+      const stableFilters = useMemo(() => createStableQueryKey(filters as Record<string, unknown>), [filters]);
 
       return useInfiniteQuery<ListResponse<T>, Error>({
         queryKey: [`${entityName}-infinite`, limit, stableFilters],
@@ -217,7 +217,7 @@ export function createEntityHooks<
       async (params: P = {} as P) => {
         try {
           await queryClient.prefetchQuery({
-            queryKey: [`${entityName}-list`, createStableQueryKey(params)],
+            queryKey: [`${entityName}-list`, createStableQueryKey(params as Record<string, unknown>)],
             queryFn: () => service.getList(params),
             staleTime: STALE_TIME,
             gcTime: GC_TIME,
@@ -262,12 +262,12 @@ export function createEntityHooks<
   const useMutations = (): EntityMutations<T, CreateData, UpdateData> => {
     const queryClient = useQueryClient();
 
-    const create = useMutation<T, Error, CreateData, { previousListData?: Array<{ queryKey: any; queryData: any }> }>({
+    const create = useMutation<T, Error, CreateData, { previousListData?: Array<{ queryKey: unknown; queryData: unknown }> }>({
       mutationFn: (data: CreateData) => service.create(data),
-      onMutate: async (newData) => {
+      onMutate: async () => {
         await queryClient.cancelQueries({ queryKey: [`${entityName}-list`] });
         const queries = queryClient.getQueriesData({ queryKey: [`${entityName}-list`] });
-        const previousListData: Array<{ queryKey: any; queryData: any }> = [];
+        const previousListData: Array<{ queryKey: unknown; queryData: unknown }> = [];
 
         for (const [queryKey, queryData] of queries) {
           previousListData.push({ queryKey, queryData });
@@ -275,54 +275,48 @@ export function createEntityHooks<
 
         return { previousListData };
       },
-      onSuccess: async (result) => {
+      onSuccess: async () => {
         stableToast.success(`${entityName} đã được tạo thành công`, {
           description: undefined
         });
 
-        // Invalidate queries to refresh data from server
         queryClient.invalidateQueries({ queryKey: [`${entityName}-list`], refetchType: 'active' });
       },
-      onError: (error, variables, context) => {
+      onError: (error, _variables, context) => {
         stableToast.error(`Không thể tạo ${entityName}`, {
           description: (error as Error).message
         });
         if (context?.previousListData) {
           for (const item of context.previousListData) {
-            queryClient.setQueryData(item.queryKey, item.queryData);
+            queryClient.setQueryData(item.queryKey as string[], item.queryData);
           }
         }
       },
     });
 
-    const update = useMutation<void, Error, { id: string; data: UpdateData }, { previousListData?: Array<{ queryKey: any; queryData: any }> }>({
+    const update = useMutation<void, Error, { id: string; data: UpdateData }, { previousListData?: Array<{ queryKey: unknown; queryData: unknown }> }>({
       mutationFn: ({ id, data }: { id: string; data: UpdateData }) => service.update(id, data),
-      onMutate: async ({ id, data }) => {
-        // Validate that ID is a real ID, not temporary
-
-        console.log(`[${entityName}Mutations] Preparing to update entity with ID: ${id}`, data);
+      onMutate: async ({ id }) => {
         if (!id || typeof id !== 'string' || id.length < 5) {
           throw new Error('Invalid ID provided for update operation');
         }
-          
-        console.log(`[${entityName}Mutations] Updating entity with ID: ${id}`, data);
 
         await queryClient.cancelQueries({ queryKey: [`${entityName}-list`] });
         await queryClient.cancelQueries({ queryKey: [entityName, id] });
 
         const queries = queryClient.getQueriesData({ queryKey: [`${entityName}-list`] });
-        const previousListData: Array<{ queryKey: any; queryData: any }> = [];
+        const previousListData: Array<{ queryKey: unknown; queryData: unknown }> = [];
 
         for (const [queryKey, queryData] of queries) {
           previousListData.push({ queryKey, queryData });
 
-          queryClient.setQueryData(queryKey, (oldData: any) => {
+          queryClient.setQueryData(queryKey as string[], (oldData: ListResponse<T> | undefined) => {
             if (!oldData || !oldData.data) return oldData;
             
             return {
               ...oldData,
-              data: oldData.data.map((item: any) => 
-                item.id === id ? { ...item, ...data, updatedAt: new Date() } : item
+              data: oldData.data.map((item: T) => 
+                item.id === id ? { ...item, updatedAt: new Date() } : item
               ),
             };
           });
@@ -337,40 +331,39 @@ export function createEntityHooks<
         queryClient.invalidateQueries({ queryKey: [`${entityName}-list`], refetchType: 'none' });
         queryClient.invalidateQueries({ queryKey: [entityName, variables.id], refetchType: 'none' });
       },
-      onError: (error, variables, context) => {
+      onError: (error, _variables, context) => {
         stableToast.error(`Không thể cập nhật ${entityName}`, {
           description: (error as Error).message
         });
         
         if (context?.previousListData) {
           for (const item of context.previousListData) {
-            queryClient.setQueryData(item.queryKey, item.queryData);
+            queryClient.setQueryData(item.queryKey as string[], item.queryData);
           }
         }
       },
     });
 
-    const deleteEntity = useMutation<void, Error, string, { previousListData?: Array<{ queryKey: any; queryData: any }> }>({
+    const deleteEntity = useMutation<void, Error, string, { previousListData?: Array<{ queryKey: unknown; queryData: unknown }> }>({
       mutationFn: (id: string) => service.delete(id),
       onMutate: async (id) => {
-        // Validate that ID is a real ID, not temporary
         if (!id || typeof id !== 'string' || id.length < 5) {
           throw new Error('Invalid ID provided for delete operation');
         }
 
         await queryClient.cancelQueries({ queryKey: [`${entityName}-list`] });
         const queries = queryClient.getQueriesData({ queryKey: [`${entityName}-list`] });
-        const previousListData: Array<{ queryKey: any; queryData: any }> = [];
+        const previousListData: Array<{ queryKey: unknown; queryData: unknown }> = [];
 
         for (const [queryKey, queryData] of queries) {
           previousListData.push({ queryKey, queryData });
 
-          queryClient.setQueryData(queryKey, (oldData: any) => {
+          queryClient.setQueryData(queryKey as string[], (oldData: ListResponse<T> | undefined) => {
             if (!oldData || !oldData.data) return oldData;
             
             return {
               ...oldData,
-              data: oldData.data.filter((item: any) => item.id !== id),
+              data: oldData.data.filter((item: T) => item.id !== id),
               total: Math.max(0, (oldData.total || 0) - 1),
             };
           });
@@ -385,14 +378,14 @@ export function createEntityHooks<
         queryClient.invalidateQueries({ queryKey: [`${entityName}-list`], refetchType: 'none' });
         queryClient.removeQueries({ queryKey: [entityName, id] });
       },
-      onError: (error, variables, context) => {
+      onError: (error, _variables, context) => {
         stableToast.error(`Không thể xóa ${entityName}`, {
           description: (error as Error).message
         });
         
         if (context?.previousListData) {
           for (const item of context.previousListData) {
-            queryClient.setQueryData(item.queryKey, item.queryData);
+            queryClient.setQueryData(item.queryKey as string[], item.queryData);
           }
         }
       },
@@ -410,7 +403,7 @@ export function createEntityHooks<
     const [selectedEntity, setSelectedEntity] = useState<T | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<Error | null>(null);
-    const [filterValues, setFilterValues] = useState<Omit<P, 'page' | 'limit' | 'sortBy' | 'sortOrder'>>({} as any);
+    const [filterValues, setFilterValues] = useState<Omit<P, 'page' | 'limit' | 'sortBy' | 'sortOrder'>>({} as Omit<P, 'page' | 'limit' | 'sortBy' | 'sortOrder'>);
     const [pagination, setPagination] = useState({
       page: 1,
       limit: 10,
@@ -421,7 +414,6 @@ export function createEntityHooks<
     const isSubmittingRef = useRef(false);
     const previousFiltersRef = useRef({});
 
-    // Debounced filter values
     const debouncedFilterValues = useDebounce(filterValues, 500);
 
     const [activeFilters, setActiveFilters] = useState<P>({
@@ -434,15 +426,16 @@ export function createEntityHooks<
 
     const { create, update, delete: deleteEntity } = useMutations();
 
-    const updateFilter = useCallback((key: string, value: any) => {
+    const updateFilter = useCallback((key: string, value: unknown) => {
       setFilterValues(prev => {
-        if ((prev as any)[key] === value) return prev;
+        const prevTyped = prev as Record<string, unknown>;
+        if (prevTyped[key] === value) return prev;
         return { ...prev, [key]: value };
       });
     }, []);
 
     const resetFilters = useCallback(() => {
-      setFilterValues({} as any);
+      setFilterValues({} as Omit<P, 'page' | 'limit' | 'sortBy' | 'sortOrder'>);
       setPagination(prev => ({ ...prev, page: 1 }));
     }, []);
 
@@ -524,7 +517,6 @@ export function createEntityHooks<
 
     const resetError = useCallback(() => setError(null), []);
 
-    // Update active filters when debounced values change
     useEffect(() => {
       const hasFilterChanged = JSON.stringify(debouncedFilterValues) !== JSON.stringify(previousFiltersRef.current);
       previousFiltersRef.current = debouncedFilterValues;
@@ -563,7 +555,6 @@ export function createEntityHooks<
     };
   };
 
-  // Main Hook
   const useEntity = () => {
     const queries = useQueries();
     const mutations = useMutations();

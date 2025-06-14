@@ -77,7 +77,7 @@ export function createEntityManager<
   CreateData,
   UpdateData
 >(entityName: string) {
-  return {
+  const manager = {
     useQueries: (): EntityQueries<T, P> => {
       throw new Error(`${entityName}Queries hook not implemented`);
     },
@@ -88,9 +88,9 @@ export function createEntityManager<
       throw new Error(`${entityName}Helpers hook not implemented`);
     },
     useEntity: () => {
-      const queries = this.useQueries();
-      const mutations = this.useMutations();
-      const helpers = this.useHelpers();
+      const queries = manager.useQueries();
+      const mutations = manager.useMutations();
+      const helpers = manager.useHelpers();
 
       return useMemo(() => ({
         ...queries,
@@ -102,4 +102,6 @@ export function createEntityManager<
       }), [queries, mutations, helpers]);
     }
   };
+
+  return manager;
 }
