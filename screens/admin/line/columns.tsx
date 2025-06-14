@@ -45,13 +45,16 @@ export const lineTableColumns: TableColumn<Line>[] = [
         sortable: true,
         cell: ({ row }) => {
             const status = row.status;
-            const statusConfig = {
-                'ACTIVE': { label: 'Hoạt động', variant: 'success' as const },
-                'INACTIVE': { label: 'Không hoạt động', variant: 'secondary' as const },
-                'MAINTENANCE': { label: 'Bảo trì', variant: 'warning' as const },
+            const statusConfig: Record<string, { label: string; variant: 'success' | 'secondary' | 'warning' }> = {
+                'ACTIVE': { label: 'Hoạt động', variant: 'success' },
+                'INACTIVE': { label: 'Không hoạt động', variant: 'secondary' },
+                'MAINTENANCE': { label: 'Bảo trì', variant: 'warning' },
             };
             
-            const config = statusConfig[status] || { label: 'Không xác định', variant: 'secondary' as const };
+            // Safely access the config with type checking
+            const config = status && typeof status === 'string' && statusConfig[status] 
+                ? statusConfig[status] 
+                : { label: 'Không xác định', variant: 'secondary' as const };
             
             return <Badge variant={config.variant}>{config.label}</Badge>;
         },
