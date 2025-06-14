@@ -10,10 +10,8 @@ import { SharedDataProvider } from '@/hooks/shared/SharedDataContext';
 
 import { AuthSecurityProvider } from './auth/AuthProvider';
 import ClientProviders from './ClientProviders';
-import { DialogProvider } from './DialogProvider';
 import QueryProvider from './QueryProvider';
 import SagaProviders from './SagaProvider';
-import { ThemeProvider } from './ThemeProvider';
 
 interface MainProvidersProps {
     children: ReactNode;
@@ -48,7 +46,6 @@ export function MainProviders({ children }: MainProvidersProps) {
                                                 showInProduction={false}
                                             />
                                         </ClientProviders>
-                                    {/* </DialogProvider> */}
                                 </PermissionProvider>
                             </SessionRecovery>
                         </AuthSecurityProvider>
