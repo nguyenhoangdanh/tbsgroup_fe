@@ -103,7 +103,7 @@ export class FactoryAdapter {
     if (frontendFilters.name) params.name = frontendFilters.name;
     if (frontendFilters.departmentId) params.departmentId = frontendFilters.departmentId;
     if (frontendFilters.managingDepartmentId) params.managingDepartmentId = frontendFilters.managingDepartmentId;
-    if (frontendFilters.departmentType) params.departmentType = frontendFilters.departmentType;
+    // if (frontendFilters.departmentType) params.departmentType = frontendFilters.departmentType;
 
     return params;
   }

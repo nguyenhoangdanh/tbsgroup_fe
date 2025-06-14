@@ -208,42 +208,65 @@ function* verifyAccountSaga(action: PayloadAction<VerifyRegistration>) {
 }
 
 /**
- * Request password reset saga
+ * Request password reset saga - updated to match backend API
  */
 function* requestPasswordResetSaga(action: PayloadAction<RequestResetParams>) {
   try {
-    yield call(AuthService.resetPassword, action.payload);
+    console.log('🔑 Requesting password reset...', action.payload);
     
-    stableToast.success('Yêu cầu đặt lại mật khẩu đã được gửi', {
-      description: 'Vui lòng kiểm tra email của bạn'
+    const response: SagaReturnType<typeof AuthService.requestPasswordReset> = yield call(
+      AuthService.requestPasswordReset, 
+      action.payload
+    );
+    
+    console.log('✅ Password reset request successful:', response);
+    
+    stableToast.success('Xác thực thành công!', {
+      description: response.message || 'Vui lòng nhập mật khẩu mới'
     });
+    
     yield put(requestPasswordResetSuccess({
-      resetToken: '',
-      username: action.payload.employeeId,
-      message: 'Password reset request sent successfully',
+      resetToken: response.resetToken,
+      username: response.username,
+      message: response.message || 'Password reset request sent successfully',
+      expiryDate: response.expiryDate,
     }));
+    
   } catch (error: any) {
-    stableToast.error('Gửi yêu cầu thất bại', {
-      description: error.message || 'Không thể gửi email đặt lại mật khẩu'
+    console.error('❌ Password reset request failed:', error);
+    stableToast.error('Xác thực thất bại', {
+      description: error.message || 'Không thể xác thực thông tin. Vui lòng kiểm tra lại mã nhân viên và CCCD.'
     });
     yield put(requestPasswordResetFailure(error.message || 'Đã xảy ra lỗi không mong muốn'));
   }
 }
 
 /**
- * Reset password saga
+ * Reset password saga - updated to match backend API
  */
 function* resetPasswordSaga(action: PayloadAction<ResetPasswordParams>) {
   try {
-    yield call(AuthService.changePassword, action.payload.currentPassword || '', action.payload.newPassword);
+    console.log('🔒 Resetting password...', { 
+      hasToken: Boolean(action.payload.resetToken),
+      hasUsername: Boolean(action.payload.username),
+      hasCardInfo: Boolean(action.payload.cardId && action.payload.employeeId)
+    });
+    
+    // Use the new resetPasswordWithToken method
+    yield call(AuthService.resetPasswordWithToken, action.payload);
+    
+    console.log('✅ Password reset successful');
     
     stableToast.success('Đổi mật khẩu thành công', {
-      description: 'Mật khẩu của bạn đã được cập nhật'
+      description: 'Mật khẩu của bạn đã được cập nhật thành công'
     });
+    
     yield put(resetPasswordSuccess());
+    
   } catch (error: any) {
+    console.error('❌ Password reset failed:', error);
     stableToast.error('Đổi mật khẩu thất bại', {
-      description: error.message || 'Mật khẩu hiện tại không đúng hoặc mật khẩu mới không hợp lệ'
+      description: error.message || 'Không thể đổi mật khẩu. Vui lòng thử lại.'
     });
     yield put(resetPasswordFailure(error.message || 'Đã xảy ra lỗi không mong muốn'));
   }

@@ -96,44 +96,81 @@ const ResetPasswordForm = React.memo(() => {
 
   // Form submission handler with stable dependencies
   const onSubmit: SubmitHandler<ResetPasswordType> = useCallback(async (data) => {
+    console.log('Form submitted with data:', { 
+      hasEmployeeId: Boolean(data.employeeId),
+      hasCardId: Boolean(data.cardId),
+      hasPassword: Boolean(data.password),
+      hasConfirmPassword: Boolean(data.confirmPassword),
+      verified,
+      isAuthenticated
+    });
+
     // Step 1: Request password reset with employee ID and card ID
     if (data.employeeId && data.cardId && !verified) {
       try {
-        // Reset toast tracking before new request
         processedData.current.resetPasswordData = null;
+        
         await requestPasswordReset({
           employeeId: data.employeeId,
           cardId: data.cardId,
         });
+        
       } catch (error: any) {
-        stableToast.error(error.message || 'Không thể yêu cầu đặt lại mật khẩu');
+        console.error('Request password reset error:', error);
+        stableToast.error('Xác thực thất bại', {
+          description: error.message || 'Không thể xác thực thông tin. Vui lòng kiểm tra lại.'
+        });
       }
     }
     // Step 2: Reset password with new password
     else if (verified && data.password && data.confirmPassword) {
       try {
-        const resetParams = resetPasswordData?.resetToken && !isAuthenticated
-          ? {
+        let resetParams: any;
+
+        // For authenticated users with PENDING_ACTIVATION status
+        if (isAuthenticated && user?.status === UserStatusEnum.PENDING_ACTIVATION) {
+          resetParams = {
+            username: user.username,
+            password: data.password,
+            confirmPassword: data.confirmPassword,
+          };
+        }
+        // For users with reset token from password reset request
+        else if (resetPasswordData?.resetToken) {
+          resetParams = {
             resetToken: resetPasswordData.resetToken,
             password: data.password,
             confirmPassword: data.confirmPassword,
-          }
-          : {
+          };
+        }
+        // For users with username from password reset request
+        else if (resetPasswordData?.username || userName) {
+          resetParams = {
             username: resetPasswordData?.username || userName,
             password: data.password,
             confirmPassword: data.confirmPassword,
           };
+        }
+        else {
+          throw new Error('Không có thông tin xác thực hợp lệ');
+        }
+
+        console.log('Resetting password with params:', {
+          hasResetToken: Boolean(resetParams.resetToken),
+          hasUsername: Boolean(resetParams.username),
+          method: resetParams.resetToken ? 'token' : 'username'
+        });
 
         await resetPassword(resetParams);
 
         stableToast.success('Đổi mật khẩu thành công');
 
-        // Auto login after successful password reset
+        // Auto login after successful password reset (if not already authenticated)
         setTimeout(async () => {
           try {
             if (!isAuthenticated && data.password) {
               await handleLogin({
-                username: resetPasswordData?.username || userName,
+                username: resetParams.username || resetPasswordData?.username || userName,
                 password: data.password,
               });
               router.push('/');
@@ -145,8 +182,12 @@ const ResetPasswordForm = React.memo(() => {
             router.push('/login');
           }
         }, 1000);
+        
       } catch (resetError: any) {
-        stableToast.error(resetError.message || 'Không thể đổi mật khẩu');
+        console.error('Reset password error:', resetError);
+        stableToast.error('Đổi mật khẩu thất bại', {
+          description: resetError.message || 'Không thể đổi mật khẩu'
+        });
       }
     }
   }, [
@@ -154,6 +195,7 @@ const ResetPasswordForm = React.memo(() => {
     userName,
     resetPasswordData,
     isAuthenticated,
+    user,
     requestPasswordReset,
     resetPassword,
     handleLogin,
@@ -162,7 +204,6 @@ const ResetPasswordForm = React.memo(() => {
 
   // Handle password reset request response
   useEffect(() => {
-    // Skip the effect on the first render
     if (isFirstRender.current) {
       isFirstRender.current = false;
       return;
@@ -170,16 +211,15 @@ const ResetPasswordForm = React.memo(() => {
 
     if (!resetPasswordData) return;
 
-    // Serialize to ensure object comparison - use a more reliable key
-    const dataId =
-      resetPasswordData?.username ||
-      resetPasswordData?.resetToken ||
-      Date.now().toString();
+    const dataId = resetPasswordData?.resetToken || 
+                   resetPasswordData?.username || 
+                   Date.now().toString();
     const dataString = `${dataId}-${JSON.stringify(resetPasswordData)}`;
 
-    // Only process if we haven't processed this data before
     if (processedData.current.resetPasswordData !== dataString) {
       processedData.current.resetPasswordData = dataString;
+
+      console.log('Processing reset password data:', resetPasswordData);
 
       if (resetPasswordData && resetPasswordData.username) {
         setVerified(true);
@@ -189,17 +229,17 @@ const ResetPasswordForm = React.memo(() => {
         methods.setValue('employeeId', '');
         methods.setValue('cardId', '');
 
-        stableToast.success(
-          resetPasswordData.message || 'Vui lòng nhập mật khẩu mới',
-        );
-      } else if (!resetPasswordData?.username) {
+        stableToast.success('Xác thực thành công!', {
+          description: resetPasswordData.message || 'Vui lòng nhập mật khẩu mới'
+        });
+      } else {
         const errorMessage = resetPasswordData?.message || 'Không thể xác thực thông tin';
-        stableToast.error(
-          errorMessage,
-        );
+        stableToast.error('Xác thực thất bại', {
+          description: errorMessage
+        });
       }
     }
-  }, [resetPasswordData]);
+  }, [resetPasswordData, methods]);
 
   // Handle user with pending activation
   useEffect(() => {

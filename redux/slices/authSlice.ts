@@ -275,7 +275,7 @@ const authSlice = createSlice({
       state.error = null;
     },
 
-    requestPasswordResetSuccess: (state, action: PayloadAction<{ resetToken: string; username: string; message: string }>) => {
+    requestPasswordResetSuccess: (state, action: PayloadAction<{ resetToken: string; username: string; message: string; expiryDate?: string }>) => {
       state.isLoading = false;
       state.error = null;
       state.resetPasswordData = action.payload;

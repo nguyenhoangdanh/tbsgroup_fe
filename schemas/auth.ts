@@ -28,32 +28,43 @@ export const resetPasswordSchema = z
   .object({
     password: z
       .string()
-      .regex(/^\S*$/, { message: 'Mật khẩu không được chứa khoảng trắng' }) // 🚀 Thêm điều kiện này
+      .min(6, { message: 'Mật khẩu phải có ít nhất 6 ký tự' })
+      .regex(/^\S*$/, { message: 'Mật khẩu không được chứa khoảng trắng' })
       .optional(),
     confirmPassword: z
-      .string({
-        message: 'Xác nhận mật khẩu không được để trống',
-      })
+      .string()
       .optional(),
     username: z
-      .string({
-        message: 'Tên đăng nhập không được để trống',
-      })
+      .string()
       .optional(),
     employeeId: z
-      .string({
-        message: 'Mã nhân viên không được để trống',
-      })
+      .string()
       .optional(),
     cardId: z
-      .string({
-        message: 'Mã thẻ không được để trống',
-      })
+      .string()
+      .optional(),
+    resetToken: z
+      .string()
       .optional(),
   })
   .refine(
     data => {
-      if (data.password) {
+      // Validate credentials: must have username OR (cardId + employeeId)
+      const hasUsername = Boolean(data.username);
+      const hasCardInfo = Boolean(data.cardId && data.employeeId);
+      const hasResetToken = Boolean(data.resetToken);
+      
+      return hasUsername || hasCardInfo || hasResetToken;
+    },
+    {
+      message: 'Vui lòng cung cấp username hoặc cả cardId và employeeId',
+      path: ['username'],
+    },
+  )
+  .refine(
+    data => {
+      // If password is provided, confirmPassword must match
+      if (data.password && data.confirmPassword) {
         return data.password === data.confirmPassword;
       }
       return true;
@@ -70,6 +81,7 @@ export const defaultResetPasswordValues = {
   employeeId: '',
   cardId: '',
   username: '',
+  resetToken: '',
 };
 
 export type ResetPasswordType = z.infer<typeof resetPasswordSchema>;

@@ -70,7 +70,8 @@ export interface AuthState {
   resetPasswordData: {
     resetToken: string;
     username: string;
-    message: string;
+    message?: string;
+    expiryDate?: string;
   } | null;
   isHydrated: boolean;
   sessionInitialized: boolean;
@@ -78,14 +79,19 @@ export interface AuthState {
 }
 
 export interface RequestResetParams {
-  employeeId: string;
-  cardId: string;
+  username?: string;
+  employeeId?: string;
+  cardId?: string;
 }
 
 export interface ResetPasswordParams {
-  token?: string;
-  currentPassword?: string;
-  newPassword: string;
+  resetToken?: string;
+  username?: string;
+  cardId?: string;
+  employeeId?: string;
+  password: string;
+  confirmPassword?: string;
+  currentPassword?: string; // for authenticated users
 }
 
 // Export default types for easy importing

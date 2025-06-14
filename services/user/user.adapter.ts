@@ -1,4 +1,5 @@
 import { UserStatusEnum } from '@/common/enum';
+import { RoleType } from '@/common/interface/role';
 import { UserType, UserProfileType, UserListParams, UserUpdateRequest, UserListResponse } from '@/common/interface/user';
 
 /**
@@ -8,137 +9,134 @@ export class UserAdapter {
   /**
    * Transform backend user data to frontend UserType
    */
-  static toUserType(backendUser: any): UserType {
+  static toUserType(backendUser: Record<string, unknown>): UserType {
     if (!backendUser) {
       throw new Error('Backend user data is required');
     }
 
     // Handle case where response might be nested in a data property
-    const userData = backendUser.data || backendUser;
+    const userData = (backendUser.data as Record<string, unknown>) || backendUser;
 
     return {
-      id: userData.id || '',
-      username: userData.username || '',
-      password: userData.password, // Only present in create/update contexts
-      salt: userData.salt,
-      avatar: userData.avatar,
-      fullName: userData.fullName || '',
-      email: userData.email,
-      phone: userData.phone,
-      cardId: userData.cardId,
-      employeeId: userData.employeeId,
-      status: userData.status as UserStatusEnum || UserStatusEnum.PENDING_ACTIVATION,
-      factoryId: userData.factoryId,
-      lineId: userData.lineId,
-      teamId: userData.teamId,
-      groupId: userData.groupId,
-      positionId: userData.positionId,
-      roleId: userData.roleId,
-      role: userData.role, // Role code from backend
-      passwordResetToken: userData.passwordResetToken,
-      passwordResetExpiry: userData.passwordResetExpiry ? new Date(userData.passwordResetExpiry) : undefined,
-      lastLogin: userData.lastLogin ? new Date(userData.lastLogin) : undefined,
-      createdAt: userData.createdAt ? new Date(userData.createdAt) : new Date(),
-      updatedAt: userData.updatedAt ? new Date(userData.updatedAt) : new Date(),
+      id: (userData.id as string) || '',
+      username: (userData.username as string) || '',
+      password: userData.password as string, // Only present in create/update contexts
+      salt: userData.salt as string,
+      avatar: userData.avatar as string,
+      fullName: (userData.fullName as string) || '',
+      email: userData.email as string,
+      phone: userData.phone as string,
+      cardId: userData.cardId as string,
+      employeeId: userData.employeeId as string,
+      status: (userData.status as UserStatusEnum) || UserStatusEnum.PENDING_ACTIVATION,
+      factoryId: userData.factoryId as string,
+      lineId: userData.lineId as string,
+      teamId: userData.teamId as string,
+      groupId: userData.groupId as string,
+      positionId: userData.positionId as string,
+      roleId: userData.roleId as string,
+      role: userData.role as RoleType, // Role code from backend
+      passwordResetToken: userData.passwordResetToken as string,
+      passwordResetExpiry: userData.passwordResetExpiry ? new Date(userData.passwordResetExpiry as string) : undefined,
+      lastLogin: userData.lastLogin ? new Date(userData.lastLogin as string) : undefined,
+      createdAt: userData.createdAt ? new Date(userData.createdAt as string) : new Date(),
+      updatedAt: userData.updatedAt ? new Date(userData.updatedAt as string) : new Date(),
       
       // Related entities
-      factory: userData.factory,
-      line: userData.line,
-      team: userData.team,
-      group: userData.group,
-      position: userData.position,
-      roleEntity: userData.roleEntity || userData.role,
+      factory: userData.factory as Record<string, unknown>,
+      line: userData.line as Record<string, unknown>,
+      team: userData.team as Record<string, unknown>,
+      group: userData.group as Record<string, unknown>,
+      position: userData.position as Record<string, unknown>,
+      roleEntity: (userData.roleEntity as Record<string, unknown>) || (userData.role as Record<string, unknown>),
     };
   }
 
   /**
    * Transform backend user data to frontend UserProfileType
    */
-  static toUserProfileType(backendUser: any): UserProfileType {
+  static toUserProfileType(backendUser: Record<string, unknown>): UserProfileType {
     if (!backendUser) {
       throw new Error('Backend user data is required');
     }
 
     const userType = this.toUserType(backendUser);
     // Remove sensitive fields for profile type
-    const { password, salt, passwordResetToken, ...profileData } = userType;
+    const { password: _password, salt: _salt, passwordResetToken: _passwordResetToken, ...profileData } = userType;
     return profileData as UserProfileType;
   }
 
   /**
    * Transform frontend form data to backend create request
    */
-  static toCreateRequest(formData: any): any {
+  static toCreateRequest(formData: Record<string, unknown>): Record<string, unknown> {
     if (!formData) {
       throw new Error('Form data is required');
     }
 
     return {
-      username: formData.username || '',
-      password: formData.password || '',
-      fullName: formData.fullName || '',
-      employeeId: formData.employeeId || '',
-      cardId: formData.cardId || '',
-      roleId: formData.roleId || '',
-      status: formData.status || UserStatusEnum.PENDING_ACTIVATION,
-      email: formData.email,
-      phone: formData.phone,
-      factoryId: formData.factoryId,
-      lineId: formData.lineId,
-      teamId: formData.teamId,
-      groupId: formData.groupId,
-      positionId: formData.positionId,
+      username: (formData.username as string) || '',
+      password: (formData.password as string) || '',
+      fullName: (formData.fullName as string) || '',
+      employeeId: (formData.employeeId as string) || '',
+      cardId: (formData.cardId as string) || '',
+      roleId: (formData.roleId as string) || '',
+      status: (formData.status as UserStatusEnum) || UserStatusEnum.PENDING_ACTIVATION,
+      email: formData.email as string,
+      phone: formData.phone as string,
+      factoryId: formData.factoryId as string,
+      lineId: formData.lineId as string,
+      teamId: formData.teamId as string,
+      groupId: formData.groupId as string,
+      positionId: formData.positionId as string,
     };
   }
 
   /**
    * Transform frontend form data to backend update request
    */
-  static toUpdateRequest(formData: any): UserUpdateRequest {
+  static toUpdateRequest(formData: Record<string, unknown>): UserUpdateRequest {
     if (!formData) {
       throw new Error('Form data is required');
     }
 
-    console.log('[UserAdapter] Converting form data to update request:', formData);
-
     // Remove id and password from update request and handle undefined values
-    const { id, password, ...updateData } = formData;
+    const { id: _id, password: _password, ...updateData } = formData;
     
     const cleanedData = {
-      username: updateData.username || undefined,
-      avatar: updateData.avatar || undefined,
-      fullName: updateData.fullName || undefined,
-      email: updateData.email || undefined,
-      phone: updateData.phone || undefined,
-      cardId: updateData.cardId || undefined,
-      employeeId: updateData.employeeId || undefined,
-      status: updateData.status || undefined,
-      factoryId: updateData.factoryId || undefined,
-      lineId: updateData.lineId || undefined,
-      teamId: updateData.teamId || undefined,
-      groupId: updateData.groupId || undefined,
-      positionId: updateData.positionId || undefined,
-      roleId: updateData.roleId || undefined,
+      username: updateData.username as string || undefined,
+      avatar: updateData.avatar as string || undefined,
+      fullName: updateData.fullName as string || undefined,
+      email: updateData.email as string || undefined,
+      phone: updateData.phone as string || undefined,
+      cardId: updateData.cardId as string || undefined,
+      employeeId: updateData.employeeId as string || undefined,
+      status: updateData.status as UserStatusEnum || undefined,
+      factoryId: updateData.factoryId as string || undefined,
+      lineId: updateData.lineId as string || undefined,
+      teamId: updateData.teamId as string || undefined,
+      groupId: updateData.groupId as string || undefined,
+      positionId: updateData.positionId as string || undefined,
+      roleId: updateData.roleId as string || undefined,
     };
 
     // Remove undefined values to avoid sending them to backend
     const result = Object.fromEntries(
-      Object.entries(cleanedData).filter(([key, value]) => value !== undefined)
+      Object.entries(cleanedData).filter(([_key, value]) => value !== undefined)
     );
 
-    console.log('[UserAdapter] Final update request:', result);
     return result as UserUpdateRequest;
   }
 
   /**
    * Transform frontend filter params to backend query params
    */
-  static toBackendFilters(frontendFilters: UserListParams): Record<string, any> {
+  static toBackendFilters(frontendFilters: UserListParams): Record<string, unknown> {
     if (!frontendFilters) {
       return {};
     }
 
-    const params: Record<string, any> = {};
+    const params: Record<string, unknown> = {};
 
     // Pagination
     if (frontendFilters.page !== undefined) params.page = frontendFilters.page;
@@ -155,18 +153,18 @@ export class UserAdapter {
   }
 
   // Add new method for base service compatibility
-  static toEntityType(backendUser: any): UserProfileType {
+  static toEntityType(backendUser: Record<string, unknown>): UserProfileType {
     return this.toUserProfileType(backendUser);
   }
 
-  static validateData(userData: any): { valid: boolean; errors: string[] } {
+  static validateData(userData: Record<string, unknown>): { valid: boolean; errors: string[] } {
     return this.validateUserData(userData);
   }
 
   /**
    * Transform backend list response to frontend format - Updated for actual response structure
    */
-  static toListResponse(backendResponse: any): UserListResponse {
+  static toListResponse(backendResponse: unknown): UserListResponse {
     if (!backendResponse) {
       return {
         data: [],
@@ -176,30 +174,32 @@ export class UserAdapter {
       };
     }
 
-    // Handle direct array response (like in your attachment)
+    // Handle direct array response
     if (Array.isArray(backendResponse)) {
       return {
-        data: backendResponse.map((user: any) => this.toUserProfileType(user)),
+        data: backendResponse.map((user: Record<string, unknown>) => this.toUserProfileType(user)),
         total: backendResponse.length,
         page: 1,
         limit: backendResponse.length,
       };
     }
 
+    const response = backendResponse as Record<string, unknown>;
+
     // Handle nested object response { data: [...], total: ..., etc }
-    if (backendResponse.data && Array.isArray(backendResponse.data)) {
+    if (response.data && Array.isArray(response.data)) {
       return {
-        data: backendResponse.data.map((user: any) => this.toUserProfileType(user)),
-        total: backendResponse.total || backendResponse.data.length,
-        page: backendResponse.page || 1,
-        limit: backendResponse.limit || backendResponse.data.length,
+        data: response.data.map((user: Record<string, unknown>) => this.toUserProfileType(user)),
+        total: (response.total as number) || response.data.length,
+        page: (response.page as number) || 1,
+        limit: (response.limit as number) || response.data.length,
       };
     }
 
     // Handle direct object response (single user case)
-    if (backendResponse.id) {
+    if (response.id) {
       return {
-        data: [this.toUserProfileType(backendResponse)],
+        data: [this.toUserProfileType(response)],
         total: 1,
         page: 1,
         limit: 1,
@@ -218,7 +218,7 @@ export class UserAdapter {
   /**
    * Validate user data before sending to backend
    */
-  static validateUserData(userData: any): { valid: boolean; errors: string[] } {
+  static validateUserData(userData: Record<string, unknown>): { valid: boolean; errors: string[] } {
     const errors: string[] = [];
 
     if (!userData) {
@@ -227,11 +227,13 @@ export class UserAdapter {
     }
 
     // Required fields validation
-    if (!userData.username || userData.username.length < 3) {
+    const username = userData.username as string;
+    if (!username || username.length < 3) {
       errors.push('Tên đăng nhập phải có ít nhất 3 ký tự');
     }
 
-    if (!userData.fullName || userData.fullName.length < 2) {
+    const fullName = userData.fullName as string;
+    if (!fullName || fullName.length < 2) {
       errors.push('Họ tên phải có ít nhất 2 ký tự');
     }
 
@@ -244,17 +246,20 @@ export class UserAdapter {
     }
 
     // Password validation (for create)
-    if (userData.password && userData.password.length < 6) {
+    const password = userData.password as string;
+    if (password && password.length < 6) {
       errors.push('Mật khẩu phải có ít nhất 6 ký tự');
     }
 
     // Email validation (if provided)
-    if (userData.email && !/\S+@\S+\.\S+/.test(userData.email)) {
+    const email = userData.email as string;
+    if (email && !/\S+@\S+\.\S+/.test(email)) {
       errors.push('Email không hợp lệ');
     }
 
     // Phone validation (if provided)
-    if (userData.phone && !/^[0-9+\-\s()]{10,15}$/.test(userData.phone)) {
+    const phone = userData.phone as string;
+    if (phone && !/^[0-9+\-\s()]{10,15}$/.test(phone)) {
       errors.push('Số điện thoại không hợp lệ');
     }
 
@@ -267,7 +272,7 @@ export class UserAdapter {
   /**
    * Generate default user data for forms
    */
-  static getDefaultUserData(): any {
+  static getDefaultUserData(): Record<string, unknown> {
     return {
       username: '',
       password: 'Abc@123',
@@ -284,19 +289,27 @@ export class UserAdapter {
   /**
    * Check if user has permission for specific action
    */
-  static hasPermission(user: UserProfileType, action: string, target?: any): boolean {
+  static hasPermission(user: UserProfileType, action: string, _target?: unknown): boolean {
     if (!user || !action) {
       return false;
     }
 
-    // This could be expanded based on your role-based permission system
+    // Safe permission checking with explicit string comparison
+    const validActions = ['edit_user', 'delete_user', 'assign_role', 'view_user'];
+    if (!validActions.includes(action)) {
+      return false;
+    }
+
+    const adminRoles = ['ADMIN', 'SUPER_ADMIN'];
+    
+    // Handle both string role and RoleType object
+    const userRoleCode = typeof user.role === 'string' ? user.role : user.role?.code || '';
+    
     switch (action) {
       case 'edit_user':
-        return user.role === 'ADMIN' || user.role === 'SUPER_ADMIN';
       case 'delete_user':
-        return user.role === 'ADMIN' || user.role === 'SUPER_ADMIN';
       case 'assign_role':
-        return user.role === 'ADMIN' || user.role === 'SUPER_ADMIN';
+        return adminRoles.includes(userRoleCode);
       case 'view_user':
         return true; // All authenticated users can view
       default:
@@ -330,9 +343,12 @@ export class UserAdapter {
       .toUpperCase()
       .substring(0, 2);
 
+    // Handle both string role and RoleType object
+    const roleForDisplay = typeof user.role === 'string' ? user.role : user.role?.code;
+
     return {
       displayName,
-      displayRole: this.formatRole(user.role),
+      displayRole: this.formatRole(roleForDisplay),
       displayStatus: this.formatStatus(user.status),
       initials,
     };
@@ -352,7 +368,8 @@ export class UserAdapter {
       'EMPLOYEE': 'Employee',
     };
 
-    return roleMap[role] || role;
+    // Safe object access
+    return Object.prototype.hasOwnProperty.call(roleMap, role) ? roleMap[role] : role;
   }
 
   /**
