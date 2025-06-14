@@ -30,7 +30,6 @@
     "performance:bundle": "npm run build:analyze",
     "deploy:staging": "npm run build && npm run test:ci && echo 'Deploy to staging'",
     "deploy:production": "npm run security:check && npm run build:production && npm run test:ci && echo 'Deploy to production'",
-    "env:validate": "node scripts/validate-env.js",
     "env:copy": "cp .env.example .env.local",
     "clean": "rm -rf .next out node_modules/.cache",
     "clean:all": "npm run clean && rm -rf node_modules package-lock.json && npm install",
