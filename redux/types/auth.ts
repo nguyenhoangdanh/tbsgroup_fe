@@ -48,15 +48,15 @@ export interface AuthResponse {
   expiresIn?: number;
 }
 
-export type AuthStatus = 
-  | 'loading' 
-  | 'checking' 
-  | 'unauthenticated' 
-  | 'authenticated' 
-  | 'refreshing_token' 
-  | 'needs_password_reset' 
-  | 'password_reset_success' 
-  | 'registration_success' 
+export type AuthStatus =
+  | 'loading'
+  | 'checking'
+  | 'unauthenticated'
+  | 'authenticated'
+  | 'refreshing_token'
+  | 'needs_password_reset'
+  | 'password_reset_success'
+  | 'registration_success'
   | 'session_expired';
 
 export interface AuthState {
@@ -78,7 +78,8 @@ export interface AuthState {
 }
 
 export interface RequestResetParams {
-  email: string;
+  employeeId: string;
+  cardId: string;
 }
 
 export interface ResetPasswordParams {

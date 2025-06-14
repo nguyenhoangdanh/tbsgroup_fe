@@ -83,27 +83,15 @@ const ResetPasswordForm = React.memo(() => {
 
   // Stabilized functions
   const requestPasswordReset = useCallback(async (data: { employeeId: string, cardId: string }) => {
-    try {
       await originalRequestPasswordReset(data);
-    } catch (error) {
-      throw error;
-    }
   }, [originalRequestPasswordReset]);
 
   const resetPassword = useCallback(async (params: any) => {
-    try {
       await originalResetPassword(params);
-    } catch (error) {
-      throw error;
-    }
   }, [originalResetPassword]);
 
   const handleLogin = useCallback(async (credentials: { username: string, password: string }) => {
-    try {
       await login(credentials);
-    } catch (error) {
-      throw error;
-    }
   }, [login]);
 
   // Form submission handler with stable dependencies
@@ -124,14 +112,14 @@ const ResetPasswordForm = React.memo(() => {
     // Step 2: Reset password with new password
     else if (verified && data.password && data.confirmPassword) {
       try {
-        const resetParams = resetPasswordData?.data?.resetToken && !isAuthenticated
+        const resetParams = resetPasswordData?.resetToken && !isAuthenticated
           ? {
-            resetToken: resetPasswordData.data.resetToken,
+            resetToken: resetPasswordData.resetToken,
             password: data.password,
             confirmPassword: data.confirmPassword,
           }
           : {
-            username: resetPasswordData?.data?.username || userName,
+            username: resetPasswordData?.username || userName,
             password: data.password,
             confirmPassword: data.confirmPassword,
           };
@@ -145,7 +133,7 @@ const ResetPasswordForm = React.memo(() => {
           try {
             if (!isAuthenticated && data.password) {
               await handleLogin({
-                username: resetPasswordData?.data?.username || userName,
+                username: resetPasswordData?.username || userName,
                 password: data.password,
               });
               router.push('/');
@@ -183,9 +171,9 @@ const ResetPasswordForm = React.memo(() => {
     if (!resetPasswordData) return;
 
     // Serialize to ensure object comparison - use a more reliable key
-    const dataId = resetPasswordData?.data?.id ||
-      resetPasswordData?.data?.username ||
-      resetPasswordData?.data?.resetToken ||
+    const dataId =
+      resetPasswordData?.username ||
+      resetPasswordData?.resetToken ||
       Date.now().toString();
     const dataString = `${dataId}-${JSON.stringify(resetPasswordData)}`;
 
@@ -193,20 +181,19 @@ const ResetPasswordForm = React.memo(() => {
     if (processedData.current.resetPasswordData !== dataString) {
       processedData.current.resetPasswordData = dataString;
 
-      if (resetPasswordData?.success && resetPasswordData.data) {
+      if (resetPasswordData && resetPasswordData.username) {
         setVerified(true);
-        setUserName(resetPasswordData.data.username);
+        setUserName(resetPasswordData.username);
 
         // Clear form fields for password entry
         methods.setValue('employeeId', '');
         methods.setValue('cardId', '');
 
         stableToast.success(
-          resetPasswordData.data.message || 'Vui lòng nhập mật khẩu mới',
+          resetPasswordData.message || 'Vui lòng nhập mật khẩu mới',
         );
-      } else if (!resetPasswordData.success) {
-        // const errorMessage = resetPasswordData.error?.message || 'Không thể xác thực thông tin';
-        const errorMessage = resetPasswordData.data?.message || 'Không thể xác thực thông tin';
+      } else if (!resetPasswordData?.username) {
+        const errorMessage = resetPasswordData?.message || 'Không thể xác thực thông tin';
         stableToast.error(
           errorMessage,
         );

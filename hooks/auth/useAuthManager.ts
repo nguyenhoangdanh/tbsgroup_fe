@@ -2,7 +2,7 @@
 
 import { useCallback } from 'react';
 
-import { useAppSelector, useAppDispatch } from '@/hooks/redux';
+import { useAppSelector } from '@/hooks/redux';
 import type { LoginCredentials, RequestResetParams, ResetPasswordParams } from '@/redux/types/auth';
 import { authManager } from '@/services/auth/AuthManager';
 
@@ -10,7 +10,6 @@ import { useSmartSession } from './useSmartSession';
 
 export const useAuthManager = () => {
   const authState = useAppSelector(state => state.auth);
-  const dispatch = useAppDispatch();
   const smartSession = useSmartSession();
   
   // Remove automatic session initialization to prevent excessive calls
