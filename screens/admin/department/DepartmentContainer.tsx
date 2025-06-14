@@ -196,7 +196,7 @@ const DepartmentContainerInner: React.FC = () => {
         }
     }, [handleCreate]);
 
-    const handleUpdateDepartment = useCallback(async (id: string, formData: any) => {
+    const handleUpdateDepartment = useCallback(async (id: string | number, formData: any) => {
         try {
             const { id: formDataId, ...updateData } = formData;
             const actualId = id || formDataId;
@@ -209,9 +209,9 @@ const DepartmentContainerInner: React.FC = () => {
         }
     }, [handleUpdate]);
 
-    const handleDeleteDepartment = useCallback(async (id: string) => {
+    const handleDeleteDepartment = useCallback(async (id: string | number) => {
         try {
-            await handleDelete(id);
+            await handleDelete(String(id));
             return true;
         } catch (error) {
             console.error('Delete department error:', error);
@@ -345,17 +345,8 @@ const DepartmentContainerInner: React.FC = () => {
                     closeOnClickOutside: false,
                     closeOnEsc: true,
                 }}
-                emptyState={{
-                    title: "Không có dữ liệu",
-                    description: "Chưa có phòng ban nào trong hệ thống",
-                }}
                 className="debug-datatable"
                 animate={false}
-                style={{
-                    border: '2px solid #ef4444',
-                    backgroundColor: 'white',
-                    minHeight: '200px'
-                }}
             />
         </div>
     );

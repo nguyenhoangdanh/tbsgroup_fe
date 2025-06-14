@@ -45,10 +45,10 @@ export default memo(function UserContainer() {
     }
   }, [handleCreate]);
 
-  const handleUpdateEntity = useCallback(async (id: string, formData: any) => {
+  const handleUpdateEntity = useCallback(async (id: string | number, formData: any) => {
     try {
       console.log('Updating User with ID:', id, 'and data:', formData);
-      await handleUpdate(id, formData);
+      await handleUpdate(String(id), formData);
       return true;
     } catch (error) {
       console.error('Update User error:', error);
@@ -56,7 +56,7 @@ export default memo(function UserContainer() {
     }
   }, [handleUpdate]);
 
-  const handleDeleteEntity = useCallback(async (id?: string | number) => {
+  const handleDeleteEntity = useCallback(async (id: string | number) => {
     try {
       await handleDelete(String(id));
       return true;

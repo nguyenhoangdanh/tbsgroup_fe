@@ -18,7 +18,6 @@ export default memo(function GroupContainer() {
     handleDelete,
     activeFilters,
     loading,
-    error,
     relatedData,
     loadingStates,
   } = useGroupContext();
@@ -48,10 +47,10 @@ export default memo(function GroupContainer() {
   );
 
   const handleUpdateEntity = useCallback(
-    async (id: string, formData: any) => {
+    async (id: string | number, formData: any) => {
       try {
         console.log('Updating Group with ID:', id, 'and data:', formData);
-        await handleUpdate(id, formData);
+        await handleUpdate(String(id), formData);
         return true;
       } catch (error) {
         console.error('Update Group error:', error);
@@ -62,7 +61,7 @@ export default memo(function GroupContainer() {
   );
 
   const handleDeleteEntity = useCallback(
-    async (id?: string | number) => {
+    async (id: string | number) => {
       try {
         await handleDelete(String(id));
         return true;

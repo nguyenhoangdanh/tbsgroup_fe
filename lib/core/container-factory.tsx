@@ -53,7 +53,7 @@ export function createEntityContainer<T extends BaseEntity>(
       }
     }, [handleCreate]);
 
-    const handleUpdateEntity = useCallback(async (id: string, formData: any) => {
+    const handleUpdateEntity = useCallback(async (id: string | number, formData: any) => {
       try {
         await handleUpdate(id, formData);
         return true;
@@ -63,7 +63,7 @@ export function createEntityContainer<T extends BaseEntity>(
       }
     }, [handleUpdate]);
 
-    const handleDeleteEntity = useCallback(async (id: string) => {
+    const handleDeleteEntity = useCallback(async (id: string | number) => {
       try {
         await handleDelete(id);
         return true;

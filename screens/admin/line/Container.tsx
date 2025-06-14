@@ -44,10 +44,10 @@ export default memo(function LineContainer() {
     }
   }, [handleCreate]);
 
-  const handleUpdateEntity = useCallback(async (id: string, formData: any) => {
+  const handleUpdateEntity = useCallback(async (id: string | number, formData: any) => {
     try {
       console.log('Updating Line with ID:', id, 'and data:', formData);
-      await handleUpdate(id, formData);
+      await handleUpdate(String(id), formData);
       return true;
     } catch (error) {
       console.error('Update Line error:', error);
@@ -55,7 +55,7 @@ export default memo(function LineContainer() {
     }
   }, [handleUpdate]);
 
-  const handleDeleteEntity = useCallback(async (id?: string | number) => {
+  const handleDeleteEntity = useCallback(async (id: string | number) => {
     try {
       await handleDelete(String(id));
       return true;
