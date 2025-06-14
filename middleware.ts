@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { addCorsHeaders } from './lib/cors';
+
 // Configuration
 const config = {
   production: process.env.NODE_ENV === 'production',
@@ -73,9 +75,27 @@ function addSecurityHeaders(response: NextResponse): NextResponse {
     );
     response.headers.set(
       'Content-Security-Policy',
-      "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https:; connect-src 'self' " +
-        config.apiBaseUrl +
-        "; frame-ancestors 'none';",
+      "default-src 'self'; " +
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://cdnjs.cloudflare.com; " +
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+      "font-src 'self' https://fonts.gstatic.com; " +
+      "img-src 'self' data: https:; " +
+      "connect-src 'self' " + config.apiBaseUrl + " https://tbsgroup-be.vercel.app wss:; " +
+      "frame-ancestors 'none'; " +
+      "base-uri 'self'; " +
+      "form-action 'self';"
+    );
+  } else {
+    // More permissive CSP for development
+    response.headers.set(
+      'Content-Security-Policy',
+      "default-src 'self'; " +
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
+      "style-src 'self' 'unsafe-inline'; " +
+      "font-src 'self' data:; " +
+      "img-src 'self' data: https:; " +
+      "connect-src 'self' http://localhost:* https://tbsgroup-be.vercel.app wss:; " +
+      "frame-ancestors 'none';"
     );
   }
 
@@ -89,16 +109,34 @@ function addSecurityHeaders(response: NextResponse): NextResponse {
 }
 
 /**
- * Generate CSRF token
+ * Generate CSRF token with proper crypto handling
  */
 function generateCSRFToken(): string {
-  const array = new Uint8Array(32);
-  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
-    crypto.getRandomValues(array);
+  // Try to use Web Crypto API first
+  if (typeof globalThis !== 'undefined' && globalThis.crypto && globalThis.crypto.getRandomValues) {
+    const array = new Uint8Array(32);
+    globalThis.crypto.getRandomValues(array);
     return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
   }
-  // Fallback for environments without crypto
-  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+  
+  // Try Node.js crypto module
+  try {
+    const { webcrypto } = eval('require')('crypto');
+    if (webcrypto && webcrypto.getRandomValues) {
+      const array = new Uint8Array(32);
+      webcrypto.getRandomValues(array);
+      return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+    }
+  } catch (e) {
+    // Crypto module not available
+  }
+  
+  // Fallback to Math.random (less secure but works everywhere)
+  let result = '';
+  for (let i = 0; i < 64; i++) {
+    result += Math.floor(Math.random() * 16).toString(16);
+  }
+  return result;
 }
 
 /**
@@ -147,8 +185,10 @@ async function validateToken(
         'Cookie': cookieHeader,
         'Cache-Control': 'no-cache',
         'User-Agent': request.headers.get('user-agent') || 'Next.js Middleware',
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
       },
-      signal: AbortSignal.timeout(3000), // 3 second timeout
+      signal: AbortSignal.timeout(5000), // Increased timeout to 5 seconds
     });
 
     if (verifyResponse.ok) {
@@ -165,7 +205,7 @@ async function validateToken(
     return { isValid: false, shouldRefresh: false };
   } catch (error) {
     console.error('[Middleware] Lỗi khi xác thực httpOnly token:', error);
-    // Nếu lỗi do mạng, tạm thời để người dùng truy cập
+    // If network error, temporarily allow user access to avoid blocking
     return { isValid: true, shouldRefresh: false };
   }
 }
@@ -177,24 +217,33 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const startTime = Date.now();
 
+  // Handle preflight requests
+  if (request.method === 'OPTIONS') {
+    const response = new NextResponse(null, { status: 200 });
+    return addCorsHeaders(response, request);
+  }
+
   // Skip middleware for static files and API routes that don't need auth
   if (staticRoutes.some(route => pathname.startsWith(route)) || pathname.includes('.')) {
-    return NextResponse.next();
+    const response = NextResponse.next();
+    return addCorsHeaders(response, request);
   }
 
   // Rate limiting check
   if (!checkRateLimit(request)) {
-    return new NextResponse('Too Many Requests', {
+    const response = new NextResponse('Too Many Requests', {
       status: 429,
       headers: {
         'Retry-After': '900', // 15 minutes
       },
     });
+    return addCorsHeaders(response, request);
   }
 
   // CSRF validation for state-changing requests
   if (!validateCSRFToken(request)) {
-    return new NextResponse('CSRF token mismatch', { status: 403 });
+    const response = new NextResponse('CSRF token mismatch', { status: 403 });
+    return addCorsHeaders(response, request);
   }
 
   // Tạo response ban đầu
@@ -203,6 +252,7 @@ export async function middleware(request: NextRequest) {
   // Skip auth check for public routes
   if (publicRoutes.some(route => pathname === route || pathname.startsWith(route))) {
     response = addSecurityHeaders(response);
+    response = addCorsHeaders(response, request);
 
     // Add performance headers
     const processingTime = Date.now() - startTime;
@@ -222,6 +272,7 @@ export async function middleware(request: NextRequest) {
 
     response = NextResponse.redirect(url);
     response = addSecurityHeaders(response);
+    response = addCorsHeaders(response, request);
     return response;
   }
 
@@ -242,6 +293,7 @@ export async function middleware(request: NextRequest) {
 
   // Add security headers
   response = addSecurityHeaders(response);
+  response = addCorsHeaders(response, request);
 
   // Add performance monitoring headers
   const processingTime = Date.now() - startTime;

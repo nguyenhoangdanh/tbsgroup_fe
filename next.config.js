@@ -14,6 +14,8 @@ const nextConfig = {
 
     async headers() {
         const isProduction = process.env.NODE_ENV === 'production';
+        const apiDomain = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
+        
         const securityHeaders = [
             { key: 'X-DNS-Prefetch-Control', value: 'off' },
             { key: 'X-Frame-Options', value: 'DENY' },
@@ -33,7 +35,7 @@ const nextConfig = {
                         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
                         "font-src 'self' https://fonts.gstatic.com",
                         "img-src 'self' data: https:",
-                        `connect-src 'self' ${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'} wss:`,
+                        `connect-src 'self' ${apiDomain} https://tbsgroup-be.vercel.app wss:`,
                         "frame-ancestors 'none'",
                         "base-uri 'self'",
                         "form-action 'self'",
@@ -41,6 +43,20 @@ const nextConfig = {
                     ].join('; ')
                 }
             );
+        } else {
+            // More permissive CSP for development
+            securityHeaders.push({
+                key: 'Content-Security-Policy',
+                value: [
+                    "default-src 'self'",
+                    "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+                    "style-src 'self' 'unsafe-inline'",
+                    "font-src 'self' data:",
+                    "img-src 'self' data: https:",
+                    "connect-src 'self' http://localhost:* https://tbsgroup-be.vercel.app wss:",
+                    "frame-ancestors 'none'"
+                ].join('; ')
+            });
         }
 
         return [{ source: '/(.*)', headers: securityHeaders }];
