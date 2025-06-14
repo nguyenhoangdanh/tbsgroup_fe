@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, ReactNode, useMemo, useEffect, useState, useRef } from 'react';
+import React, { createContext, useContext, ReactNode, useMemo, useEffect, useState, useRef, useCallback } from 'react';
 
 import { DepartmentTreeNode } from '@/common/interface/department';
 import { departmentService } from '@/services/department/department.service';
@@ -215,7 +215,7 @@ export const DepartmentProvider: React.FC<DepartmentProviderProps> = ({
   };
 
   // Refresh organization tree manually
-  const refreshOrganizationTree = async () => {
+  const refreshOrganizationTree = useCallback(async () => {
     if (!mountedRef.current) return;
     
     setLoadingStates(prev => ({ ...prev, organizationTree: true }));
@@ -233,17 +233,23 @@ export const DepartmentProvider: React.FC<DepartmentProviderProps> = ({
         setLoadingStates(prev => ({ ...prev, organizationTree: false }));
       }
     }
-  };
+  }, []);
 
   // Refresh all data manually
-  const refreshAllData = async () => {
+  const refreshAllData = useCallback(async () => {
     if (!mountedRef.current) return;
 
-    // Clear all caches
-    Object.keys(globalCache.lastFetch).forEach(key => {
-      globalCache[key as keyof typeof globalCache] = null;
-      globalCache.lastFetch[key as keyof typeof globalCache.lastFetch] = 0;
-    });
+    // Clear all caches properly
+    globalCache.organizationTree = null;
+    globalCache.rootDepartments = null;
+    globalCache.headOffices = null;
+    globalCache.factoryOffices = null;
+    globalCache.lastFetch = {
+      organizationTree: 0,
+      rootDepartments: 0,
+      headOffices: 0,
+      factoryOffices: 0,
+    };
 
     setLoadingStates({
       organizationTree: true,
@@ -278,7 +284,7 @@ export const DepartmentProvider: React.FC<DepartmentProviderProps> = ({
         });
       }
     }
-  };
+  }, []);
 
   // Load related data based on configuration
   useEffect(() => {
