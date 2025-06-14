@@ -6,7 +6,6 @@ import {
   updateUserRequest,
   requestPasswordResetRequest,
   resetPasswordRequest,
-  clearErrors,
   initializeSession,
   clearResetPasswordData,
 } from '@/redux/slices/authSlice';
@@ -30,6 +29,9 @@ class AuthManager {
     isLoading: false,
     expiresAt: null,
     resetPasswordData: null,
+    isHydrated: false,
+    sessionInitialized: false,
+    lastSessionCheck: null,
   };
 
   constructor() {
