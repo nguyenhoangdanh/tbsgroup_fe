@@ -4,7 +4,6 @@ import React, { createContext, useContext, ReactNode, useMemo, useEffect, useSta
 
 import { useSharedData } from '@/hooks/shared/SharedDataContext';
 import { lineService } from '@/services/line/line.service';
-import { userService } from '@/services/user/user.service';
 
 import { useTeam } from './useTeam';
 
@@ -55,13 +54,21 @@ export const TeamProvider: React.FC<TeamProviderProps> = ({
     const { sharedData, loadingStates: sharedLoadingStates } = useSharedData();
 
     // State for other related data
-    const [relatedData, setRelatedData] = useState({
+    const [relatedData, setRelatedData] = useState<{
+        lines: any[];
+        leaders: any[];
+        users: any[];
+    }>({
         lines: [],
         leaders: [],
         users: [],
     });
 
-    const [loadingStates, setLoadingStates] = useState({
+    const [loadingStates, setLoadingStates] = useState<{
+        lines: boolean;
+        leaders: boolean;
+        users: boolean;
+    }>({
         lines: false,
         leaders: false,
         users: false,

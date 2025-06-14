@@ -4,7 +4,6 @@ import React, { createContext, useContext, ReactNode, useMemo, useEffect, useSta
 
 import { useSharedData } from '@/hooks/shared/SharedDataContext';
 import { factoryService } from '@/services/factory/factory.service';
-import { userService } from '@/services/user/user.service';
 
 import { useLine } from './useLine';
 
@@ -55,13 +54,21 @@ export const LineProvider: React.FC<LineProviderProps> = ({
     const { sharedData, loadingStates: sharedLoadingStates } = useSharedData();
 
     // State for other related data
-    const [relatedData, setRelatedData] = useState({
+    const [relatedData, setRelatedData] = useState<{
+        factories: any[];
+        managers: any[];
+        users: any[];
+    }>({
         factories: [],
         managers: [],
         users: [],
     });
 
-    const [loadingStates, setLoadingStates] = useState({
+    const [loadingStates, setLoadingStates] = useState<{
+        factories: boolean;
+        managers: boolean;
+        users: boolean;
+    }>({
         factories: false,
         managers: false,
         users: false,

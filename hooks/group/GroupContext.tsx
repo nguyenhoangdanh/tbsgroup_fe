@@ -50,14 +50,22 @@ export const GroupProvider: React.FC<GroupProviderProps> = ({
     // Initialize the group context state
     const groupState = useGroup();
 
-    // State for other related data
-    const [relatedData, setRelatedData] = useState({
+    // State for other related data with proper typing
+    const [relatedData, setRelatedData] = useState<{
+        teams: any[];
+        leaders: any[];
+        users: any[];
+    }>({
         teams: [],
         leaders: [],
         users: [],
     });
 
-    const [loadingStates, setLoadingStates] = useState({
+    const [loadingStates, setLoadingStates] = useState<{
+        teams: boolean;
+        leaders: boolean;
+        users: boolean;
+    }>({
         teams: false,
         leaders: false,
         users: false,
