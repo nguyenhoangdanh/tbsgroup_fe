@@ -18,7 +18,6 @@ export default memo(function FactoryContainer() {
     handleDelete,
     activeFilters,
     loading,
-    error,
     relatedData,
     loadingStates,
   } = useFactoryContext();

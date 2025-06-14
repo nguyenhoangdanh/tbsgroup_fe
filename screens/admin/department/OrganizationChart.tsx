@@ -2,7 +2,7 @@
 
 import { ArrowLeft, Building, Building2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback } from 'react';
 
 import { DepartmentTreeNode } from '@/common/interface/department';
 import { Badge } from '@/components/ui/badge';

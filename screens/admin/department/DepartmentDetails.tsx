@@ -18,7 +18,6 @@ import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useDepartmentQueries } from '@/hooks/department';
 
-import DepartmentForm from './DepartmentForm';
 
 export interface DepartmentDetailsProps {
     departmentId: string;
@@ -29,12 +28,11 @@ export const DepartmentDetails: React.FC<DepartmentDetailsProps> = ({ department
     const [activeTab, setActiveTab] = useState('general');
 
     // Use the correct department queries
-    const { getById, invalidateCache } = useDepartmentQueries();
+    const { getById } = useDepartmentQueries();
     const {
         data: departmentDetails,
         isLoading,
         error,
-        refetch,
     } = getById(departmentId, {
         enabled: !!departmentId,
     });

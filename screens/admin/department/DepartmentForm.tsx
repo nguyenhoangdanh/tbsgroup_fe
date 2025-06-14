@@ -1,7 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import React, { useState, useCallback, memo, useEffect, useMemo, forwardRef } from 'react';
+import React, { useState, useCallback, useEffect, useMemo, forwardRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { AutoForm } from 'react-table-power';
 import { z } from 'zod';
