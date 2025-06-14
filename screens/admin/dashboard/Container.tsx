@@ -2,11 +2,10 @@
 import { User, DollarSign, ShoppingCart, CreditCard } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import React, { useMemo } from 'react';
-import { DataTable } from 'react-table-power';
 
 import { DashboardCardComponent } from '../../../components/common/layouts/admin/DashboardCard';
 
-import { columns, Payment } from './_components/columns';
+import { Payment } from './_components/columns';
 
 
 const CARD_ITEMS = [
@@ -104,7 +103,7 @@ const AdminDashboardContainer = () => {
   return (
     <div className="flex flex-col gap-6 p-4 md:p-6 pb-8">
       {dashboardCards}
-      <DataTable
+      {/* <DataTable
         data={PAYMENT_DATA}
         columns={columns}
         className="w-full"
@@ -112,7 +111,7 @@ const AdminDashboardContainer = () => {
         headerClassName="bg-gray-100 dark:bg-gray-800"
         rowClassName="hover:bg-gray-50 dark:hover:bg-gray-700"
         emptyText="Không có dữ liệu"
-      />
+      /> */}
     </div>
   );
 };
