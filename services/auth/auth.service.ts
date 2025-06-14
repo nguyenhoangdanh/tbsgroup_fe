@@ -109,8 +109,11 @@ export class AuthService {
   /**
    * Reset password
    */
-  static async resetPassword(email: string): Promise<void> {
-    await api.post('/auth/reset-password', { email });
+  static async resetPassword({
+    employeeId,
+    cardId,
+  }: { employeeId: string; cardId: string }): Promise<void> {
+    await api.post('/auth/reset-password', { employeeId, cardId });
   }
 
   /**
@@ -152,8 +155,8 @@ export class AuthService {
     return AuthService.register(userData);
   }
 
-  async resetPassword(email: string): Promise<void> {
-    return AuthService.resetPassword(email);
+  async resetPassword({ employeeId, cardId }: { employeeId: string; cardId: string }): Promise<void> {
+    return AuthService.resetPassword({ employeeId, cardId });
   }
 
   async changePassword(currentPassword: string, newPassword: string): Promise<void> {

@@ -9,7 +9,6 @@ import {
   initializeSession,
   setSessionAuthenticated,
   setSessionUnauthenticated,
-  setSessionError,
   loginRequest,
   loginSuccess,
   loginFailure,
@@ -213,14 +212,14 @@ function* verifyAccountSaga(action: PayloadAction<VerifyRegistration>) {
  */
 function* requestPasswordResetSaga(action: PayloadAction<RequestResetParams>) {
   try {
-    yield call(AuthService.resetPassword, action.payload.email);
+    yield call(AuthService.resetPassword, action.payload);
     
     stableToast.success('Yêu cầu đặt lại mật khẩu đã được gửi', {
       description: 'Vui lòng kiểm tra email của bạn'
     });
     yield put(requestPasswordResetSuccess({
       resetToken: '',
-      username: action.payload.email,
+      username: action.payload.employeeId,
       message: 'Password reset request sent successfully',
     }));
   } catch (error: any) {
