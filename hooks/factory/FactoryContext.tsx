@@ -4,7 +4,6 @@ import React, { createContext, useContext, ReactNode, useMemo, useEffect, useSta
 
 import { useDepartmentContext } from '@/hooks/department/DepartmentContext';
 import { useSharedData } from '@/hooks/shared/SharedDataContext';
-import { userService } from '@/services/user/user.service';
 
 import { useFactory } from './useFactory';
 
@@ -55,13 +54,19 @@ export const FactoryProvider: React.FC<FactoryProviderProps> = ({
     // Use shared data context for users
     const { sharedData, loadingStates: sharedLoadingStates } = useSharedData();
 
-    // State for other related data
-    const [relatedData, setRelatedData] = useState({
+    // State for other related data with proper typing
+    const [relatedData, setRelatedData] = useState<{
+        departments: any[];
+        users: any[];
+    }>({
         departments: [],
         users: [],
     });
 
-    const [loadingStates, setLoadingStates] = useState({
+    const [loadingStates, setLoadingStates] = useState<{
+        departments: boolean;
+        users: boolean;
+    }>({
         departments: false,
         users: false,
     });
@@ -76,11 +81,11 @@ export const FactoryProvider: React.FC<FactoryProviderProps> = ({
     useEffect(() => {
         setRelatedData(prev => ({
             ...prev,
-            users: sharedData.users
+            users: sharedData.users || []
         }));
         setLoadingStates(prev => ({
             ...prev,
-            users: sharedLoadingStates.users
+            users: sharedLoadingStates.users || false
         }));
     }, [sharedData.users, sharedLoadingStates.users]);
 
