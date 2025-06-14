@@ -1,7 +1,9 @@
 'use client';
 
 import React from 'react';
+
 import { FactoryProvider } from '@/hooks/factory/FactoryContext';
+
 import FactoryContainer from './FactoryContainer';
 
 const FactoryPage: React.FC = () => {

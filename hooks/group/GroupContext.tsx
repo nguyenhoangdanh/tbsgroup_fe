@@ -1,9 +1,11 @@
 'use client';
 
 import React, { createContext, useContext, ReactNode, useMemo, useEffect, useState } from 'react';
-import { useGroup } from './useGroup';
-import { userService } from '@/services/user/user.service';
+
 import { teamService } from '@/services/team/team.service';
+import { userService } from '@/services/user/user.service';
+
+import { useGroup } from './useGroup';
 
 // Create group context with type definitions
 export type GroupContextType = ReturnType<typeof useGroup> & {

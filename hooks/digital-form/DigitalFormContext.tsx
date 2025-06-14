@@ -9,10 +9,6 @@ import {
   useState,
 } from 'react';
 
-import { useDigitalFormMutations } from './useDigitalFormMutations';
-import { useDigitalFormQueries } from './useDigitalFormQueries';
-import { useWorkShifts } from './useWorkShifts';
-
 import { getCurrentTimeSlot } from '@/common/constants/time-slots';
 import {
   AttendanceStatus,
@@ -29,6 +25,11 @@ import {
   DigitalFormUpdateRequest,
   FormEntryUpdateRequest,
 } from '@/common/types/digital-form-dto';
+
+import { useDigitalFormMutations } from './useDigitalFormMutations';
+import { useDigitalFormQueries } from './useDigitalFormQueries';
+import { useWorkShifts } from './useWorkShifts';
+
 
 // Define context shape
 interface DigitalFormContextProps {

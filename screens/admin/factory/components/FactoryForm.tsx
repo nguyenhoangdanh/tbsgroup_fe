@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useState, useCallback, useMemo, useEffect, forwardRef } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
+import React, { useState, useCallback, useMemo, useEffect, forwardRef } from 'react';
 import { useForm } from 'react-hook-form';
-
-import { FieldInput, FieldSelect, FormController } from '@/components/common/fields';
 import { AutoForm } from 'react-table-power';
 import { z } from 'zod';
+
+import { FieldInput, FieldSelect, FormController } from '@/components/common/fields';
 
 // Define Factory schema
 const factorySchema = z.object({

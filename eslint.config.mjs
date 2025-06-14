@@ -36,6 +36,36 @@ export default [
                 },
                 project: ['./tsconfig.json'],
             },
+            globals: {
+                // Browser globals
+                window: 'readonly',
+                document: 'readonly',
+                navigator: 'readonly',
+                localStorage: 'readonly',
+                sessionStorage: 'readonly',
+                console: 'readonly',
+                setTimeout: 'readonly',
+                clearTimeout: 'readonly',
+                setInterval: 'readonly',
+                clearInterval: 'readonly',
+                fetch: 'readonly',
+                performance: 'readonly',
+
+                // Node.js globals
+                process: 'readonly',
+                Buffer: 'readonly',
+                global: 'readonly',
+                require: 'readonly',
+                module: 'readonly',
+                exports: 'readonly',
+                __dirname: 'readonly',
+                __filename: 'readonly',
+
+                // TypeScript/React globals
+                NodeJS: 'readonly',
+                React: 'readonly',
+                JSX: 'readonly',
+            },
         },
         plugins: {
             '@typescript-eslint': typescriptPlugin,
@@ -55,7 +85,6 @@ export default [
             // TypeScript specific rules
             '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
             '@typescript-eslint/no-explicit-any': 'warn',
-            '@typescript-eslint/prefer-const': 'error',
             '@typescript-eslint/no-var-requires': 'error',
 
             // React specific rules
@@ -82,7 +111,7 @@ export default [
             'security/detect-non-literal-regexp': 'warn',
 
             // General rules
-            'no-console': ['warn', { allow: ['warn', 'error'] }],
+            // 'no-console': ['error', { allow: ['warn', 'error'] }],
             'no-debugger': 'error',
             'prefer-const': 'error',
             'no-var': 'error',
@@ -96,6 +125,24 @@ export default [
                     alwaysTryTypes: true,
                     project: './tsconfig.json',
                 },
+            },
+        },
+    },
+
+    // Node.js specific files
+    {
+        files: ['**/*.config.{js,mjs,ts}', '**/scripts/**/*', 'tscheck.js'],
+        languageOptions: {
+            globals: {
+                process: 'readonly',
+                require: 'readonly',
+                module: 'readonly',
+                exports: 'readonly',
+                __dirname: 'readonly',
+                __filename: 'readonly',
+                console: 'readonly',
+                Buffer: 'readonly',
+                global: 'readonly',
             },
         },
     },

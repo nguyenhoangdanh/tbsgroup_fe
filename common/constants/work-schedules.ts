@@ -1,5 +1,6 @@
-import { REGULAR_TIME_SLOTS, EXTENDED_TIME_SLOTS, OVERTIME_TIME_SLOTS } from './time-slots';
 import { ShiftType } from '../types/digital-form';
+
+import { REGULAR_TIME_SLOTS, EXTENDED_TIME_SLOTS, OVERTIME_TIME_SLOTS } from './time-slots';
 
 /**
  * Work schedule interface that matches backend implementation

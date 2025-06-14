@@ -1,6 +1,8 @@
 "use client"
 
 import { ChevronRight } from "lucide-react"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
 
 import {
   Collapsible,
@@ -17,9 +19,8 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar"
+
 import { NavItem } from './sidebar-data'
-import Link from "next/link"
-import { usePathname } from "next/navigation"
 
 interface NavMainProps {
   items: NavItem[]

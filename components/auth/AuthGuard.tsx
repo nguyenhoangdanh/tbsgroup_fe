@@ -1,10 +1,11 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, ReactNode } from 'react';
 
+import { useAuthManager } from '@/hooks/auth/useAuthManager';
+import { logger } from '@/utils/monitoring/logger';
+
 import { AuthLoadingSkeleton } from './AuthLoadingSkeleton';
 
-import { logger } from '@/utils/monitoring/logger';
-import { useAuthManager } from '@/hooks/auth/useAuthManager';
 
 interface AuthGuardProps {
   children: ReactNode;

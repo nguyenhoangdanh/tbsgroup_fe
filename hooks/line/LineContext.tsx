@@ -1,10 +1,12 @@
 'use client';
 
 import React, { createContext, useContext, ReactNode, useMemo, useEffect, useState } from 'react';
-import { useLine } from './useLine';
-import { userService } from '@/services/user/user.service';
-import { factoryService } from '@/services/factory/factory.service';
+
 import { useSharedData } from '@/hooks/shared/SharedDataContext';
+import { factoryService } from '@/services/factory/factory.service';
+import { userService } from '@/services/user/user.service';
+
+import { useLine } from './useLine';
 
 // Create line context with type definitions
 export type LineContextType = ReturnType<typeof useLine> & {

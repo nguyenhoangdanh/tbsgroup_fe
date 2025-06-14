@@ -2,8 +2,8 @@
 
 import React from 'react';
 
-import PermissionGuard from '@/hooks/permission/PermissionGuard';
 import { GroupProvider } from '@/hooks/group/GroupContext';
+import PermissionGuard from '@/hooks/permission/PermissionGuard';
 import GroupContainer from '@/screens/admin/group/Container';
 
 export default function GroupPage() {

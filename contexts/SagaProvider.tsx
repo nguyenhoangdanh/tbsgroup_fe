@@ -1,6 +1,7 @@
 'use client';
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
+
 import { store } from '@/redux/store';
 
 // Memoized dynamic imports

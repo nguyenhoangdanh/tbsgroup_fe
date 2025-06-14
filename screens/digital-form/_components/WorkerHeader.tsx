@@ -1,10 +1,11 @@
 import { UserCircle } from 'lucide-react';
 
+import { Worker } from '@/common/types/worker';
+import { CardHeader, CardTitle } from '@/components/ui/card';
+
 import { ShiftTypeBadge } from './shift-type-badge';
 import { WorkerStatusBadge } from './worker-status-badge';
 
-import { Worker } from '@/common/types/worker';
-import { CardHeader, CardTitle } from '@/components/ui/card';
 
 interface WorkerHeaderProps {
   worker: Worker;

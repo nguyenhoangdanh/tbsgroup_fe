@@ -1,7 +1,8 @@
 import { useEffect, useRef } from 'react';
 import { useForm, UseFormReturn } from 'react-hook-form';
-import { DialogMode } from '../types';
 import { useFormHandling } from 'react-table-power';
+
+import { DialogMode } from '../types';
 
 /**
  * A custom hook that integrates React Hook Form with the FormHandlingContext

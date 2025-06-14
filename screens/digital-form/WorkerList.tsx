@@ -3,13 +3,14 @@
 import { ChevronUp, ChevronDown } from 'lucide-react';
 import { useState } from 'react';
 
-import AttendanceBadge from './AttendanceBadge';
-import TimeSlotButton from './TimeSlotButton';
 
 import { TIME_SLOTS } from '@/common/constants/time-slots';
 import { Worker } from '@/common/types/worker';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+
+import AttendanceBadge from './AttendanceBadge';
+import TimeSlotButton from './TimeSlotButton';
 
 interface WorkerListProps {
   workers: Worker[];

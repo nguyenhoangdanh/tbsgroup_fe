@@ -1,6 +1,7 @@
 import { TableColumn } from 'react-table-power';
-import { UserProfileType } from '@/common/interface/user';
+
 import { UserStatusEnum } from '@/common/enum';
+import { UserProfileType } from '@/common/interface/user';
 import { Badge } from '@/components/ui/badge';
 
 export const userTableColumns: TableColumn<UserProfileType>[] = [

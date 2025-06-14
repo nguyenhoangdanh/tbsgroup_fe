@@ -1,7 +1,8 @@
-import { BaseService } from '@/lib/core/base-service';
-import { GroupAdapter } from './group.adapter';
 import { Group, GroupCondDTO, GroupCreateDTO, GroupUpdateDTO, GroupLeaderCreateDTO, GroupLeaderUpdateDTO, GroupPerformance } from '@/common/interface/group';
 import { api } from '@/lib/api/api';
+import { BaseService } from '@/lib/core/base-service';
+
+import { GroupAdapter } from './group.adapter';
 
 export class GroupService extends BaseService<
   Group,

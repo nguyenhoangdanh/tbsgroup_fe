@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient, UseQueryResult, UseQueryOptions } from '@tanstack/react-query';
 import { useCallback } from 'react';
+import { toast } from 'react-toast-kit';
 
 import {
   getPermissionListApi,
@@ -19,7 +20,6 @@ import {
   UserPermissionsQueryDTO,
   UserPermissionsResponse,
 } from '@/common/types/permission';
-import { toast } from 'react-toast-kit';
 import { validateUUIDOrShowError } from '@/utils/uuid-utils';
 
 interface RolePermissionResponse {

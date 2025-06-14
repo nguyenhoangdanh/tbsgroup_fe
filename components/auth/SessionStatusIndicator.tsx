@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState } from 'react';
+
 import { useAuthManager } from '@/hooks/auth/useAuthManager';
 import { useSessionMonitor } from '@/hooks/auth/useSmartSession';
 

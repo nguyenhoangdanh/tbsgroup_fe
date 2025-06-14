@@ -3,7 +3,6 @@ import { Building, Users, Pencil, ArrowLeft, Building2, TreePine } from 'lucide-
 import { useRouter } from 'next/navigation';
 import React, { useCallback, useState } from 'react';
 
-import DepartmentForm from './DepartmentForm';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -18,6 +17,8 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useDepartmentQueries } from '@/hooks/department';
+
+import DepartmentForm from './DepartmentForm';
 
 export interface DepartmentDetailsProps {
     departmentId: string;

@@ -6,11 +6,14 @@ import { usePathname } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import React, { useState, useEffect, useRef } from 'react';
 
-import UserAvatar from './UserAvatar';
-import ThemeSwitcher from '../admin/ThemeSwitcher';
-
-import ImageLogo from '../ImageLogo';
 import { useAuthManager } from '@/hooks/auth/useAuthManager';
+
+import ThemeSwitcher from '../admin/ThemeSwitcher';
+import ImageLogo from '../ImageLogo';
+
+import UserAvatar from './UserAvatar';
+
+
 
 interface IHeaderProps {
   children?: React.ReactNode;

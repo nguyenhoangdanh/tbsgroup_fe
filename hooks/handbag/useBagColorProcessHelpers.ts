@@ -1,6 +1,7 @@
+import { BagColorProcess, BagColorProcessCondDTO } from '@/common/interface/handbag';
+
 import { useBaseHelpers } from '../base/useBaseHelpers';
 
-import { BagColorProcess, BagColorProcessCondDTO } from '@/common/interface/handbag';
 
 /**
  * Hook for BagColorProcess helpers (filtering, pagination, etc.)

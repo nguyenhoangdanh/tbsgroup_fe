@@ -2,7 +2,7 @@
 import { usePathname, useRouter } from 'next/navigation';
 import React, { createContext, useContext, useEffect, useCallback, useMemo } from 'react';
 
-import { SecurityProvider, useSecurityContext } from '../security/SecurityContext';
+import { PUBLICROUTES } from '@/config/constants';
 import { useAppDispatch, useAppSelector } from '@/hooks/redux';
 import {
   loginRequest,
@@ -21,7 +21,8 @@ import {
   ResetPasswordParams,
 } from '@/redux/types/auth';
 import stableToast from '@/utils/stableToast';
-import { PUBLICROUTES } from '@/config/constants';
+
+import { SecurityProvider, useSecurityContext } from '../security/SecurityContext';
 
 type AuthContextType = {
   user: User | null;

@@ -13,7 +13,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import * as React from "react";
 
-import { useSidebarCollapsed, useSidebarIsMobileView } from "../../SidebarStateProvider";
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
@@ -45,8 +44,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { hasRouteAccess, UserRole } from "@/utils/permission-utils";
 import { useAuthManager } from "@/hooks/auth/useAuthManager";
+import { hasRouteAccess, UserRole } from "@/utils/permission-utils";
+
+import { useSidebarCollapsed, useSidebarIsMobileView } from "../../SidebarStateProvider";
+
 import { Project } from './sidebar-data';
 
 interface ProjectItem {

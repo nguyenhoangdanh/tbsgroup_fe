@@ -1,5 +1,5 @@
-import { UserType, UserProfileType, UserListParams, UserUpdateRequest, UserListResponse } from '@/common/interface/user';
 import { UserStatusEnum } from '@/common/enum';
+import { UserType, UserProfileType, UserListParams, UserUpdateRequest, UserListResponse } from '@/common/interface/user';
 
 /**
  * User data adapter for transforming between frontend and backend formats

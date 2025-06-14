@@ -1,9 +1,8 @@
 "use client";
 
-import * as React from "react";
 import { Check, ChevronsUpDown, Plus } from "lucide-react";
+import * as React from "react";
 
-import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,6 +36,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
+
 import { Team } from './sidebar-data'
 
 interface TeamSwitcherProps {

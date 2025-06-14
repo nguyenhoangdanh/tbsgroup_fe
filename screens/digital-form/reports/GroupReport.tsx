@@ -3,15 +3,6 @@
 import { Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
-import { GroupWorkerBreakdown } from './breakdowns/GroupWorkerBreakdown';
-import { DailyOutputChart } from './charts/DailyOutputChart';
-import { HourlyOutputChart } from './charts/HourlyOutputChart';
-import { OutputByBagChart } from './charts/OutputByBagChart';
-import { OutputByProcessChart } from './charts/OutputByProcessChart';
-import { ProductionIssuesChart } from './charts/ProductionIssuesChart';
-import { AttendanceStats } from './stats/AttendanceStats';
-import { GroupProductionSummary } from './summaries/GroupProductionSummary';
-
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
@@ -24,6 +15,16 @@ import {
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { ReportService } from '@/services/reportService';
+
+import { GroupWorkerBreakdown } from './breakdowns/GroupWorkerBreakdown';
+import { DailyOutputChart } from './charts/DailyOutputChart';
+import { HourlyOutputChart } from './charts/HourlyOutputChart';
+import { OutputByBagChart } from './charts/OutputByBagChart';
+import { OutputByProcessChart } from './charts/OutputByProcessChart';
+import { ProductionIssuesChart } from './charts/ProductionIssuesChart';
+import { AttendanceStats } from './stats/AttendanceStats';
+import { GroupProductionSummary } from './summaries/GroupProductionSummary';
+
 
 interface GroupReportProps {
   groupId: string;

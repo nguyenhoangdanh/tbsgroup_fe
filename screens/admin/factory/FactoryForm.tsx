@@ -7,8 +7,8 @@ import { z } from 'zod';
 
 import { FactoryWithDetails } from '@/common/interface/factory';
 import { FieldInput } from '@/components/common/fields/FieldInput';
-import { FieldTextarea } from '@/components/common/fields/FieldTextarea';
 import { FieldSelect } from '@/components/common/fields/FieldSelect';
+import { FieldTextarea } from '@/components/common/fields/FieldTextarea';
 import FormActions from '@/components/common/fields/FormActions';
 import { Form } from '@/components/ui/form';
 

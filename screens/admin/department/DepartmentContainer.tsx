@@ -1,15 +1,16 @@
 'use client';
 
-import React, { useMemo, useCallback, Suspense, memo } from 'react';
-import { DataTable, TableColumn } from 'react-table-power';
 import { Building, Building2, Workflow, Eye, Users } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import React, { useMemo, useCallback, Suspense, memo } from 'react';
+import { DataTable, TableColumn } from 'react-table-power';
 
-import DepartmentForm from './DepartmentForm';
-import { DepartmentProvider, useDepartmentContext } from '@/hooks/department/DepartmentContext';
 import { Department, DepartmentCreateDTO, DepartmentUpdateDTO } from '@/common/interface/department';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { DepartmentProvider, useDepartmentContext } from '@/hooks/department/DepartmentContext';
+
+import DepartmentForm from './DepartmentForm';
 
 const DepartmentContainerInner: React.FC = () => {
     const router = useRouter();

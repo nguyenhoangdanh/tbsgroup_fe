@@ -1,8 +1,9 @@
 'use client';
 
 import React, { createContext, useContext, ReactNode, useMemo, useEffect, useState, useRef } from 'react';
-import { userService } from '@/services/user/user.service';
+
 import { departmentService } from '@/services/department/department.service';
+import { userService } from '@/services/user/user.service';
 
 interface SharedData {
   users: any[];

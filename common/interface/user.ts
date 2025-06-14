@@ -1,5 +1,7 @@
 import { Role } from '@/lib/types/auth';
+
 import { UserStatusEnum } from '../enum';
+
 import { RoleType } from './role';
 
 // Base user interface matching backend User model

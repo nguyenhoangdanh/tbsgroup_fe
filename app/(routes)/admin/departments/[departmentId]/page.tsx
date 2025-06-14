@@ -1,6 +1,7 @@
-import { DepartmentDetails } from '@/screens/admin/department/DepartmentDetails';
-import { DepartmentProvider } from '@/hooks/department/DepartmentContext';
 import React from 'react';
+
+import { DepartmentProvider } from '@/hooks/department/DepartmentContext';
+import { DepartmentDetails } from '@/screens/admin/department/DepartmentDetails';
 
 interface DepartmentDetailPageProps {
   params: {

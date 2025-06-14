@@ -3,10 +3,10 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import React, { useState, useCallback, memo, useEffect, useMemo, forwardRef } from 'react';
 import { useForm } from 'react-hook-form';
+import { AutoForm } from 'react-table-power';
 import { z } from 'zod';
 
 import { FieldInput, FieldSelect, FormController, FieldTextarea } from '@/components/common/fields';
-import { AutoForm } from 'react-table-power';
 
 const departmentSchema = z.object({
   id: z.string().optional(),

@@ -5,9 +5,10 @@ import Image from 'next/image';
 import { useTheme } from 'next-themes';
 import React from 'react';
 
+import { useMediaQuery } from '@/hooks/useMediaQuery';
+
 import { LoadingConfig } from './LoadingProvider';
 
-import { useMediaQuery } from '@/hooks/useMediaQuery';
 
 interface FullscreenLoaderProps {
   config: LoadingConfig;

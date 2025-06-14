@@ -1,7 +1,8 @@
-import { BaseService } from '@/lib/core/base-service';
-import { FactoryAdapter } from './factory.adapter';
 import { Factory, FactoryCondDTO, FactoryCreateDTO, FactoryUpdateDTO } from '@/common/interface/factory';
 import { api } from '@/lib/api/api';
+import { BaseService } from '@/lib/core/base-service';
+
+import { FactoryAdapter } from './factory.adapter';
 
 export class FactoryService extends BaseService<
   Factory,

@@ -1,12 +1,13 @@
 'use client';
 import { useEffect, useState } from 'react';
 
+import { DigitalForm, DigitalFormEntry, ShiftType } from '@/common/types/digital-form';
+
 import { useDigitalFormMutations } from './useDigitalFormMutations';
 import { useDigitalFormQueries } from './useDigitalFormQueries';
 import { useDigitalFormStats } from './useDigitalFormStats';
 import { useWorkShifts } from './useWorkShifts';
 
-import { DigitalForm, DigitalFormEntry, ShiftType } from '@/common/types/digital-form';
 
 /**
  * A higher level hook that demonstrates proper usage pattern for the query hooks

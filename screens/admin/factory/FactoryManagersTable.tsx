@@ -3,10 +3,11 @@ import { Plus } from 'lucide-react';
 import React, { useMemo } from 'react';
 
 import { FactoryManager } from '@/common/interface/factory';
-import { DataTable, BaseData } from '@/components/common/table/data-table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+
+import { DataTable, BaseData } from '@/components/common/table/data-table';
 
 interface ManagerData extends BaseData {
   userId: string;

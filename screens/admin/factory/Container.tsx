@@ -2,10 +2,12 @@
 
 import React, { memo, useCallback, useMemo, Suspense } from 'react';
 import { DataTable } from 'react-table-power';
+
 import { Factory } from '@/common/interface/factory';
+import { useFactoryContext } from '@/hooks/factory';
+
 import { factoryTableColumns } from './columns';
 import FactoryFormWrapper from './FactoryFormWrapper';
-import { useFactoryContext } from '@/hooks/factory';
 
 // FactoryContainer component that renders DataTable directly
 export default memo(function FactoryContainer() {

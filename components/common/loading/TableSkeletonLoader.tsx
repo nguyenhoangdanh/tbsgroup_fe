@@ -3,9 +3,10 @@
 import { motion } from 'framer-motion';
 import React from 'react';
 
+import { useMediaQuery } from '@/hooks/useMediaQuery';
+
 import { LoadingConfig } from './LoadingProvider';
 
-import { useMediaQuery } from '@/hooks/useMediaQuery';
 
 interface TableSkeletonLoaderProps {
   config: LoadingConfig;

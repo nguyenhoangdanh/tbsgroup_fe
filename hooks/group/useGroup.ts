@@ -1,6 +1,6 @@
+import { Group, GroupCondDTO, GroupCreateDTO, GroupUpdateDTO } from '@/common/interface/group';
 import { createEntityHooks } from '@/lib/core/hook-factory';
 import { groupService } from '@/services/group/group.service';
-import { Group, GroupCondDTO, GroupCreateDTO, GroupUpdateDTO } from '@/common/interface/group';
 
 const defaultGroupValues = (): GroupCreateDTO => ({
   code: '',

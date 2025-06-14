@@ -1,9 +1,11 @@
 'use client';
 
 import React, { createContext, useContext, ReactNode, useMemo, useEffect, useState, useRef } from 'react';
-import { useDepartment } from './useDepartment';
-import { departmentService } from '@/services/department/department.service';
+
 import { DepartmentTreeNode } from '@/common/interface/department';
+import { departmentService } from '@/services/department/department.service';
+
+import { useDepartment } from './useDepartment';
 
 // Create department context with type definitions
 export type DepartmentContextType = ReturnType<typeof useDepartment> & {

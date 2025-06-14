@@ -2,8 +2,8 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 
-import AccessDeniedMessage from '@/components/common/notifications/AccessDeniedMessage';
 import { useLoading } from '@/components/common/loading/LoadingProvider';
+import AccessDeniedMessage from '@/components/common/notifications/AccessDeniedMessage';
 import { useProtectedResource } from '@/hooks/permission/useProtectedResource';
 
 type PermissionGuardProps = {

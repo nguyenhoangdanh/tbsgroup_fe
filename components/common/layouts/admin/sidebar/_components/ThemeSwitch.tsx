@@ -1,8 +1,9 @@
 'use client';
 
-import React from 'react';
 import { Sun, Moon, Monitor } from 'lucide-react';
 import { useTheme } from 'next-themes';
+import React from 'react';
+
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,

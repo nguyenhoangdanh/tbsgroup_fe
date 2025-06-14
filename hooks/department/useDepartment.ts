@@ -1,6 +1,6 @@
+import { Department, DepartmentCondDTO, DepartmentCreateDTO, DepartmentUpdateDTO } from '@/common/interface/department';
 import { createEntityHooks } from '@/lib/core/hook-factory';
 import { departmentService } from '@/services/department/department.service';
-import { Department, DepartmentCondDTO, DepartmentCreateDTO, DepartmentUpdateDTO } from '@/common/interface/department';
 
 const defaultDepartmentValues = (): DepartmentCreateDTO => ({
   code: '',

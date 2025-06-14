@@ -1,8 +1,8 @@
 'use client';
 
+import { useTheme } from 'next-themes';
 import React from 'react';
 import { DataTableProvider, FormHandlingProvider } from 'react-table-power';
-import { useTheme } from 'next-themes';
 
 const DataTableProviderWrapper = ({ children }: { children: React.ReactNode }) => {
   // Get the current theme from next-themes to pass to the DataTableProvider

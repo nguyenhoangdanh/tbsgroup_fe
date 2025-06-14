@@ -1,8 +1,8 @@
-import { createEntityHooks } from '@/lib/core/hook-factory';
-import { userService } from '@/services/user/user.service';
-import { UserProfileType, UserListParams, UserUpdateRequest } from '@/common/interface/user';
-import { TUserSchema } from '@/schemas/user';
 import { UserStatusEnum } from '@/common/enum';
+import { UserProfileType, UserListParams, UserUpdateRequest } from '@/common/interface/user';
+import { createEntityHooks } from '@/lib/core/hook-factory';
+import { TUserSchema } from '@/schemas/user';
+import { userService } from '@/services/user/user.service';
 
 const defaultUserValues = (): Omit<TUserSchema, 'id'> => ({
   username: '',

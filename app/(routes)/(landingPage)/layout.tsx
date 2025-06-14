@@ -1,5 +1,5 @@
-import LandingHeader from '@/components/common/layouts/landing/LandingHeader';
 import LandingFooter from '@/components/common/layouts/landing/LandingFooter';
+import LandingHeader from '@/components/common/layouts/landing/LandingHeader';
 import ScrollToTop from '@/components/common/ui/ScrollToTop';
 
 export default async function LandingPageLayout({

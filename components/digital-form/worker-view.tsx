@@ -11,8 +11,6 @@ import {
 } from 'lucide-react';
 import React, { useState, useMemo, useCallback } from 'react';
 
-import { BagTimeSlotGrid } from './bag-time-slot-grid';
-import { TimeSlotTable } from './time-slot-table';
 
 import { ShiftType, AttendanceStatus } from '@/common/types/digital-form';
 import { Worker } from '@/common/types/worker';
@@ -26,6 +24,9 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useDigitalFormContext } from '@/hooks/digital-form';
 import { useWorkShifts } from '@/hooks/digital-form/useWorkShifts';
 import { cn } from '@/lib/utils';
+
+import { BagTimeSlotGrid } from './bag-time-slot-grid';
+import { TimeSlotTable } from './time-slot-table';
 
 // Types for component props
 interface WorkerViewProps {

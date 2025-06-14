@@ -1,8 +1,9 @@
 "use client";
 
+import { Bell, Search } from "lucide-react";
 import React from "react";
-import { AppSidebar } from "./sidebar/_components/app-sidebar";
-import { ThemeSwitch } from "./sidebar/_components/ThemeSwitch";
+
+import { Badge } from "@/components/ui/badge";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -11,9 +12,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { Bell, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,7 +21,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+
+import { AppSidebar } from "./sidebar/_components/app-sidebar";
+import { ThemeSwitch } from "./sidebar/_components/ThemeSwitch";
+
 
 interface AdminLayoutWrapperProps {
   children: React.ReactNode;

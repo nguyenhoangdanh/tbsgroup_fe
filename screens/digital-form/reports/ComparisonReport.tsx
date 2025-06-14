@@ -3,10 +3,6 @@
 import { Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
-import { ComparisonByBagChart } from './charts/ComparisonByBagChart';
-import { ComparisonByProcessChart } from './charts/ComparisonByProcessChart';
-import { ComparisonTimeSeriesChart } from './charts/ComparisonTimeSeriesChart';
-import { ComparisonProductionSummary } from './summaries/ComparisonProductionSummary';
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -27,6 +23,11 @@ import {
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { ReportService } from '@/services/reportService';
+
+import { ComparisonByBagChart } from './charts/ComparisonByBagChart';
+import { ComparisonByProcessChart } from './charts/ComparisonByProcessChart';
+import { ComparisonTimeSeriesChart } from './charts/ComparisonTimeSeriesChart';
+import { ComparisonProductionSummary } from './summaries/ComparisonProductionSummary';
 
 interface ComparisonReportProps {
   lineId: string;

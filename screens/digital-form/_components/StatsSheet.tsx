@@ -2,7 +2,6 @@
 
 import { useMemo } from 'react';
 
-import { WorkerStatusBadge } from './worker-status-badge';
 
 import { AttendanceStatus } from '@/common/types/digital-form';
 import { Button } from '@/components/ui/button';
@@ -26,6 +25,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
+import { WorkerStatusBadge } from './worker-status-badge';
 
 interface StatsSheetProps {
   open: boolean;

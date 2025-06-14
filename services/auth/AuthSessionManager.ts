@@ -1,7 +1,7 @@
 "use client"
 
-import { store } from '@/redux/store';
 import { initializeApp, forceSessionCheck } from '@/redux/slices/authSlice';
+import { store } from '@/redux/store';
 import type { AuthState } from '@/redux/types/auth';
 
 /**

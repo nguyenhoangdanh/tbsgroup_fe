@@ -1,6 +1,7 @@
+import { toast } from 'react-toast-kit';
+
 import { usePermissionMutations } from './usePermissionMutations';
 
-import { toast } from 'react-toast-kit';
 
 /**
  * Hook that provides utility functions for the BulkOperationsPanel

@@ -3,10 +3,10 @@ import Script from 'next/script';
 
 import RootLayoutWrapper from '@/components/common/layouts/admin/RootLayoutWrapper';
 import { LoadingProvider } from '@/components/common/loading/LoadingProvider';
-import { MainProviders } from '@/contexts/MainProviders';
-import { beVietnamPro } from '@/lib/fonts';
 import { ClientToastProvider } from '@/contexts/ClientToastProvider';
   import DataTableProviderWrapper from '@/contexts/DataTableProviderWrapper';
+import { MainProviders } from '@/contexts/MainProviders';
+import { beVietnamPro } from '@/lib/fonts';
 
 import './globals.css';
 

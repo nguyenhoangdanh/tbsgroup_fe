@@ -2,10 +2,12 @@
 
 import React, { memo, useCallback, useMemo, Suspense } from 'react';
 import { DataTable } from 'react-table-power';
+
 import { Line } from '@/common/interface/line';
+import { useLineContext } from '@/hooks/line';
+
 import { lineTableColumns } from './columns';
 import LineFormWrapper from './LineFormWrapper';
-import { useLineContext } from '@/hooks/line';
 
 // LineContainer component that renders DataTable directly
 export default memo(function LineContainer() {

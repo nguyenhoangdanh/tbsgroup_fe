@@ -1,8 +1,9 @@
-import { BaseService } from '@/lib/core/base-service';
-import { UserAdapter } from './user.adapter';
 import { UserProfileType, UserListParams, UserUpdateRequest } from '@/common/interface/user';
-import { TUserSchema } from '@/schemas/user';
 import { api } from '@/lib/api/api';
+import { BaseService } from '@/lib/core/base-service';
+import { TUserSchema } from '@/schemas/user';
+
+import { UserAdapter } from './user.adapter';
 
 export class UserService extends BaseService<
   UserProfileType,

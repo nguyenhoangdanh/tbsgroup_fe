@@ -1,13 +1,14 @@
 'use client';
 import { useMemo } from 'react';
-import { useAuthContext } from '@/contexts/auth/AuthProvider';
 
-import { sidebarData } from './sidebar-data';
+import { useAuthContext } from '@/contexts/auth/AuthProvider';
 import {
   filterNavItemsByRole,
   filterProjectsByRole,
   UserRole,
 } from '@/utils/permission-utils';
+
+import { sidebarData } from './sidebar-data';
 
 /**
  * Custom hook to get sidebar items filtered by user permissions

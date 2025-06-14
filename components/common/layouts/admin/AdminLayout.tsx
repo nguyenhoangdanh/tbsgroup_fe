@@ -5,12 +5,6 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import React, { useCallback, useMemo } from 'react';
 
-import {
-  useSidebarCollapsed,
-  useSidebarSetCollapsed,
-  useSidebarIsMobileView,
-} from './SidebarStateProvider';
-import ThemeSwitcher from './ThemeSwitcher';
 
 import {
   Breadcrumb,
@@ -22,6 +16,13 @@ import {
 } from '@/components/ui/breadcrumb';
 import { Separator } from '@/components/ui/separator';
 import { useRouteChangeHandler } from '@/hooks/useRouteChangeHandler';
+
+import {
+  useSidebarCollapsed,
+  useSidebarSetCollapsed,
+  useSidebarIsMobileView,
+} from './SidebarStateProvider';
+import ThemeSwitcher from './ThemeSwitcher';
 
 const DynamicAppSidebar = dynamic(
   () =>

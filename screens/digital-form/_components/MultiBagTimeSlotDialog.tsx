@@ -3,7 +3,6 @@
 import { Loader2, PlusCircle, Trash2, Edit } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
 
-import { AddBagForm } from './add-bag-form';
 
 import { Worker } from '@/common/types/worker';
 import {
@@ -34,6 +33,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+
+import { AddBagForm } from './add-bag-form';
 
 interface BagEntry {
   entryId: string;

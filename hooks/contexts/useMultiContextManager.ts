@@ -1,6 +1,7 @@
 import { useMemo, useCallback } from 'react';
-import { useUserContext } from '../users/UserContext';
+
 import { useRoleContext } from '../roles/roleContext';
+import { useUserContext } from '../users/UserContext';
 
 // Types for different entity contexts (to be extended)
 interface FactoryContext {

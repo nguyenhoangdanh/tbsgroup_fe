@@ -2,10 +2,12 @@
 
 import React, { memo, useCallback, useMemo, Suspense } from 'react';
 import { DataTable } from 'react-table-power';
+
 import { Team } from '@/common/interface/team';
+import { useTeamContext } from '@/hooks/teams';
+
 import { teamTableColumns } from './columns';
 import TeamFormWrapper from './TeamFormWrapper';
-import { useTeamContext } from '@/hooks/teams';
 
 // TeamContainer component that renders DataTable directly
 export default memo(function TeamContainer() {

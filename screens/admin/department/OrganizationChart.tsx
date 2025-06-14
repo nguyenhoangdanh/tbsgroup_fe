@@ -1,14 +1,14 @@
 'use client';
 
-import React, { useCallback, useMemo } from 'react';
 import { ArrowLeft, Building, Building2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import React, { useCallback, useMemo } from 'react';
 
+import { DepartmentTreeNode } from '@/common/interface/department';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useDepartmentContext } from '@/hooks/department/DepartmentContext';
-import { DepartmentTreeNode } from '@/common/interface/department';
 
 const OrganizationChart: React.FC = () => {
   const router = useRouter();

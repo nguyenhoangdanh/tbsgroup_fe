@@ -1,4 +1,5 @@
 import { TableColumn } from 'react-table-power';
+
 import { Team } from '@/common/interface/team';
 
 export const teamTableColumns: TableColumn<Team>[] = [

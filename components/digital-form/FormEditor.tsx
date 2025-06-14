@@ -6,9 +6,9 @@ import { Loader2, CalendarIcon, Factory, Users } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'react-toast-kit';
 import * as z from 'zod';
 
-import { toast } from 'react-toast-kit';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';

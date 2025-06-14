@@ -1,9 +1,11 @@
 "use client"
 
 import { useCallback } from 'react';
+
 import { useAppSelector, useAppDispatch } from '@/hooks/redux';
-import { authManager } from '@/services/auth/AuthManager';
 import type { LoginCredentials, RequestResetParams, ResetPasswordParams } from '@/redux/types/auth';
+import { authManager } from '@/services/auth/AuthManager';
+
 import { useSmartSession } from './useSmartSession';
 
 export const useAuthManager = () => {

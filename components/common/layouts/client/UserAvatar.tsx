@@ -3,7 +3,6 @@ import { CircleUserRound, KeyRound, LogOut } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useState } from 'react';
 
-import { stableToast } from '@/utils/stableToast';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -15,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAuthManager } from '@/hooks/auth/useAuthManager';
+import { stableToast } from '@/utils/stableToast';
 
 const UserAvatar = () => {
   const router = useRouter();

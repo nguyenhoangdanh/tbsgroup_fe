@@ -1,7 +1,8 @@
-import { BaseService } from '@/lib/core/base-service';
-import { DepartmentAdapter } from './department.adapter';
 import { Department, DepartmentCondDTO, DepartmentCreateDTO, DepartmentUpdateDTO, DepartmentTreeNode } from '@/common/interface/department';
 import { api } from '@/lib/api/api';
+import { BaseService } from '@/lib/core/base-service';
+
+import { DepartmentAdapter } from './department.adapter';
 
 export class DepartmentService extends BaseService<
   Department,

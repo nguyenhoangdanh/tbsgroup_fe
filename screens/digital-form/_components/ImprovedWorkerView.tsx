@@ -3,6 +3,13 @@
 import { Edit, PlusCircle } from 'lucide-react';
 import { useState, useMemo, useCallback, useEffect } from 'react';
 
+import { ShiftType } from '@/common/types/digital-form';
+import { Worker, AttendanceStatus } from '@/common/types/worker';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+
 import { AddBagForm } from './add-bag-form';
 import { BagsTable } from './BagsTable';
 import { MultiBagTimeSlotDialog } from './MultiBagTimeSlotDialog';
@@ -11,12 +18,6 @@ import { TimeSlotTable } from './TimeSlotTable';
 import { WorkerHeader } from './WorkerHeader';
 import { WorkerProgress } from './WorkerProgress';
 
-import { ShiftType } from '@/common/types/digital-form';
-import { Worker, AttendanceStatus } from '@/common/types/worker';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
 interface TimeSlotData {
   label: string;

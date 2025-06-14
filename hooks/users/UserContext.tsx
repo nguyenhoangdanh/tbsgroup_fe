@@ -1,15 +1,18 @@
 'use client';
 
 import React, { createContext, useContext, ReactNode, useMemo, useEffect, useState } from 'react';
-import { useUser } from './useUser';
-import { useRoleContext } from '../roles/roleContext';
+
 import { UserStatusEnum } from '@/common/enum';
+import { useSharedData } from '@/hooks/shared/SharedDataContext';
+import { departmentService } from '@/services/department/department.service';
 import { factoryService } from '@/services/factory/factory.service';
+import { groupService } from '@/services/group/group.service';
 import { lineService } from '@/services/line/line.service';
 import { teamService } from '@/services/team/team.service';
-import { groupService } from '@/services/group/group.service';
-import { departmentService } from '@/services/department/department.service';
-import { useSharedData } from '@/hooks/shared/SharedDataContext';
+
+import { useRoleContext } from '../roles/roleContext';
+
+import { useUser } from './useUser';
 
 interface RelatedData {
   roles: any[];

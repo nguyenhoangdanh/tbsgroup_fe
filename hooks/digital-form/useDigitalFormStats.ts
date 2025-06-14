@@ -1,8 +1,9 @@
 import { useMemo } from 'react';
 
+import { AttendanceStatus, DigitalForm, DigitalFormEntry } from '@/common/types/digital-form';
+
 import { useWorkShifts } from './useWorkShifts';
 
-import { AttendanceStatus, DigitalForm, DigitalFormEntry } from '@/common/types/digital-form';
 
 interface FormStatsOptions {
   includeAttendance?: boolean;

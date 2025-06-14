@@ -1,10 +1,11 @@
 "use client"
 
 import { useEffect, useCallback, useRef } from 'react';
+
 import { useAppSelector, useAppDispatch } from '@/redux/hooks';
 import { forceSessionCheck, clearErrors } from '@/redux/slices/authSlice';
-import { authSessionManager } from '@/services/auth/AuthSessionManager';
 import type { AuthState } from '@/redux/types/auth';
+import { authSessionManager } from '@/services/auth/AuthSessionManager';
 
 /**
  * Enhanced hook for intelligent session management

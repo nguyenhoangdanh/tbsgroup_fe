@@ -12,9 +12,6 @@ import {
 import { useRouter } from 'next/navigation';
 import React, { useState, useMemo, useCallback } from 'react';
 
-import { FormExportActions } from './form-export-actions';
-import { FormStatsCard } from './form-stats-card';
-import { WorkerView } from './worker-view';
 
 import { AttendanceStatus, RecordStatus, ShiftType } from '@/common/types/digital-form';
 import type { Worker } from '@/common/types/worker';
@@ -34,6 +31,10 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useDigitalFormContext } from '@/hooks/digital-form';
 import { useWorkShifts } from '@/hooks/digital-form/useWorkShifts';
+
+import { FormExportActions } from './form-export-actions';
+import { FormStatsCard } from './form-stats-card';
+import { WorkerView } from './worker-view';
 
 interface DigitalFormManagerProps {
   formId?: string;

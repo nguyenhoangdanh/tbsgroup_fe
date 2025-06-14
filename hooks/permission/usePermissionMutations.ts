@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'react-toast-kit';
 
 import {
   createPermissionApi,
@@ -12,7 +13,6 @@ import {
   CreatePermissionDTO,
   UpdatePermissionDTO,
 } from '@/common/types/permission';
-import { toast } from 'react-toast-kit';
 
 /**
  * Custom hook for Permission mutations

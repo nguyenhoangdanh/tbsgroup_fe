@@ -1,7 +1,7 @@
 'use client';
 
-import React, { memo, useMemo } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import React, { memo, useMemo } from 'react';
 import { DataTableProvider, DataTableProviderConfig } from 'react-table-power';
 
 // Tạo QueryClient với cấu hình tối ưu

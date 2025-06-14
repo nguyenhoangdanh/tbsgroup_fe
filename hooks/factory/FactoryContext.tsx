@@ -1,10 +1,12 @@
 'use client';
 
 import React, { createContext, useContext, ReactNode, useMemo, useEffect, useState } from 'react';
-import { useFactory } from './useFactory';
+
 import { useDepartmentContext } from '@/hooks/department/DepartmentContext';
-import { userService } from '@/services/user/user.service';
 import { useSharedData } from '@/hooks/shared/SharedDataContext';
+import { userService } from '@/services/user/user.service';
+
+import { useFactory } from './useFactory';
 
 // Create factory context with type definitions
 export type FactoryContextType = ReturnType<typeof useFactory> & {

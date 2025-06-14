@@ -5,11 +5,12 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useEffect } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { toast } from 'react-toast-kit';
-import SubmitButton from '@/components/SubmitButton';
-import { defaultLoginValues, loginSchema, TLoginSchema } from '@/schemas/auth';
-import { useAuthManager } from '@/hooks/auth/useAuthManager';
-import FieldInput from '@/components/common/fields/FieldInput';
+
 import { FieldCheckbox, FormController } from '@/components/common/fields';
+import FieldInput from '@/components/common/fields/FieldInput';
+import SubmitButton from '@/components/SubmitButton';
+import { useAuthManager } from '@/hooks/auth/useAuthManager';
+import { defaultLoginValues, loginSchema, TLoginSchema } from '@/schemas/auth';
 
 const LoginForm = () => {
   const router = useRouter();

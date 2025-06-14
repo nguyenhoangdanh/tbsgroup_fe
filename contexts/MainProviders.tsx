@@ -5,14 +5,15 @@ import { ReactNode } from 'react';
 import { AuthErrorBoundary } from '@/components/auth/AuthErrorBoundary';
 import { SessionRecovery } from '@/components/auth/SessionRecovery';
 import { SessionStatusIndicator } from '@/components/auth/SessionStatusIndicator';
+import { PermissionProvider } from '@/hooks/permission/PermissionContext';
+import { SharedDataProvider } from '@/hooks/shared/SharedDataContext';
+
 import { AuthSecurityProvider } from './auth/AuthProvider';
 import ClientProviders from './ClientProviders';
 import { DialogProvider } from './DialogProvider';
 import QueryProvider from './QueryProvider';
 import SagaProviders from './SagaProvider';
 import { ThemeProvider } from './ThemeProvider';
-import { PermissionProvider } from '@/hooks/permission/PermissionContext';
-import { SharedDataProvider } from '@/hooks/shared/SharedDataContext';
 
 interface MainProvidersProps {
     children: ReactNode;

@@ -2,10 +2,12 @@
 
 import React, { memo, useCallback, useMemo, Suspense } from 'react';
 import { DataTable } from 'react-table-power';
+
 import { Group } from '@/common/interface/group';
+import { useGroupContext } from '@/hooks/group';
+
 import { groupTableColumns } from './columns';
 import GroupFormWrapper from './GroupFormWrapper';
-import { useGroupContext } from '@/hooks/group';
 
 // GroupContainer component that renders DataTable directly
 export default memo(function GroupContainer() {

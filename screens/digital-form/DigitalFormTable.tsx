@@ -6,7 +6,6 @@ import { Loader2, Search, PlusCircle, Filter, X, Eye, Edit, Trash2, FileText } f
 import { useRouter } from 'next/navigation';
 import { useState, useCallback } from 'react';
 
-import { ReportsPanel } from './ReportsPanel';
 
 import { DigitalForm, RecordStatus, ShiftType } from '@/common/types/digital-form';
 import {
@@ -60,6 +59,9 @@ import {
   useDigitalFormPagination,
   useDigitalFormQueries,
 } from '@/hooks/digital-form';
+
+import { ReportsPanel } from './ReportsPanel';
+
 import useDigitalFormManager from '@/hooks/digital-form/useDigitalFormManager';
 
 /**

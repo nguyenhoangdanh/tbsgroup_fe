@@ -2,10 +2,11 @@
 
 import React, { createContext, useContext, ReactNode } from 'react';
 
-import { initializeRoleContext } from './useRole';
 
 import { RoleType } from '@/apis/roles/role.api';
 import { TRoleSchema } from '@/schemas/role';
+
+import { initializeRoleContext } from './useRole';
 
 //Create role context with type definitions
 type RoleContextType = ReturnType<typeof initializeRoleContext>;

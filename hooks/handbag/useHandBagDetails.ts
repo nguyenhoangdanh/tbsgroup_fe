@@ -1,8 +1,8 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'react-toast-kit';
 
 import { getHandBagFullDetails } from '@/apis/handbag/handbag.api';
 import { HandBag, BagColor, BagColorProcess } from '@/common/interface/handbag';
-import { toast } from 'react-toast-kit';
 
 /**
  * Extended type for a HandBag with its colors and processes

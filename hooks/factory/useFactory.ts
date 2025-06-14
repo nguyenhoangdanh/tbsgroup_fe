@@ -1,6 +1,6 @@
+import { Factory, FactoryCondDTO, FactoryCreateDTO, FactoryUpdateDTO } from '@/common/interface/factory';
 import { createEntityHooks } from '@/lib/core/hook-factory';
 import { factoryService } from '@/services/factory/factory.service';
-import { Factory, FactoryCondDTO, FactoryCreateDTO, FactoryUpdateDTO } from '@/common/interface/factory';
 
 const defaultFactoryValues = (): FactoryCreateDTO => ({
   code: '',

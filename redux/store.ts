@@ -3,6 +3,7 @@ import { createWrapper } from 'next-redux-wrapper';
 import { combineReducers } from 'redux';
 import { persistStore, persistReducer } from 'redux-persist';
 import createSagaMiddleware from 'redux-saga';
+
 import rootSaga from '@/redux/sagas';
 import authReducer, { setHydrated } from '@/redux/slices/authSlice';
 import type { AuthState } from '@/redux/types/auth';

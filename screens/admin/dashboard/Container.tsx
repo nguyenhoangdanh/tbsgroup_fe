@@ -2,10 +2,11 @@
 import { User, DollarSign, ShoppingCart, CreditCard } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import React, { useMemo } from 'react';
+import { DataTable } from 'react-table-power';
+
+import { DashboardCardComponent } from '../../../components/common/layouts/admin/DashboardCard';
 
 import { columns, Payment } from './_components/columns';
-import { DashboardCardComponent } from '../../../components/common/layouts/admin/DashboardCard';
-import { DataTable } from 'react-table-power';
 
 
 const CARD_ITEMS = [

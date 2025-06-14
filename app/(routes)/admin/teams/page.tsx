@@ -3,8 +3,8 @@
 import React from 'react';
 
 import PermissionGuard from '@/hooks/permission/PermissionGuard';
-import TeamContainer from '@/screens/admin/team/Container';
 import { TeamProvider } from '@/hooks/teams';
+import TeamContainer from '@/screens/admin/team/Container';
 
 export default function TeamsPage() {
   return (

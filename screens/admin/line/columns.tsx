@@ -1,4 +1,5 @@
 import { TableColumn } from 'react-table-power';
+
 import { Line } from '@/common/interface/line';
 import { Badge } from '@/components/ui/badge';
 

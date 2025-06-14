@@ -2,16 +2,16 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { CircleCheckBig } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
-import { useRouter } from 'next/navigation';
 
 import { UserStatusEnum } from '@/common/enum';
+import { FormController } from '@/components/common/fields';
 import { FieldInput } from '@/components/common/fields/FieldInput';
 import SubmitButton from '@/components/SubmitButton';
-import { defaultResetPasswordValues, resetPasswordSchema, ResetPasswordType } from '@/schemas/auth';
 import { useAuthManager } from '@/hooks/auth/useAuthManager';
-import { FormController } from '@/components/common/fields';
+import { defaultResetPasswordValues, resetPasswordSchema, ResetPasswordType } from '@/schemas/auth';
 import stableToast from '@/utils/stableToast';
 
 

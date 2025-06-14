@@ -1,10 +1,9 @@
 'use client';
 
-import * as React from 'react';
 
 import * as SelectPrimitive from '@radix-ui/react-select';
-
 import {Check, X} from 'lucide-react';
+import * as React from 'react';
 
 import {Button} from '@/components/ui/button';
 import {
@@ -16,7 +15,6 @@ import {
   CommandList,
 } from '@/components/ui/command';
 import {Popover, PopoverContent, PopoverTrigger} from '@/components/ui/popover';
-
 import {cn} from '@/lib/utils';
 
 interface MultiSelectProps {

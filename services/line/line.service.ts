@@ -1,7 +1,8 @@
-import { BaseService } from '@/lib/core/base-service';
-import { LineAdapter } from './line.adapter';
 import { Line, LineCondDTO, LineCreateDTO, LineUpdateDTO, LineManagerDTO } from '@/common/interface/line';
 import { api } from '@/lib/api/api';
+import { BaseService } from '@/lib/core/base-service';
+
+import { LineAdapter } from './line.adapter';
 
 export class LineService extends BaseService<
   Line,

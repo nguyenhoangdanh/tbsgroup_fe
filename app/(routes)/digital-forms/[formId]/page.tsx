@@ -4,8 +4,9 @@ import { Loader2 } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { Suspense } from 'react';
 
-import { FormProvider } from '@/contexts/form-context';
 import DigitalFormContainer from '@/screens/digital-form/DigitalFormContainer';
+
+import { FormProvider } from '@/contexts/form-context';
 
 export default function DigitalFormPage() {
   const params = useParams();

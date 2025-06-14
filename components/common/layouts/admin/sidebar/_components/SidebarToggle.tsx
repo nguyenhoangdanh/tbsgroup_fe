@@ -1,9 +1,10 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { useSidebar } from '@/components/ui/sidebar';
 import { PanelLeft } from 'lucide-react';
 import React from 'react';
+
+import { Button } from '@/components/ui/button';
+import { useSidebar } from '@/components/ui/sidebar';
 
 export function SidebarToggle() {
   const { toggleSidebar } = useSidebar();

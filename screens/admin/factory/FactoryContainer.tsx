@@ -1,17 +1,19 @@
 'use client';
 
-import React, { useMemo, useCallback, Suspense } from 'react';
-import { DataTable, TableColumn } from 'react-table-power';
 import { Factory as FactoryIcon, Building, Building2, Users, Workflow, Eye, GroupIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
+import React, { useMemo, useCallback, Suspense } from 'react';
+import { DataTable, TableColumn } from 'react-table-power';
 
-import FactoryForm from './FactoryForm';
-import { DashboardCardComponent } from '../../../components/common/layouts/admin/DashboardCard';
-import { useFactoryContext } from '@/hooks/factory/FactoryContext';
 import { Factory, FactoryCreateDTO, FactoryUpdateDTO } from '@/common/interface/factory';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { useFactoryContext } from '@/hooks/factory/FactoryContext';
+
+import { DashboardCardComponent } from '../../../components/common/layouts/admin/DashboardCard';
+
+import FactoryForm from './FactoryForm';
 
 const FactoryContainer: React.FC = () => {
   const router = useRouter();

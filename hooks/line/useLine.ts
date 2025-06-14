@@ -1,6 +1,6 @@
+import { Line, LineCondDTO, LineCreateDTO, LineUpdateDTO } from '@/common/interface/line';
 import { createEntityHooks } from '@/lib/core/hook-factory';
 import { lineService } from '@/services/line/line.service';
-import { Line, LineCondDTO, LineCreateDTO, LineUpdateDTO } from '@/common/interface/line';
 
 const defaultLineValues = (): LineCreateDTO => ({
   code: '',

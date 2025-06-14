@@ -5,12 +5,13 @@ import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import React from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
+import { toast } from 'react-toast-kit';
+
+import { FieldInput } from '@/components/common/fields/FieldInput';
+import { useAuthManager } from '@/hooks/auth/useAuthManager';
+import { defaultUserValues, TUserSchema, userSchema } from '@/schemas/user';
 
 import { resetPasswordMutationFn } from '@/apis/user/user.api';
-import { FieldInput } from '@/components/common/fields/FieldInput';
-import { toast } from 'react-toast-kit';
-import { defaultUserValues, TUserSchema, userSchema } from '@/schemas/user';
-import { useAuthManager } from '@/hooks/auth/useAuthManager';
 
 const UserProfileForm = () => {
   const { user } = useAuthManager();

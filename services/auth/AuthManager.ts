@@ -1,5 +1,4 @@
 "use client"
-import { store } from '@/redux/store';
 import { 
   loginRequest, 
   logoutRequest, 
@@ -11,7 +10,9 @@ import {
   initializeSession,
   clearResetPasswordData,
 } from '@/redux/slices/authSlice';
+import { store } from '@/redux/store';
 import type { AuthState, LoginCredentials, RequestResetParams, ResetPasswordParams } from '@/redux/types/auth';
+
 import { authService } from './auth.service';
 
 /**

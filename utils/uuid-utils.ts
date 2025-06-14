@@ -21,8 +21,7 @@ export const isValidUUID = (id: string): boolean => {
   try {
     uuidSchema.parse(id);
     return true;
-  } catch (error) {
-    console.error('ID không hợp lệ:', error);
+  } catch {
     return false;
   }
 };

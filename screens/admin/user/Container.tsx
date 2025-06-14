@@ -2,10 +2,12 @@
 
 import React, { memo, useCallback, useMemo, Suspense } from 'react';
 import { DataTable } from 'react-table-power';
+
 import { UserProfileType } from '@/common/interface/user';
+import { useUserContext } from '@/hooks/users';
+
 import { userTableColumns } from './columns';
 import UserFormWrapper from './UserFormWrapper';
-import { useUserContext } from '@/hooks/users';
 
 
 // UserContainer component that renders DataTable directly

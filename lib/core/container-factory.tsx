@@ -2,6 +2,7 @@
 
 import React, { memo, useCallback, useMemo, Suspense } from 'react';
 import { DataTable, TableColumn } from 'react-table-power';
+
 import { BaseEntity } from './entity-manager';
 
 interface ContainerFactoryOptions<T extends BaseEntity> {

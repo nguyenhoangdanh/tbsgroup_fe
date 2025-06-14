@@ -1,10 +1,11 @@
 import { Suspense, memo, useMemo } from 'react';
 
-import ResetPasswordForm from './form';
 
 import AuthImage from '@/components/common/layouts/auth/AuthImage';
 import AuthLayout from '@/components/common/layouts/auth/AuthLayout';
 import LazyLoader from '@/components/common/loading/LazyLoader';
+
+import ResetPasswordForm from './form';
 
 // Memoize the container component to prevent unnecessary re-renders
 export const ResetPasswordContainer = memo(() => {

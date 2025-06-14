@@ -1,10 +1,12 @@
 'use client';
 
 import React, { createContext, useContext, ReactNode, useMemo, useEffect, useState } from 'react';
-import { useTeam } from './useTeam';
-import { userService } from '@/services/user/user.service';
-import { lineService } from '@/services/line/line.service';
+
 import { useSharedData } from '@/hooks/shared/SharedDataContext';
+import { lineService } from '@/services/line/line.service';
+import { userService } from '@/services/user/user.service';
+
+import { useTeam } from './useTeam';
 
 // Create team context with type definitions
 export type TeamContextType = ReturnType<typeof useTeam> & {

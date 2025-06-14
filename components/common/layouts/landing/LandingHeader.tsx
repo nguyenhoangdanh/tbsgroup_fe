@@ -7,11 +7,13 @@ import { usePathname } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import React, { useState, useEffect } from 'react';
 
-import UserAvatar from '../client/UserAvatar';
-import ThemeSwitcher from '../admin/ThemeSwitcher';
-import ImageLogo from '../ImageLogo';
-import { useAuthManager } from '@/hooks/auth/useAuthManager';
 import { Button } from '@/components/ui/button';
+import { useAuthManager } from '@/hooks/auth/useAuthManager';
+
+import ThemeSwitcher from '../admin/ThemeSwitcher';
+import UserAvatar from '../client/UserAvatar';
+import ImageLogo from '../ImageLogo';
+
 
 const navLinks = [
   { title: 'Trang chủ', path: '/' },

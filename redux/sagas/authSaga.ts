@@ -1,6 +1,9 @@
 import { PayloadAction } from '@reduxjs/toolkit';
 import { takeLatest, call, put, all, select, delay, fork, cancel, SagaReturnType } from 'redux-saga/effects';
 
+import { AuthService } from '@/services/auth/auth.service';
+import { stableToast } from '@/utils/stableToast';
+
 import {
   initializeApp,
   initializeSession,
@@ -44,8 +47,6 @@ import type {
   VerifyRegistration,
 } from '../types/auth';
 
-import { AuthService } from '@/services/auth/auth.service';
-import { stableToast } from '@/utils/stableToast';
 
 // Selector to get auth state with proper typing
 const selectAuth = (state: RootState) => state.auth;

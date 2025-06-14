@@ -1,9 +1,10 @@
 'use client';
 
 import React from 'react';
-import HeroSection from '@/components/common/layouts/landing/HeroSection';
-import FeaturesSection from '@/components/common/layouts/landing/FeaturesSection';
+
 import AboutSection from '@/components/common/layouts/landing/AboutSection';
+import FeaturesSection from '@/components/common/layouts/landing/FeaturesSection';
+import HeroSection from '@/components/common/layouts/landing/HeroSection';
 
 export default function Home() {
   return (
