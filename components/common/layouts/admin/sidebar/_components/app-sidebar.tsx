@@ -1,6 +1,5 @@
 "use client"
 
-import { sub } from "date-fns"
 import { ChevronRight, Menu, X, Settings, LogOut, User, Bell, Search, PanelLeftClose, PanelLeft } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -19,14 +18,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
-import { Separator } from "@/components/ui/separator"
 import { useAuthContext } from "@/contexts/auth/AuthProvider"
 import { cn } from "@/lib/utils"
 
-import { sidebarData } from "./sidebar-data"
 import { useSidebarPermissions } from "./useSidebarPermissions"
-
-
 
 interface AppSidebarProps {
   className?: string
@@ -43,7 +38,7 @@ export function AppSidebar({ className }: AppSidebarProps) {
   
   const pathname = usePathname()
   const { user, logout } = useAuthContext()
-  const { navMain, userRole } = useSidebarPermissions()
+  const { navMain } = useSidebarPermissions()
 
   // CRITICAL FIX: Improved breakpoint detection
   React.useEffect(() => {

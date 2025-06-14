@@ -59,7 +59,7 @@ export function NavUser() {
                   {user?.fullName || user?.username || "User"}
                 </span>
                 <span className="truncate text-xs">
-                  {user?.email || user?.roleEntity?.name || "No role"}
+                  {user?.email || "No role"}
                 </span>
               </div>
               <ChevronsUpDown className="ml-auto size-4" />
@@ -83,8 +83,11 @@ export function NavUser() {
                   <span className="truncate font-semibold">
                     {user?.fullName || user?.username || "User"}
                   </span>
+                  {/* <span className="truncate text-xs">
+                    {user?.email || user?.role?.name || "No role"}
+                  </span> */}
                   <span className="truncate text-xs">
-                    {user?.email || user?.roleEntity?.name || "No role"}
+                    {user?.email || "No role"}
                   </span>
                 </div>
               </div>
