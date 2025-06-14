@@ -13,7 +13,7 @@ export {
   useUserFormWithDefaults as useUserForm 
 } from '@/hooks/users/UserContext';
 export { default as UserContainer } from '@/screens/admin/user/Container';
-export { default as UserForm } from '@/screens/admin/user/form';
+// export { default as UserForm } from '@/screens/admin/user/form';
 
 // Re-export types
 export type { UserProfileType, UserListParams, UserUpdateRequest } from '@/common/interface/user';
