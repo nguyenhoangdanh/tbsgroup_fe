@@ -36,8 +36,7 @@
     "prepare": "husky install",
     "pre-commit": "lint-staged",
     "health:check": "curl -f http://localhost:3000/api/health || exit 1",
-    "monitor:start": "npm run dev & npm run health:check",
-    "postinstall": "npm run env:validate || echo 'Environment validation skipped'"
+    "monitor:start": "npm run dev & npm run health:check"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
