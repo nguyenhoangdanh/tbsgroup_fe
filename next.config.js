@@ -24,6 +24,16 @@ const nextConfig = {
             { key: 'X-XSS-Protection', value: '1; mode=block' },
         ];
 
+        // Add CORS headers for production
+        if (isProduction) {
+            securityHeaders.push(
+                { key: 'Access-Control-Allow-Credentials', value: 'true' },
+                { key: 'Access-Control-Allow-Origin', value: apiDomain },
+                { key: 'Access-Control-Allow-Methods', value: 'GET, POST, PUT, DELETE, PATCH, OPTIONS' },
+                { key: 'Access-Control-Allow-Headers', value: 'Content-Type, Authorization, Cookie' }
+            );
+        }
+
         if (isProduction) {
             securityHeaders.push(
                 { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },

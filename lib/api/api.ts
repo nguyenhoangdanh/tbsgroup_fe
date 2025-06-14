@@ -1,5 +1,7 @@
 // lib/api/api.ts - Centralized API client with httpOnly cookie authentication
 
+import { mode } from "crypto-js";
+
 interface ApiConfig {
   baseURL?: string;
   timeout?: number;
@@ -44,6 +46,7 @@ class ApiClient {
     this.defaultHeaders = {
       'Content-Type': 'application/json',
       ...config.defaultHeaders,
+      mode: 'cors',
     };
   }
 
