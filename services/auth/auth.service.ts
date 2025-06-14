@@ -35,7 +35,7 @@ export interface ResetPasswordParams {
   cardId?: string;
   employeeId?: string;
   password: string;
-  confirmPassword: string;
+  confirmPassword?: string;
 }
 
 /**
@@ -45,7 +45,7 @@ export class AuthService {
   /**
    * Login user - backend sẽ tự động set httpOnly cookies
    */
-  static async login(credentials: LoginCredentials): Promise<LoginResponse> {
+  async login(credentials: LoginCredentials): Promise<LoginResponse> {
     try {
       const response = await api.login(credentials);
       return {
@@ -62,7 +62,7 @@ export class AuthService {
   /**
    * Logout user - backend sẽ clear httpOnly cookies
    */
-  static async logout(): Promise<void> {
+  async logout(): Promise<void> {
     try {
       await api.logout();
     } catch (error) {
@@ -74,7 +74,7 @@ export class AuthService {
   /**
    * Refresh access token - backend sẽ tự động handle và set cookies mới
    */
-  static async refreshToken(): Promise<any> {
+  async refreshToken(): Promise<any> {
     try {
       const response = await api.refreshToken();
       return response;
@@ -87,7 +87,7 @@ export class AuthService {
   /**
    * Check session via API call
    */
-  static async checkSession(): Promise<SessionData> {
+  async checkSession(): Promise<SessionData> {
     try {
       return await api.checkAuthenticationStatus();
     } catch (error) {
@@ -99,7 +99,7 @@ export class AuthService {
   /**
    * Check if user is authenticated
    */
-  static async isAuthenticated(): Promise<boolean> {
+  async isAuthenticated(): Promise<boolean> {
     try {
       return await api.isAuthenticated();
     } catch (error) {
@@ -111,7 +111,7 @@ export class AuthService {
   /**
    * Get current user profile
    */
-  static async getCurrentUser(): Promise<any> {
+  async getCurrentUser(): Promise<any> {
     try {
       return await api.getCurrentUser();
     } catch (error) {
@@ -123,7 +123,7 @@ export class AuthService {
   /**
    * Register new user
    */
-  static async register(userData: any): Promise<any> {
+  async register(userData: any): Promise<any> {
     const response = await api.post('/auth/register', userData);
     return response.data;
   }
@@ -131,7 +131,7 @@ export class AuthService {
   /**
    * Request password reset - đúng theo backend API
    */
-  static async requestPasswordReset(params: RequestPasswordResetParams): Promise<RequestPasswordResetResponse> {
+  async requestPasswordReset(params: RequestPasswordResetParams): Promise<RequestPasswordResetResponse> {
     try {
       const response = await api.post('/auth/request-password-reset', params);
       return response.data;
@@ -144,9 +144,16 @@ export class AuthService {
   /**
    * Reset password with token or credentials - đúng theo backend API
    */
-  static async resetPasswordWithToken(params: ResetPasswordParams): Promise<void> {
+  async resetPasswordWithToken(params: ResetPasswordParams): Promise<any> {
     try {
-      await api.post('/auth/reset-password', params);
+      // Ensure confirmPassword is set to password if not provided
+      const requestParams = {
+        ...params,
+        confirmPassword: params.confirmPassword || params.password
+      };
+      
+      const response = await api.post('/auth/reset-password', requestParams);
+      return response.data;
     } catch (error) {
       console.error('[AuthService] Reset password error:', error);
       throw error;
@@ -156,17 +163,17 @@ export class AuthService {
   /**
    * Reset password - legacy method for backward compatibility
    */
-  static async resetPassword({
+  async resetPassword({
     employeeId,
     cardId,
   }: { employeeId: string; cardId: string }): Promise<RequestPasswordResetResponse> {
-    return AuthService.requestPasswordReset({ employeeId, cardId });
+    return this.requestPasswordReset({ employeeId, cardId });
   }
 
   /**
    * Change password for authenticated user
    */
-  static async changePassword(oldPassword: string, newPassword: string): Promise<void> {
+  async changePassword(oldPassword: string, newPassword: string): Promise<void> {
     try {
       await api.post('/auth/change-password', {
         oldPassword,
@@ -177,51 +184,6 @@ export class AuthService {
       console.error('[AuthService] Change password error:', error);
       throw error;
     }
-  }
-
-  // Instance methods for backward compatibility
-  async login(credentials: LoginCredentials): Promise<LoginResponse> {
-    return AuthService.login(credentials);
-  }
-
-  async logout(): Promise<void> {
-    return AuthService.logout();
-  }
-
-  async refreshToken(): Promise<any> {
-    return AuthService.refreshToken();
-  }
-
-  async checkSession(): Promise<SessionData> {
-    return AuthService.checkSession();
-  }
-
-  async isAuthenticated(): Promise<boolean> {
-    return AuthService.isAuthenticated();
-  }
-
-  async getCurrentUser(): Promise<any> {
-    return AuthService.getCurrentUser();
-  }
-
-  async register(userData: any): Promise<any> {
-    return AuthService.register(userData);
-  }
-
-  async requestPasswordReset(params: RequestPasswordResetParams): Promise<RequestPasswordResetResponse> {
-    return AuthService.requestPasswordReset(params);
-  }
-
-  async resetPasswordWithToken(params: ResetPasswordParams): Promise<void> {
-    return AuthService.resetPasswordWithToken(params);
-  }
-
-  async resetPassword({ employeeId, cardId }: { employeeId: string; cardId: string }): Promise<RequestPasswordResetResponse> {
-    return AuthService.resetPassword({ employeeId, cardId });
-  }
-
-  async changePassword(oldPassword: string, newPassword: string): Promise<void> {
-    return AuthService.changePassword(oldPassword, newPassword);
   }
 }
 

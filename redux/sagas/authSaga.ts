@@ -1,7 +1,7 @@
 import { PayloadAction } from '@reduxjs/toolkit';
-import { takeLatest, call, put, all, select, delay, fork, cancel, SagaReturnType } from 'redux-saga/effects';
+import { takeLatest, call, put, all, select, delay, SagaReturnType } from 'redux-saga/effects';
 
-import { AuthService } from '@/services/auth/auth.service';
+import { authService } from '@/services/auth/auth.service';
 import { stableToast } from '@/utils/stableToast';
 
 import {
@@ -57,8 +57,11 @@ function* checkAuthenticationCookies() {
   try {
     console.log('🔍 Checking authentication cookies...');
     
-    // Call the API to check if user is authenticated via httpOnly cookies
-    const sessionData: SagaReturnType<typeof AuthService.checkSession> = yield call(AuthService.checkSession);
+    // Use object format for instance method calls
+    const sessionData: SagaReturnType<typeof authService.checkSession> = yield call({
+      context: authService,
+      fn: authService.checkSession
+    });
     
     if (sessionData.isAuthenticated && sessionData.user) {
       console.log('✅ Authentication successful via cookies');
@@ -86,7 +89,10 @@ function* loginSaga(action: PayloadAction<LoginCredentials>) {
   try {
     console.log('🔐 Starting login process...');
     
-    const response: SagaReturnType<typeof AuthService.login> = yield call(AuthService.login, action.payload);
+    const response: SagaReturnType<typeof authService.login> = yield call({
+      context: authService,
+      fn: authService.login
+    }, action.payload);
 
     if (response.success && response.user) {
       console.log('✅ Login successful');
@@ -127,7 +133,10 @@ function* logoutSaga(
 
     if (!silent) {
       // Call logout service (clears httpOnly cookies)
-      yield call(AuthService.logout);
+      yield call({
+        context: authService,
+        fn: authService.logout
+      });
       stableToast.info('Bạn đã đăng xuất thành công');
     }
 
@@ -170,7 +179,10 @@ function* logoutSaga(
  */
 function* registerSaga(action: PayloadAction<RegisterCredentials>): Generator {
   try {
-    const response: SagaReturnType<typeof AuthService.register> = yield call(AuthService.register, action.payload);
+    const response: SagaReturnType<typeof authService.register> = yield call({
+      context: authService,
+      fn: authService.register
+    }, action.payload);
 
     stableToast.success('Đăng ký thành công', {
       description: 'Tài khoản đã được tạo thành công'
@@ -214,10 +226,11 @@ function* requestPasswordResetSaga(action: PayloadAction<RequestResetParams>) {
   try {
     console.log('🔑 Requesting password reset...', action.payload);
     
-    const response: SagaReturnType<typeof AuthService.requestPasswordReset> = yield call(
-      AuthService.requestPasswordReset, 
-      action.payload
-    );
+    // Use object format for instance method calls
+    const response: SagaReturnType<typeof authService.requestPasswordReset> = yield call({
+      context: authService,
+      fn: authService.requestPasswordReset
+    }, action.payload);
     
     console.log('✅ Password reset request successful:', response);
     
@@ -252,8 +265,11 @@ function* resetPasswordSaga(action: PayloadAction<ResetPasswordParams>) {
       hasCardInfo: Boolean(action.payload.cardId && action.payload.employeeId)
     });
     
-    // Use the new resetPasswordWithToken method
-    yield call(AuthService.resetPasswordWithToken, action.payload);
+    // Use object format for instance method calls
+    yield call({
+      context: authService,
+      fn: authService.resetPasswordWithToken
+    }, action.payload);
     
     console.log('✅ Password reset successful');
     
@@ -277,7 +293,10 @@ function* resetPasswordSaga(action: PayloadAction<ResetPasswordParams>) {
  */
 function* updateUserSaga(action: PayloadAction<Partial<User>>): Generator {
   try {
-    const response: SagaReturnType<typeof AuthService.getCurrentUser> = yield call(AuthService.getCurrentUser);
+    const response: SagaReturnType<typeof authService.getCurrentUser> = yield call({
+      context: authService,
+      fn: authService.getCurrentUser
+    });
     
     stableToast.success('Cập nhật thông tin thành công', {
       description: 'Thông tin cá nhân đã được cập nhật'
@@ -375,7 +394,10 @@ function* initializeSessionSaga() {
     
     console.log('🔄 SAGA: Proceeding with session check...');
     
-    const sessionResponse: SagaReturnType<typeof AuthService.checkSession> = yield call(AuthService.checkSession);
+    const sessionResponse: SagaReturnType<typeof authService.checkSession> = yield call({
+      context: authService,
+      fn: authService.checkSession
+    });
     
     if (sessionResponse.isAuthenticated && sessionResponse.user) {
       console.log('✅ Session is valid, user authenticated');
@@ -457,30 +479,20 @@ function* sessionMonitorSaga() {
 }
 
 /**
- * Root auth saga
+ * Root saga for authentication
  */
-export function* authSaga(): Generator {
-  // Fork session monitor to run in background
-  const sessionMonitorTask = yield fork(sessionMonitorSaga);
-  
+export function* authSaga() {
   yield all([
-    takeLatest(initializeApp.type, initializeAppSaga),
-    takeLatest(initializeSession.type, initializeSessionSaga),
-    takeLatest(forceSessionCheck.type, forceSessionCheckSaga),
     takeLatest(loginRequest.type, loginSaga),
+    takeLatest(logoutRequest.type, logoutSaga),
     takeLatest(registerRequest.type, registerSaga),
     takeLatest(verifyAccountRequest.type, verifyAccountSaga),
-    takeLatest(logoutRequest.type, logoutSaga),
-    takeLatest(updateUserRequest.type, updateUserSaga),
     takeLatest(requestPasswordResetRequest.type, requestPasswordResetSaga),
     takeLatest(resetPasswordRequest.type, resetPasswordSaga),
-    takeLatest('auth/refreshToken', refreshTokenSaga),
+    takeLatest(updateUserRequest.type, updateUserSaga),
+    takeLatest(forceSessionCheck.type, forceSessionCheckSaga),
+    takeLatest(refreshTokenSuccess.type, refreshTokenSaga),
+    takeLatest(initializeSession.type, initializeSessionSaga),
+    takeLatest(initializeApp.type, initializeAppSaga),
   ]);
-  
-  // Clean up on app shutdown
-  yield takeLatest('APP_SHUTDOWN', function* () {
-    yield cancel(sessionMonitorTask);
-  });
 }
-
-export default authSaga;
