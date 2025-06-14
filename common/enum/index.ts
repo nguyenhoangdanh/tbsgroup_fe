@@ -12,3 +12,9 @@ export enum UserRoleEnum {
   USER = 'USER',
   EMPLOYEE = 'EMPLOYEE',
 }
+
+export enum PermissionType {
+  PAGE_ACCESS = 'PAGE_ACCESS',
+  FEATURE_ACCESS = 'FEATURE_ACCESS',
+  DATA_ACCESS = 'DATA_ACCESS',
+}
