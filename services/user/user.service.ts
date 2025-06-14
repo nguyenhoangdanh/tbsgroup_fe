@@ -25,15 +25,19 @@ export class UserService extends BaseService<
     }
 
     try {
-      // Validate required fields for update - cast to proper type
-      const dataAsRecord = data as unknown as Record<string, unknown>;
+      // Convert to Record<string, unknown> for adapter compatibility
+      const dataAsRecord: Record<string, unknown> = Object.keys(data).reduce((acc, key) => {
+        acc[key] = data[key as keyof UserUpdateRequest];
+        return acc;
+      }, {} as Record<string, unknown>);
+      
       const validation = this.adapter.validateData ? this.adapter.validateData(dataAsRecord) : { valid: true, errors: [] };
       if (!validation.valid) {
         console.error('[UserService] Validation failed:', validation.errors);
         throw new Error(`Validation failed: ${validation.errors.join(', ')}`);
       }
       
-      const updateRequest = this.adapter.toUpdateRequest(data as Record<string, unknown>);
+      const updateRequest = this.adapter.toUpdateRequest(dataAsRecord);
       
       // Ensure we don't send empty objects
       if (Object.keys(updateRequest).length === 0) {
@@ -54,8 +58,12 @@ export class UserService extends BaseService<
     }
 
     try {
-      // Cast to proper type for validation
-      const dataAsRecord = data as unknown as Record<string, unknown>;
+      // Convert to Record<string, unknown> for adapter compatibility
+      const dataAsRecord: Record<string, unknown> = Object.keys(data).reduce((acc, key) => {
+        acc[key] = data[key as keyof typeof data];
+        return acc;
+      }, {} as Record<string, unknown>);
+      
       const validation = this.adapter.validateUserData(dataAsRecord);
       if (!validation.valid) {
         throw new Error(validation.errors.join(', '));
@@ -89,7 +97,13 @@ export class UserService extends BaseService<
 
   async updateProfile(data: UserUpdateRequest): Promise<UserProfileType> {
     try {
-      const updateRequest = this.adapter.toUpdateRequest(data as Record<string, unknown>);
+      // Convert to Record<string, unknown> for adapter compatibility
+      const dataAsRecord: Record<string, unknown> = Object.keys(data).reduce((acc, key) => {
+        acc[key] = data[key as keyof UserUpdateRequest];
+        return acc;
+      }, {} as Record<string, unknown>);
+      
+      const updateRequest = this.adapter.toUpdateRequest(dataAsRecord);
       const response = await api.patch('/users/profile', updateRequest);
       return this.adapter.toUserProfileType(response.data);
     } catch (error) {

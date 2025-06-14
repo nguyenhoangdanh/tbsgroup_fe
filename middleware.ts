@@ -109,29 +109,17 @@ function addSecurityHeaders(response: NextResponse): NextResponse {
 }
 
 /**
- * Generate CSRF token with proper crypto handling
+ * Generate CSRF token with proper crypto handling for Edge Runtime
  */
 function generateCSRFToken(): string {
-  // Try to use Web Crypto API first
+  // Try to use Web Crypto API first (available in Edge Runtime)
   if (typeof globalThis !== 'undefined' && globalThis.crypto && globalThis.crypto.getRandomValues) {
     const array = new Uint8Array(32);
     globalThis.crypto.getRandomValues(array);
     return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
   }
   
-  // Try Node.js crypto module
-  try {
-    const { webcrypto } = eval('require')('crypto');
-    if (webcrypto && webcrypto.getRandomValues) {
-      const array = new Uint8Array(32);
-      webcrypto.getRandomValues(array);
-      return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
-    }
-  } catch (e) {
-    // Crypto module not available
-  }
-  
-  // Fallback to Math.random (less secure but works everywhere)
+  // Fallback to Math.random (Edge Runtime compatible)
   let result = '';
   for (let i = 0; i < 64; i++) {
     result += Math.floor(Math.random() * 16).toString(16);

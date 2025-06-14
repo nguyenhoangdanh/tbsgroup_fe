@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-export function corsHeaders(origin: string | null): Record<string, string> {
+export function corsHeaders(origin?: string) {
   const allowedOrigins = [
     'http://localhost:3000',
     'https://daily-performance.vercel.app',
@@ -23,7 +23,7 @@ export function corsHeaders(origin: string | null): Record<string, string> {
 }
 
 export function addCorsHeaders(response: NextResponse, request: NextRequest): NextResponse {
-  const origin = request.headers.get('origin');
+    const origin = request.headers.get('origin') as string;
   const headers = corsHeaders(origin);
   
   Object.entries(headers).forEach(([key, value]) => {
