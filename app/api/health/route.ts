@@ -33,6 +33,8 @@ async function checkDatabase(): Promise<boolean> {
   try {
     // Add your database health check here
     // For example, a simple query to check connection
+    // Simulate a database check with a resolved promise
+    await Promise.resolve();
     return true;
   } catch {
     return false;
