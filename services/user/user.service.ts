@@ -25,22 +25,22 @@ export class UserService extends BaseService<
     }
 
     try {
-      
-      // Validate required fields for update
-      const validation = this.adapter.validateData ? this.adapter.validateData(data) : { valid: true, errors: [] };
+      // Validate required fields for update - cast to proper type
+      const dataAsRecord = data as unknown as Record<string, unknown>;
+      const validation = this.adapter.validateData ? this.adapter.validateData(dataAsRecord) : { valid: true, errors: [] };
       if (!validation.valid) {
         console.error('[UserService] Validation failed:', validation.errors);
         throw new Error(`Validation failed: ${validation.errors.join(', ')}`);
       }
       
-      const updateRequest = this.adapter.toUpdateRequest(data);
+      const updateRequest = this.adapter.toUpdateRequest(data as Record<string, unknown>);
       
       // Ensure we don't send empty objects
       if (Object.keys(updateRequest).length === 0) {
         throw new Error('No valid update data provided');
       }
       
-      const response = await api.patch(`${this.basePath}/${id}`, updateRequest);
+      await api.patch(`${this.basePath}/${id}`, updateRequest);
     } catch (error) {
       console.error(`[UserService] update error:`, error);
       throw error;
@@ -54,7 +54,9 @@ export class UserService extends BaseService<
     }
 
     try {
-      const validation = this.adapter.validateUserData(data);
+      // Cast to proper type for validation
+      const dataAsRecord = data as unknown as Record<string, unknown>;
+      const validation = this.adapter.validateUserData(dataAsRecord);
       if (!validation.valid) {
         throw new Error(validation.errors.join(', '));
       }
@@ -87,7 +89,7 @@ export class UserService extends BaseService<
 
   async updateProfile(data: UserUpdateRequest): Promise<UserProfileType> {
     try {
-      const updateRequest = this.adapter.toUpdateRequest(data);
+      const updateRequest = this.adapter.toUpdateRequest(data as Record<string, unknown>);
       const response = await api.patch('/users/profile', updateRequest);
       return this.adapter.toUserProfileType(response.data);
     } catch (error) {

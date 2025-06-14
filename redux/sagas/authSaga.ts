@@ -57,11 +57,10 @@ function* checkAuthenticationCookies() {
   try {
     console.log('🔍 Checking authentication cookies...');
     
-    // Use object format for instance method calls
-    const sessionData: SagaReturnType<typeof authService.checkSession> = yield call({
-      context: authService,
-      fn: authService.checkSession
-    });
+    // Use bound method call for better type safety
+    const sessionData: SagaReturnType<typeof authService.checkSession> = yield call(
+      authService.checkSession.bind(authService)
+    );
     
     if (sessionData.isAuthenticated && sessionData.user) {
       console.log('✅ Authentication successful via cookies');
@@ -89,10 +88,10 @@ function* loginSaga(action: PayloadAction<LoginCredentials>) {
   try {
     console.log('🔐 Starting login process...');
     
-    const response: SagaReturnType<typeof authService.login> = yield call({
-      context: authService,
-      fn: authService.login
-    }, action.payload);
+    const response: SagaReturnType<typeof authService.login> = yield call(
+      authService.login.bind(authService),
+      action.payload
+    );
 
     if (response.success && response.user) {
       console.log('✅ Login successful');
@@ -133,10 +132,7 @@ function* logoutSaga(
 
     if (!silent) {
       // Call logout service (clears httpOnly cookies)
-      yield call({
-        context: authService,
-        fn: authService.logout
-      });
+      yield call(authService.logout.bind(authService));
       stableToast.info('Bạn đã đăng xuất thành công');
     }
 
@@ -179,10 +175,10 @@ function* logoutSaga(
  */
 function* registerSaga(action: PayloadAction<RegisterCredentials>): Generator {
   try {
-    const response: SagaReturnType<typeof authService.register> = yield call({
-      context: authService,
-      fn: authService.register
-    }, action.payload);
+    const response: SagaReturnType<typeof authService.register> = yield call(
+      authService.register.bind(authService),
+      action.payload
+    );
 
     stableToast.success('Đăng ký thành công', {
       description: 'Tài khoản đã được tạo thành công'
@@ -226,11 +222,10 @@ function* requestPasswordResetSaga(action: PayloadAction<RequestResetParams>) {
   try {
     console.log('🔑 Requesting password reset...', action.payload);
     
-    // Use object format for instance method calls
-    const response: SagaReturnType<typeof authService.requestPasswordReset> = yield call({
-      context: authService,
-      fn: authService.requestPasswordReset
-    }, action.payload);
+    const response: SagaReturnType<typeof authService.requestPasswordReset> = yield call(
+      authService.requestPasswordReset.bind(authService),
+      action.payload
+    );
     
     console.log('✅ Password reset request successful:', response);
     
@@ -265,11 +260,10 @@ function* resetPasswordSaga(action: PayloadAction<ResetPasswordParams>) {
       hasCardInfo: Boolean(action.payload.cardId && action.payload.employeeId)
     });
     
-    // Use object format for instance method calls
-    yield call({
-      context: authService,
-      fn: authService.resetPasswordWithToken
-    }, action.payload);
+    yield call(
+      authService.resetPasswordWithToken.bind(authService),
+      action.payload
+    );
     
     console.log('✅ Password reset successful');
     
@@ -293,10 +287,9 @@ function* resetPasswordSaga(action: PayloadAction<ResetPasswordParams>) {
  */
 function* updateUserSaga(action: PayloadAction<Partial<User>>): Generator {
   try {
-    const response: SagaReturnType<typeof authService.getCurrentUser> = yield call({
-      context: authService,
-      fn: authService.getCurrentUser
-    });
+    const response: SagaReturnType<typeof authService.getCurrentUser> = yield call(
+      authService.getCurrentUser.bind(authService)
+    );
     
     stableToast.success('Cập nhật thông tin thành công', {
       description: 'Thông tin cá nhân đã được cập nhật'
@@ -394,10 +387,9 @@ function* initializeSessionSaga() {
     
     console.log('🔄 SAGA: Proceeding with session check...');
     
-    const sessionResponse: SagaReturnType<typeof authService.checkSession> = yield call({
-      context: authService,
-      fn: authService.checkSession
-    });
+    const sessionResponse: SagaReturnType<typeof authService.checkSession> = yield call(
+      authService.checkSession.bind(authService)
+    );
     
     if (sessionResponse.isAuthenticated && sessionResponse.user) {
       console.log('✅ Session is valid, user authenticated');
