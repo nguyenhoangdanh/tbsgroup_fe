@@ -195,11 +195,11 @@ importers:
         specifier: ^9.2.0
         version: 9.2.0(@types/react@18.3.18)(react@18.3.1)(redux@5.0.1)
       react-table-power:
-        specifier: file:/home/hoangdanh2000/Desktop/Projects/react-table-power
-        version: file:../Projects/react-table-power(@tanstack/react-table@8.21.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react-hook-form@7.54.2(react@18.3.1))(react@18.3.1)(zod@3.24.2)
+        specifier: ^1.0.1
+        version: 1.0.1(@tanstack/react-table@8.21.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react-hook-form@7.54.2(react@18.3.1))(react@18.3.1)(zod@3.24.2)
       react-toast-kit:
-        specifier: file:/home/hoangdanh2000/Desktop/Projects/react-toast-kit
-        version: file:../Projects/react-toast-kit(@types/react@18.3.18)(framer-motion@12.6.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(immer@10.1.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(use-sync-external-store@1.4.0(react@18.3.1))
+        specifier: ^1.0.7
+        version: 1.0.7(@types/react@18.3.18)(framer-motion@12.6.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(immer@10.1.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(use-sync-external-store@1.4.0(react@18.3.1))
       recharts:
         specifier: ^2.15.1
         version: 2.15.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -4981,8 +4981,8 @@ packages:
       '@types/react':
         optional: true
 
-  react-table-power@file:../Projects/react-table-power:
-    resolution: {directory: ../Projects/react-table-power, type: directory}
+  react-table-power@1.0.1:
+    resolution: {integrity: sha512-1p+Rwo+WFGhgv5+a2MY60FkCT30SSxD8/zQmHfDLwNNs/E6HTP6w3UW6z7afj7BzDb6RYGxWsYo0a7Rc1FQ4EQ==}
     peerDependencies:
       '@tanstack/react-table': ^8.0.0
       react: ^17.0.0 || ^18.0.0
@@ -4995,8 +4995,8 @@ packages:
       zod:
         optional: true
 
-  react-toast-kit@file:../Projects/react-toast-kit:
-    resolution: {directory: ../Projects/react-toast-kit, type: directory}
+  react-toast-kit@1.0.7:
+    resolution: {integrity: sha512-0BZPuAhw19iODJtdTTNbHVg+taz6/KJyRlkk96G+aoyRBLUwYWs4ziZDmmR15fMYT6gzMM9qPaEBar7fDC49uA==}
     peerDependencies:
       framer-motion: ^10.16.0 || ^11.0.0
       react: ^17.0.0 || ^18.0.0
@@ -11328,7 +11328,7 @@ snapshots:
     optionalDependencies:
       '@types/react': 18.3.18
 
-  react-table-power@file:../Projects/react-table-power(@tanstack/react-table@8.21.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react-hook-form@7.54.2(react@18.3.1))(react@18.3.1)(zod@3.24.2):
+  react-table-power@1.0.1(@tanstack/react-table@8.21.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react-hook-form@7.54.2(react@18.3.1))(react@18.3.1)(zod@3.24.2):
     dependencies:
       '@tanstack/react-table': 8.21.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@tanstack/react-virtual': 3.13.10(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -11348,7 +11348,7 @@ snapshots:
     transitivePeerDependencies:
       - '@emotion/is-prop-valid'
 
-  react-toast-kit@file:../Projects/react-toast-kit(@types/react@18.3.18)(framer-motion@12.6.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(immer@10.1.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(use-sync-external-store@1.4.0(react@18.3.1)):
+  react-toast-kit@1.0.7(@types/react@18.3.18)(framer-motion@12.6.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(immer@10.1.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(use-sync-external-store@1.4.0(react@18.3.1)):
     dependencies:
       framer-motion: 12.6.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react: 18.3.1
