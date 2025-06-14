@@ -27,8 +27,6 @@ export const SessionRecovery: React.FC<SessionRecoveryProps> = ({
   const { 
     status, 
     error, 
-    isAuthenticated, 
-    isReady,
     forceRefresh, 
     clearAuthErrors,
     sessionInfo 
